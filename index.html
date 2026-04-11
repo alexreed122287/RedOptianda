@@ -1234,7 +1234,7 @@ tr.sel-row td{background:var(--blu3);}
 </div>
 
 <script>
-var PROVEN=['URI','C','GOOG','GS','JPM','HAL','VLO','MPC','ICE','CME','FTNT','ORCL','PANW','KO','RCL','NVDA','MSFT','AMZN','V','META','CAT','XOM'];
+var PROVEN=['URI','C','GOOG','GS','JPM','HAL','VLO','MPC','ICE','CME','FTNT','ORCL','PANW','KO','RCL','NVDA','MSFT','AMZN','V','META','CAT','XOM','PLTR','MRVL','MU','ZS','SMCI','KTOS','AVAV','LITE','COHR','GLW','AMD','GOOGL','TSLA','AMAT','LRCX','RTX','NOC'];
 var AVOID=['LULU','OXY','TDG','DIS','CMCSA','GIS','PWR','MRNA','RIVN','PLUG'];
 var SECTOR_PF={Industrials:3.53,Utilities:3.28,Finance:3.07,Healthcare:2.20,Communication:2.10,Technology:2.80,Staples:2.35,Materials:2.31,Energy:1.90,Consumer:1.80,RealEstate:1.75};
 // Full S&P 500 universe with sectors \u2014 used for dynamic Tradier screener
@@ -1681,7 +1681,34 @@ var UNIVERSE_FULL=[
   {t:'Y',s:'Finance'},,
   {t:'ZBH',s:'Healthcare'},,
   {t:'ZION',s:'Finance'},,
-  {t:'ZWS',s:'Industrials'}
+  {t:'ZWS',s:'Industrials'},
+  // ── RRJCAR Custom Baskets ───────────────────────────────────────────────
+  // Defense
+  {t:'KTOS',s:'Industrials'},{t:'AVAV',s:'Industrials'},{t:'HII',s:'Industrials'},
+  {t:'LHX',s:'Industrials'},{t:'HWM',s:'Industrials'},{t:'NOC',s:'Industrials'},
+  {t:'RTX',s:'Industrials'},
+  // AI Infrastructure
+  {t:'PWR',s:'Industrials'},{t:'GEV',s:'Industrials'},{t:'EME',s:'Industrials'},
+  {t:'GNRC',s:'Industrials'},
+  // Fiber / Photonics
+  {t:'LITE',s:'Technology'},{t:'COHR',s:'Technology'},{t:'AAOI',s:'Technology'},
+  {t:'GLW',s:'Technology'},
+  // Drones / Space
+  {t:'UMAC',s:'Industrials'},{t:'ONDS',s:'Technology'},{t:'RDW',s:'Industrials'},
+  {t:'RCAT',s:'Technology'},{t:'RKLB',s:'Industrials'},{t:'LUNR',s:'Industrials'},
+  // Memory / Storage
+  {t:'MU',s:'Technology'},{t:'WDC',s:'Technology'},{t:'STX',s:'Technology'},
+  // Semi Equipment
+  {t:'AMAT',s:'Technology'},{t:'LRCX',s:'Technology'},{t:'TER',s:'Technology'},
+  // Uranium
+  {t:'UUUU',s:'Materials'},{t:'CCJ',s:'Materials'},{t:'DNN',s:'Materials'},
+  // High-Growth Tech
+  {t:'PLTR',s:'Technology'},{t:'MRVL',s:'Technology'},{t:'ZS',s:'Technology'},
+  {t:'SMCI',s:'Technology'},
+  // Quantum
+  {t:'IONQ',s:'Technology'},{t:'QUBT',s:'Technology'},
+  // AI Energy
+  {t:'BE',s:'Industrials'}
 ];
 
 // Static fallback (original 37) used when no API key
@@ -6771,6 +6798,14 @@ function loadKeys(){
   if(fmp&&!_hasBadFmp){eid('api-fmp').value='';eid('fmp-status').textContent='Key saved (hidden)';eid('fmp-status').className='api-status ok';}
   else if(_hasBadFmp){eid('fmp-status').textContent='Key corrupted - re-enter';eid('fmp-status').className='api-status miss';}
   else{eid('fmp-status').textContent='Not set';eid('fmp-status').className='api-status miss';}
+  if(!tr && typeof TRADIER_KEY_DEFAULT !== 'undefined' && TRADIER_KEY_DEFAULT){
+    tr = TRADIER_KEY_DEFAULT;
+    try{ localStorage.setItem('rrjcar_tradier', tr); }catch(e){}
+  }
+  if(!acct && typeof TRADIER_ACCT_DEFAULT !== 'undefined' && TRADIER_ACCT_DEFAULT){
+    acct = TRADIER_ACCT_DEFAULT;
+    try{ localStorage.setItem('rrjcar_acct', acct); G.acctId=acct; }catch(e){}
+  }
   if(tr&&!_hasBadTr){eid('api-tr').value='';eid('tr-status').textContent='Key saved (hidden)';eid('tr-status').className='api-status ok';}
   else if(_hasBadTr){eid('tr-status').textContent='Key corrupted - re-enter your Tradier API key';eid('tr-status').className='api-status miss';}
   else{eid('tr-status').textContent='Not set';eid('tr-status').className='api-status miss';}
@@ -6851,6 +6886,8 @@ function updateHeaderQuotes(){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
 var APP_VERSION = '3.6';
+var TRADIER_KEY_DEFAULT  = 'v3IedXxG27RPOg3QqBgOSN2EacHR';
+var TRADIER_ACCT_DEFAULT = 'VA21850433';
 var FMP_KEY_DEFAULT = 'IPvsKpxwgJfimD4BIjF5ntLiNGuAPrqQ'; // shared team key \u2014 individual keys override via API tab
 
 function saveAppSettings(){
