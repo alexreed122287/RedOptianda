@@ -7387,10 +7387,10 @@ function renderContractPanel(ticker, contracts){
       '<td style="padding:8px 14px;font-weight:700;color:'+scoreColor+'">'+c.totalScore+'</td>'+
       '<td style="padding:8px 14px;text-align:center;white-space:nowrap;">'+
         '<button class="btn" style="font-size:10px;padding:3px 10px;margin-right:6px;background:var(--amb3);border-color:var(--amb);color:var(--amb);" '+
-          'onclick="cpBuyNow(''+ticker+'','+o.strike+',''+c.expDate+'','+c.mid+')">&#9650; BUY NOW</button>'+
+          'onclick="cpBuyNow(\''+ticker+'\','+o.strike+',\''+c.expDate+'\','+c.mid+')">&#9650; BUY NOW</button>'+
         '<button class="btn" style="font-size:10px;padding:3px 10px;'+(isWatched?'background:rgba(0,212,255,.2);border-color:var(--amb);color:var(--amb);':'border-color:var(--gry2);color:var(--gry);"')+'" '+
           'id="watch-btn-'+watchKey+'" '+
-          'onclick="cwToggleWatch(''+ticker+'','+o.strike+',''+c.expDate+'','+c.mid+','+c.delta+','+c.totalScore+')">'+
+          'onclick="cwToggleWatch(\''+ticker+'\','+o.strike+',\''+c.expDate+'\','+c.mid+','+c.delta+','+c.totalScore+')">'+
           (isWatched?'&#9733; WATCHING':'&#9734; WATCH')+'</button>'+
       '</td>'+
     '</tr>';
@@ -7517,9 +7517,9 @@ function cwRenderTable(){
       '<td>'+bestBadge+'</td>'+
       '<td style="white-space:nowrap;">'+
         '<button class="btn" style="font-size:10px;padding:3px 8px;margin-right:4px;background:var(--amb3);border-color:var(--amb);color:var(--amb);" '+
-          'onclick="cpBuyNow(''+c.ticker+'','+c.strike+',''+c.expDate+'','+c.currentMid+')">&#9650; BUY</button>'+
+          'onclick="cpBuyNow(\''+c.ticker+'\','+c.strike+',\''+c.expDate+'\','+c.currentMid+')">&#9650; BUY</button>'+
         '<button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--ngo);color:var(--ngo);" '+
-          'onclick="cwRemove(''+k+'')">&#10005;</button>'+
+          'onclick="cwRemove(\''+k+'\')">&#10005;</button>'+
       '</td>'+
     '</tr>';
   });
