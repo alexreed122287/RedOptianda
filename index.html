@@ -4363,9 +4363,14 @@ function renderScan(){
         rows+='<td style="color:var(--gry);font-size:10px;">--</td><td style="color:var(--gry);font-size:10px;">--</td>';
       }
     }
+    // Buy button — shown for all tickers regardless of GO/NO-GO
+    rows += '<td><button class="btn" style="font-size:10px;padding:3px 10px;white-space:nowrap;border-color:var(--amb);color:var(--amb);background:var(--amb3);" '
+      +'onclick="event.stopPropagation();openContractPanel(''+tk+'')" title="View all call contracts">&#9650; BUY</button></td>';
     rows+='</tr>';
   });
 
+  // Add buy column header
+  th += '<th style="cursor:default;color:var(--amb);font-size:10px;letter-spacing:1px;">CONTRACTS</th>';
   wrap.innerHTML='<table><thead><tr>'+th+'</tr></thead><tbody>'+rows+'</tbody></table>';
 }
 </script>
