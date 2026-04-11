@@ -31,8 +31,9 @@ body{
 }
 a{color:var(--blu);text-decoration:none;}
 #hdr{display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border-bottom:2px solid var(--amb);padding:0 12px;height:32px;flex-wrap:wrap;gap:4px;}
-#hdr-logo{color:var(--amb);font-weight:700;font-size:16px;letter-spacing:3px;white-space:nowrap;font-family:var(--ff-brand);text-shadow:0 0 12px rgba(0,212,255,.7);display:flex;align-items:center;gap:10px;}
-#hdr-logo .panda-icon{height:38px;width:auto;mix-blend-mode:screen;filter:drop-shadow(0 0 8px rgba(0,212,255,.45)) contrast(1.05);object-fit:contain;}
+#hdr-logo{color:var(--amb);font-weight:700;font-size:16px;letter-spacing:3px;white-space:nowrap;font-family:var(--ff-brand);text-shadow:0 0 12px rgba(0,212,255,.7);display:flex;align-items:center;gap:12px;position:relative;z-index:10;overflow:visible;}
+#hdr-logo .panda-icon{height:64px;width:auto;object-fit:contain;filter:drop-shadow(0 0 10px rgba(0,212,255,.6)) drop-shadow(0 0 4px rgba(0,212,255,.4));margin:-14px 0;position:relative;z-index:11;}
+#hdr{overflow:visible !important;position:relative;z-index:5;}
 #hdr-tickers{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;flex:1;}
 .htick{font-size:12px;white-space:nowrap;}
 .htick .ts{color:var(--gry);}
@@ -353,7 +354,7 @@ tr.sel-row td{background:var(--blu3);}
 </head>
 <body>
 <div id="hdr">
-  <div id="hdr-logo"><img src="assets/panda.jpg" alt="" class="panda-icon"><span>PANDA 1.0</span></div>
+  <div id="hdr-logo"><img src="assets/panda.png" alt="" class="panda-icon"><span>PANDA 1.0</span></div>
   <div id="hdr-tickers">
     <span class="htick"><span class="ts">SPY </span><span class="tv" id="h-spy">--</span> <span class="tc" id="h-spy-c"></span></span>
     <span class="htick"><span class="ts">QQQ </span><span class="tv" id="h-qqq">--</span> <span class="tc" id="h-qqq-c"></span></span>
