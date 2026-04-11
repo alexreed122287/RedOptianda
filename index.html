@@ -350,6 +350,21 @@ tr.sel-row td{background:var(--blu3);}
 .chain-hdr-calls{color:var(--grn) !important;text-align:center !important;background:rgba(34,197,94,0.06) !important;}
 .chain-hdr-puts{color:var(--red) !important;text-align:center !important;background:rgba(239,68,68,0.06) !important;}
 .chain-loading{display:flex;align-items:center;justify-content:center;height:200px;color:var(--gry);font-family:var(--ff-mono);font-size:12px;}
+
+/* Data table readability + alignment */
+.tbl-wrap table{font-size:12.5px;}
+.tbl-wrap thead th{font-size:11px;padding:8px 10px;}
+.tbl-wrap tbody td{padding:7px 10px;font-size:12.5px;}
+/* Right-align numeric columns, left-align text, center badges/buttons */
+.tbl-wrap tbody td{text-align:right;}
+.tbl-wrap tbody td:first-child{text-align:left;}
+.tbl-wrap thead th{text-align:right;}
+.tbl-wrap thead th:first-child{text-align:left;}
+.tbl-wrap tbody td:has(> .badge),
+.tbl-wrap tbody td:has(> button){text-align:center;}
+.tbl-wrap thead th[data-col="signal"],
+.tbl-wrap thead th[data-col="buy"]{text-align:center;}
+
 </style>
 </head>
 <body>
@@ -480,9 +495,9 @@ tr.sel-row td{background:var(--blu3);}
     <button class="btn blu" onclick="runGex()">&#8635; REFRESH GEX</button>
     <span style="color:var(--gry);font-size:10px;margin-left:8px;" id="gex-ts"></span>
   </div>
-  <div class="split">
-    <div class="split-l"><div class="tbl-wrap" id="gx-tbl-wrap"><div class="empty-det" id="gx-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Click REFRESH GEX</p></div></div></div>
-    <div class="split-r"><div class="det-wrap"><div class="empty-det" id="gx-det-empty"><div class="ei">&#9632;</div><p>Select a row to view details</p></div><div id="gx-detail" style="display:none;flex-direction:column;height:100%;overflow:hidden;"></div></div></div>
+  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
+    <div class="tbl-wrap" id="gx-tbl-wrap" style="flex:1;overflow:auto;"><div class="empty-det" id="gx-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Click REFRESH GEX</p></div></div>
+    <div id="gx-det-empty" style="display:none;"></div><div id="gx-detail" style="display:none;"></div>
   </div>
 </div>
 <div class="tab-pane" id="tab-wl">
@@ -1226,6 +1241,20 @@ tr.sel-row td{background:var(--blu3);}
 </div>
 
 <script>
+// One-time migration: update old fill-wait default 15 → 3
+(function(){
+  try{
+    var raw = localStorage.getItem('rrjcar_sf');
+    if(raw){
+      var sf = JSON.parse(raw);
+      if(sf && (sf.delay==='15' || sf.delay===15)){
+        sf.delay = '3';
+        localStorage.setItem('rrjcar_sf', JSON.stringify(sf));
+      }
+    }
+  }catch(e){}
+})();
+
 var PROVEN=['URI','C','GOOG','GS','JPM','HAL','VLO','MPC','ICE','CME','FTNT','ORCL','PANW','KO','RCL','NVDA','MSFT','AMZN','V','META','CAT','XOM','PLTR','MRVL','MU','ZS','SMCI','KTOS','AVAV','LITE','COHR','GLW','AMD','GOOGL','TSLA','AMAT','LRCX','RTX','NOC'];
 var AVOID=['LULU','OXY','TDG','DIS','CMCSA','GIS','PWR','MRNA','RIVN','PLUG'];
 var SECTOR_PF={Industrials:3.53,Utilities:3.28,Finance:3.07,Healthcare:2.20,Communication:2.10,Technology:2.80,Staples:2.35,Materials:2.31,Energy:1.90,Consumer:1.80,RealEstate:1.75};
