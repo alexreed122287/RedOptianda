@@ -31,7 +31,8 @@ body{
 }
 a{color:var(--blu);text-decoration:none;}
 #hdr{display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border-bottom:2px solid var(--amb);padding:0 12px;height:32px;flex-wrap:wrap;gap:4px;}
-#hdr-logo{color:var(--amb);font-weight:700;font-size:16px;letter-spacing:3px;white-space:nowrap;font-family:var(--ff-brand);text-shadow:0 0 12px rgba(0,212,255,.7);}
+#hdr-logo{color:var(--amb);font-weight:700;font-size:16px;letter-spacing:3px;white-space:nowrap;font-family:var(--ff-brand);text-shadow:0 0 12px rgba(0,212,255,.7);display:flex;align-items:center;gap:10px;}
+#hdr-logo .panda-icon{height:38px;width:auto;mix-blend-mode:screen;filter:drop-shadow(0 0 8px rgba(0,212,255,.45)) contrast(1.05);object-fit:contain;}
 #hdr-tickers{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;flex:1;}
 .htick{font-size:12px;white-space:nowrap;}
 .htick .ts{color:var(--gry);}
@@ -116,7 +117,9 @@ a{color:var(--blu);text-decoration:none;}
 .ri-val.pass{color:var(--blub);}
 .ri-val.fail{color:var(--wrn);}
 .ri-val.filt-fail{color:var(--ambb);}
-.tbl-wrap{flex:1;overflow:auto;}
+.tbl-wrap{flex:1;overflow:auto;align-self:stretch;}
+.tbl-wrap table{width:100%;}
+.tbl-wrap > div, .tbl-wrap > table{vertical-align:top;}
 table{border-collapse:collapse;width:100%;}
 th{background:var(--bg2);border-bottom:1px solid rgba(0,212,255,.1);color:var(--amb);cursor:pointer;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 10px;text-align:left;position:sticky;top:0;white-space:nowrap;user-select:none;text-shadow:0 0 15px rgba(0,212,255,.2);transition:color .15s;}
 th:hover{color:var(--ambb);}
@@ -350,7 +353,7 @@ tr.sel-row td{background:var(--blu3);}
 </head>
 <body>
 <div id="hdr">
-  <div id="hdr-logo">&#9632; PANDA 1.0</div>
+  <div id="hdr-logo"><img src="assets/panda.jpg" alt="" class="panda-icon"><span>PANDA 1.0</span></div>
   <div id="hdr-tickers">
     <span class="htick"><span class="ts">SPY </span><span class="tv" id="h-spy">--</span> <span class="tc" id="h-spy-c"></span></span>
     <span class="htick"><span class="ts">QQQ </span><span class="tv" id="h-qqq">--</span> <span class="tc" id="h-qqq-c"></span></span>
@@ -466,9 +469,9 @@ tr.sel-row td{background:var(--blu3);}
       <div id="sc-prog-bar" style="background:var(--amb);height:4px;border-radius:2px;width:0%;transition:width 0.2s;"></div>
     </div>
   </div>
-  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-    <div class="tbl-wrap" id="sc-tbl-wrap" style="flex:1;overflow:auto;"><div class="empty-det" id="sc-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Run a scan to see results</p></div></div>
-    <div id="sc-det-empty" style="display:none;"></div><div id="sc-detail" style="display:none;"></div>
+  <div class="split">
+    <div class="split-l"><div class="tbl-wrap" id="sc-tbl-wrap"><div class="empty-det" id="sc-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Run a scan to see results</p></div></div></div>
+    <div class="split-r"><div class="det-wrap"><div class="empty-det" id="sc-det-empty"><div class="ei">&#9632;</div><p>Select a row to view details</p></div><div id="sc-detail" style="display:none;flex-direction:column;height:100%;overflow:hidden;"></div></div></div>
   </div>
 </div>
 <div class="tab-pane" id="tab-gx">
@@ -738,7 +741,7 @@ tr.sel-row td{background:var(--blu3);}
           </div>
           <div class="step-cfg-field">
             <label>Fill Wait (sec)</label>
-            <input type="number" id="sf-delay" value="15" min="5" max="120" placeholder="15"
+            <input type="number" id="sf-delay" value="3" min="1" max="120" placeholder="3"
               title="How long to wait for each limit order to fill before stepping to next price"
               onchange="saveAppSettings()">
           </div>
@@ -7240,7 +7243,7 @@ function renderContractPanel(ticker, contracts){
 
   // Sort state: default best-to-worst by totalScore
   if(!window.CP_DATA || window.CP_DATA.ticker !== ticker){
-    window.CP_DATA = {ticker:ticker, contracts:contracts, sortCol:'totalScore', sortDir:-1};
+    window.CP_DATA = {ticker:ticker, contracts:contracts, sortCol:'expDate', sortDir:1};
   } else {
     window.CP_DATA.contracts = contracts;
   }
