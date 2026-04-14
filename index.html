@@ -588,7 +588,7 @@ tr.sel-row td{background:var(--blu3);}
         <div class="ts-field" style="align-self:flex-end;">
           <label>Auto-arm</label>
           <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
-            <input type="checkbox" id="ts-auto-arm" checked onchange="saveAppSettings()" style="width:auto;" title="Automatically enable trail stop for all positions when they load">
+            <input type="checkbox" id="ts-auto-arm" onchange="saveAppSettings()" style="width:auto;" title="Automatically enable trail stop for all positions when they load">
             <span style="color:var(--gry);font-size:10px;">On load</span>
           </div>
         </div>
@@ -4640,7 +4640,7 @@ function getTsDefaultSettings(){
 
 function applyDefaultTsConfig(symbols){
   // Apply defaults to any position that has NOT been manually configured
-  var autoArm = eid('ts-auto-arm') ? eid('ts-auto-arm').checked : true;
+  var autoArm = eid('ts-auto-arm') ? eid('ts-auto-arm').checked : false;
   if(!autoArm) return;
   var defaults = getTsDefaultSettings();
   var changed = false;
@@ -4730,7 +4730,7 @@ function renderPositionsTable(pos,srcLabel){
   applyDefaultTsConfig(symbols);
 
   // Auto-enable the trailing stop poller if auto-arm is on and positions exist
-  var autoArm = eid('ts-auto-arm') ? eid('ts-auto-arm').checked : true;
+  var autoArm = eid('ts-auto-arm') ? eid('ts-auto-arm').checked : false;
   if(autoArm && pos.length > 0 && !G.tsActive){
     if(eid('ts-toggle')){ eid('ts-toggle').checked = true; }
     if(eid('ts-cfg')){ eid('ts-cfg').style.display = ''; }
@@ -7029,7 +7029,7 @@ function saveAppSettings(){
       defaultActivate: eid('ts-default-activate') ? eid('ts-default-activate').value : '6',
       defaultPullback: eid('ts-default-pullback')  ? eid('ts-default-pullback').value  : '3',
       defaultDisRet:   eid('ts-default-disret')    ? eid('ts-default-disret').value    : '2',
-      autoArm:         eid('ts-auto-arm')          ? eid('ts-auto-arm').checked        : true,
+      autoArm:         eid('ts-auto-arm')          ? eid('ts-auto-arm').checked        : false,
       tsActive:        G.tsActive  // persist poller active state across reloads
     };
     localStorage.setItem('rrjcar_ts_global', JSON.stringify(tsSettings));
@@ -7104,7 +7104,7 @@ function loadAppSettings(){
         if(!G.tsState[sym]){
           var st = savedState[sym];
           var cfg = G.tsConfig[sym] || {};
-          var activateAt = cfg.activate || 6;
+          var activateAt = cfg.activate || 25;
           if(st.status === 'disabled' && (st.peakPct || 0) < activateAt){
             st = {status:'watching', peak:0, peakPct:0};
           }
