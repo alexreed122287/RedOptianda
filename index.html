@@ -567,21 +567,21 @@ tr.sel-row td{background:var(--blu3);}
         <div class="ts-field">
           <label>Activate at</label>
           <div style="display:flex;align-items:center;gap:4px;">
-            <input type="number" id="ts-default-activate" value="6" min="0" step="1" style="width:60px;" onchange="saveAppSettings()" title="Auto-arm trail stop when position reaches this % return">
+            <input type="number" id="ts-default-activate" value="25" min="0" step="1" style="width:60px;" onchange="saveAppSettings()" title="Auto-arm trail stop when position reaches this % return">
             <span style="color:var(--gry);font-size:10px;">% return</span>
           </div>
         </div>
         <div class="ts-field">
           <label>Close on</label>
           <div style="display:flex;align-items:center;gap:4px;">
-            <input type="number" id="ts-default-pullback" value="3" min="1" step="1" style="width:60px;" onchange="saveAppSettings()" title="Close position when it pulls back this % from peak">
+            <input type="number" id="ts-default-pullback" value="15" min="1" step="1" style="width:60px;" onchange="saveAppSettings()" title="Close position when it pulls back this % from peak">
             <span style="color:var(--gry);font-size:10px;">% pullback</span>
           </div>
         </div>
         <div class="ts-field">
           <label>Disable if &lt;</label>
           <div style="display:flex;align-items:center;gap:4px;">
-            <input type="number" id="ts-default-disret" value="2" min="0" step="1" style="width:60px;" onchange="saveAppSettings()" title="Disable trail stop if return drops below this %">
+            <input type="number" id="ts-default-disret" value="0" min="0" step="1" style="width:60px;" onchange="saveAppSettings()" title="Disable trail stop if return drops below this %">
             <span style="color:var(--gry);font-size:10px;">% return</span>
           </div>
         </div>
@@ -7026,9 +7026,9 @@ function saveAppSettings(){
       interval:  eid('ts-interval')          ? eid('ts-interval').value          : '30',
       closeMode: eid('ts-close-mode')        ? eid('ts-close-mode').value        : 'step',
       // Default values for auto-arm
-      defaultActivate: eid('ts-default-activate') ? eid('ts-default-activate').value : '6',
-      defaultPullback: eid('ts-default-pullback')  ? eid('ts-default-pullback').value  : '3',
-      defaultDisRet:   eid('ts-default-disret')    ? eid('ts-default-disret').value    : '2',
+      defaultActivate: eid('ts-default-activate') ? eid('ts-default-activate').value : '25',
+      defaultPullback: eid('ts-default-pullback')  ? eid('ts-default-pullback').value  : '15',
+      defaultDisRet:   eid('ts-default-disret')    ? eid('ts-default-disret').value    : '0',
       autoArm:         eid('ts-auto-arm')          ? eid('ts-auto-arm').checked        : false,
       tsActive:        G.tsActive  // persist poller active state across reloads
     };
@@ -7079,12 +7079,17 @@ function loadAppSettings(){
       var ts = JSON.parse(tsRaw);
       if(eid('ts-interval')           && ts.interval)         eid('ts-interval').value           = ts.interval;
       if(eid('ts-close-mode')         && ts.closeMode)        eid('ts-close-mode').value         = ts.closeMode;
-      if(eid('ts-default-activate')   && ts.defaultActivate)  eid('ts-default-activate').value   = ts.defaultActivate;
-      if(eid('ts-default-pullback')   && ts.defaultPullback)  eid('ts-default-pullback').value   = ts.defaultPullback;
+      // Sanitize stored thresholds — reject any values from the old dangerous defaults
+      var safeActivate = (ts.defaultActivate && +ts.defaultActivate >= 15) ? ts.defaultActivate : '25';
+      var safePullback = (ts.defaultPullback && +ts.defaultPullback >= 10) ? ts.defaultPullback : '15';
+      if(eid('ts-default-activate'))  eid('ts-default-activate').value = safeActivate;
+      if(eid('ts-default-pullback'))  eid('ts-default-pullback').value = safePullback;
       if(eid('ts-default-disret')     && ts.defaultDisRet)    eid('ts-default-disret').value     = ts.defaultDisRet;
-      if(eid('ts-auto-arm')           && ts.autoArm !== undefined) eid('ts-auto-arm').checked    = ts.autoArm;
-      // Flag to restart poller on next positions load if it was active before reload
-      if(ts.tsActive) G._tsRestoreActive = true;
+      // SAFETY: auto-arm and tsActive are FORCED OFF at load regardless of stored value.
+      // User must explicitly opt in every session. Prevents runaway auto-closes on reload.
+      if(eid('ts-auto-arm'))          eid('ts-auto-arm').checked = false;
+      G._tsRestoreActive = false;
+      G.tsActive = false;
     }
 
     // Per-position trail stop configs
