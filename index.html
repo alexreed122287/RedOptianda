@@ -4996,6 +4996,13 @@ function finishScan(){
             var updated = scoreIt(t, r.ind, r.opt);
             r.score=updated.score; r.techScore=updated.techScore; r.fundScore=updated.fundScore;
             r.isGo=updated.isGo; r.rules=updated.rules; r.passes=updated.passes;
+            if(typeof _rescoredCount==='undefined') window._rescoredCount=0;
+            window._rescoredCount++;
+            if(window._rescoredCount % 25 === 0){
+              G.results.sort(function(a,b){ return b.score-a.score; });
+              G.filtered = G.results.slice();
+              renderBuySig(); renderScan();
+            }
           }
         });
       }, fmpDelay);
