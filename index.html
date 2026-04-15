@@ -4984,7 +4984,7 @@ function finishScan(){
   var fmpKey='';try{fmpKey=localStorage.getItem('rrjcar_fmp')||'';}catch(e){}
   if(!fmpKey && typeof FMP_KEY_DEFAULT !== 'undefined') fmpKey = FMP_KEY_DEFAULT;
   if(fmpKey){
-    var goTickers = G.results.filter(function(r){ return r.isGo; }).slice(0,20).map(function(r){ return r.ticker; });
+    var goTickers = G.results.slice(0,150).map(function(r){ return r.ticker; });
     var fmpDelay = 0;
     goTickers.forEach(function(t){
       setTimeout(function(){
@@ -4999,7 +4999,7 @@ function finishScan(){
           }
         });
       }, fmpDelay);
-      fmpDelay += 300; // stagger by 300ms to avoid rate limiting
+      fmpDelay += 150; // stagger 150ms
     });
   }
 
