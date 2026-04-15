@@ -4682,10 +4682,10 @@ function setScanProgress(pct, label){
 
 async function fetchDynamicUniverse(key, mode){
   var host = mode === 'live' ? 'https://api.tradier.com' : 'https://sandbox.tradier.com';
-  var minPrice   = parseFloat(eid('sc-minprice')   ? eid('sc-minprice').value   : 20)  || 20;
+  var minPrice   = parseFloat(eid('sc-minprice')   ? eid('sc-minprice').value   : 1)  || 1;
   var maxPrice   = parseFloat(eid('sc-maxprice')   ? eid('sc-maxprice').value   : 0)   || 0;
-  var minAvgVol  = parseFloat(eid('sc-minavgvol')  ? eid('sc-minavgvol').value  : 500000) || 500000;
-  var volRatioPct= parseFloat(eid('sc-volratio')   ? eid('sc-volratio').value   : 10)  || 10;
+  var minAvgVol  = parseFloat(eid('sc-minavgvol')  ? eid('sc-minavgvol').value  : 50000) || 50000;
+  var volRatioPct= parseFloat(eid('sc-volratio')   ? eid('sc-volratio').value   : 0)  || 0;
   var seen = {};
   var allTickers = UNIVERSE_FULL.filter(function(u){
     if(seen[u.t]) return false;
