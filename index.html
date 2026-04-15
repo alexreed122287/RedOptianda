@@ -4553,20 +4553,20 @@ function viewDetail(ticker,detId,emptyId){
    r.isGo=newScore.isGo;r.filtersPass=newScore.filtersPass;
    r.rules=newScore.rules;r.passes=newScore.passes;
    G.detailOpt={ticker:ticker,strike:optData.strike,exp:optData.exp};
-   buildDetail(r,detId,emptyId);
+   buildDetail(r,detId,emptyId); renderBuySig(); renderScan();
    fetchIndicatorHistory(ticker).then(function(days){
     if(days){G_HIST_CACHE[ticker]=days;}
     var s1=scoreIt(ticker,r.ind,r.opt);
     r.score=s1.score;r.techScore=s1.techScore;r.fundScore=s1.fundScore;
     r.isGo=s1.isGo;r.rules=s1.rules;r.passes=s1.passes;
-    buildDetail(r,detId,emptyId);
+    buildDetail(r,detId,emptyId); renderBuySig(); renderScan();
     if(fmpKey){
      fetchFmpData(ticker).then(function(fmpData){
       if(!fmpData)return;
       var s2=scoreIt(ticker,r.ind,r.opt);
       r.score=s2.score;r.techScore=s2.techScore;r.fundScore=s2.fundScore;
       r.isGo=s2.isGo;r.rules=s2.rules;r.passes=s2.passes;
-      buildDetail(r,detId,emptyId);
+      buildDetail(r,detId,emptyId); renderBuySig(); renderScan();
      });
     }
    });
@@ -4579,7 +4579,7 @@ function viewDetail(ticker,detId,emptyId){
     var updated=scoreIt(ticker,r.ind,r.opt);
     r.score=updated.score;r.techScore=updated.techScore;r.fundScore=updated.fundScore;
     r.isGo=updated.isGo;r.rules=updated.rules;r.passes=updated.passes;
-    buildDetail(r,detId,emptyId);
+    buildDetail(r,detId,emptyId); renderBuySig(); renderScan();
    });
   });
  }
