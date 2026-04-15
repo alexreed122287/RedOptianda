@@ -4816,7 +4816,10 @@ async function fetchDynamicUniverse(key, mode){
     var changePct= parseFloat(q.change_percentage) || 0;
     if(price < minPrice) return;
     if(maxPrice > 0 && price > maxPrice) return;
-    if(avgVol < minAvgVol) return;
+    // Tradier sometimes returns 0 for average_volume even on liquid names (e.g. HOOD).
+    // When that happens, treat today's volume as a proxy and skip the ratio check.
+    var effectiveAvgVol = avgVol > 0 ? avgVol : todayVol;
+    if(effectiveAvgVol < minAvgVol) return;
     if(avgVol > 0 && (todayVol / avgVol) * 100 < volRatioPct) return;
     passed.push({
       t: u.t, s: u.s,
