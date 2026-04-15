@@ -500,9 +500,9 @@ tr.sel-row td{background:var(--blu3);}
       <div id="sc-prog-bar" style="background:var(--amb);height:4px;border-radius:2px;width:0%;transition:width 0.2s;"></div>
     </div>
   </div>
-  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-    <div class="tbl-wrap" id="sc-tbl-wrap" style="flex:1;overflow:auto;"><div class="empty-det" id="sc-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Run a scan to see results</p></div></div>
-    <div id="sc-det-empty" style="display:none;"></div><div id="sc-detail" style="display:none;"></div>
+  <div id="sc-body" style="flex:1;display:flex;flex-direction:row;overflow:hidden;">
+    <div class="tbl-wrap" id="sc-tbl-wrap" style="width:340px;min-width:220px;flex-shrink:0;overflow:auto;border-right:1px solid var(--bg3);"><div class="empty-det" id="sc-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Run a scan to see results</p></div></div>
+    <div id="sc-det-empty" style="display:none;"></div><div id="sc-detail" style="flex:1;overflow:auto;display:none;"></div>
   </div>
 </div>
 <div class="tab-pane" id="tab-gx">
