@@ -5010,6 +5010,33 @@ function finishScan(){
     });
   }
 
+  // Sequential enrichment queue — one ticker at a time, no browser lockup
+  var enrichQueue = G.results.slice(0, 50).map(function(r){ return r.ticker; });
+  var enrichIdx = 0;
+  function enrichNext(){
+    if(enrichIdx >= enrichQueue.length) return;
+    var t = enrichQueue[enrichIdx++];
+    var r = G.results.filter(function(x){ return x.ticker===t; })[0];
+    if(!r){ enrichNext(); return; }
+    var tradierKey='';try{tradierKey=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+    var fmpKey='';try{fmpKey=localStorage.getItem('rrjcar_fmp')||'';}catch(e){}
+    setScanProgress(62 + Math.round((enrichIdx/enrichQueue.length)*35), 'Enriching '+enrichIdx+'/'+enrichQueue.length+': '+t+'...');
+    fetchIndicatorHistory(t).then(function(days){
+      if(days) G_HIST_CACHE[t]=days;
+      var p = fmpKey ? fetchFmpData(t) : Promise.resolve(null);
+      p.then(function(){
+        var u=scoreIt(t,r.ind,r.opt);
+        r.score=u.score; r.techScore=u.techScore; r.fundScore=u.fundScore;
+        r.isGo=u.isGo; r.rules=u.rules; r.passes=u.passes;
+        G.results.sort(function(a,b){ return b.score-a.score; });
+        G.filtered=G.results.slice();
+        renderBuySig(); renderScan();
+        setTimeout(enrichNext, 100);
+      });
+    });
+  }
+  setTimeout(enrichNext, 1000);
+
   var goCount = G.results.filter(function(r){ return r.isGo; }).length;
   addAlert('SYS', 'Scan complete: ' + G.results.length + ' tickers | ' + goCount + ' GO', 'go');
   toast('Scan complete \u2014 ' + G.results.length + ' tickers');
