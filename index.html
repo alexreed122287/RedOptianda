@@ -4683,54 +4683,49 @@ function setScanProgress(pct, label){
 async function fetchDynamicUniverse(key, mode){
   var host = mode === 'live' ? 'https://api.tradier.com' : 'https://sandbox.tradier.com';
   var minPrice   = parseFloat(eid('sc-minprice')   ? eid('sc-minprice').value   : 20)  || 20;
-  var maxPrice   = parseFloat(eid('sc-maxprice')   ? eid('sc-maxprice').value   : 0)   || 0; // 0 = no limit
+  var maxPrice   = parseFloat(eid('sc-maxprice')   ? eid('sc-maxprice').value   : 0)   || 0;
   var minAvgVol  = parseFloat(eid('sc-minavgvol')  ? eid('sc-minavgvol').value  : 500000) || 500000;
-  var volRatioPct= parseFloat(eid('sc-volratio')   ? eid('sc-volratio').value   : 30)  || 30;
-
-  // De-duplicate tickers (GOOGL appears in two sectors)
-  // Always include SPY for relative strength baseline
+  var volRatioPct= parseFloat(eid('sc-volratio')   ? eid('sc-volratio').value   : 10)  || 10;
   var seen = {};
   var allTickers = UNIVERSE_FULL.filter(function(u){
     if(seen[u.t]) return false;
     seen[u.t] = true;
     return true;
   });
-  // Add SPY if not already in universe (needed for RS calculation)
   if(!seen['SPY']) allTickers.push({t:'SPY', s:'ETF'});
-
-  var symbols = allTickers.map(function(u){ return u.t; }).join(',');
-  setScanProgress(10, 'Fetching quotes for ' + allTickers.length + ' tickers...');
-
-  var data;
-  try {
-    var resp = await fetch(host + '/v1/markets/quotes', {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + key,
-        Accept: 'application/json',
-        'Content-Type': 'application/x-www-form-urlencoded'
-      },
-      body: 'symbols=' + encodeURIComponent(symbols) + '&greeks=false'
-    });
-    data = await resp.json();
-  } catch(e) {
-    console.warn('Dynamic screener fetch failed:', e);
-    return null;
+  var BATCH_SIZE = 400;
+  var allQuotes = [];
+  var totalBatches = Math.ceil(allTickers.length / BATCH_SIZE);
+  for(var b = 0; b < totalBatches; b++){
+    var batch = allTickers.slice(b * BATCH_SIZE, (b + 1) * BATCH_SIZE);
+    var symbols = batch.map(function(u){ return u.t; }).join(',');
+    setScanProgress(
+      10 + Math.round((b / totalBatches) * 30),
+      'Fetching quotes batch ' + (b+1) + '/' + totalBatches + ' (' + allTickers.length + ' tickers total)...'
+    );
+    try {
+      var resp = await fetch(host + '/v1/markets/quotes', {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + key,
+          Accept: 'application/json',
+          'Content-Type': 'application/x-www-form-urlencoded'
+        },
+        body: 'symbols=' + encodeURIComponent(symbols) + '&greeks=false'
+      });
+      var data = await resp.json();
+      var q = data.quotes && data.quotes.quote;
+      if(q){
+        var arr = Array.isArray(q) ? q : [q];
+        arr.forEach(function(qt){ if(qt && qt.symbol) allQuotes.push(qt); });
+      }
+    } catch(e) {
+      console.warn('Batch ' + (b+1) + ' fetch failed:', e);
+    }
   }
-
-  setScanProgress(40, 'Filtering by price and volume...');
-
-  var quotes = [];
-  try {
-    var q = data.quotes.quote;
-    quotes = Array.isArray(q) ? q : [q];
-  } catch(e) { return null; }
-
-  // Build a lookup map for quote data
+  setScanProgress(40, 'Filtering ' + allQuotes.length + ' quotes by price and volume...');
   var quoteMap = {};
-  quotes.forEach(function(q){ if(q && q.symbol) quoteMap[q.symbol] = q; });
-
-  // Filter by screener criteria
+  allQuotes.forEach(function(q){ if(q && q.symbol) quoteMap[q.symbol] = q; });
   var passed = [];
   allTickers.forEach(function(u){
     var q = quoteMap[u.t];
@@ -4740,56 +4735,40 @@ async function fetchDynamicUniverse(key, mode){
     var todayVol = parseFloat(q.volume) || 0;
     var change   = parseFloat(q.change) || 0;
     var changePct= parseFloat(q.change_percentage) || 0;
-
     if(price < minPrice) return;
     if(maxPrice > 0 && price > maxPrice) return;
     if(avgVol < minAvgVol) return;
     if(avgVol > 0 && (todayVol / avgVol) * 100 < volRatioPct) return;
-
     passed.push({
       t: u.t, s: u.s,
-      price: price,
-      change: change,
-      changePct: changePct,
-      volume: todayVol,
-      avgVol: avgVol,
-      // v3.5 momentum quality fields from Tradier bulk quote
+      price: price, change: change, changePct: changePct,
+      volume: todayVol, avgVol: avgVol,
       week52hi: parseFloat(q.week_52_high) || 0,
       week52lo: parseFloat(q.week_52_low) || 0,
-      changePct5d: changePct // today's change as proxy; relative strength computed vs SPY below
+      changePct5d: changePct
     });
   });
-
   setScanProgress(60, 'Screened to ' + passed.length + ' active tickers...');
-
-  // Get SPY change_percentage for relative strength baseline
   var spyQ = quoteMap['SPY'];
   var spyChangePct = spyQ ? (parseFloat(spyQ.change_percentage) || 0) : 0;
-
-  // Add relative strength vs SPY to each passed ticker
   passed.forEach(function(u){
     u.relStr5d = +(u.changePct - spyChangePct).toFixed(2);
-    u.avgChangePct5d = +(spyChangePct * 0.8).toFixed(2); // proxy for 5d avg
+    u.avgChangePct5d = +(spyChangePct * 0.8).toFixed(2);
   });
-
-  // Merge custom tickers \u2014 always included regardless of filters
   var customs = getCustomTickerList();
   if(customs.length > 0){
     var passedSet = {};
     passed.forEach(function(u){ passedSet[u.t] = true; });
     customs.forEach(function(t){
       if(!passedSet[t]){
-        // Find sector from UNIVERSE_FULL if known, else 'Custom'
         var found = UNIVERSE_FULL.filter(function(u){ return u.t === t; })[0];
         passed.push({ t:t, s:found?found.s:'Custom', price:0, change:0, changePct:0, volume:0, avgVol:0, custom:true });
       }
     });
     setScanProgress(62, 'Added ' + customs.length + ' custom ticker(s)...');
   }
-
   return passed;
 }
-
 function runScan(){
   if(G.scanRunning) return;
   G.scanRunning = true;
