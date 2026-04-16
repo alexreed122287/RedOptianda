@@ -3659,7 +3659,7 @@ function renderTickerChart(ticker) {
         {name:'EMA10',type:'line',data:m_ema10,smooth:false,lineStyle:{color:'#00e676',width:1},symbol:'none',connectNulls:false},
         {name:'EMA20',type:'line',data:m_ema20,smooth:false,lineStyle:{color:'#ffd740',width:1},symbol:'none',connectNulls:false},
         {name:'EMA50',type:'line',data:m_ema50,smooth:false,lineStyle:{color:'#ff5252',width:1.5},symbol:'none',connectNulls:false},
-        {name:'VWAP',type:'line',data:vwap,smooth:false,lineStyle:{color:'#00d4ff',width:1.5,type:'dashed'},symbol:'none',connectNulls:true}
+        {name:'VWAP',type:'line',data:vwap,smooth:false,lineStyle:{color:'#00d4ff',width:0},symbol:'none',connectNulls:true,silent:true}
       ]
     });
     var ro2=new ResizeObserver(function(){ec1m.resize();});ro2.observe(chart1m);
