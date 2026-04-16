@@ -1168,7 +1168,16 @@ tr.sel-row td{background:var(--blu3);}
       </div>
     </div></div>
 
-    
+
+    <div class="card" style="margin-top:14px;">
+      <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;">
+        <span>API USAGE ANALYZER</span>
+        <button class="btn blu" style="font-size:10px;padding:3px 12px;" onclick="runApiAnalyzer()">&#9650; ANALYZE</button>
+      </div>
+      <div class="card-body" id="api-analyzer-body" style="padding:12px 14px;">
+        <div style="color:var(--gry);font-size:11px;">Click ANALYZE to inspect your call log and get optimization recommendations.</div>
+      </div>
+    </div>
 
   </div>
 </div>
@@ -1505,6 +1514,234 @@ window.showApiBreakdown = function(){
   }).join('');
 
   modal.style.display='flex';
+};
+
+window.runApiAnalyzer = function(){
+  var body = document.getElementById('api-analyzer-body');
+  if(!body) return;
+
+  var log;
+  try{ log = JSON.parse(localStorage.getItem('op_api_log')||'{}'); }catch(e){ log={}; }
+  var calls = log.calls || [];
+  var counts = log.counts || {};
+  var date = log.date || '--';
+
+  // ── Rate limits (official Tradier docs) ────────────────────────────────
+  var mode = localStorage.getItem('rrjcar_mode')||'sandbox';
+  var MARKET_LIMIT  = mode==='live' ? 120 : 60;  // per minute
+  var BROKERAGE_LIMIT = mode==='live' ? 120 : 60;
+  var TRADE_LIMIT   = 60; // always 60/min for orders
+  var DAY_BUDGET    = MARKET_LIMIT * 60 * 6.5; // ~6.5 market hours
+  var WARN_THRESHOLD = 0.70; // warn at 70% of any limit
+
+  // ── Classify each call ─────────────────────────────────────────────────
+  var tradeEps    = ['orders','balances','positions','account','profile'];
+  var marketEps   = ['quotes','opt-chain','opt-exp','opt-quote','history','timesales'];
+
+  function classify(ep){
+    if(tradeEps.indexOf(ep)!==-1) return 'brokerage';
+    if(marketEps.indexOf(ep)!==-1) return 'market';
+    return 'market';
+  }
+
+  // ── Per-minute burst analysis ──────────────────────────────────────────
+  var minuteBuckets = {};
+  calls.forEach(function(c){
+    var key = c.t ? c.t.slice(0,5) : '??:??'; // HH:MM
+    if(!minuteBuckets[key]) minuteBuckets[key]={total:0,trade:0,market:0,eps:{}};
+    var cls = classify(c.ep);
+    minuteBuckets[key].total++;
+    minuteBuckets[key][cls==='brokerage'?'trade':'market']++;
+    minuteBuckets[key].eps[c.ep]=(minuteBuckets[key].eps[c.ep]||0)+1;
+  });
+
+  var peakMinute = {key:'--',total:0,trade:0,market:0,eps:{}};
+  Object.keys(minuteBuckets).forEach(function(k){
+    if(minuteBuckets[k].total > peakMinute.total) peakMinute = Object.assign({key:k},minuteBuckets[k]);
+  });
+
+  // ── Totals by category ─────────────────────────────────────────────────
+  var totalMarket=0, totalTrade=0;
+  calls.forEach(function(c){
+    if(classify(c.ep)==='brokerage') totalTrade++; else totalMarket++;
+  });
+
+  // ── Build recommendations ──────────────────────────────────────────────
+  var recs = [];
+
+  // opt-chain is most expensive — check
+  var chainCalls = counts['opt-chain']||0;
+  if(chainCalls > 20){
+    recs.push({
+      sev: chainCalls>60?'red':'amber',
+      ep: 'opt-chain',
+      count: chainCalls,
+      title: 'Option chain calls are your biggest consumer ('+chainCalls+' today)',
+      detail: 'Each signal click + scanner pass pulls a full chain. '
+        +'Cache chain data per ticker per expiry for 5–10 min — if the same ticker is clicked twice within that window, reuse the cached chain instead of re-fetching. '
+        +'Estimated savings: 40–60% of chain calls.'
+    });
+  }
+
+  var quotesCalls = counts['quotes']||0;
+  if(quotesCalls > 30){
+    recs.push({
+      sev: quotesCalls>80?'red':'amber',
+      ep: 'quotes',
+      count: quotesCalls,
+      title: 'Quote calls are frequent ('+quotesCalls+' today)',
+      detail: 'The trail stop poller, position refreshes, and live quote fetches all hit /quotes. '
+        +'Increase position poll interval from the default or batch all position symbols into a single /quotes call (already batched up to 16). '
+        +'Consider pausing the trail stop poller outside market hours — it fires even when the market is closed.'
+    });
+  }
+
+  var expCalls = counts['opt-exp']||0;
+  if(expCalls > 15){
+    recs.push({
+      sev: 'amber',
+      ep: 'opt-exp',
+      count: expCalls,
+      title: 'Expiration lookups are repeated ('+expCalls+' today)',
+      detail: 'Expiration dates for a ticker don\'t change intraday. '
+        +'Cache /options/expirations per ticker for the full session (clear at midnight). '
+        +'Estimated savings: near-100% of repeated exp calls for the same ticker.'
+    });
+  }
+
+  var histCalls = counts['history']||0;
+  var tsCalls = counts['timesales']||0;
+  if(histCalls+tsCalls > 20){
+    recs.push({
+      sev: 'amber',
+      ep: 'history/timesales',
+      count: histCalls+tsCalls,
+      title: 'Chart data re-fetched on every signal click ('+( histCalls+tsCalls)+' today)',
+      detail: 'Daily history doesn\'t change bar-by-bar — cache it per ticker for 15–30 min. '
+        +'1-min timesales could be cached for 60 seconds since each bar is 1 min anyway. '
+        +'If you\'re clicking through signals rapidly, this stacks up fast.'
+    });
+  }
+
+  if(peakMinute.total > MARKET_LIMIT * WARN_THRESHOLD){
+    recs.push({
+      sev: peakMinute.total >= MARKET_LIMIT ? 'red' : 'amber',
+      ep: 'burst at '+peakMinute.key,
+      count: peakMinute.total,
+      title: 'Peak burst of '+peakMinute.total+' calls in minute '+peakMinute.key+' (limit: '+MARKET_LIMIT+'/min)',
+      detail: 'At '+peakMinute.total+' calls in one minute you\'re at '
+        +Math.round((peakMinute.total/MARKET_LIMIT)*100)+'% of the '
+        +(mode==='live'?'production':'sandbox')+' rate limit. '
+        +'The top endpoints that minute: '
+        +Object.keys(peakMinute.eps).sort(function(a,b){return peakMinute.eps[b]-peakMinute.eps[a];})
+          .slice(0,3).map(function(k){return k+'('+peakMinute.eps[k]+')';}).join(', ')+'.'
+    });
+  }
+
+  if(totalTrade > TRADE_LIMIT * WARN_THRESHOLD){
+    recs.push({
+      sev: totalTrade>=TRADE_LIMIT*5?'red':'amber',
+      ep: 'orders/positions/balances',
+      count: totalTrade,
+      title: 'Brokerage calls today: '+totalTrade+' (trade scope limit: '+TRADE_LIMIT+'/min)',
+      detail: 'Each step fill attempt fires 2–3 brokerage calls (submit + poll + cancel). '
+        +'At '+totalTrade+' total today, watch for bursts during active step fills. '
+        +'Consider increasing step fill delay to 4–5s during high-activity sessions.'
+    });
+  }
+
+  if(recs.length===0 && calls.length > 0){
+    recs.push({
+      sev:'green',
+      ep:'all',
+      count:calls.length,
+      title:'Usage looks healthy — '+calls.length+' calls today',
+      detail:'No single endpoint or minute is showing stress. '
+        +'Peak minute was '+peakMinute.total+' calls ('+Math.round((peakMinute.total/MARKET_LIMIT)*100)+'% of limit). '
+        +'Keep an eye on opt-chain and quotes as scan frequency increases.'
+    });
+  }
+
+  if(calls.length===0){
+    body.innerHTML='<div style="color:var(--gry);font-size:11px;">No API calls recorded yet today. Use the scanner and come back to analyze.</div>';
+    return;
+  }
+
+  // ── Build UI ───────────────────────────────────────────────────────────
+  var sevColor = {red:'var(--ngo)',amber:'var(--wrn)',green:'var(--grn)'};
+  var sevBg    = {red:'rgba(255,0,230,.08)',amber:'rgba(255,215,64,.06)',green:'rgba(0,230,118,.06)'};
+  var sevBdr   = {red:'rgba(255,0,230,.3)',amber:'rgba(255,215,64,.25)',green:'rgba(0,230,118,.25)'};
+
+  // Gauge bar helper
+  function gauge(val, max, color){
+    var pct = Math.min(Math.round((val/max)*100),100);
+    return '<div style="height:6px;background:var(--bg3);border-radius:3px;margin:4px 0 2px;">'
+      +'<div style="height:6px;width:'+pct+'%;background:'+color+';border-radius:3px;transition:width .4s;"></div></div>'
+      +'<div style="font-size:9px;color:var(--gry);">'+val+' / '+max+' ('+pct+'%)</div>';
+  }
+
+  var html = '';
+
+  // Summary stats row
+  html += '<div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px;margin-bottom:14px;">';
+  var stats = [
+    {label:'TOTAL TODAY',  val:calls.length,     color:'var(--amb)'},
+    {label:'MARKET CALLS', val:totalMarket,       color:'var(--blu)'},
+    {label:'BROKER CALLS', val:totalTrade,        color:'var(--ngo)'},
+    {label:'PEAK/MIN',     val:peakMinute.total,  color: peakMinute.total>=MARKET_LIMIT?'var(--ngo)':peakMinute.total>=MARKET_LIMIT*0.7?'var(--wrn)':'var(--grn)'},
+    {label:'MODE LIMIT',   val:MARKET_LIMIT+'/m', color:'var(--gry)'},
+    {label:'DATE',         val:date,              color:'var(--gry)'},
+  ];
+  stats.forEach(function(s){
+    html+='<div style="background:var(--bg2);border:1px solid var(--bg3);border-radius:4px;padding:6px 10px;">'
+      +'<div style="font-size:9px;color:var(--gry);letter-spacing:.5px;">'+s.label+'</div>'
+      +'<div style="font-size:16px;font-weight:700;color:'+s.color+';font-family:var(--ff-mono);">'+s.val+'</div>'
+      +'</div>';
+  });
+  html += '</div>';
+
+  // Rate limit gauges
+  html += '<div style="margin-bottom:14px;">';
+  html += '<div style="font-size:10px;color:var(--gry);letter-spacing:1px;margin-bottom:6px;">PEAK MINUTE UTILIZATION vs LIMITS</div>';
+  html += '<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
+  html += '<div><div style="font-size:10px;color:var(--amb);">Market data ('+MARKET_LIMIT+'/min)</div>'+gauge(peakMinute.market,MARKET_LIMIT,'var(--amb)')+'</div>';
+  html += '<div><div style="font-size:10px;color:var(--ngo);">Trade/brokerage ('+TRADE_LIMIT+'/min)</div>'+gauge(peakMinute.trade,TRADE_LIMIT,'var(--ngo)')+'</div>';
+  html += '</div></div>';
+
+  // Endpoint breakdown bar chart
+  var sortedEps = Object.keys(counts).sort(function(a,b){return counts[b]-counts[a];});
+  var maxCount = sortedEps.length ? counts[sortedEps[0]] : 1;
+  html += '<div style="margin-bottom:14px;">';
+  html += '<div style="font-size:10px;color:var(--gry);letter-spacing:1px;margin-bottom:6px;">CALLS BY ENDPOINT</div>';
+  sortedEps.forEach(function(ep){
+    var n=counts[ep], pct=Math.round((n/maxCount)*100);
+    var c=classify(ep)==='brokerage'?'var(--ngo)':'var(--amb)';
+    html+='<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;font-size:10px;">'
+      +'<span style="width:80px;color:var(--amb);font-family:var(--ff-mono);flex-shrink:0;">'+ep+'</span>'
+      +'<div style="flex:1;height:14px;background:var(--bg3);border-radius:2px;overflow:hidden;">'
+      +'<div style="height:100%;width:'+pct+'%;background:'+c+';opacity:.7;"></div></div>'
+      +'<span style="width:28px;text-align:right;color:var(--wht);font-family:var(--ff-mono);">'+n+'</span>'
+      +'</div>';
+  });
+  html += '</div>';
+
+  // Recommendations
+  html += '<div style="font-size:10px;color:var(--gry);letter-spacing:1px;margin-bottom:8px;">RECOMMENDATIONS</div>';
+  recs.forEach(function(r){
+    html+='<div style="background:'+sevBg[r.sev]+';border:1px solid '+sevBdr[r.sev]+';border-radius:4px;padding:9px 12px;margin-bottom:8px;">'
+      +'<div style="display:flex;align-items:center;gap:8px;margin-bottom:4px;">'
+      +'<span style="width:8px;height:8px;border-radius:50%;background:'+sevColor[r.sev]+';flex-shrink:0;"></span>'
+      +'<span style="font-size:11px;font-weight:700;color:'+sevColor[r.sev]+';">'+r.title+'</span>'
+      +'</div>'
+      +'<div style="font-size:10px;color:var(--gry);line-height:1.6;padding-left:16px;">'+r.detail+'</div>'
+      +'</div>';
+  });
+
+  html += '<div style="font-size:9px;color:var(--gry2);margin-top:6px;border-top:1px solid var(--bg3);padding-top:6px;">'
+    +'Tradier limits: Market '+MARKET_LIMIT+'/min | Brokerage '+BROKERAGE_LIMIT+'/min | Trade '+TRADE_LIMIT+'/min &nbsp;('+(mode==='live'?'LIVE':'SANDBOX')+' mode)'
+    +'&nbsp;&mdash;&nbsp;Analysis based on '+calls.length+' calls logged today.</div>';
+
+  body.innerHTML = html;
 };
 
 window.clearApiLog = function(){
