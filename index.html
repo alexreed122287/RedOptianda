@@ -1815,16 +1815,80 @@ window.clearApiLog = function(){
 
 // FMP circuit breaker — once an endpoint fails, stop trying for the session
 window._fmpDead = false;
+window._fmpRateLimited = 0;       // timestamp when 429 was hit; 0 = not limited
+window._fmpRateLimitLogs = 0;     // suppress log spam after a few
+window._fmpQueue = [];
+window._fmpActive = 0;
+window._FMP_MAX_CONCURRENT = 3;
+window._FMP_MIN_SPACING_MS = 200;
+window._FMP_COOLDOWN_MS = 60000;
+window._fmpLastStart = 0;
 
-// FMP fetch wrapper with circuit breaker
-window.fmpFetch = function(url, opts) {
-  if (window._fmpDead) return Promise.reject(new Error('FMP circuit breaker open'));
-  return fetch(url, opts).then(function(r) {
-    if (r.status === 402 || r.status === 403) {
+function _fmpProcessQueue(){
+  if(window._fmpActive >= window._FMP_MAX_CONCURRENT) return;
+  if(!window._fmpQueue.length) return;
+
+  // Respect rate-limit cooldown
+  if(window._fmpRateLimited > 0){
+    if(Date.now() - window._fmpRateLimited < window._FMP_COOLDOWN_MS){
+      // Drain queue — callers get a clean rejection, no browser network error
+      while(window._fmpQueue.length){
+        var q = window._fmpQueue.shift();
+        q.reject(new Error('FMP rate limit cooldown'));
+      }
+      return;
+    }
+    // Cooldown elapsed, reset
+    window._fmpRateLimited = 0;
+    window._fmpRateLimitLogs = 0;
+  }
+
+  // Enforce min spacing
+  var now = Date.now();
+  var spacing = now - window._fmpLastStart;
+  if(spacing < window._FMP_MIN_SPACING_MS){
+    setTimeout(_fmpProcessQueue, window._FMP_MIN_SPACING_MS - spacing);
+    return;
+  }
+
+  var item = window._fmpQueue.shift();
+  window._fmpActive++;
+  window._fmpLastStart = Date.now();
+
+  fetch(item.url, item.opts).then(function(r){
+    if(r.status === 429){
+      window._fmpRateLimited = Date.now();
+      window._fmpRateLimitLogs++;
+      if(window._fmpRateLimitLogs <= 2){
+        console.warn('[FMP] Rate limited (429) — pausing FMP calls for 60s. Further 429 warnings silenced.');
+      }
+      // Drain remaining queue
+      while(window._fmpQueue.length){
+        var q = window._fmpQueue.shift();
+        q.reject(new Error('FMP rate limit cooldown'));
+      }
+    } else if(r.status === 402 || r.status === 403){
       window._fmpDead = true;
       console.warn('[FMP] Circuit breaker tripped on', r.status, '— silencing further FMP calls this session');
     }
     return r;
+  }).then(function(r){ item.resolve(r); }).catch(function(err){
+    item.reject(err);
+  }).then(function(){
+    window._fmpActive--;
+    _fmpProcessQueue();
+  });
+}
+
+// FMP fetch wrapper with circuit breaker + rate-limit throttle + queueing
+window.fmpFetch = function(url, opts){
+  if(window._fmpDead) return Promise.reject(new Error('FMP circuit breaker open'));
+  if(window._fmpRateLimited > 0 && (Date.now() - window._fmpRateLimited) < window._FMP_COOLDOWN_MS){
+    return Promise.reject(new Error('FMP rate limit cooldown'));
+  }
+  return new Promise(function(resolve, reject){
+    window._fmpQueue.push({ url: url, opts: opts, resolve: resolve, reject: reject });
+    _fmpProcessQueue();
   });
 };
 
@@ -3770,10 +3834,10 @@ async function fetchFmpData(ticker){
   // FMP migrated to /stable/ endpoints Aug 31 2025 \u2014 v3 legacy endpoints blocked for new keys
   var base = 'https://financialmodelingprep.com/stable';
   try{
-    // Fetch analyst estimates + grades in parallel
+    // Fetch analyst estimates + grades in parallel via throttled wrapper
     var results = await Promise.all([
-      fetch(base+'/analyst-estimates?symbol='+ticker+'&period=annual&limit=5&apikey='+fmpKey).then(function(r){return r.json();}),
-      fetch(base+'/grades?symbol='+ticker+'&limit=20&apikey='+fmpKey).then(function(r){return r.json();})
+      window.fmpFetch(base+'/analyst-estimates?symbol='+ticker+'&period=annual&limit=5&apikey='+fmpKey).then(function(r){return r.json();}),
+      window.fmpFetch(base+'/grades?symbol='+ticker+'&limit=20&apikey='+fmpKey).then(function(r){return r.json();})
     ]);
     var estRes = results[0], gradesRes = results[1];
 
@@ -5237,7 +5301,7 @@ function renderScan(){
 <script>
 function runGex(){
   var wrap=eid('gx-tbl-wrap');
-  eid('gex-ts').textContent='Updated: '+new Date().toLocaleTimeString();
+  var tsEl=eid('gex-ts'); if(tsEl) tsEl.textContent='Updated: '+new Date().toLocaleTimeString();
 
   // Use GO results from scan if available, otherwise fall back to static UNIVERSE
   var sourceTickers;
@@ -9195,7 +9259,7 @@ function pfEnrichUnknownSectors(tickers){
   var needed = tickers.filter(function(t){ return pfSectorFor(t)==='Unknown'; });
   if(!needed.length) return Promise.resolve();
   var promises = needed.map(function(t){
-    return fetch('https://financialmodelingprep.com/api/v3/profile/'+t+'?apikey='+fmpKey)
+    return window.fmpFetch('https://financialmodelingprep.com/api/v3/profile/'+t+'?apikey='+fmpKey)
       .then(function(r){ return r.ok ? r.json() : null; })
       .then(function(data){
         if(data && data[0] && data[0].sector){
