@@ -1106,6 +1106,8 @@ tr.sel-row td{background:var(--blu3);}
     <div class="stat-box"><div class="stat-label">AVG LOSS</div><div class="stat-val nogo" id="cl-avgloss">--</div></div>
     <div class="stat-box"><div class="stat-label">BEST TRADE</div><div class="stat-val go" id="cl-best">--</div></div>
     <div class="stat-box"><div class="stat-label">WORST TRADE</div><div class="stat-val nogo" id="cl-worst">--</div></div>
+    <div class="stat-box"><div class="stat-label">PROFIT FACTOR</div><div class="stat-val amb" id="cl-pf">--</div></div>
+    <div class="stat-box"><div class="stat-label">SORTINO RATIO</div><div class="stat-val amb" id="cl-sortino">--</div></div>
   </div>
   <div class="flt-bar">
     <button class="btn blu" onclick="fetchClosedPositions()">&#8635; REFRESH</button>
@@ -1183,6 +1185,88 @@ tr.sel-row td{background:var(--blu3);}
     <div class="empty-det" style="min-height:200px;">
       <div class="ei">&#9734;</div>
       <p>No contracts watched yet — click WATCH next to any contract in the scanner</p>
+    </div>
+  </div>
+</div>
+<div id="roll-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto;">
+  <div style="background:var(--bg1);border:1px solid var(--amb);border-radius:8px;max-width:660px;width:95%;margin:0 auto 40px;padding:0;">
+    <div style="background:var(--bg2);border-bottom:var(--bdr);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+      <span style="font-family:var(--ff-brand);font-size:13px;color:var(--amb);letter-spacing:2px;">&#8635; ROLL POSITION</span>
+      <button class="btn" style="padding:2px 10px;font-size:11px;" onclick="closeRollModal()">&#10005; CLOSE</button>
+    </div>
+    <div style="padding:14px 16px;">
+      <!-- Current position info -->
+      <div id="roll-current-info" style="background:var(--bg2);border:1px solid var(--bg3);border-radius:4px;padding:8px 12px;margin-bottom:12px;font-size:11px;color:var(--gry);"></div>
+      <!-- Leg labels -->
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:10px;">
+        <div style="font-size:10px;font-weight:700;color:var(--ngo);letter-spacing:1px;">LEG 1 — SELL TO CLOSE</div>
+        <div style="font-size:10px;font-weight:700;color:var(--grn);letter-spacing:1px;">LEG 2 — BUY TO OPEN</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-bottom:12px;">
+        <!-- Leg 1: sell to close -->
+        <div style="background:var(--bg2);border:1px solid rgba(255,0,230,.2);border-radius:4px;padding:10px 12px;">
+          <div style="font-size:10px;color:var(--gry);margin-bottom:6px;">Current contract (auto-filled)</div>
+          <div id="roll-leg1-info" style="font-size:11px;color:var(--wht);margin-bottom:6px;"></div>
+          <div style="display:flex;gap:6px;align-items:center;font-size:10px;color:var(--gry);">
+            <span>Qty:</span><input type="number" id="roll-leg1-qty" min="1" step="1" value="1" style="width:50px;background:var(--bg0);border:var(--bdr);color:var(--wht);padding:2px 5px;font-size:11px;">
+            <span>Bid: <b id="roll-leg1-bid" style="color:var(--wrn)">--</b></span>
+            <span>Ask: <b id="roll-leg1-ask" style="color:var(--amb)">--</b></span>
+          </div>
+        </div>
+        <!-- Leg 2: buy to open -->
+        <div style="background:var(--bg2);border:1px solid rgba(0,212,255,.2);border-radius:4px;padding:10px 12px;">
+          <div style="font-size:10px;color:var(--gry);margin-bottom:6px;">New contract</div>
+          <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:6px;">
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <label style="font-size:9px;color:var(--gry);">TYPE</label>
+              <select id="roll-new-type" style="background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:11px;padding:2px 4px;" onchange="rollFetchBest()">
+                <option>CALL</option><option>PUT</option>
+              </select>
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <label style="font-size:9px;color:var(--gry);">EXPIRY</label>
+              <input type="date" id="roll-new-exp" style="background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:11px;padding:2px 4px;" onchange="rollFetchBest()">
+            </div>
+            <div style="display:flex;flex-direction:column;gap:2px;">
+              <label style="font-size:9px;color:var(--gry);">MIN DTE</label>
+              <input type="number" id="roll-min-dte" value="21" min="1" step="1" style="width:52px;background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:11px;padding:2px 4px;">
+            </div>
+            <button class="btn blu" style="font-size:10px;padding:3px 10px;align-self:flex-end;" onclick="rollFetchBest()">&#9650; FIND BEST</button>
+          </div>
+          <div id="roll-leg2-info" style="font-size:11px;color:var(--wht);margin-bottom:6px;">--</div>
+          <div style="display:flex;gap:6px;align-items:center;font-size:10px;color:var(--gry);">
+            <span>Qty:</span><input type="number" id="roll-leg2-qty" min="1" step="1" value="1" style="width:50px;background:var(--bg0);border:var(--bdr);color:var(--wht);padding:2px 5px;font-size:11px;">
+            <span>Bid: <b id="roll-leg2-bid" style="color:var(--wrn)">--</b></span>
+            <span>Ask: <b id="roll-leg2-ask" style="color:var(--amb)">--</b></span>
+          </div>
+        </div>
+      </div>
+      <!-- Net credit/debit display -->
+      <div id="roll-net-display" style="text-align:center;padding:8px;background:var(--bg2);border:1px solid var(--bg3);border-radius:4px;margin-bottom:12px;font-size:13px;font-weight:700;letter-spacing:1px;">
+        NET: <span id="roll-net-val" style="color:var(--gry);">--</span>
+      </div>
+      <!-- Step fill config -->
+      <div style="background:var(--bg2);border:1px solid var(--grn3);border-radius:4px;padding:8px 12px;margin-bottom:12px;">
+        <div style="font-size:10px;color:var(--grn);font-weight:700;letter-spacing:.5px;margin-bottom:6px;">STEP FILL SETTINGS</div>
+        <div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--gry);align-items:center;">
+          <div style="display:flex;flex-direction:column;gap:2px;"><label>Max Attempts</label><input type="number" id="roll-sf-max" value="11" min="1" step="1" style="width:52px;background:var(--bg0);border:var(--bdr);color:var(--wht);padding:2px 4px;font-size:11px;"></div>
+          <div style="display:flex;flex-direction:column;gap:2px;"><label>Fill Wait (sec)</label><input type="number" id="roll-sf-delay" value="3" min="1" step="1" style="width:52px;background:var(--bg0);border:var(--bdr);color:var(--wht);padding:2px 4px;font-size:11px;"></div>
+          <div style="display:flex;flex-direction:column;gap:2px;"><label>Spread Coverage %</label><input type="number" id="roll-sf-coverage" value="100" min="10" max="200" step="5" style="width:60px;background:var(--bg0);border:var(--bdr);color:var(--wht);padding:2px 4px;font-size:11px;"></div>
+          <div style="display:flex;flex-direction:column;gap:2px;"><label>If No Fill</label>
+            <select id="roll-sf-fallback" style="background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:11px;padding:2px 4px;">
+              <option value="none">Give Up</option><option value="market">Market Order</option>
+            </select>
+          </div>
+        </div>
+      </div>
+      <!-- Roll log -->
+      <div id="roll-log" style="background:var(--bg0);border:var(--bdr);border-radius:3px;font-size:10px;line-height:1.8;max-height:120px;overflow-y:auto;padding:6px 10px;display:none;margin-bottom:10px;"></div>
+      <!-- Action buttons -->
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn blu" id="roll-submit-btn" onclick="submitRoll()" style="font-size:12px;padding:6px 18px;">&#8635; EXECUTE ROLL</button>
+        <button class="btn" onclick="cancelRollFill()" style="font-size:12px;padding:6px 14px;border-color:var(--wrn);color:var(--wrn);">&#10005; CANCEL</button>
+        <span id="roll-status" style="font-size:11px;color:var(--gry);flex:1;text-align:right;"></span>
+      </div>
     </div>
   </div>
 </div>
@@ -5189,7 +5273,7 @@ function renderPositionsTable(pos,srcLabel){
       +'<td class="'+pnlCls+'">'+(p.pnlPct>=0?'+':'')+fmtP(p.pnlPct)+'</td>'
       +'<td>'+trailBadge+'</td>'
       +'<td>'+statusBadge+'</td>'
-      +'<td><button class="cbtn" onclick="doClose(this)">CLOSE</button></td>'
+      +'<td style="white-space:nowrap;">'+'<button class="cbtn" onclick="doClose(this)">CLOSE</button> '+'<button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--amb);color:var(--amb);margin-left:4px;" '+'onclick="doRoll(this)">&#8635; ROLL</button></td>'
       +'<td><button class="btn ts-enable-btn" style="'+(cfgEnabled?'border-color:var(--grn);color:var(--grn);':'')+'" '
         +'onclick="toggleTsRow(\''+sym+'\')">\u25b4 TRAIL</button></td>'
       +'<td><button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--blu3);color:var(--blub);" '
@@ -5935,6 +6019,313 @@ function fetchBalances(){
 //  CLOSED POSITIONS ENGINE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  ROLL ENGINE
+// ═══════════════════════════════════════════════════════════════════════════
+
+var G_roll = { ticker:'', type:'', strike:0, exp:'', qty:1, occSym:'', leg2:{}, rollCancel:false, rollActive:false };
+
+function doRoll(btn){
+  var tr = btn.closest('tr');
+  G_roll.ticker  = tr.dataset.tk;
+  G_roll.type    = tr.dataset.tp;
+  G_roll.strike  = +tr.dataset.st;
+  G_roll.exp     = tr.dataset.ex;
+  G_roll.qty     = +tr.dataset.qty;
+  G_roll.occSym  = tr.dataset.sym;
+  G_roll.leg2    = {};
+  G_roll.rollCancel = false;
+
+  // Prefill current position info
+  var info = eid('roll-current-info');
+  info.innerHTML = '<b style="color:var(--wht)">'+G_roll.occSym+'</b>'
+    +' &nbsp;|&nbsp; '+G_roll.type+' $'+G_roll.strike+' exp '+G_roll.exp
+    +' &nbsp;|&nbsp; Qty: '+G_roll.qty;
+  eid('roll-leg1-info').textContent = G_roll.occSym;
+  eid('roll-leg2-info').textContent = '-- click FIND BEST --';
+  eid('roll-leg1-qty').value = G_roll.qty;
+  eid('roll-leg2-qty').value = G_roll.qty;
+  eid('roll-new-type').value = G_roll.type;
+  eid('roll-leg1-bid').textContent='--'; eid('roll-leg1-ask').textContent='--';
+  eid('roll-leg2-bid').textContent='--'; eid('roll-leg2-ask').textContent='--';
+  eid('roll-net-val').textContent='--'; eid('roll-net-val').style.color='var(--gry)';
+  eid('roll-log').style.display='none'; eid('roll-log').innerHTML='';
+  eid('roll-status').textContent='';
+
+  // Default new expiry: 30 days out
+  var d = new Date(); d.setDate(d.getDate()+30);
+  eid('roll-new-exp').value = d.toISOString().slice(0,10);
+
+  // Show modal
+  var modal = eid('roll-modal');
+  modal.style.display='flex';
+
+  // Fetch leg1 live quote
+  rollFetchLeg1Quote();
+}
+
+function closeRollModal(){
+  eid('roll-modal').style.display='none';
+  G_roll.rollCancel=true;
+}
+
+function rollLog(msg,cls){
+  var log=eid('roll-log');
+  log.style.display='block';
+  var line=document.createElement('div');
+  line.style.cssText='padding:1px 0;color:'+(cls==='ok'?'var(--grn)':cls==='err'?'var(--ngo)':'var(--gry)');
+  line.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+  log.appendChild(line);
+  log.scrollTop=log.scrollHeight;
+}
+
+function rollGetCreds(){
+  var mode=localStorage.getItem('rrjcar_mode')||'sandbox';
+  var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
+  var key=mode==='live'
+    ?(localStorage.getItem('rrjcar_tradier_live')||localStorage.getItem('rrjcar_tradier')||'')
+    :(localStorage.getItem('rrjcar_tradier_sandbox')||localStorage.getItem('rrjcar_tradier')||'');
+  if(!key&&typeof TRADIER_KEY_DEFAULT!=='undefined') key=TRADIER_KEY_DEFAULT;
+  return {host:host,key:key};
+}
+
+function rollFetchLeg1Quote(){
+  var c=rollGetCreds();
+  fetch(c.host+'/v1/markets/options/quotes?symbols='+encodeURIComponent(G_roll.occSym)+'&greeks=false',{
+    headers:{Authorization:'Bearer '+c.key,Accept:'application/json'}
+  }).then(function(r){return r.json();})
+  .then(function(data){
+    var q=(data.options&&data.options.option)?data.options.option:null;
+    if(!q){q=(data.quotes&&data.quotes.quote)?data.quotes.quote:null;}
+    if(!q) return;
+    if(Array.isArray(q)) q=q[0];
+    var bid=+q.bid, ask=+q.ask;
+    eid('roll-leg1-bid').textContent='$'+fmt2(bid);
+    eid('roll-leg1-ask').textContent='$'+fmt2(ask);
+    G_roll.leg1Quote={bid:bid,ask:ask};
+    rollUpdateNet();
+  }).catch(function(){});
+}
+
+function rollFetchBest(){
+  var c=rollGetCreds();
+  var newType=eid('roll-new-type').value;
+  var newExp=eid('roll-new-exp').value;
+  if(!newExp){toast('Set expiry date first');return;}
+  eid('roll-leg2-info').textContent='Fetching chain...';
+  eid('roll-status').textContent='Finding best contract...';
+
+  fetch(c.host+'/v1/markets/options/chains?symbol='+G_roll.ticker+'&expiration='+newExp+'&greeks=true',{
+    headers:{Authorization:'Bearer '+c.key,Accept:'application/json'}
+  }).then(function(r){return r.json();})
+  .then(function(data){
+    var chain=(data.options&&data.options.option)?data.options.option:[];
+    if(!Array.isArray(chain)) chain=[chain];
+    // Filter by type
+    chain=chain.filter(function(o){return o.option_type===(newType==='CALL'?'call':'put');});
+    if(!chain.length){eid('roll-leg2-info').textContent='No contracts found for that expiry';return;}
+
+    // Score: prefer delta 0.30-0.50 for OTM roll, OI>100, tight spread
+    chain.forEach(function(o){
+      var d=Math.abs(+(o.greeks&&o.greeks.delta)||0);
+      var oi=+o.open_interest||0;
+      var spread=(+o.ask)-(+o.bid);
+      var spreadPct=o.ask>0?spread/o.ask:1;
+      // Score: closer delta to 0.40, more OI, tighter spread
+      o._score = (1-Math.abs(d-0.40))*40 + Math.min(oi/1000,30) + (1-Math.min(spreadPct,1))*30;
+    });
+    chain.sort(function(a,b){return b._score-a._score;});
+    var best=chain[0];
+    G_roll.leg2={occSym:best.symbol,strike:+best.strike,exp:newExp,type:newType,bid:+best.bid,ask:+best.ask,delta:best.greeks?best.greeks.delta:null};
+    eid('roll-leg2-info').innerHTML='<b style="color:var(--amb)">'+best.symbol+'</b>'
+      +' $'+fmt2(+best.strike)+' '+(best.greeks?'δ'+fmt2(Math.abs(+best.greeks.delta)):'');
+    eid('roll-leg2-bid').textContent='$'+fmt2(+best.bid);
+    eid('roll-leg2-ask').textContent='$'+fmt2(+best.ask);
+    eid('roll-status').textContent='Best contract found';
+    rollUpdateNet();
+  }).catch(function(e){
+    eid('roll-leg2-info').textContent='Error fetching chain';
+    eid('roll-status').textContent='Error: '+e.message;
+  });
+}
+
+function rollUpdateNet(){
+  var l1q=G_roll.leg1Quote, l2=G_roll.leg2;
+  if(!l1q||!l2.bid) return;
+  // Sell to close: receive bid of leg1. Buy to open: pay ask of leg2.
+  var receive=l1q.bid, pay=l2.ask;
+  var net=(receive-pay)*100; // per contract
+  var q1=+eid('roll-leg1-qty').value||1, q2=+eid('roll-leg2-qty').value||1;
+  var netTotal=net*Math.min(q1,q2);
+  var isCredit=netTotal>=0;
+  eid('roll-net-val').textContent=(isCredit?'CREDIT ':'DEBIT ')+fmtD(Math.abs(netTotal))+' ('+fmtD(Math.abs(net))+'/contract)';
+  eid('roll-net-val').style.color=isCredit?'var(--grn)':'var(--ngo)';
+}
+
+function cancelRollFill(){
+  G_roll.rollCancel=true;
+  G_roll.rollActive=false;
+  rollLog('Roll cancelled by user.','err');
+  eid('roll-status').textContent='Cancelled';
+  eid('roll-submit-btn').disabled=false;
+  eid('roll-submit-btn').textContent='↻ EXECUTE ROLL';
+}
+
+async function submitRoll(){
+  if(!G_roll.leg2.occSym){toast('Find best contract first');return;}
+  var c=rollGetCreds();
+  if(!c.key){toast('No API key');return;}
+  var acct=G.acctId||localStorage.getItem('rrjcar_acct')||'';
+  if(!acct){toast('No account number');return;}
+
+  G_roll.rollCancel=false;
+  G_roll.rollActive=true;
+  eid('roll-submit-btn').disabled=true;
+  eid('roll-submit-btn').textContent='Running...';
+  eid('roll-log').innerHTML='';
+
+  var q1=+eid('roll-leg1-qty').value||1;
+  var q2=+eid('roll-leg2-qty').value||1;
+  var maxAtt=+eid('roll-sf-max').value||11;
+  var delay=+eid('roll-sf-delay').value||3;
+  var coverage=+eid('roll-sf-coverage').value||100;
+  var fallback=eid('roll-sf-fallback').value;
+
+  var l1q=G_roll.leg1Quote||{bid:0,ask:0};
+  var l2=G_roll.leg2;
+
+  // ── LEG 1: SELL TO CLOSE — start at ASK, step DOWN toward BID ────────────
+  // Starting at ask gives best chance of quick fill on the close side
+  var l1Spread=Math.max(l1q.ask-l1q.bid,0);
+  var l1Step=Math.max(+(l1Spread*(coverage/100)/Math.max(maxAtt,1)).toFixed(2),0.01);
+  var l1Start=l1q.ask;   // start at ask (aggressive for STC)
+  var l1Limit=l1q.bid;   // step down to bid
+
+  rollLog('LEG 1 — Sell to Close: '+G_roll.occSym+' x'+q1,'');
+  rollLog('Start: $'+fmt2(l1Start)+' | Step: -$'+fmt2(l1Step)+' (ask→bid)','');
+
+  var l1Filled=false;
+  var l1Price=l1Start;
+  for(var att=1;att<=maxAtt;att++){
+    if(G_roll.rollCancel){rollLog('Cancelled at LEG 1 attempt '+att,'err');break;}
+    var price=Math.max(+(l1Price).toFixed(2), l1Limit);
+    rollLog('LEG 1 attempt '+att+'/'+maxAtt+' @ $'+fmt2(price),'');
+    try{
+      var res=await submitLimitAtPrice(c,acct,G_roll.occSym,G_roll.ticker,'sell_to_close',q1,'option',price);
+      rollLog('LEG 1 order #'+res.orderId+' placed','');
+      await sleep(delay*1000);
+      if(G_roll.rollCancel){await cancelOrder(c,acct,res.orderId);break;}
+      var st=await pollOrderStatus(c,acct,res.orderId);
+      rollLog('LEG 1 status: '+st.toUpperCase(),'');
+      if(st==='filled'){rollLog('✓ LEG 1 FILLED @ $'+fmt2(price),'ok');l1Filled=true;break;}
+      if(st==='pending'||st==='open'||st==='partially_filled'){
+        await cancelOrder(c,acct,res.orderId);
+        // Step DOWN from last attempted price
+        l1Price=+(l1Price-l1Step).toFixed(2);
+        if(l1Price<l1Limit-l1Step){rollLog('LEG 1 reached price limit','err');break;}
+      } else {
+        l1Price=+(l1Price-l1Step).toFixed(2);
+      }
+    }catch(e){rollLog('LEG 1 error: '+e.message,'err');l1Price=+(l1Price-l1Step).toFixed(2);}
+  }
+
+  if(!l1Filled&&fallback==='market'&&!G_roll.rollCancel){
+    rollLog('LEG 1 fallback: market order...','');
+    try{
+      var mkt=await fetch(c.host+'/v1/accounts/'+acct+'/orders',{method:'POST',
+        headers:{Authorization:'Bearer '+c.key,Accept:'application/json','Content-Type':'application/x-www-form-urlencoded'},
+        body:'class=option&symbol='+encodeURIComponent(G_roll.ticker)+'&option_symbol='+encodeURIComponent(G_roll.occSym)+'&side=sell_to_close&quantity='+q1+'&type=market&duration=day'
+      }).then(function(r){return r.json();});
+      if(mkt.order){rollLog('LEG 1 market order #'+mkt.order.id,'ok');l1Filled=true;}
+    }catch(e){rollLog('LEG 1 market fallback error: '+e.message,'err');}
+  }
+
+  if(!l1Filled&&!G_roll.rollCancel){
+    rollLog('⚠ LEG 1 not filled — aborting LEG 2 to avoid naked position','err');
+    eid('roll-status').textContent='Roll failed: LEG 1 unfilled';
+    eid('roll-submit-btn').disabled=false; eid('roll-submit-btn').textContent='↻ EXECUTE ROLL';
+    G_roll.rollActive=false;
+    toast('Roll aborted: could not close existing position');
+    return;
+  }
+
+  if(G_roll.rollCancel){
+    eid('roll-submit-btn').disabled=false; eid('roll-submit-btn').textContent='↻ EXECUTE ROLL';
+    G_roll.rollActive=false; return;
+  }
+
+  // ── LEG 2: BUY TO OPEN — start at BID, step UP toward ASK ───────────────
+  var l2Spread=Math.max(l2.ask-l2.bid,0);
+  var l2Step=Math.max(+(l2Spread*(coverage/100)/Math.max(maxAtt,1)).toFixed(2),0.01);
+  var l2Start=l2.bid;
+  var l2Limit=l2.ask;
+
+  rollLog('LEG 2 — Buy to Open: '+l2.occSym+' x'+q2,'');
+  rollLog('Start: $'+fmt2(l2Start)+' | Step: +$'+fmt2(l2Step)+' (bid→ask)','');
+
+  var l2Filled=false;
+  var l2Price=l2Start;
+  for(var att2=1;att2<=maxAtt;att2++){
+    if(G_roll.rollCancel){rollLog('Cancelled at LEG 2 attempt '+att2,'err');break;}
+    var price2=Math.min(+(l2Price).toFixed(2),l2Limit);
+    rollLog('LEG 2 attempt '+att2+'/'+maxAtt+' @ $'+fmt2(price2),'');
+    try{
+      var res2=await submitLimitAtPrice(c,acct,l2.occSym,G_roll.ticker,'buy_to_open',q2,'option',price2);
+      rollLog('LEG 2 order #'+res2.orderId+' placed','');
+      await sleep(delay*1000);
+      if(G_roll.rollCancel){await cancelOrder(c,acct,res2.orderId);break;}
+      var st2=await pollOrderStatus(c,acct,res2.orderId);
+      rollLog('LEG 2 status: '+st2.toUpperCase(),'');
+      if(st2==='filled'){rollLog('✓ LEG 2 FILLED @ $'+fmt2(price2),'ok');l2Filled=true;break;}
+      if(st2==='pending'||st2==='open'||st2==='partially_filled'){
+        await cancelOrder(c,acct,res2.orderId);
+        l2Price=+(l2Price+l2Step).toFixed(2);
+        if(l2Price>l2Limit+l2Step){rollLog('LEG 2 reached price limit','err');break;}
+      } else {
+        l2Price=+(l2Price+l2Step).toFixed(2);
+      }
+    }catch(e){rollLog('LEG 2 error: '+e.message,'err');l2Price=+(l2Price+l2Step).toFixed(2);}
+  }
+
+  if(!l2Filled&&fallback==='market'&&!G_roll.rollCancel){
+    rollLog('LEG 2 fallback: market order...','');
+    try{
+      var mkt2=await fetch(c.host+'/v1/accounts/'+acct+'/orders',{method:'POST',
+        headers:{Authorization:'Bearer '+c.key,Accept:'application/json','Content-Type':'application/x-www-form-urlencoded'},
+        body:'class=option&symbol='+encodeURIComponent(G_roll.ticker)+'&option_symbol='+encodeURIComponent(l2.occSym)+'&side=buy_to_open&quantity='+q2+'&type=market&duration=day'
+      }).then(function(r){return r.json();});
+      if(mkt2.order){rollLog('LEG 2 market order #'+mkt2.order.id,'ok');l2Filled=true;}
+    }catch(e){rollLog('LEG 2 market fallback error: '+e.message,'err');}
+  }
+
+  var net=(l1Price-l2Price)*100*Math.min(q1,q2);
+  rollLog((l2Filled?'✓ ROLL COMPLETE':'⚠ Roll partial — LEG 2 not filled')+' | NET '+(net>=0?'CREDIT':'DEBIT')+': '+fmtD(Math.abs(net)),'ok');
+  eid('roll-status').textContent=(l2Filled?'Roll complete':'Roll partial')+' | '+(net>=0?'Credit':'Debit')+': '+fmtD(Math.abs(net));
+  eid('roll-submit-btn').disabled=false; eid('roll-submit-btn').textContent='↻ EXECUTE ROLL';
+  G_roll.rollActive=false;
+  toast(l2Filled?'Roll complete: '+G_roll.ticker:'Roll partial: LEG 2 not filled');
+  setTimeout(function(){if(G.acctId)fetchPositions();},3000);
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  MIDNIGHT TRADE LOG REFRESH
+// ═══════════════════════════════════════════════════════════════════════════
+
+function scheduleMidnightRefresh(){
+  var now=new Date();
+  var next=new Date(now);
+  next.setDate(next.getDate()+1);
+  next.setHours(0,0,5,0); // 12:00:05 AM
+  var ms=next-now;
+  setTimeout(function(){
+    // Refresh closed positions / trade log
+    if(typeof fetchClosedPositions==='function') fetchClosedPositions();
+    addAlert('SYSTEM','Trade log refreshed at midnight','go');
+    scheduleMidnightRefresh(); // reschedule for next midnight
+  },ms);
+}
+scheduleMidnightRefresh();
+
 var G_closed = { raw:[], trades:[], openFilled:[] };
 
 function parseOccSymbolFull(sym){
@@ -6275,6 +6666,22 @@ function updateClosedStats(trades){
   var worst=trades.length?Math.min.apply(null,trades.map(function(t){return t.pnl;})):0;
   var wr=total?Math.round((wins.length/total)*100):0;
 
+  // Profit Factor = gross wins / |gross losses|
+  var grossWin  = wins.reduce(function(s,t){return s+t.pnl;},0);
+  var grossLoss = Math.abs(losses.reduce(function(s,t){return s+t.pnl;},0));
+  var pf = grossLoss>0 ? (grossWin/grossLoss) : (grossWin>0 ? 999 : 0);
+
+  // Sortino Ratio (annualised, daily returns, risk-free=0)
+  var sortino = 0;
+  if(trades.length>1){
+    var pnls = trades.map(function(t){return t.pnl;});
+    var meanR = totalPnl/pnls.length;
+    var downside = pnls.filter(function(r){return r<0;});
+    var dsVar = downside.length ? downside.reduce(function(s,r){return s+r*r;},0)/downside.length : 0;
+    var dsSd = Math.sqrt(dsVar);
+    sortino = dsSd>0 ? +(meanR/dsSd * Math.sqrt(252)).toFixed(2) : (meanR>0?999:0);
+  }
+
   eid('cl-count').textContent=total||'--';
   eid('cl-wr').textContent=total?(wr+'%'):'--';
   eid('cl-wr').className='stat-val '+(wr>=50?'go':'nogo');
@@ -6285,6 +6692,13 @@ function updateClosedStats(trades){
   eid('cl-avgloss').textContent=losses.length?fmtD(avgLoss):'--';
   eid('cl-best').textContent=best?fmtD(best):'--';
   eid('cl-worst').textContent=worst?fmtD(worst):'--';
+  var pfEl=eid('cl-pf');
+  if(pfEl){ pfEl.textContent=total?(pf>=999?'∞':pf.toFixed(2)):'--'; pfEl.className='stat-val '+(pf>=1.5?'go':pf>=1?'amb':'nogo'); }
+  var sortinoEl=eid('cl-sortino');
+  if(sortinoEl){ sortinoEl.textContent=total?(sortino>=999?'∞':sortino.toFixed(2)):'--'; sortinoEl.className='stat-val '+(sortino>=1?'go':sortino>=0?'amb':'nogo'); }
+
+  // Cache stats for midnight refresh
+  try{ localStorage.setItem('op_tradestat_cache', JSON.stringify({pf:pf,sortino:sortino,wr:wr,total:total,totalPnl:totalPnl,ts:Date.now()})); }catch(e){}
 }
 
 function toggleClosedChart(sym,strike,openPrice,closePrice,optType,qty){
