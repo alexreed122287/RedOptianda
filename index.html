@@ -405,13 +405,11 @@ tr.sel-row td{background:var(--blu3);}
 <div id="nav">
   <button class="ntab active" onclick="switchTab('bs')">BUY SIGNALS</button>
   <button class="ntab" onclick="switchTab('sc')">FULL SCANNER</button>
-  <button class="ntab" onclick="switchTab('gx')">GEX / FLOW</button>
   <button class="ntab" onclick="switchTab('wl')">WATCHLIST</button>
   <button class="ntab" onclick="switchTab('pos')">POSITIONS</button>
   <button class="ntab" onclick="switchTab('order')">ORDER TICKET</button>
   <button class="ntab" onclick="switchTab('mb')">MARKET BREADTH</button>
   <button class="ntab" onclick="switchTab('al')">ALERTS</button>
-  <button class="ntab" onclick="switchTab('ex')">EXPECTANCY</button>
   <button class="ntab" onclick="switchTab('closed')">CLOSED POSITIONS</button>
   <button class="ntab" onclick="switchTab('api')">&#9881; API</button>
   <button class="ntab" onclick="switchTab('cw')">&#9734; WATCHLIST</button>
@@ -507,16 +505,7 @@ tr.sel-row td{background:var(--blu3);}
     <div id="sc-det-empty" style="display:none;"></div><div id="sc-detail" style="flex:1;overflow:auto;display:none;"></div>
   </div>
 </div>
-<div class="tab-pane" id="tab-gx">
-  <div class="flt-bar">
-    <button class="btn blu" onclick="runGex()">&#8635; REFRESH GEX</button>
-    <span style="color:var(--gry);font-size:10px;margin-left:8px;" id="gex-ts"></span>
-  </div>
-  <div style="flex:1;display:flex;flex-direction:column;overflow:hidden;">
-    <div class="tbl-wrap" id="gx-tbl-wrap" style="flex:1;overflow:auto;"><div class="empty-det" id="gx-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Click REFRESH GEX</p></div></div>
-    <div id="gx-det-empty" style="display:none;"></div><div id="gx-detail" style="display:none;"></div>
-  </div>
-</div>
+
 <div class="tab-pane" id="tab-wl">
   <div class="flt-bar">
     <input id="wl-add" placeholder="Add ticker..." style="width:120px;" onkeydown="if(event.key==='Enter')addWL()">
@@ -920,7 +909,7 @@ tr.sel-row td{background:var(--blu3);}
         </div>
         <div class="ord-field" style="flex:0.5;display:flex;align-items:flex-end;gap:6px;">
           <button class="btn blu" style="font-size:10px;padding:3px 10px;" onclick="testEmailAlert()">SEND TEST</button>
-          <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--grn);color:var(--grn);" onclick="saveNotifSettings();toast('Alert settings saved');this.textContent='&#10003; SAVED';var b=this;setTimeout(function(){b.textContent='SAVE';},2000);">SAVE</button>
+          <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--grn);color:var(--grn);" onclick="saveAlertSettingsBtn(this)">SAVE</button>
         </div>
       </div>
       <div class="api-note">
@@ -1079,23 +1068,7 @@ tr.sel-row td{background:var(--blu3);}
 
   </div>
 </div>
-<div class="tab-pane" id="tab-ex">
-  <div class="page-wrap">
-    <div class="card"><div class="card-hdr">EXPECTANCY CALCULATOR</div>
-    <div class="card-body" style="max-width:400px;">
-      <div class="ord-row">
-        <div class="ord-field"><label>WIN RATE %</label><input id="ex-wr" type="number" value="65"></div>
-        <div class="ord-field"><label>AVG WIN $</label><input id="ex-aw" type="number" value="350"></div>
-      </div>
-      <div class="ord-row">
-        <div class="ord-field"><label>AVG LOSS $</label><input id="ex-al" type="number" value="150"></div>
-        <div class="ord-field"><label>TRADES/MONTH</label><input id="ex-tm" type="number" value="12"></div>
-      </div>
-      <div class="ord-row"><button class="btn blu" onclick="calcEx()">CALCULATE</button></div>
-      <div id="ex-result" style="margin-top:10px;"></div>
-    </div></div>
-  </div>
-</div>
+
 <!-- ═══════════════════════════════════════════════════════
      CLOSED POSITIONS TAB
      ═══════════════════════════════════════════════════════ -->
@@ -2451,7 +2424,7 @@ function switchTab(id){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.ntab').forEach(function(b){b.classList.remove('active');});
   var pane=eid('tab-'+id);if(pane)pane.classList.add('active');
-  var ids=['bs','sc','gx','wl','pos','order','mb','al','ex','closed','api'];
+  var ids=['bs','sc','wl','pos','order','mb','al','closed','api','cw'];
   var idx=ids.indexOf(id);
   var btns=document.querySelectorAll('.ntab');
   if(btns[idx])btns[idx].classList.add('active');
@@ -7492,6 +7465,20 @@ function renderBreadth(){
 
 var G_NOTIF_COOLDOWNS = {}; // ticker -> timestamp of last alert
 
+function saveAlertSettingsBtn(btn){
+  saveNotifSettings();
+  var s = getNotifSettings();
+  var ok = s.ejsService && s.ejsTemplate && s.ejsPubKey && s.emailTo;
+  if(ok){
+    toast('\u2713 Alert settings saved');
+    addAlert('NOTIF','Alert settings saved — email: '+s.emailTo,'go');
+  } else {
+    toast('Settings saved (some EmailJS fields are empty)');
+  }
+  if(btn){ btn.textContent='\u2713 SAVED'; btn.style.borderColor='var(--grn)';
+    setTimeout(function(){ btn.textContent='SAVE'; },2000); }
+}
+
 function saveNotifSettings(){
   try{
     localStorage.setItem('rrjcar_notif', JSON.stringify({
@@ -7596,19 +7583,29 @@ function fireBrowserNotif(ticker, score, sector, price, rulesSummary){
 
 function fireEmailAlert(ticker, score, sector, price, rulesSummary){
   var s = getNotifSettings();
-  if(!s.email || !s.ejsService || !s.ejsTemplate || !s.ejsPubKey || !s.emailTo) return;
-
-  // Load EmailJS SDK dynamically if not already loaded
+  // For test calls allow even if notif-email toggle is off
+  var isTest = (ticker === 'TEST');
+  if(!isTest && !s.email) return;
+  if(!s.ejsService || !s.ejsTemplate || !s.ejsPubKey || !s.emailTo){
+    addAlert('NOTIF','Email alert skipped — missing EmailJS config','warn');
+    return;
+  }
+  function doSend(){
+    try{
+      emailjs.init({publicKey: s.ejsPubKey});
+      sendEmailJsAlert(s, ticker, score, sector, price, rulesSummary);
+    }catch(e){
+      addAlert('NOTIF','EmailJS init error: '+e.message,'warn');
+    }
+  }
   if(typeof emailjs === 'undefined'){
     var script = document.createElement('script');
     script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js';
-    script.onload = function(){
-      emailjs.init(s.ejsPubKey);
-      sendEmailJsAlert(s, ticker, score, sector, price, rulesSummary);
-    };
+    script.onload = doSend;
+    script.onerror = function(){ addAlert('NOTIF','Failed to load EmailJS SDK','warn'); };
     document.head.appendChild(script);
   } else {
-    sendEmailJsAlert(s, ticker, score, sector, price, rulesSummary);
+    doSend();
   }
 }
 
@@ -7629,13 +7626,17 @@ function sendEmailJsAlert(s, ticker, score, sector, price, rulesSummary){
 }
 
 function testEmailAlert(){
+  // Always save current field values first so getNotifSettings() reads latest
+  saveNotifSettings();
   var s = getNotifSettings();
   if(!s.ejsService || !s.ejsTemplate || !s.ejsPubKey || !s.emailTo){
-    toast('Fill in all EmailJS fields first');
+    toast('\u26a0 Fill in EmailJS Service ID, Template ID, Public Key and Email address first');
+    addAlert('NOTIF','Test email failed — missing EmailJS fields','warn');
     return;
   }
-  fireEmailAlert('TEST', 999, 'Technology', 123.45, 'PROVEN + Score 90+ + Analyst Revisions \u2191 + GEX Call Heavy');
-  toast('Test email sending...');
+  toast('Sending test email to '+s.emailTo+'...');
+  addAlert('NOTIF','Sending test email to '+s.emailTo+'...','go');
+  fireEmailAlert('TEST', 999, 'Technology', 123.45, 'PROVEN + Score 90+ + Analyst Revisions ↑ + GEX Call Heavy');
 }
 
 // \u2500\u2500 AUTO-FILL & AUTO-SUBMIT ENGINE \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
