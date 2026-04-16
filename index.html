@@ -5367,6 +5367,7 @@ function renderScan(){
 <script>
 function runGex(){
   var wrap=eid('gx-tbl-wrap');
+  if(!wrap) return;
   var tsEl=eid('gex-ts'); if(tsEl) tsEl.textContent='Updated: '+new Date().toLocaleTimeString();
 
   // Use GO results from scan if available, otherwise fall back to static UNIVERSE
@@ -5539,6 +5540,7 @@ function runGex(){
 
 function renderGex(){
   var wrap=eid('gx-tbl-wrap');
+  if(!wrap) return;
   var html='<table><thead><tr><th>SYMBOL</th><th>NET GEX</th><th>GAMMA FLIP</th><th>CALL OI%</th><th>PUT OI%</th><th>DTE</th><th>FLOW</th></tr></thead><tbody>';
   G.gexData.forEach(function(r){
     var gexCls=r.gex>0?'pnl-pos':'pnl-neg';
