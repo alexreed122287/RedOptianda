@@ -5,6 +5,7 @@
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>OPTION PANDA</title>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 :root{
   --bg0:#050d14;--bg1:#071018;--bg2:#0b1522;--bg3:#111b2e;
@@ -412,6 +413,7 @@ tr.sel-row td{background:var(--blu3);}
   <button class="ntab" onclick="switchTab('al')">ALERTS</button>
   <button class="ntab" onclick="switchTab('closed')">CLOSED POSITIONS</button>
   <button class="ntab" onclick="switchTab('api')">&#9881; API</button>
+  <button class="ntab" onclick="switchTab('pf')">&#128202; PORTFOLIO</button>
   <button class="ntab" onclick="switchTab('cw')">&#9734; WATCHLIST</button>
 </div>
 <div id="app">
@@ -1171,6 +1173,73 @@ tr.sel-row td{background:var(--blu3);}
       <p>No contracts watched yet — click WATCH next to any contract in the scanner</p>
     </div>
   </div>
+</div>
+<div class="tab-pane" id="tab-pf">
+  <div class="flt-bar" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <span style="font-family:var(--ff-brand);font-size:12px;color:var(--amb);letter-spacing:2px;">&#128202; PORTFOLIO BUILDER</span>
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <span style="color:var(--gry);font-size:10px;" id="pf-last-update">Not loaded</span>
+      <button class="btn blu" style="font-size:10px;padding:3px 10px;" onclick="pfRefreshAll()">&#8635; REFRESH ALL</button>
+      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--grn);color:var(--grn);" onclick="pfAddColumn()">+ ADD COLUMN</button>
+      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--wrn);color:var(--wrn);" onclick="pfExportCSV()">&#10515; EXPORT CSV</button>
+      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ngo);color:var(--ngo);" onclick="pfResetAll()">RESET</button>
+    </div>
+  </div>
+
+  <!-- Stats row -->
+  <div class="stats-bar" style="padding:6px 10px;">
+    <div class="stat-box"><div class="stat-label">TOTAL VALUE</div><div class="stat-val" id="pf-total-val">$0.00</div></div>
+    <div class="stat-box"><div class="stat-label">POSITIONS</div><div class="stat-val" id="pf-pos-count">0</div></div>
+    <div class="stat-box"><div class="stat-label">COLUMNS</div><div class="stat-val" id="pf-col-count">0</div></div>
+    <div class="stat-box"><div class="stat-label">DEAD</div><div class="stat-val" id="pf-dead-count" style="color:var(--ngo);">0</div></div>
+    <div class="stat-box"><div class="stat-label">TOP SECTOR</div><div class="stat-val" id="pf-top-sector">--</div></div>
+  </div>
+
+  <!-- Master charts row -->
+  <div style="display:flex;gap:10px;padding:8px 10px;flex-wrap:wrap;">
+    <div style="flex:1;min-width:300px;background:var(--bg1);border:var(--bdr);border-radius:4px;padding:10px;">
+      <div style="font-family:var(--ff-brand);font-size:10px;color:var(--amb);letter-spacing:2px;margin-bottom:6px;">MASTER HOLDINGS BY TICKER</div>
+      <div style="position:relative;height:240px;"><canvas id="pf-chart-master"></canvas></div>
+    </div>
+    <div style="flex:1;min-width:300px;background:var(--bg1);border:var(--bdr);border-radius:4px;padding:10px;">
+      <div style="font-family:var(--ff-brand);font-size:10px;color:var(--amb);letter-spacing:2px;margin-bottom:6px;">ALLOCATION BY SECTOR</div>
+      <div style="position:relative;height:240px;"><canvas id="pf-chart-sector"></canvas></div>
+    </div>
+  </div>
+
+  <!-- Columns horizontal scroll -->
+  <div id="pf-cols-wrap" style="display:flex;gap:10px;padding:8px 10px;overflow-x:auto;align-items:flex-start;min-height:400px;">
+    <!-- columns rendered dynamically by renderPortfolio() -->
+  </div>
+
+  <!-- Robinhood paste modal -->
+  <div id="pf-paste-modal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.82);backdrop-filter:blur(3px);align-items:flex-start;justify-content:center;padding-top:60px;">
+    <div style="background:var(--bg1);border:1px solid var(--amb);border-radius:8px;width:640px;max-width:94vw;max-height:80vh;display:flex;flex-direction:column;">
+      <div style="background:var(--bg2);border-bottom:var(--bdr);padding:10px 16px;display:flex;align-items:center;justify-content:space-between;">
+        <span style="font-family:var(--ff-brand);font-size:12px;color:var(--amb);letter-spacing:2px;">&#128203; PASTE FROM ROBINHOOD</span>
+        <button class="btn" style="font-size:10px;padding:2px 8px;" onclick="pfClosePasteModal()">&#10005;</button>
+      </div>
+      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
+        <p style="color:var(--gry);font-size:11px;line-height:1.5;margin:0;">
+          Copy your options positions table from Robinhood's web UI (or any source).
+          Paste here &mdash; the parser will pull out <b style="color:var(--amb);">ticker, strike, expiry, type, contracts</b>.
+          Also accepts CSV. One position per line.
+        </p>
+        <p style="color:var(--gry);font-size:10px;margin:0;">Examples accepted:<br>
+          <code style="color:var(--ambb);">NVDA $150 Call 12/19/2025 x3</code><br>
+          <code style="color:var(--ambb);">AMZN,220,2026-01-16,CALL,2</code><br>
+          <code style="color:var(--ambb);">MU 160C 1/16/26  5 contracts</code>
+        </p>
+        <textarea id="pf-paste-text" style="width:100%;height:180px;background:var(--bg0);border:var(--bdr);color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:8px;border-radius:3px;" placeholder="Paste positions here..."></textarea>
+        <div id="pf-paste-preview" style="font-size:10px;color:var(--gry);max-height:120px;overflow-y:auto;font-family:var(--ff-mono);"></div>
+        <div style="display:flex;gap:8px;justify-content:flex-end;">
+          <button class="btn" style="font-size:11px;padding:5px 12px;" onclick="pfParsePreview()">&#128270; PREVIEW PARSE</button>
+          <button class="btn blu" style="font-size:11px;padding:5px 12px;" onclick="pfImportPasted()">&#10003; IMPORT TO COLUMN</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
 </div>
 <div id="roll-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto;">
   <div style="background:var(--bg1);border:1px solid var(--amb);border-radius:8px;max-width:660px;width:95%;margin:0 auto 40px;padding:0;">
@@ -1997,8 +2066,7 @@ var UNIVERSE_FULL=[
   {t:'ACLX',s:'Health technology'},{t:'PAYC',s:'Technology services'},{t:'STWD',s:'Finance'},{t:'TEX',s:'Producer manufacturing'},
   {t:'SAIL',s:'Technology services'},{t:'RIOT',s:'Technology services'},{t:'SWX',s:'Utilities'},{t:'MIDD',s:'Producer manufacturing'},
   {t:'WH',s:'Consumer services'},{t:'ECG',s:'Industrial services'},{t:'INGM',s:'Technology services'},{t:'FAF',s:'Finance'},
-  {t:'SM',s:'Energy minerals'},{t:'STEP',s:'Finance'},{t:'MBLY',s:'Technology services'},{t:'BYD',s:'Consumer services'},
-  {t:'RYN',s:'Finance'},{t:'BZ',s:'Commercial services'},{t:'TXNM',s:'Utilities'},{t:'RHP',s:'Finance'},
+  {t:'SM',s:'Energy minerals'},{t:'STEP',s:'Finance'},{t:'MBLY',s:'Technology services'},{t:'BYD',s:'Consumer services'},  {t:'RYN',s:'Finance'},{t:'BZ',s:'Commercial services'},{t:'TXNM',s:'Utilities'},{t:'RHP',s:'Finance'},
   {t:'CHDN',s:'Consumer services'},{t:'GXO',s:'Transportation'},{t:'MHK',s:'Producer manufacturing'},{t:'SSRM',s:'Non-energy minerals'},
   {t:'AROC',s:'Industrial services'},{t:'FNB',s:'Finance'},{t:'BEPC',s:'Utilities'},{t:'RGTI',s:'Electronic technology'},
   {t:'VAL',s:'Industrial services'},{t:'CENX',s:'Non-energy minerals'},{t:'GTES',s:'Producer manufacturing'},{t:'HXL',s:'Electronic technology'},
@@ -2424,7 +2492,7 @@ function switchTab(id){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.ntab').forEach(function(b){b.classList.remove('active');});
   var pane=eid('tab-'+id);if(pane)pane.classList.add('active');
-  var ids=['bs','sc','wl','pos','order','mb','al','closed','api','cw'];
+  var ids=['bs','sc','wl','pos','order','mb','al','closed','api','pf','cw'];
   var idx=ids.indexOf(id);
   var btns=document.querySelectorAll('.ntab');
   if(btns[idx])btns[idx].classList.add('active');
@@ -2461,6 +2529,7 @@ function switchTab(id){
     }
   }
   if(id==='cw'){cwRenderTable();}
+  if(id==='pf'){ if(typeof renderPortfolio==='function') renderPortfolio(); }
   if(id==='order'){
     var sym=eid('ord-sym').value.trim();
     if(sym)fetchLiveQuote();
@@ -3997,8 +4066,7 @@ function renderTickerChart(ticker) {
   var dStart = new Date(); dStart.setDate(dStart.getDate() - 120);
 
   fetch(host + '/v1/markets/history?symbol=' + ticker + '&interval=daily&start=' + fmt(dStart) + '&end=' + fmt(dEnd), {
-    headers: { 'Authorization': 'Bearer ' + tk, 'Accept': 'application/json' }
-  })
+    headers: { 'Authorization': 'Bearer ' + tk, 'Accept': 'application/json' }  })
   .then(function(r){ return r.json(); })
   .then(function(data) {
     if (loadEl) loadEl.style.display = 'none';
@@ -5363,7 +5431,7 @@ function renderGex(){
 
 function loadWL(){try{var s=localStorage.getItem('rrjcar_wl');if(s)G.wlTickers=JSON.parse(s);}catch(e){}if(!G.wlTickers.length)G.wlTickers=['SPY','QQQ','AAPL','MSFT','NVDA'];}
 function saveWL(){localStorage.setItem('rrjcar_wl',JSON.stringify(G.wlTickers));}
-function addWL(){var inp=eid('wl-add'),t=inp.value.trim().toUpperCase();if(!t)return;if(G.wlTickers.indexOf(t)<0){G.wlTickers.push(t);saveWL();}inp.value='';refreshWL();}
+function addWL(){var inp=eid('wl-add'),t=inp.value.trim().toUpperCase();if(!t)return;if(G.wlTickers.indexOf(t)<0){G.wlTickers.unshift(t);saveWL();}inp.value='';refreshWL();}
 function removeWL(t){G.wlTickers=G.wlTickers.filter(function(x){return x!==t;});saveWL();refreshWL();}
 function refreshWL(){
   var wrap=eid('wl-tbl-wrap');
@@ -5997,8 +6065,7 @@ function executeTsClose(p,closeMode,creds){
   if(!acct||!creds){
     tsLog(p.underlying+': cannot close \u2014 no API key or account ID','warn');return;
   }
-  if(closeMode==='market'){
-    // Market close
+  if(closeMode==='market'){    // Market close
     var body='class=option'
       +'&symbol='+encodeURIComponent(p.underlying)
       +'&option_symbol='+encodeURIComponent(p.symbol)
@@ -9034,6 +9101,894 @@ function hideStaleBanner(id){
   if(old) old.remove();
 }
 
+
+// ─── PORTFOLIO BUILDER ENGINE (injected) ───────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+//  PORTFOLIO BUILDER ENGINE
+// ═══════════════════════════════════════════════════════════════════════════
+// localStorage schema:  rrjcar_portfolio = { columns:[{id,name,type,rows:[...]}], v:1 }
+// Row shape:            { id, ticker, strike, exp, type('CALL'|'PUT'), qty, mid, value, dead }
+// ═══════════════════════════════════════════════════════════════════════════
+
+var PF_STORAGE_KEY = 'rrjcar_portfolio';
+var PF_CHART_MASTER = null;
+var PF_CHART_SECTOR = null;
+var PF_COL_CHARTS = {};       // { colId: Chart instance }
+var PF_SECTOR_CACHE = {};     // { ticker: sector } fetched on demand from FMP
+var PF_PASTE_TARGET_COL = null;
+var PF_PASTE_STAGED = [];
+var PF_CHAIN_CACHE = {};      // { ticker: { expirations: [], strikesByExp: {exp: [strikes]}, spot: n, ts } }
+
+// ── Palette (recycles across categories) ───────────────────────────────────
+var PF_PALETTE = [
+  '#00d4ff','#40e8ff','#ff00e6','#ffd740','#00e676','#ff6b9d',
+  '#b388ff','#64ffda','#ffab40','#69f0ae','#ff8a80','#82b1ff',
+  '#ea80fc','#80d8ff','#ffd180','#ccff90','#a7ffeb','#ff9e80'
+];
+
+function pfColor(i){ return PF_PALETTE[i % PF_PALETTE.length]; }
+
+// ── Data layer ─────────────────────────────────────────────────────────────
+function pfLoad(){
+  try {
+    var raw = localStorage.getItem(PF_STORAGE_KEY);
+    if(raw){ var o = JSON.parse(raw); if(o && Array.isArray(o.columns)) return o; }
+  } catch(e){}
+  // default
+  return {
+    v: 1,
+    columns: [
+      { id:'tradier',    name:'Tradier',    type:'tradier', rows:[] },
+      { id:'joint',      name:'Joint',      type:'manual',  rows:[] },
+      { id:'alex',       name:'Alex',       type:'manual',  rows:[] },
+      { id:'bianca',     name:'Bianca',     type:'manual',  rows:[] },
+      { id:'individual', name:'Individual', type:'manual',  rows:[] }
+    ]
+  };
+}
+function pfSave(data){
+  try { localStorage.setItem(PF_STORAGE_KEY, JSON.stringify(data)); } catch(e){ toast('Portfolio save failed: storage full'); }
+}
+function pfGenId(prefix){ return (prefix||'') + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+function pfGetCol(data, colId){ for(var i=0;i<data.columns.length;i++){ if(data.columns[i].id===colId) return data.columns[i]; } return null; }
+function pfGetRow(col, rowId){ for(var i=0;i<col.rows.length;i++){ if(col.rows[i].id===rowId) return col.rows[i]; } return null; }
+
+// ── OCC symbol builder ──────────────────────────────────────────────────────
+function pfOccSymbol(ticker, exp, type, strike){
+  // exp YYYY-MM-DD, strike number, type 'CALL'|'PUT' → OCC format: TICKERYYMMDDTSSSSSSSS
+  if(!ticker || !exp || !strike) return null;
+  var dt = exp.replace(/-/g,''); if(dt.length!==8) return null;
+  var yy = dt.slice(2,4), mm = dt.slice(4,6), dd = dt.slice(6,8);
+  var t = (type||'CALL').toUpperCase().charAt(0); // C or P
+  var strikeInt = Math.round(parseFloat(strike) * 1000);
+  var strikePad = ('00000000' + strikeInt).slice(-8);
+  return ticker.toUpperCase() + yy + mm + dd + t + strikePad;
+}
+
+// ── Sector lookup (UNIVERSE first, then FMP cache) ──────────────────────────
+function pfSectorFor(ticker){
+  if(!ticker) return 'Unknown';
+  var t = ticker.toUpperCase();
+  if(PF_SECTOR_CACHE[t]) return PF_SECTOR_CACHE[t];
+  // Check UNIVERSE_FULL (larger list with sectors)
+  try {
+    if(typeof UNIVERSE_FULL !== 'undefined'){
+      for(var i=0;i<UNIVERSE_FULL.length;i++){
+        if(UNIVERSE_FULL[i].t === t){ PF_SECTOR_CACHE[t] = UNIVERSE_FULL[i].s || 'Unknown'; return PF_SECTOR_CACHE[t]; }
+      }
+    }
+    if(typeof UNIVERSE !== 'undefined'){
+      for(var j=0;j<UNIVERSE.length;j++){
+        if(UNIVERSE[j].t === t){ PF_SECTOR_CACHE[t] = UNIVERSE[j].s || 'Unknown'; return PF_SECTOR_CACHE[t]; }
+      }
+    }
+  } catch(e){}
+  PF_SECTOR_CACHE[t] = 'Unknown';
+  return 'Unknown';
+}
+
+// Optional: fetch sector from FMP for Unknowns, populate cache, re-render charts
+function pfEnrichUnknownSectors(tickers){
+  var fmpKey = ''; try { fmpKey = localStorage.getItem('rrjcar_fmp') || ''; } catch(e){}
+  if(!fmpKey) return Promise.resolve();
+  var needed = tickers.filter(function(t){ return pfSectorFor(t)==='Unknown'; });
+  if(!needed.length) return Promise.resolve();
+  var promises = needed.map(function(t){
+    return fetch('https://financialmodelingprep.com/api/v3/profile/'+t+'?apikey='+fmpKey)
+      .then(function(r){ return r.ok ? r.json() : null; })
+      .then(function(data){
+        if(data && data[0] && data[0].sector){
+          PF_SECTOR_CACHE[t] = data[0].sector;
+        }
+      }).catch(function(){});
+  });
+  return Promise.all(promises);
+}
+
+// ── Main render ────────────────────────────────────────────────────────────
+function renderPortfolio(){
+  var data = pfLoad();
+  var wrap = eid('pf-cols-wrap');
+  if(!wrap) return;
+
+  var html = '';
+  for(var i=0;i<data.columns.length;i++){
+    html += pfRenderColumn(data.columns[i]);
+  }
+  wrap.innerHTML = html;
+
+  // Compute totals & render charts from cached values
+  pfRecomputeStats(data);
+  pfRenderCharts(data);
+
+  // Init each column chart after DOM is in place
+  setTimeout(function(){ pfRenderColumnCharts(data); }, 20);
+}
+
+function pfRenderColumn(col){
+  var isTradier = col.type === 'tradier';
+  var headerBadge = isTradier
+    ? '<span style="background:rgba(0,230,118,.15);color:var(--grn);border:1px solid var(--grn);border-radius:2px;font-size:8px;padding:1px 5px;letter-spacing:1px;">AUTO</span>'
+    : '<span style="background:rgba(0,212,255,.1);color:var(--ambb);border:1px solid var(--amb);border-radius:2px;font-size:8px;padding:1px 5px;letter-spacing:1px;">MANUAL</span>';
+
+  var colVal = 0, colCount = 0, deadCount = 0;
+  for(var r=0;r<col.rows.length;r++){
+    var v = +col.rows[r].value || 0;
+    colVal += v;
+    if(col.rows[r].dead) deadCount++;
+    else if(col.rows[r].ticker) colCount++;
+  }
+
+  var html = '<div class="pf-col" data-col-id="'+col.id+'" style="flex:0 0 360px;max-width:360px;background:var(--bg1);border:var(--bdr);border-radius:4px;display:flex;flex-direction:column;">';
+
+  // Header
+  html += '<div style="padding:8px 10px;border-bottom:var(--bdr);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;gap:6px;">';
+  html +=   '<div style="display:flex;align-items:center;gap:6px;flex:1;min-width:0;">';
+  html +=     '<input type="text" value="'+pfEsc(col.name)+'" onchange="pfRenameColumn(\''+col.id+'\',this.value)" '+
+              'style="background:transparent;border:none;color:var(--amb);font-family:var(--ff-brand);font-size:13px;letter-spacing:2px;font-weight:700;width:100%;outline:none;" '+
+              (isTradier?'readonly':'')+'>';
+  html +=     headerBadge;
+  html +=   '</div>';
+  html +=   '<button class="btn" style="font-size:10px;padding:2px 6px;border-color:var(--ngo);color:var(--ngo);" onclick="pfDeleteColumn(\''+col.id+'\')" title="Remove column">&#10005;</button>';
+  html += '</div>';
+
+  // Column stats + mini pie
+  html += '<div style="padding:6px 10px;border-bottom:var(--bdr);display:flex;align-items:center;gap:8px;">';
+  html +=   '<div style="flex:1;display:flex;flex-direction:column;gap:2px;">';
+  html +=     '<div style="font-size:9px;color:var(--gry);letter-spacing:1px;">VALUE</div>';
+  html +=     '<div style="font-size:14px;color:var(--ambb);font-weight:700;font-family:var(--ff-mono);">$'+fmt2(colVal)+'</div>';
+  html +=     '<div style="font-size:9px;color:var(--gry);">'+colCount+' open · '+(deadCount?('<span style="color:var(--ngo);">'+deadCount+' dead</span>'):'0 dead')+'</div>';
+  html +=   '</div>';
+  html +=   '<div style="width:90px;height:90px;position:relative;"><canvas id="pf-minichart-'+col.id+'"></canvas></div>';
+  html += '</div>';
+
+  // Control row (paste / auto-pull / add row)
+  html += '<div style="padding:6px 10px;border-bottom:var(--bdr);display:flex;gap:4px;flex-wrap:wrap;">';
+  if(isTradier){
+    html += '<button class="btn" style="font-size:9px;padding:3px 8px;border-color:var(--grn);color:var(--grn);flex:1;" onclick="pfAutoPullTradier()">&#8635; PULL TRADIER</button>';
+  } else {
+    html += '<button class="btn" style="font-size:9px;padding:3px 8px;flex:1;" onclick="pfOpenPasteModal(\''+col.id+'\')" title="Paste positions from Robinhood">&#128203; PASTE RH</button>';
+  }
+  html +=   '<button class="btn" style="font-size:9px;padding:3px 8px;border-color:var(--amb);color:var(--amb);flex:1;" onclick="pfAddRow(\''+col.id+'\')">+ ROW</button>';
+  html +=   '<button class="btn" style="font-size:9px;padding:3px 8px;border-color:var(--wrn);color:var(--wrn);" onclick="pfClearColumn(\''+col.id+'\')" title="Clear all rows">CLR</button>';
+  html += '</div>';
+
+  // Rows container
+  html += '<div style="padding:4px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;max-height:520px;">';
+  if(!col.rows.length){
+    html += '<div style="padding:20px 10px;text-align:center;color:var(--gry);font-size:10px;">No positions. Click + ROW to add one'+(isTradier?' or pull from Tradier.':'.')+'</div>';
+  } else {
+    for(var i=0;i<col.rows.length;i++){
+      html += pfRenderRow(col, col.rows[i]);
+    }
+  }
+  html += '</div>';
+
+  html += '</div>';
+  return html;
+}
+
+function pfEsc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;').replace(/'/g,'&#39;'); }
+
+function pfRenderRow(col, row){
+  var rid = row.id;
+  var dead = row.dead ? 'border-left:2px solid var(--ngo);' : 'border-left:2px solid var(--gry2);';
+  var valStr = row.value != null ? '$'+fmt2(row.value) : '--';
+  var valCls = row.value > 0 ? 'color:var(--ambb);' : 'color:var(--gry);';
+  var midStr = row.mid != null ? '$'+fmt2(row.mid) : '--';
+  var typeColor = row.type==='PUT' ? 'var(--ngo)' : 'var(--grn)';
+  var deadBadge = row.dead ? '<span style="color:var(--ngo);font-size:9px;" title="Zero bid — position dead">&#9888; DEAD</span>' : '';
+
+  var html = '<div class="pf-row" data-row-id="'+rid+'" style="background:var(--bg2);'+dead+'border-radius:3px;padding:6px 8px;display:flex;flex-direction:column;gap:4px;">';
+
+  // Line 1: ticker + type + qty + delete
+  html += '<div style="display:flex;gap:4px;align-items:center;">';
+  html +=   '<input type="text" value="'+pfEsc(row.ticker||'')+'" placeholder="TICK" maxlength="6" '+
+            'style="width:65px;background:var(--bg0);border:var(--bdr);color:var(--amb);font-family:var(--ff-mono);font-size:11px;font-weight:700;padding:3px 5px;border-radius:2px;text-transform:uppercase;" '+
+            'onblur="pfTickerChanged(\''+col.id+'\',\''+rid+'\',this.value)">';
+  html +=   '<select style="background:var(--bg0);border:var(--bdr);color:'+typeColor+';font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'type\',this.value)">';
+  html +=     '<option value="CALL"'+(row.type!=='PUT'?' selected':'')+'>CALL</option>';
+  html +=     '<option value="PUT"'+(row.type==='PUT'?' selected':'')+'>PUT</option>';
+  html +=   '</select>';
+  html +=   '<input type="number" value="'+(row.qty||1)+'" min="1" step="1" '+
+            'style="width:48px;background:var(--bg0);border:var(--bdr);color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:3px 5px;border-radius:2px;" '+
+            'onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'qty\',this.value)" title="# contracts">';
+  html +=   '<div style="flex:1;"></div>';
+  html +=   '<button class="btn" style="font-size:9px;padding:2px 5px;border-color:var(--ngo);color:var(--ngo);" onclick="pfDeleteRow(\''+col.id+'\',\''+rid+'\')" title="Delete row">&#10005;</button>';
+  html += '</div>';
+
+  // Line 2: expiry + strike dropdowns (with loading/free-text fallback)
+  html += '<div style="display:flex;gap:4px;align-items:center;">';
+  // Expiry dropdown
+  html +=   '<select id="pf-exp-'+rid+'" style="flex:1;background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'exp\',this.value);pfLoadStrikesFor(\''+col.id+'\',\''+rid+'\')">';
+  html +=     '<option value="">-- Expiry --</option>';
+  if(row.exp){ html += '<option value="'+pfEsc(row.exp)+'" selected>'+pfEsc(row.exp)+'</option>'; }
+  html +=   '</select>';
+  // Strike dropdown
+  html +=   '<select id="pf-str-'+rid+'" style="flex:1;background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'strike\',this.value)">';
+  html +=     '<option value="">-- Strike --</option>';
+  if(row.strike){ html += '<option value="'+row.strike+'" selected>$'+fmt2(row.strike)+'</option>'; }
+  html +=   '</select>';
+  html += '</div>';
+
+  // Line 3: valuation + actions
+  html += '<div style="display:flex;gap:6px;align-items:center;font-size:10px;color:var(--gry);font-family:var(--ff-mono);">';
+  html +=   '<span title="Mid price per contract">Mid: <span style="color:var(--wht);">'+midStr+'</span></span>';
+  html +=   '<span title="Total position value = mid × 100 × qty" style="'+valCls+'">Val: <span style="font-weight:700;">'+valStr+'</span></span>';
+  html +=   deadBadge;
+  html +=   '<div style="flex:1;"></div>';
+  html +=   '<button class="btn" style="font-size:9px;padding:2px 6px;" onclick="pfRefreshRow(\''+col.id+'\',\''+rid+'\')" title="Fetch live quote for this row">&#8635;</button>';
+  html +=   '<button class="btn blu" style="font-size:9px;padding:2px 6px;" onclick="pfSaveRow(\''+col.id+'\',\''+rid+'\')" title="Persist to storage">&#128190;</button>';
+  html += '</div>';
+
+  html += '</div>';
+  return html;
+}
+
+// ── CRUD ops ───────────────────────────────────────────────────────────────
+function pfAddRow(colId){
+  var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
+  col.rows.unshift({ id:pfGenId('r_'), ticker:'', type:'CALL', qty:1, strike:null, exp:'', mid:null, value:null, dead:false });
+  pfSave(data); renderPortfolio();
+}
+function pfDeleteRow(colId, rowId){
+  var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
+  col.rows = col.rows.filter(function(r){ return r.id !== rowId; });
+  pfSave(data); renderPortfolio();
+}
+function pfRowField(colId, rowId, field, val){
+  var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
+  var row = pfGetRow(col, rowId); if(!row) return;
+  if(field==='qty'){ row.qty = Math.max(1, parseInt(val)||1); }
+  else if(field==='strike'){ row.strike = val ? parseFloat(val) : null; }
+  else if(field==='exp'){ row.exp = val || ''; }
+  else if(field==='type'){ row.type = (val==='PUT')?'PUT':'CALL'; }
+  else { row[field] = val; }
+  pfSave(data);
+  // recompute if we have enough info
+  if(row.ticker && row.exp && row.strike){
+    pfRefreshRow(colId, rowId);
+  }
+}
+function pfSaveRow(colId, rowId){
+  var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
+  var row = pfGetRow(col, rowId); if(!row) return;
+  // Grab current row DOM values
+  var dom = document.querySelector('.pf-row[data-row-id="'+rowId+'"]');
+  if(dom){
+    var inputs = dom.querySelectorAll('input, select');
+    // [0]=ticker, [1]=type, [2]=qty, [3]=exp, [4]=strike
+    if(inputs[0]) row.ticker = inputs[0].value.trim().toUpperCase();
+    if(inputs[1]) row.type = inputs[1].value;
+    if(inputs[2]) row.qty = Math.max(1, parseInt(inputs[2].value)||1);
+    if(inputs[3]) row.exp = inputs[3].value;
+    if(inputs[4]) row.strike = inputs[4].value ? parseFloat(inputs[4].value) : null;
+  }
+  pfSave(data);
+  toast('Row saved');
+  if(row.ticker && row.exp && row.strike) pfRefreshRow(colId, rowId);
+}
+function pfRenameColumn(colId, newName){
+  var data = pfLoad(); var col = pfGetCol(data, colId); if(!col || col.type==='tradier') return;
+  col.name = (newName||'').trim() || col.name;
+  pfSave(data);
+}
+function pfAddColumn(){
+  var name = prompt('Column name (e.g. "401k" or "TastyTrade"):', '');
+  if(!name || !name.trim()) return;
+  var data = pfLoad();
+  data.columns.push({ id:pfGenId('c_'), name:name.trim(), type:'manual', rows:[] });
+  pfSave(data); renderPortfolio();
+}
+function pfDeleteColumn(colId){
+  var data = pfLoad();
+  if(data.columns.length <= 1){ toast('Cannot remove the last column'); return; }
+  var col = pfGetCol(data, colId); if(!col) return;
+  if(!confirm('Delete column "'+col.name+'" and all '+col.rows.length+' rows? This cannot be undone.')) return;
+  data.columns = data.columns.filter(function(c){ return c.id !== colId; });
+  pfSave(data); renderPortfolio();
+}
+function pfClearColumn(colId){
+  var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
+  if(!col.rows.length){ toast('Already empty'); return; }
+  if(!confirm('Clear all '+col.rows.length+' rows from "'+col.name+'"?')) return;
+  col.rows = [];
+  pfSave(data); renderPortfolio();
+}
+function pfResetAll(){
+  if(!confirm('Wipe the entire Portfolio tab back to defaults? All entered positions will be lost.')) return;
+  localStorage.removeItem(PF_STORAGE_KEY);
+  PF_SECTOR_CACHE = {};
+  PF_CHAIN_CACHE = {};
+  renderPortfolio();
+  toast('Portfolio reset to defaults');
+}
+
+// ── Ticker changed: fetch expiries and current spot from Tradier ────────────
+function pfTickerChanged(colId, rowId, tickerVal){
+  var t = (tickerVal||'').trim().toUpperCase();
+  var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
+  var row = pfGetRow(col, rowId); if(!row) return;
+  if(row.ticker === t) return;
+  row.ticker = t;
+  row.strike = null; row.exp = ''; row.mid = null; row.value = null; row.dead = false;
+  pfSave(data);
+  if(!t){ renderPortfolio(); return; }
+
+  var creds = getTradierCreds();
+  if(!creds){ toast('Set Tradier API key in ⚙ API tab first'); renderPortfolio(); return; }
+
+  // Cached chain?
+  if(PF_CHAIN_CACHE[t] && (Date.now() - PF_CHAIN_CACHE[t].ts) < 600000){
+    pfPopulateExpiries(rowId, PF_CHAIN_CACHE[t]);
+    return;
+  }
+
+  // Fetch spot + expirations in parallel
+  Promise.all([
+    fetch(creds.host+'/v1/markets/quotes?symbols='+t, {headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}}).then(function(r){ return r.ok?r.json():null; }),
+    fetch(creds.host+'/v1/markets/options/expirations?symbol='+t+'&includeAllRoots=true', {headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}}).then(function(r){ return r.ok?r.json():null; })
+  ]).then(function(results){
+    var qData = results[0], eData = results[1];
+    var spot = null;
+    try {
+      var q = qData && qData.quotes && qData.quotes.quote;
+      if(q){ spot = q.last || ((q.bid+q.ask)/2) || q.close; }
+    } catch(e){}
+    var exps = [];
+    try {
+      var raw = eData && eData.expirations && eData.expirations.date;
+      if(Array.isArray(raw)) exps = raw;
+      else if(raw) exps = [raw];
+    } catch(e){}
+    // Filter to <1yr
+    var today = new Date(); today.setHours(0,0,0,0);
+    var oneYear = new Date(); oneYear.setDate(oneYear.getDate()+365);
+    exps = exps.filter(function(d){
+      var dt = new Date(d+'T00:00:00');
+      return dt >= today && dt <= oneYear;
+    });
+    PF_CHAIN_CACHE[t] = { expirations: exps, strikesByExp: {}, spot: spot, ts: Date.now() };
+    pfPopulateExpiries(rowId, PF_CHAIN_CACHE[t]);
+  }).catch(function(e){
+    toast('Chain fetch failed: '+e.message);
+  });
+}
+
+function pfPopulateExpiries(rowId, chain){
+  var sel = eid('pf-exp-'+rowId); if(!sel) return;
+  var currentVal = sel.value;
+  sel.innerHTML = '<option value="">-- Expiry --</option>';
+  chain.expirations.forEach(function(d){
+    var opt = document.createElement('option');
+    opt.value = d;
+    var dt = new Date(d+'T00:00:00');
+    var today = new Date(); today.setHours(0,0,0,0);
+    var dte = Math.round((dt - today)/86400000);
+    opt.textContent = d + ' ('+dte+'d)';
+    if(d === currentVal) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  if(chain.spot){
+    var hint = eid('pf-spot-hint-'+rowId);
+    if(!hint){
+      hint = document.createElement('span');
+      hint.id = 'pf-spot-hint-'+rowId;
+      hint.style.cssText = 'font-size:9px;color:var(--gry);margin-left:4px;';
+    }
+    hint.textContent = 'Spot: $'+fmt2(chain.spot);
+  }
+}
+
+function pfLoadStrikesFor(colId, rowId){
+  var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
+  var row = pfGetRow(col, rowId); if(!row || !row.ticker || !row.exp) return;
+  var chain = PF_CHAIN_CACHE[row.ticker];
+  if(!chain) return;
+  var spot = chain.spot || 100;
+
+  // Already cached strikes for this expiry?
+  if(chain.strikesByExp[row.exp]){
+    pfPopulateStrikes(rowId, chain.strikesByExp[row.exp], spot);
+    return;
+  }
+
+  var creds = getTradierCreds(); if(!creds) return;
+  fetch(creds.host+'/v1/markets/options/strikes?symbol='+row.ticker+'&expiration='+row.exp,
+    {headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(data){
+      var strikes = [];
+      try {
+        var raw = data && data.strikes && data.strikes.strike;
+        if(Array.isArray(raw)) strikes = raw;
+        else if(raw != null) strikes = [raw];
+      } catch(e){}
+      chain.strikesByExp[row.exp] = strikes;
+      pfPopulateStrikes(rowId, strikes, spot);
+    }).catch(function(e){ toast('Strike fetch failed: '+e.message); });
+}
+
+function pfPopulateStrikes(rowId, strikes, spot){
+  var sel = eid('pf-str-'+rowId); if(!sel) return;
+  var currentVal = parseFloat(sel.value) || null;
+  // Filter to ±20% of spot
+  var lo = spot * 0.80, hi = spot * 1.20;
+  var filtered = strikes.filter(function(s){ return s >= lo && s <= hi; });
+  if(!filtered.length) filtered = strikes; // fallback: show all if filter too aggressive
+  sel.innerHTML = '<option value="">-- Strike --</option>';
+  filtered.forEach(function(s){
+    var opt = document.createElement('option');
+    opt.value = s;
+    var pct = ((s - spot)/spot*100).toFixed(1);
+    var tag = s < spot ? 'ITM' : s > spot ? 'OTM' : 'ATM';
+    opt.textContent = '$'+fmt2(s)+' ('+tag+' '+(pct>=0?'+':'')+pct+'%)';
+    if(currentVal && Math.abs(s-currentVal) < 0.01) opt.selected = true;
+    sel.appendChild(opt);
+  });
+}
+
+// ── Refresh single row (fetch current mid from Tradier) ─────────────────────
+function pfRefreshRow(colId, rowId){
+  var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
+  var row = pfGetRow(col, rowId); if(!row) return;
+  if(!row.ticker || !row.exp || !row.strike){ return; }
+  var creds = getTradierCreds(); if(!creds){ return; }
+  var occ = pfOccSymbol(row.ticker, row.exp, row.type, row.strike);
+  if(!occ) return;
+  fetch(creds.host+'/v1/markets/quotes?symbols='+occ+'&greeks=false',
+    {headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(qd){
+      var q = qd && qd.quotes && qd.quotes.quote;
+      if(!q){ toast('No quote for '+occ); return; }
+      var bid = +q.bid || 0, ask = +q.ask || 0;
+      var mid = (bid>0 && ask>0) ? (bid+ask)/2 : (q.last || 0);
+      var qty = +row.qty || 1;
+      row.mid = mid;
+      row.value = mid * 100 * qty;
+      row.dead = (bid === 0 && ask === 0);
+      pfSave(data);
+      renderPortfolio();
+    }).catch(function(e){ toast('Quote fetch failed: '+e.message); });
+}
+
+// ── Refresh ALL: batched 16 OCC symbols per call per user's Tradier rules ──
+function pfRefreshAll(){
+  var data = pfLoad();
+  var creds = getTradierCreds();
+  if(!creds){ toast('Set Tradier API key in ⚙ API tab first'); return; }
+
+  // Collect all rows with enough info to price
+  var priceable = [];
+  data.columns.forEach(function(col){
+    col.rows.forEach(function(row){
+      if(row.ticker && row.exp && row.strike){
+        var occ = pfOccSymbol(row.ticker, row.exp, row.type, row.strike);
+        if(occ) priceable.push({col:col, row:row, occ:occ});
+      }
+    });
+  });
+
+  if(!priceable.length){
+    toast('No priceable rows yet — add ticker/exp/strike first');
+    pfRecomputeStats(data); pfRenderCharts(data); pfRenderColumnCharts(data);
+    return;
+  }
+
+  eid('pf-last-update').textContent = 'Fetching '+priceable.length+' quotes...';
+
+  // Batch in groups of 16
+  var batches = [];
+  for(var i=0;i<priceable.length;i+=16) batches.push(priceable.slice(i, i+16));
+
+  var idx = 0;
+  function nextBatch(){
+    if(idx >= batches.length){
+      // Done
+      pfSave(data);
+      // Enrich sectors for unknowns, then final render
+      var allTickers = [];
+      data.columns.forEach(function(c){ c.rows.forEach(function(r){ if(r.ticker && allTickers.indexOf(r.ticker)<0) allTickers.push(r.ticker); }); });
+      pfEnrichUnknownSectors(allTickers).then(function(){
+        renderPortfolio();
+        eid('pf-last-update').textContent = 'Updated: '+new Date().toLocaleTimeString();
+        toast('Portfolio refreshed');
+      });
+      return;
+    }
+    var batch = batches[idx++];
+    var syms = batch.map(function(b){ return b.occ; }).join(',');
+    fetch(creds.host+'/v1/markets/quotes?symbols='+encodeURIComponent(syms)+'&greeks=false',
+      {headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(qd){
+        var quotes = [];
+        try {
+          var raw = qd && qd.quotes && qd.quotes.quote;
+          if(Array.isArray(raw)) quotes = raw;
+          else if(raw) quotes = [raw];
+        } catch(e){}
+        var byOcc = {};
+        quotes.forEach(function(q){ byOcc[q.symbol] = q; });
+        batch.forEach(function(b){
+          var q = byOcc[b.occ];
+          if(!q){ b.row.mid = null; b.row.value = null; return; }
+          var bid = +q.bid || 0, ask = +q.ask || 0;
+          var mid = (bid>0 && ask>0) ? (bid+ask)/2 : (q.last || 0);
+          b.row.mid = mid;
+          b.row.value = mid * 100 * (+b.row.qty || 1);
+          b.row.dead = (bid === 0 && ask === 0);
+        });
+        setTimeout(nextBatch, 150);
+      }).catch(function(e){
+        toast('Batch '+idx+' failed: '+e.message);
+        setTimeout(nextBatch, 150);
+      });
+  }
+  nextBatch();
+}
+
+// ── Auto-pull Tradier positions (options only) ──────────────────────────────
+function pfAutoPullTradier(){
+  var creds = getTradierCreds();
+  if(!creds){ toast('Set Tradier API key in ⚙ API tab first'); return; }
+  var acct = G.acctId || ''; try { if(!acct) acct = localStorage.getItem('rrjcar_acct') || ''; } catch(e){}
+  if(!acct){ toast('No Tradier account number set — go to ⚙ API tab'); return; }
+
+  eid('pf-last-update').textContent = 'Pulling Tradier positions...';
+  fetch(creds.host+'/v1/accounts/'+acct+'/positions',
+    {headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}})
+    .then(function(r){ return r.ok?r.json():null; })
+    .then(function(pd){
+      var positions = [];
+      try {
+        var raw = pd && pd.positions && pd.positions.position;
+        if(Array.isArray(raw)) positions = raw;
+        else if(raw) positions = [raw];
+      } catch(e){}
+
+      var data = pfLoad();
+      var col = pfGetCol(data, 'tradier');
+      if(!col){ toast('No Tradier column found'); return; }
+
+      var newRows = [];
+      positions.forEach(function(p){
+        var sym = p.symbol || '';
+        // Options symbols: 7+ chars, has digits+C|P
+        if(sym.length < 15) return;
+        var parsed = (typeof parseOccSymbol === 'function') ? parseOccSymbol(sym) : null;
+        if(!parsed || !parsed.strike) return;
+        newRows.push({
+          id: pfGenId('r_'),
+          ticker: parsed.underlying,
+          type: parsed.type,
+          qty: Math.abs(+p.quantity) || 1,
+          strike: parsed.strike,
+          exp: parsed.exp,
+          mid: null,
+          value: null,
+          dead: false
+        });
+      });
+
+      col.rows = newRows;
+      pfSave(data);
+      toast('Pulled '+newRows.length+' options positions from Tradier');
+      // Now price them
+      pfRefreshAll();
+    }).catch(function(e){ toast('Tradier positions fetch failed: '+e.message); });
+}
+
+// ── Stats recompute ─────────────────────────────────────────────────────────
+function pfRecomputeStats(data){
+  var total = 0, count = 0, deadCount = 0;
+  var sectorTotals = {};
+  data.columns.forEach(function(col){
+    col.rows.forEach(function(row){
+      var v = +row.value || 0;
+      total += v;
+      if(row.ticker){
+        if(row.dead) deadCount++; else count++;
+        if(v > 0){
+          var sec = pfSectorFor(row.ticker);
+          sectorTotals[sec] = (sectorTotals[sec] || 0) + v;
+        }
+      }
+    });
+  });
+  eid('pf-total-val').textContent = '$'+fmt2(total);
+  eid('pf-pos-count').textContent = count;
+  eid('pf-col-count').textContent = data.columns.length;
+  eid('pf-dead-count').textContent = deadCount;
+  var topSec = '--', topVal = 0;
+  Object.keys(sectorTotals).forEach(function(s){ if(sectorTotals[s] > topVal){ topVal = sectorTotals[s]; topSec = s; } });
+  eid('pf-top-sector').textContent = topSec;
+}
+
+// ── Chart rendering ─────────────────────────────────────────────────────────
+function pfChartOpts(){
+  return {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'right',
+        labels: {
+          color: '#7090c8',
+          font: { family: 'Rajdhani, sans-serif', size: 10 },
+          boxWidth: 10,
+          padding: 4
+        }
+      },
+      tooltip: {
+        backgroundColor: '#0b1522',
+        titleColor: '#00d4ff',
+        bodyColor: '#c8daf8',
+        borderColor: '#00d4ff',
+        borderWidth: 1,
+        callbacks: {
+          label: function(ctx){
+            var total = ctx.dataset.data.reduce(function(s,v){ return s+v; }, 0);
+            var pct = total>0 ? (ctx.raw/total*100).toFixed(1) : '0';
+            return ctx.label+': $'+(+ctx.raw).toFixed(2)+' ('+pct+'%)';
+          }
+        }
+      }
+    }
+  };
+}
+
+function pfRenderCharts(data){
+  if(typeof Chart === 'undefined'){ return; }
+
+  // Master pie: by ticker across all columns
+  var tickerTotals = {};
+  var sectorTotals = {};
+  data.columns.forEach(function(col){
+    col.rows.forEach(function(row){
+      var v = +row.value || 0;
+      if(v <= 0 || !row.ticker) return;
+      tickerTotals[row.ticker] = (tickerTotals[row.ticker] || 0) + v;
+      var sec = pfSectorFor(row.ticker);
+      sectorTotals[sec] = (sectorTotals[sec] || 0) + v;
+    });
+  });
+
+  // Master
+  var tickers = Object.keys(tickerTotals).sort(function(a,b){ return tickerTotals[b]-tickerTotals[a]; });
+  var masterData = {
+    labels: tickers.length ? tickers : ['(no data)'],
+    datasets: [{
+      data: tickers.length ? tickers.map(function(t){ return tickerTotals[t]; }) : [1],
+      backgroundColor: tickers.length ? tickers.map(function(_,i){ return pfColor(i); }) : ['#3d5580'],
+      borderColor: '#0b1522',
+      borderWidth: 2
+    }]
+  };
+
+  var masterCanvas = eid('pf-chart-master');
+  if(masterCanvas){
+    if(PF_CHART_MASTER) PF_CHART_MASTER.destroy();
+    PF_CHART_MASTER = new Chart(masterCanvas, { type:'doughnut', data: masterData, options: pfChartOpts() });
+  }
+
+  // Sector
+  var sectors = Object.keys(sectorTotals).sort(function(a,b){ return sectorTotals[b]-sectorTotals[a]; });
+  var sectorData = {
+    labels: sectors.length ? sectors : ['(no data)'],
+    datasets: [{
+      data: sectors.length ? sectors.map(function(s){ return sectorTotals[s]; }) : [1],
+      backgroundColor: sectors.length ? sectors.map(function(_,i){ return pfColor(i); }) : ['#3d5580'],
+      borderColor: '#0b1522',
+      borderWidth: 2
+    }]
+  };
+  var sectorCanvas = eid('pf-chart-sector');
+  if(sectorCanvas){
+    if(PF_CHART_SECTOR) PF_CHART_SECTOR.destroy();
+    PF_CHART_SECTOR = new Chart(sectorCanvas, { type:'doughnut', data: sectorData, options: pfChartOpts() });
+  }
+}
+
+function pfRenderColumnCharts(data){
+  if(typeof Chart === 'undefined') return;
+  // Destroy old ones
+  Object.keys(PF_COL_CHARTS).forEach(function(k){ try { PF_COL_CHARTS[k].destroy(); } catch(e){} });
+  PF_COL_CHARTS = {};
+  data.columns.forEach(function(col){
+    var canvas = eid('pf-minichart-'+col.id);
+    if(!canvas) return;
+    var tickerTotals = {};
+    col.rows.forEach(function(r){
+      var v = +r.value || 0;
+      if(v <= 0 || !r.ticker) return;
+      tickerTotals[r.ticker] = (tickerTotals[r.ticker]||0) + v;
+    });
+    var tickers = Object.keys(tickerTotals);
+    var cd = {
+      labels: tickers.length ? tickers : ['(empty)'],
+      datasets: [{
+        data: tickers.length ? tickers.map(function(t){ return tickerTotals[t]; }) : [1],
+        backgroundColor: tickers.length ? tickers.map(function(_,i){ return pfColor(i); }) : ['#3d5580'],
+        borderColor: '#0b1522',
+        borderWidth: 1
+      }]
+    };
+    PF_COL_CHARTS[col.id] = new Chart(canvas, {
+      type:'doughnut',
+      data: cd,
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { enabled: tickers.length > 0 } },
+        cutout: '55%'
+      }
+    });
+  });
+}
+
+// ── Robinhood paste parser ──────────────────────────────────────────────────
+function pfOpenPasteModal(colId){
+  PF_PASTE_TARGET_COL = colId;
+  PF_PASTE_STAGED = [];
+  eid('pf-paste-text').value = '';
+  eid('pf-paste-preview').innerHTML = '';
+  eid('pf-paste-modal').style.display = 'flex';
+}
+function pfClosePasteModal(){ eid('pf-paste-modal').style.display = 'none'; }
+
+// Parses one line → {ticker, strike, exp, type, qty} | null
+function pfParseLine(line){
+  if(!line || !line.trim()) return null;
+  var s = line.trim().replace(/\t+/g, ' ').replace(/ +/g,' ');
+
+  // Try CSV-style first: TICKER,STRIKE,EXP,TYPE,QTY
+  if(s.indexOf(',') >= 0){
+    var parts = s.split(',').map(function(p){ return p.trim(); });
+    if(parts.length >= 4){
+      var t = (parts[0]||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+      var strike = parseFloat(parts[1]);
+      var exp = pfNormalizeDate(parts[2]);
+      var typ = (parts[3]||'').toUpperCase().indexOf('P')>=0 ? 'PUT' : 'CALL';
+      var qty = parseInt(parts[4]||'1') || 1;
+      if(t && strike && exp) return { ticker:t, strike:strike, exp:exp, type:typ, qty:qty };
+    }
+  }
+
+  // Free-form: "NVDA $150 Call 12/19/2025 x3"
+  // Find ticker: 1-5 uppercase letters (optionally followed by digits for some symbols)
+  var tickerM = s.match(/\b([A-Z]{1,5}[A-Z0-9]{0,2})\b/);
+  // Find strike: $NNN or NNNNC or NNNNP
+  var strikeM = s.match(/\$?(\d+(?:\.\d+)?)[CP]?\b/g);
+  // Find date: MM/DD/YY(YY) or YYYY-MM-DD
+  var dateM = s.match(/(\d{1,2}\/\d{1,2}\/\d{2,4})|(\d{4}-\d{1,2}-\d{1,2})/);
+  // Find type
+  var typeM = /\bP(UT)?\b|\bPUTS?\b/i.test(s) ? 'PUT' : 'CALL';
+  // Find qty: "x3" or "3 contracts" or leading count
+  var qtyM = s.match(/[xX×](\d+)|\b(\d+)\s*(?:contracts?|ct|qty|shares)?\b\s*$/);
+  var qty = 1;
+  if(qtyM){ qty = parseInt(qtyM[1] || qtyM[2]) || 1; }
+
+  if(!tickerM || !strikeM || !dateM) return null;
+  var ticker = tickerM[1];
+
+  // Pick the strike: prefer one not inside the date
+  var strikeVal = null;
+  for(var i=0;i<strikeM.length;i++){
+    var v = parseFloat(strikeM[i].replace(/[^\d.]/g,''));
+    if(v > 0 && v < 10000){ strikeVal = v; break; }
+  }
+  if(!strikeVal) return null;
+
+  var exp = pfNormalizeDate(dateM[0]);
+  if(!exp) return null;
+
+  return { ticker:ticker, strike:strikeVal, exp:exp, type:typeM, qty:qty };
+}
+
+function pfNormalizeDate(s){
+  if(!s) return null;
+  s = s.trim();
+  // YYYY-MM-DD
+  if(/^\d{4}-\d{1,2}-\d{1,2}$/.test(s)){
+    var p = s.split('-');
+    return p[0]+'-'+('0'+p[1]).slice(-2)+'-'+('0'+p[2]).slice(-2);
+  }
+  // M/D/YY or M/D/YYYY
+  var m = s.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+  if(m){
+    var yr = m[3]; if(yr.length===2) yr = (parseInt(yr)>50?'19':'20')+yr;
+    return yr+'-'+('0'+m[1]).slice(-2)+'-'+('0'+m[2]).slice(-2);
+  }
+  return null;
+}
+
+function pfParsePreview(){
+  var text = eid('pf-paste-text').value;
+  var lines = text.split('\n');
+  PF_PASTE_STAGED = [];
+  var preview = '';
+  var good = 0, bad = 0;
+  lines.forEach(function(ln, idx){
+    if(!ln.trim()) return;
+    var parsed = pfParseLine(ln);
+    if(parsed){
+      good++;
+      PF_PASTE_STAGED.push(parsed);
+      preview += '<div style="color:var(--grn);">✓ '+parsed.ticker+' $'+parsed.strike+' '+parsed.type+' '+parsed.exp+' × '+parsed.qty+'</div>';
+    } else {
+      bad++;
+      preview += '<div style="color:var(--ngo);">✗ Line '+(idx+1)+': '+pfEsc(ln.slice(0,60))+'</div>';
+    }
+  });
+  preview = '<div style="color:var(--amb);margin-bottom:6px;">'+good+' parsed · '+bad+' unparseable</div>' + preview;
+  eid('pf-paste-preview').innerHTML = preview;
+}
+
+function pfImportPasted(){
+  if(!PF_PASTE_TARGET_COL){ toast('No target column'); return; }
+  if(!PF_PASTE_STAGED.length){ pfParsePreview(); if(!PF_PASTE_STAGED.length){ toast('Nothing parseable to import'); return; } }
+  var data = pfLoad();
+  var col = pfGetCol(data, PF_PASTE_TARGET_COL);
+  if(!col){ toast('Target column not found'); return; }
+  PF_PASTE_STAGED.forEach(function(p){
+    col.rows.push({
+      id: pfGenId('r_'),
+      ticker: p.ticker, type: p.type, qty: p.qty,
+      strike: p.strike, exp: p.exp,
+      mid: null, value: null, dead: false
+    });
+  });
+  pfSave(data);
+  toast('Imported '+PF_PASTE_STAGED.length+' rows into '+col.name);
+  pfClosePasteModal();
+  renderPortfolio();
+  // Auto-refresh prices
+  setTimeout(pfRefreshAll, 300);
+}
+
+// ── Export all rows as CSV ──────────────────────────────────────────────────
+function pfExportCSV(){
+  var data = pfLoad();
+  var rows = [['Column','Ticker','Type','Strike','Expiry','Qty','Mid','Value','Dead']];
+  data.columns.forEach(function(col){
+    col.rows.forEach(function(r){
+      rows.push([col.name, r.ticker||'', r.type||'CALL', r.strike||'', r.exp||'', r.qty||1, r.mid!=null?r.mid.toFixed(4):'', r.value!=null?r.value.toFixed(2):'', r.dead?'YES':'']);
+    });
+  });
+  var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
+  var blob = new Blob([csv], {type:'text/csv'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'portfolio_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  toast('CSV exported');
+}
+
+function loadPortfolio(){ /* no-op loader — data loaded on demand in renderPortfolio */ }
+
+// ─── END PORTFOLIO BUILDER ENGINE ──────────────────────────────────────
+
 function init(){
   loadKeys();
   loadWL();
@@ -9041,6 +9996,7 @@ function init(){
   loadNotifSettings();
   loadAutoTraderSettings();
   loadAutoTraderState();
+  loadPortfolio();
   updateClock();
   setInterval(updateClock, 1000);
   setInterval(saveAppSettings, 60000);
