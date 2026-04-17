@@ -3,7 +3,22 @@
 <head>
 <meta charset="UTF-8">
 <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&family=Orbitron:wght@500;700;900&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<!-- Mobile viewport: allow pinch-zoom (accessibility) + cover safe areas on notched iPhones -->
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<!-- iOS home-screen / PWA -->
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Panda">
+<meta name="theme-color" content="#050d14">
+<link rel="manifest" href="manifest.json">
+<!-- Home-screen icons: iOS uses apple-touch-icon, Android reads from manifest -->
+<link rel="apple-touch-icon" href="assets/apple-touch-icon.png">
+<link rel="apple-touch-icon" sizes="180x180" href="assets/icon-180.png">
+<link rel="apple-touch-icon" sizes="192x192" href="assets/icon-192.png">
+<link rel="apple-touch-icon" sizes="512x512" href="assets/icon-512.png">
+<link rel="icon" type="image/png" sizes="512x512" href="assets/icon-512.png">
+<link rel="icon" type="image/png" sizes="192x192" href="assets/icon-192.png">
 <title>OPTION PANDA</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
@@ -333,22 +348,135 @@ tr.sel-row td{background:var(--blu3);}
 ::-webkit-scrollbar-track{background:var(--bg0);}
 ::-webkit-scrollbar-thumb{background:var(--gry2);border-radius:3px;}
 ::-webkit-scrollbar-thumb:hover{background:var(--amb);}
+
+/* ══════════════════════════════════════════════════════════════════════════
+   MOBILE LAYER — iPhone 17 Pro optimized (≤768px)
+   Desktop styles are 100% preserved; this block only applies to narrow screens.
+   ══════════════════════════════════════════════════════════════════════════ */
 @media(max-width:768px){
-  #hdr{height:auto;padding:4px 8px;}
+  /* ── Safe areas (Dynamic Island, home indicator) ── */
+  html, body{
+    padding-top: env(safe-area-inset-top, 0);
+    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-left: env(safe-area-inset-left, 0);
+    padding-right: env(safe-area-inset-right, 0);
+  }
+
+  /* ── Base typography bump for readability ── */
+  body{font-size:14px;line-height:1.5;-webkit-text-size-adjust:100%;}
+  label, .flt-bar label, th, td{font-size:12px !important;}
+  .card-hdr{font-size:12px !important;letter-spacing:1.2px;}
+
+  /* ── Header + layout containers ── */
+  #hdr{height:auto;padding:6px 8px;flex-wrap:wrap;gap:4px;}
   #app{height:auto;overflow:visible;}
   .tab-pane.active{height:auto;overflow:visible;}
+  .page-wrap{padding:8px;}
+
+  /* ── Horizontal-scrolling tab bar (instead of wrapping into 3+ rows) ── */
+  #nav, .nav, nav{overflow-x:auto !important;overflow-y:hidden !important;white-space:nowrap !important;-webkit-overflow-scrolling:touch;scrollbar-width:none;}
+  #nav::-webkit-scrollbar, .nav::-webkit-scrollbar, nav::-webkit-scrollbar{display:none;}
+  .ntab{font-size:11px;padding:10px 12px;flex-shrink:0;min-height:44px;display:inline-flex;align-items:center;white-space:nowrap;}
+
+  /* ── Tap targets: every button/checkbox/select ≥ 44×44 per Apple HIG ── */
+  .btn, button.btn, input[type="checkbox"] + span, select, .sect-btn{
+    min-height:38px;
+  }
+  .btn{font-size:12px !important;padding:8px 12px !important;}
+  .ind-filter-lbl{padding:6px 4px;min-height:36px;display:inline-flex;align-items:center;}
+  .ind-filter-lbl input[type="checkbox"]{width:18px;height:18px;}
+  input[type="number"], input[type="text"], input[type="date"], select{
+    font-size:16px !important;  /* iOS zooms if font < 16px — this prevents it */
+    padding:8px 10px !important;
+    min-height:40px;
+  }
+
+  /* ── Filter bars: collapsible on mobile ── */
+  .flt-bar{padding:8px 10px;gap:8px;}
+  .flt-bar.mobile-collapsed{display:none !important;}
+  .mobile-filter-toggle{display:none;}
+  .mobile-filter-toggle.show{
+    display:inline-flex;align-items:center;gap:6px;
+    background:var(--bg2);border:var(--bdr);border-radius:4px;
+    color:var(--ambb);font-size:11px;font-weight:700;padding:8px 12px;
+    margin:6px 10px;cursor:pointer;min-height:40px;
+  }
+  .mobile-filter-toggle .mft-arr{transition:transform .2s;}
+  .mobile-filter-toggle.open .mft-arr{transform:rotate(180deg);}
+
+  /* ── Scan / Watchlist / Positions tables: card-style on mobile ── */
+  .tbl-wrap, .data-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  table{min-width:0;}
+  /* Reduce columns that aren't essential for monitoring on mobile */
+  .hide-mobile, .col-hide-mobile{display:none !important;}
+  th.hide-mobile, td.hide-mobile{display:none !important;}
+
+  /* ── Detail split layouts stack vertically ── */
   .split{flex-direction:column;}
   .split-l{width:100%;max-height:260px;border-right:none;border-bottom:2px solid var(--amb3);}
   .split-r{width:100%;}
-  .det-tv{min-height:300px;}
+  .det-tv{min-height:280px;}
   .det-scroll{flex:1;min-height:0;}
-  .ind-grid{grid-template-columns:1fr 1fr;}
-  .rules-grid{grid-template-columns:1fr 1fr;}
-  .opt-grid{grid-template-columns:1fr;}
-  .stat-val{font-size:16px;}
-  .ntab{font-size:10px;padding:6px 8px;}
-  .tbl-wrap{overflow-x:auto;}
-  table{min-width:600px;}
+
+  /* ── Grids collapse to 1–2 columns ── */
+  .ind-grid{grid-template-columns:1fr 1fr !important;}
+  .rules-grid{grid-template-columns:1fr 1fr !important;}
+  .opt-grid{grid-template-columns:1fr !important;}
+  .stat-grid, .stats-grid{grid-template-columns:1fr 1fr !important;}
+  .stat-val{font-size:18px !important;}
+
+  /* ── Order Ticket: stack all rows vertically, full-width inputs ── */
+  .ord-form{max-width:100% !important;padding:10px !important;}
+  .ord-row{flex-direction:column !important;gap:8px !important;}
+  .ord-field{min-width:0 !important;width:100%;}
+  .ord-field input, .ord-field select{width:100% !important;}
+  /* Live-quote panel: 3 cols on mobile instead of 5 */
+  .quote-panel{grid-template-columns:repeat(3, 1fr) !important;}
+
+  /* ── Multi-select sector dropdown: full-width on mobile ── */
+  .sect-wrap{width:100%;}
+  .sect-btn{width:100%;min-width:0;min-height:44px;font-size:14px;}
+  .sect-dd{left:0;right:0;min-width:0;max-height:60vh;}
+  .sect-opt{padding:8px 6px;font-size:13px;min-height:36px;}
+  .sect-opt input{width:18px;height:18px;}
+
+  /* ── Trailing stop + step fill panels: stack + full-width ── */
+  .ts-panel-hdr{flex-direction:column;align-items:flex-start;}
+  .ts-cfg, .ts-inline{flex-direction:column;align-items:stretch;gap:8px;}
+  .ts-field, .ts-inline-field{width:100%;}
+  .ts-field input, .ts-inline-field input, .ts-inline-field select{width:100% !important;}
+  .step-fill-cfg{flex-direction:column;gap:8px;}
+  .step-cfg-field{width:100%;}
+
+  /* ── Chart containers: honor viewport height ── */
+  canvas, .chart-container{max-width:100% !important;}
+
+  /* ── Toast: bottom-centered above home indicator ── */
+  #toast{
+    bottom: calc(20px + env(safe-area-inset-bottom, 0)) !important;
+    left:10px !important;right:10px !important;width:auto !important;
+    font-size:13px !important;
+  }
+
+  /* ── Modals / overlays: fill the screen with padding ── */
+  .modal, .overlay, .ord-modal{
+    padding:env(safe-area-inset-top,0) env(safe-area-inset-right,0) env(safe-area-inset-bottom,0) env(safe-area-inset-left,0) !important;
+  }
+
+  /* ── Order-ticket "ACTION BUTTONS" row: big, full-width, thumb-friendly ── */
+  .ord-row button.btn{min-height:48px;font-size:14px !important;font-weight:700;}
+
+  /* ── Utility: hide descriptive helper text that clutters mobile ── */
+  .mobile-hide-helper{display:none !important;}
+  .strategy-desc, #strategy-desc-sc{display:none !important;}
+}
+
+/* iPhone-specific: treat very narrow screens as needing extra compression */
+@media(max-width:430px){
+  body{font-size:13px;}
+  .ntab{font-size:10px;padding:9px 10px;}
+  .stat-val{font-size:16px !important;}
+  .card-hdr{padding:7px 10px;}
 }
 
 .chain-tabs{display:flex;gap:0;border-bottom:var(--bdr);background:var(--bg1);flex-shrink:0;}
@@ -459,6 +587,12 @@ tr.sel-row td{background:var(--blu3);}
   </div>
 </div>
 <div class="tab-pane" id="tab-sc">
+  <!-- Mobile-only: condensed action bar with SCAN + Filters toggle -->
+  <button type="button" class="mobile-filter-toggle show" onclick="toggleMobileFilters()" id="sc-mobile-filter-btn">
+    <span>☰</span><span>FILTERS</span><span class="mft-arr">▾</span>
+    <span id="sc-mobile-filter-count" style="margin-left:auto;color:var(--gry);font-size:10px;"></span>
+  </button>
+  <div id="sc-filter-bars">
   <!-- Strategy mode quick filters -->
   <div class="flt-bar" style="flex-wrap:wrap;gap:6px;border-bottom:1px solid var(--bg3);">
     <span style="font-family:var(--ff-mono);font-size:10px;color:var(--amb);letter-spacing:.5px;margin-right:2px;">STRATEGY:</span>
@@ -529,6 +663,7 @@ tr.sel-row td{background:var(--blu3);}
       <button class="btn" style="font-size:10px;padding:2px 8px;" onclick="clearCustomTickers()">CLR</button>
     </div>
   </div>
+  </div><!-- /#sc-filter-bars -->
   <!-- Progress bar -->
   <div id="sc-progress-wrap" style="display:none;padding:6px 12px;background:var(--bg1);border-bottom:1px solid var(--bg3);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -2677,10 +2812,20 @@ function _parseCsvLine(line){
 }
 async function loadTickerCSV(filename){
   filename = filename || 'ticker416.csv';
+  // Cache-bust with a version param so stale browser caches don't serve
+  // an old 404. The timestamp granularity (hourly) keeps CDN-friendly
+  // caching without letting a stale 404 persist for days.
+  var bust = Math.floor(Date.now() / 3600000);
+  var url = filename + '?v=' + bust;
   try{
-    var resp = await fetch(filename, {cache:'no-cache'});
-    if(!resp.ok) throw new Error('HTTP '+resp.status);
+    var resp = await fetch(url, {cache:'no-cache'});
+    if(!resp.ok) throw new Error('HTTP '+resp.status+' — file not found at '+filename);
     var txt = await resp.text();
+    // Guard: if GitHub Pages returns the repo's 404 page (HTML), bail
+    if(txt.trim().slice(0,15).toLowerCase().indexOf('<!doctype') === 0 ||
+       txt.trim().slice(0,6).toLowerCase() === '<html>'){
+      throw new Error('got HTML 404 page instead of CSV — file missing at '+filename);
+    }
     var lines = txt.split(/\r?\n/).filter(function(l){return l.trim().length>0;});
     if(lines.length < 2) throw new Error('CSV has no data rows');
     var head = _parseCsvLine(lines[0]).map(function(s){return s.trim().toLowerCase();});
@@ -2698,18 +2843,36 @@ async function loadTickerCSV(filename){
       seen[t] = true;
       arr.push({t:t, s:s});
     }
-    if(arr.length === 0) throw new Error('no valid rows parsed');
+    if(arr.length === 0) throw new Error('no valid rows parsed — check Symbol column exists');
     UNIVERSE_FULL = arr;
     G._tickerSource = filename+' ('+arr.length+' tickers)';
-    console.log('[ticker-csv] Loaded '+arr.length+' tickers from '+filename);
+    G._tickerLoadStatus = 'ok';
+    G._tickerLoadError = null;
+    console.log('[ticker-csv] ✓ Loaded '+arr.length+' tickers from '+filename);
     try{
       var el = document.getElementById('sc-universe-label');
-      if(el && !G.scanRunning) el.textContent = filename.toUpperCase()+' — '+arr.length+' tickers (ready)';
+      if(el && !G.scanRunning){
+        el.textContent = '✓ '+filename+' — '+arr.length+' tickers loaded';
+        el.style.color = 'var(--grn)';
+      }
     }catch(e){}
     return arr.length;
   }catch(e){
-    console.log('[ticker-csv] Using embedded fallback ('+UNIVERSE_FULL.length+' tickers). Reason: '+e.message);
     G._tickerSource = 'embedded ('+UNIVERSE_FULL.length+' tickers)';
+    G._tickerLoadStatus = 'fallback';
+    G._tickerLoadError = e.message;
+    console.warn('[ticker-csv] ✗ CSV load FAILED — using embedded fallback ('+UNIVERSE_FULL.length+' tickers). Reason: '+e.message);
+    try{
+      var el2 = document.getElementById('sc-universe-label');
+      if(el2 && !G.scanRunning){
+        el2.textContent = '⚠ ticker416.csv not loaded — using embedded ' + UNIVERSE_FULL.length + ' (' + e.message + ')';
+        el2.style.color = 'var(--wrn)';
+      }
+      // Also surface a toast so the user sees it without checking DevTools
+      if(typeof toast === 'function'){
+        setTimeout(function(){ toast('ticker416.csv not loaded — using embedded universe', 4000); }, 500);
+      }
+    }catch(e2){}
     return 0;
   }
 }
@@ -2901,6 +3064,74 @@ function sectorAllowed(sec){
   if(G.selectedSectors.has('__NONE__')) return false;
   return G.selectedSectors.has(sec);
 }
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  SECTOR EXCLUSION LIST — hard-filters entire sectors from the scanner
+//  unless the ticker is on the allowlist. Lives on G so it can be tweaked
+//  at runtime from the console: G.sectorExclusions.sectors / .allowlist
+//
+//  Example: block all Health Technology and Health Services except HIMS, OSCR
+// ═══════════════════════════════════════════════════════════════════════════
+G.sectorExclusions = {
+  // Sector names (case-insensitive, matched against the sector field
+  // on each ticker) to exclude from scans and results.
+  sectors: ['Health technology', 'Health services'],
+  // Tickers that are allowed through even if their sector is on the
+  // exclusion list. (Symbols, upper-case.)
+  allowlist: ['HIMS', 'OSCR']
+};
+
+function tickerPassesSectorExclusion(ticker, sector){
+  var ex = G.sectorExclusions;
+  if(!ex || !ex.sectors || ex.sectors.length === 0) return true;
+  var sec = (sector || '').trim().toLowerCase();
+  var blocked = ex.sectors.some(function(s){ return String(s).trim().toLowerCase() === sec; });
+  if(!blocked) return true;
+  // Sector is blocked — only allow if ticker is on the allowlist
+  var sym = (ticker || '').trim().toUpperCase();
+  if(ex.allowlist && ex.allowlist.indexOf(sym) !== -1) return true;
+  return false;
+}
+// Return results filtered by the hard sector exclusion list. Use this any
+// time you'd otherwise do G.results.slice() — it keeps excluded tickers
+// out of every view (buy signals, scan table, cache restore, etc).
+function excludedFilteredResults(){
+  return (G.results||[]).filter(function(r){
+    return tickerPassesSectorExclusion(r.ticker, r.sector);
+  });
+}
+
+// ── Mobile: collapse/expand the scanner filter bars ──
+function toggleMobileFilters(){
+  var wrap = eid('sc-filter-bars');
+  var btn  = eid('sc-mobile-filter-btn');
+  if(!wrap) return;
+  var bars = wrap.querySelectorAll('.flt-bar');
+  var collapsed = bars[0] && bars[0].classList.contains('mobile-collapsed');
+  bars.forEach(function(b){
+    if(collapsed) b.classList.remove('mobile-collapsed');
+    else b.classList.add('mobile-collapsed');
+  });
+  if(btn) btn.classList.toggle('open', collapsed);
+}
+// Collapse filters by default on mobile
+(function(){
+  try{
+    if(window.matchMedia('(max-width:768px)').matches){
+      // Run after DOM is ready
+      var doit = function(){
+        var wrap = document.getElementById('sc-filter-bars');
+        if(!wrap) return;
+        wrap.querySelectorAll('.flt-bar').forEach(function(b){ b.classList.add('mobile-collapsed'); });
+      };
+      if(document.readyState === 'loading'){
+        document.addEventListener('DOMContentLoaded', doit, {once:true});
+      } else {
+        doit();
+      }
+    }
+  }catch(e){}
+})();
 
 function addAlert(tk,msg,type){
   G.alerts.unshift({tk:tk,msg:msg,type:type,ts:new Date().toLocaleTimeString()});
@@ -5473,6 +5704,8 @@ function renderBuySig(){
   // Derive top sector from actual GO signals \u2014 matches Market Breadth
   var sectorGoCounts={}, sectorAllCounts={};
   G.results.forEach(function(r){
+    // Hard sector exclusion (e.g. no health sectors except allowlist)
+    if(!tickerPassesSectorExclusion(r.ticker, r.sector)) return;
     if(r.isGo) goCount++; else noCount++;
     scoreSum += r.score;
     sectorAllCounts[r.sector] = (sectorAllCounts[r.sector]||0) + 1;
@@ -5573,6 +5806,8 @@ async function fetchDynamicUniverse(key, mode){
     // Respect the multi-select sector filter — only scan selected sectors.
     // Empty G.selectedSectors = "all sectors".
     if(!sectorAllowed(u.s)) return false;
+    // Apply hard sector exclusion (e.g. health sectors except allowlist)
+    if(!tickerPassesSectorExclusion(u.t, u.s)) return false;
     return true;
   });
   // Always include SPY as a market reference, regardless of sector filter
@@ -5869,7 +6104,7 @@ function finishScan(){
   updateSectorLabel();
 
   G.results.sort(function(a,b){ return b.score - a.score; });
-  G.filtered = G.results.slice();
+  G.filtered = excludedFilteredResults();
   setScanProgress(100, 'Complete \u2014 ' + G.results.length + ' tickers');
 
   // Update stats bar
@@ -5920,7 +6155,7 @@ function finishScan(){
             window._rescoredCount++;
             if(window._rescoredCount % 25 === 0){
               G.results.sort(function(a,b){ return b.score-a.score; });
-              G.filtered = G.results.slice();
+              G.filtered = excludedFilteredResults();
               renderBuySig(); renderScan();
             }
           }
@@ -6014,6 +6249,8 @@ function applyFilters(){
   }
 
   G.filtered = G.results.filter(function(r){
+    // Hard sector exclusion (e.g. no health sectors except allowlist)
+    if(!tickerPassesSectorExclusion(r.ticker, r.sector)) return false;
     // Multi-select sector filter
     if(!sectorAllowed(r.sector)) return false;
     if(sig === 'GO' && !r.isGo) return false;
@@ -6080,7 +6317,7 @@ function clearFilters(){
   });
   var countEl = eid('sc-filter-count');
   if(countEl) countEl.textContent = '';
-  G.filtered = G.results.slice();
+  G.filtered = excludedFilteredResults();
   renderScan();
 }
 
@@ -6343,7 +6580,7 @@ function runGex(){
         r.isGo = updated.isGo; r.rules = updated.rules; r.passes = updated.passes;
       });
       G.results.sort(function(a,b){ return b.score - a.score; });
-      G.filtered = G.results.slice();
+      G.filtered = excludedFilteredResults();
       renderBuySig(); renderScan();
       toast('GEX loaded \u2014 scores updated');
       // Re-check high-conviction signals now that GEX bonus is applied
@@ -11133,7 +11370,7 @@ function init(){
   var cachedScan = cacheGet(CACHE_KEYS.scanResults);
   if(cachedScan && cachedScan.length){
     G.results = cachedScan;
-    G.filtered = cachedScan;
+    G.filtered = cachedScan.filter(function(r){ return tickerPassesSectorExclusion(r.ticker, r.sector); });
     if(typeof renderBuySig==='function') renderBuySig();
     if(typeof renderScan==='function') renderScan();
     var scanAge = cacheAge(CACHE_KEYS.scanTs);
