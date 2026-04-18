@@ -92,6 +92,9 @@ a{color:var(--blu);text-decoration:none;}
 .ntab.active{color:var(--amb);border-bottom-color:var(--amb);text-shadow:0 0 15px rgba(0,212,255,.4);}
 #app{height:calc(100vh - 68px);overflow:hidden;position:relative;}
 .tab-pane{display:none;height:100%;overflow:hidden;}
+/* Hide the mobile filter toggle on desktop \u2014 the CSS that reveals it only applies in @media(max-width:768px) */
+.mobile-filter-toggle{display:none !important;}
+@media(max-width:768px){ .mobile-filter-toggle.show{display:inline-flex !important;} }
 .tab-pane.active{display:flex;flex-direction:column;}
 .stats-bar{display:flex;gap:0;border-bottom:var(--bdr);flex-shrink:0;}
 .stat-box{flex:1;padding:8px 12px;border-right:var(--bdr);text-align:center;}
@@ -554,7 +557,7 @@ tr.sel-row td{background:var(--blu3);}
 .tbl-wrap tbody tr:hover{background:rgba(0,212,255,0.04);}
 
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<!-- echarts CDN removed \u2014 detail-view charts removed, nothing uses echarts anymore -->
 </head>
 <body>
 <div id="hdr">
@@ -570,6 +573,7 @@ tr.sel-row td{background:var(--blu3);}
   </div>
   <div id="hdr-right">
     <button id="theme-toggle" onclick="toggleLightMode()" title="Toggle light / dark mode" style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:2px 8px;font-size:10px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;cursor:pointer;">&#9788; LIGHT</button>
+    <span id="hdr-opt-bp" title="Option buying power from Tradier \u2014 click to refresh" onclick="fetchBalances()" style="cursor:pointer;background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.3);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--grn);letter-spacing:.5px;">OPT BP: --</span>
     <span id="clk">--:--:--</span>
     <span id="mkt-status">--</span>
     <span id="mode-badge">SANDBOX</span>
@@ -1483,21 +1487,56 @@ tr.sel-row td{background:var(--blu3);}
         <span style="font-family:var(--ff-brand);font-size:12px;color:var(--amb);letter-spacing:2px;">&#128203; PASTE FROM ROBINHOOD</span>
         <button class="btn" style="font-size:10px;padding:2px 8px;" onclick="pfClosePasteModal()">&#10005;</button>
       </div>
-      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:8px;">
-        <p style="color:var(--gry);font-size:11px;line-height:1.5;margin:0;">
-          Copy your options positions table from Robinhood's web UI (or any source).
-          Paste here &mdash; the parser will pull out <b style="color:var(--amb);">ticker, strike, expiry, type, contracts</b>.
-          Also accepts CSV. One position per line.
-        </p>
-        <p style="color:var(--gry);font-size:10px;margin:0;">Examples accepted:<br>
-          <code style="color:var(--ambb);">NVDA $150 Call 12/19/2025 x3</code><br>
-          <code style="color:var(--ambb);">AMZN,220,2026-01-16,CALL,2</code><br>
-          <code style="color:var(--ambb);">MU 160C 1/16/26  5 contracts</code>
-        </p>
-        <textarea id="pf-paste-text" style="width:100%;height:180px;background:var(--bg0);border:var(--bdr);color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:8px;border-radius:3px;" placeholder="Paste positions here..."></textarea>
-        <div id="pf-paste-preview" style="font-size:10px;color:var(--gry);max-height:120px;overflow-y:auto;font-family:var(--ff-mono);"></div>
+      <div style="padding:14px 16px;display:flex;flex-direction:column;gap:10px;overflow-y:auto;">
+
+        <!-- ─── METHOD 1: Guided Position Builder (fastest, no parsing) ─── -->
+        <div style="background:var(--bg2);border:1px solid var(--grn);border-radius:4px;padding:10px;">
+          <div style="font-family:var(--ff-brand);font-size:11px;color:var(--grn);letter-spacing:2px;margin-bottom:8px;">&#10003; METHOD 1 &mdash; GUIDED BUILDER (RECOMMENDED)</div>
+          <div style="display:grid;grid-template-columns:1fr 80px 130px 80px 60px auto;gap:6px;align-items:center;font-size:11px;">
+            <input type="text" id="pf-b-tk" placeholder="TICKER" maxlength="6" style="text-transform:uppercase;background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
+            <input type="number" id="pf-b-strike" placeholder="Strike" step="0.5" min="0" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
+            <input type="date" id="pf-b-exp" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
+            <select id="pf-b-type" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);"><option value="CALL">CALL</option><option value="PUT">PUT</option></select>
+            <input type="number" id="pf-b-qty" placeholder="Qty" value="1" min="1" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
+            <button class="btn grn" style="font-size:10px;padding:6px 10px;" onclick="pfBuilderAdd()">+ ADD</button>
+          </div>
+          <div style="font-size:9px;color:var(--gry);margin-top:6px;">Fill fields &rarr; ADD &rarr; row lands in the staging list below. Repeat for each position, then IMPORT.</div>
+        </div>
+
+        <!-- ─── METHOD 2: CSV Template (for bulk entry in Excel/Sheets) ─── -->
+        <div style="background:var(--bg2);border:1px solid var(--amb);border-radius:4px;padding:10px;">
+          <div style="font-family:var(--ff-brand);font-size:11px;color:var(--amb);letter-spacing:2px;margin-bottom:6px;">&#128196; METHOD 2 &mdash; CSV TEMPLATE</div>
+          <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+            <button class="btn" style="font-size:11px;padding:5px 12px;border-color:var(--amb);color:var(--amb);" onclick="pfDownloadCSVTemplate()">&#10515; DOWNLOAD TEMPLATE</button>
+            <label class="btn" style="font-size:11px;padding:5px 12px;border-color:var(--amb);color:var(--amb);cursor:pointer;">&#128228; UPLOAD FILLED CSV<input type="file" accept=".csv,text/csv" style="display:none;" onchange="pfUploadCSV(this)"></label>
+            <span style="font-size:10px;color:var(--gry);">Columns: <b style="color:var(--ambb);">TICKER, STRIKE, EXPIRATION, TYPE, QTY</b></span>
+          </div>
+        </div>
+
+        <!-- ─── METHOD 3: Paste (best-effort parser, fallback) ─── -->
+        <details style="background:var(--bg2);border:1px solid var(--bg3);border-radius:4px;padding:8px;">
+          <summary style="cursor:pointer;font-family:var(--ff-brand);font-size:11px;color:var(--gry);letter-spacing:2px;">&#128203; METHOD 3 &mdash; PASTE / FREE-FORM (FALLBACK)</summary>
+          <div style="padding-top:8px;">
+            <p style="color:var(--gry);font-size:10px;line-height:1.5;margin:0 0 6px 0;">
+              Best-effort parser &mdash; Robinhood's clipboard format is inconsistent. If lines fail to parse, use Method 1 or 2.
+            </p>
+            <p style="color:var(--gry);font-size:10px;margin:0 0 6px 0;">Examples accepted:<br>
+              <code style="color:var(--ambb);">NVDA $150 Call 12/19/2025 x3</code><br>
+              <code style="color:var(--ambb);">AMZN,220,2026-01-16,CALL,2</code><br>
+              <code style="color:var(--ambb);">MU 160C 1/16/26  5 contracts</code>
+            </p>
+            <textarea id="pf-paste-text" style="width:100%;height:100px;background:var(--bg0);border:var(--bdr);color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:8px;border-radius:3px;" placeholder="Paste positions here..."></textarea>
+            <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
+              <button class="btn" style="font-size:11px;padding:5px 12px;" onclick="pfParsePreview()">&#128270; PREVIEW PARSE</button>
+            </div>
+          </div>
+        </details>
+
+        <!-- Staging list (shared by all methods) -->
+        <div id="pf-paste-preview" style="font-size:10px;color:var(--gry);max-height:160px;overflow-y:auto;font-family:var(--ff-mono);border:var(--bdr);padding:6px;border-radius:3px;min-height:40px;background:var(--bg0);">Staged positions will appear here.</div>
+
         <div style="display:flex;gap:8px;justify-content:flex-end;">
-          <button class="btn" style="font-size:11px;padding:5px 12px;" onclick="pfParsePreview()">&#128270; PREVIEW PARSE</button>
+          <button class="btn" style="font-size:11px;padding:5px 12px;border-color:var(--wrn);color:var(--wrn);" onclick="pfBuilderClear()">&#10005; CLEAR STAGED</button>
           <button class="btn blu" style="font-size:11px;padding:5px 12px;" onclick="pfImportPasted()">&#10003; IMPORT TO COLUMN</button>
         </div>
       </div>
@@ -5550,7 +5589,7 @@ function buildDetail(r,detId,emptyId){
     +'<div class="chain-tab active" id="dtab-signals" onclick="switchDetTab(\''+r.ticker+'\',\'signals\')">SIGNALS</div>'
     +'<div class="chain-tab" id="dtab-chain" onclick="switchDetTab(\''+r.ticker+'\',\'chain\')">&#9783; OPTION CHAIN</div>'
     +'</div>'
-    +'<div id="det-signals-'+r.ticker+'" style="display:flex;flex-direction:column;overflow:hidden;flex:1;">'    +'<div id="chart-wrap-'+r.ticker+'" style="flex-shrink:0;height:320px;background:var(--bg0);border-bottom:1px solid var(--bg3);display:flex;flex-direction:row;">'+'<div style="flex:1;position:relative;border-right:1px solid var(--bg3);">'+'<div style="position:absolute;top:4px;left:58px;font-size:9px;color:var(--gry);font-family:var(--ff-mono);letter-spacing:1px;z-index:2;">DAILY</div>'+'<div id="chart-ec-'+r.ticker+'" style="width:100%;height:100%;"></div>'+'<div id="chart-loading-'+r.ticker+'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--gry);font-size:11px;font-family:var(--ff-mono);letter-spacing:1px;">LOADING CHART...</div>'+'</div>'+'<div style="flex:1;position:relative;">'+'<div style="position:absolute;top:4px;left:58px;font-size:9px;color:var(--gry);font-family:var(--ff-mono);letter-spacing:1px;z-index:2;">1 MIN</div>'+'<div id="chart-1m-'+r.ticker+'" style="width:100%;height:100%;"></div>'+'<div id="chart-loading-1m-'+r.ticker+'" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--gry);font-size:11px;font-family:var(--ff-mono);letter-spacing:1px;">LOADING 1M...</div>'+'</div>'+'</div>'    +'<div class="det-scroll">'
+    +'<div id="det-signals-'+r.ticker+'" style="display:flex;flex-direction:column;overflow:hidden;flex:1;">'    +'<div class="det-scroll">'
     +'<div class="s-hdr">TECHNICAL INDICATORS</div>'
     +'<div class="ind-grid">'
     +'<div class="ig-cell"><div class="ig-lbl">RSI(14)</div><div class="ig-val '+(ind.rsi<40||ind.rsi>70?'warn':'')+'">'+ind.rsi+'</div></div>'
@@ -5598,233 +5637,10 @@ function buildDetail(r,detId,emptyId){
     closeDiv.id = 'det-signals-close-'+r.ticker;
     sigDiv.style.overflow = 'hidden';
   }
-  // TV charts removed
-  // Render ECharts daily candle chart for this ticker
-  renderTickerChart(r.ticker);
+  // Charts removed \u2014 detail panel shows signals + option chain only
 }
 
-function renderTickerChart(ticker) {
-  var loadEl  = document.getElementById('chart-loading-' + ticker);
-  var loadEl1m= document.getElementById('chart-loading-1m-' + ticker);
-  var chartEl = document.getElementById('chart-ec-' + ticker);
-  var chart1m = document.getElementById('chart-1m-' + ticker);
-  if (!chartEl) return;
-
-  var mode = localStorage.getItem('rrjcar_mode') || 'sandbox';
-  var host = mode === 'live' ? 'https://api.tradier.com' : 'https://sandbox.tradier.com';
-  var tk = '';
-  try {
-    tk = mode === 'live'
-      ? (localStorage.getItem('rrjcar_tradier_live') || localStorage.getItem('rrjcar_tradier') || '')
-      : (localStorage.getItem('rrjcar_tradier_sandbox') || localStorage.getItem('rrjcar_tradier') || '');
-    if (!tk) tk = (typeof TRADIER_KEY_DEFAULT !== 'undefined') ? TRADIER_KEY_DEFAULT : '';
-  } catch(e) {}
-
-  var fmt = function(d){ return d.toISOString().slice(0,10); };
-
-  // ── Daily chart: 120 days fetch, default zoom to last 30 days ────────────
-  var dEnd   = new Date();
-  var dStart = new Date(); dStart.setDate(dStart.getDate() - 120);
-
-  fetch(host + '/v1/markets/history?symbol=' + ticker + '&interval=daily&start=' + fmt(dStart) + '&end=' + fmt(dEnd), {
-    headers: { 'Authorization': 'Bearer ' + tk, 'Accept': 'application/json' }  })
-  .then(function(r){ return r.json(); })
-  .then(function(data) {
-    if (loadEl) loadEl.style.display = 'none';
-    var days = (data.history && data.history.day) ? data.history.day : [];
-    if (!Array.isArray(days)) days = [days];
-    if (!days.length) { if (loadEl) { loadEl.style.display='flex'; loadEl.textContent='NO DATA'; } return; }
-
-    var labels = days.map(function(d){ return d.date.slice(5); });
-    var closes = days.map(function(d){ return +d.close; });
-
-    function calcEma(data, period) {
-      var k = 2/(period+1), out=[], prev=null;
-      data.forEach(function(v,i){
-        if(i<period-1){out.push(null);return;}
-        if(prev===null){prev=data.slice(0,period).reduce(function(a,b){return a+b;},0)/period;out.push(+prev.toFixed(2));return;}
-        prev=v*k+prev*(1-k); out.push(+prev.toFixed(2));
-      });
-      return out;
-    }
-
-    var ema10=calcEma(closes,10), ema20=calcEma(closes,20), ema50=calcEma(closes,50);
-
-    function findSR(data, lb) {
-      lb=lb||4;
-      var highs=[], lows=[];
-      for(var i=lb;i<data.length-lb;i++){
-        var h=data[i].high, l=data[i].low, isH=true, isL=true;
-        for(var j=i-lb;j<i;j++){if(data[j].high>h)isH=false;if(data[j].low<l)isL=false;}
-        for(var j=i+1;j<=i+lb;j++){if(data[j].high>h)isH=false;if(data[j].low<l)isL=false;}
-        if(isH)highs.push(h); if(isL)lows.push(l);
-      }
-      function cluster(pts){
-        var zones=[], tol=(Math.max.apply(null,closes)-Math.min.apply(null,closes))*0.015;
-        pts.sort(function(a,b){return a-b;});
-        pts.forEach(function(p){
-          var m=null;
-          for(var i=0;i<zones.length;i++){if(Math.abs(zones[i].mid-p)<tol){m=zones[i];break;}}
-          if(m){m.vals.push(p);m.mid=m.vals.reduce(function(a,b){return a+b;},0)/m.vals.length;}
-          else zones.push({mid:p,vals:[p]});
-        });
-        return zones.map(function(z){return{lo:+(z.mid-tol*0.6).toFixed(2),hi:+(z.mid+tol*0.6).toFixed(2)};});
-      }
-      return{res:cluster(highs),sup:cluster(lows)};
-    }
-
-    var sr=findSR(days,4);
-    var priceMin=Math.min.apply(null,days.map(function(d){return d.low;}))*0.99;
-    var priceMax=Math.max.apply(null,days.map(function(d){return d.high;}))*1.01;
-
-    // Filled S/R zones with solid color
-    var resAreas=sr.res.map(function(z){return[
-      {yAxis:z.lo,itemStyle:{color:'rgba(255,60,60,0.18)',borderColor:'rgba(255,82,82,0.55)',borderWidth:1}},
-      {yAxis:z.hi}
-    ];});
-    var supAreas=sr.sup.map(function(z){return[
-      {yAxis:z.lo,itemStyle:{color:'rgba(0,210,100,0.15)',borderColor:'rgba(0,230,118,0.55)',borderWidth:1}},
-      {yAxis:z.hi}
-    ];});
-
-    // LuxAlgo SMC order blocks (internal, pivot 5) \u2014 use 260-day cache if present, else 120d
-    var obBearAreas=[], obBullAreas=[];
-    try{
-      var obDays = G_OB_CACHE[ticker] || days;
-      var obs = detectOrderBlocks(obDays, {pivotSize:5, maxShow:5, mitigation:'highlow', filter:'atr'});
-      obBearAreas = (obs.bearish||[]).map(function(ob){ return [
-        {yAxis:ob.barLow,  itemStyle:{color:'rgba(247,124,128,0.28)', borderColor:'rgba(247,124,128,0.75)', borderWidth:1}},
-        {yAxis:ob.barHigh}
-      ]; });
-      obBullAreas = (obs.bullish||[]).map(function(ob){ return [
-        {yAxis:ob.barLow,  itemStyle:{color:'rgba(49,121,245,0.22)',  borderColor:'rgba(49,121,245,0.75)', borderWidth:1}},
-        {yAxis:ob.barHigh}
-      ]; });
-    }catch(e){}
-
-    // Default zoom: show last ~22 trading days (1 month)
-    var zoomStart = Math.max(0, Math.round(((days.length-22)/days.length)*100));
-
-    var ec=echarts.init(chartEl,null,{renderer:'canvas'});
-    ec.setOption({
-      backgroundColor:'transparent', animation:false,
-      tooltip:{
-        trigger:'axis',
-        axisPointer:{type:'cross',crossStyle:{color:'rgba(55,138,221,0.35)',width:1}},
-        backgroundColor:'#071018',borderColor:'rgba(0,212,255,0.2)',
-        textStyle:{color:'#c8daf8',fontSize:10},
-        formatter:function(params){
-          var c=null;for(var i=0;i<params.length;i++){if(params[i].seriesName==='Price'){c=params[i];break;}}
-          if(!c)return '';
-          var d=days[c.dataIndex],chg=(((d.close-d.open)/d.open)*100).toFixed(2);
-          var e10=ema10[c.dataIndex],e20=ema20[c.dataIndex],e50=ema50[c.dataIndex];
-          return '<b>'+c.name+'</b><br>O:$'+d.open+' H:$'+d.high+' L:$'+d.low+' C:$'+d.close+'<br>'+(chg>=0?'+':'')+chg+'%'
-            +(e10?'<br><span style="color:#00e676">EMA10:$'+e10+'</span>':'')
-            +(e20?'<br><span style="color:#ffd740">EMA20:$'+e20+'</span>':'')
-            +(e50?'<br><span style="color:#ff5252">EMA50:$'+e50+'</span>':'');
-        }
-      },
-      grid:{left:56,right:8,top:18,bottom:36},
-      xAxis:{type:'category',data:labels,axisLine:{lineStyle:{color:'rgba(120,140,180,0.1)'}},axisLabel:{color:'#7090c8',fontSize:8,interval:Math.floor(days.length/6)},splitLine:{show:false}},
-      yAxis:{scale:true,min:priceMin,max:priceMax,splitLine:{lineStyle:{color:'rgba(120,140,180,0.08)',type:'dashed'}},axisLabel:{color:'#7090c8',fontSize:8,formatter:function(v){return '$'+v.toFixed(0);}}},
-      dataZoom:[
-        {type:'inside',start:zoomStart,end:100},
-        {type:'slider',start:zoomStart,end:100,bottom:0,height:18,borderColor:'rgba(0,212,255,0.15)',fillerColor:'rgba(0,212,255,0.05)',handleStyle:{color:'#378ADD'},textStyle:{color:'#7090c8',fontSize:8},dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}}
-      ],
-      series:[
-        {name:'Price',type:'candlestick',data:days.map(function(d){return[d.open,d.close,d.low,d.high];}),
-          itemStyle:{color:'#1D9E75',color0:'#D85A30',borderColor:'#1D9E75',borderColor0:'#D85A30',borderWidth:1},
-          barMaxWidth:10,markArea:{silent:true,data:resAreas.concat(supAreas).concat(obBearAreas).concat(obBullAreas)}},
-        {name:'EMA10',type:'line',data:ema10,smooth:false,lineStyle:{color:'#00e676',width:1.5},symbol:'none',connectNulls:false},
-        {name:'EMA20',type:'line',data:ema20,smooth:false,lineStyle:{color:'#ffd740',width:1.5},symbol:'none',connectNulls:false},
-        {name:'EMA50',type:'line',data:ema50,smooth:false,lineStyle:{color:'#ff5252',width:2},symbol:'none',connectNulls:false}
-      ]
-    });
-    var ro=new ResizeObserver(function(){ec.resize();});ro.observe(chartEl);
-  })
-  .catch(function(e){if(loadEl){loadEl.style.display='flex';loadEl.textContent='CHART UNAVAILABLE';}});
-
-  // ── 1-Minute intraday chart ───────────────────────────────────────────────
-  if (!chart1m) return;
-  var now=new Date(), mStart=new Date(now);
-  mStart.setHours(9,30,0,0);
-  var mEnd=new Date(now); mEnd.setHours(16,0,0,0);
-  // If weekend or before market open, go back to last Friday/previous day
-  if(now.getDay()===0) mStart.setDate(mStart.getDate()-2);
-  if(now.getDay()===6) mStart.setDate(mStart.getDate()-1);
-  var fmtTs=function(d){return d.getFullYear()+'-'+(d.getMonth()+1<10?'0':'')+(d.getMonth()+1)+'-'+(d.getDate()<10?'0':'')+d.getDate()+' '+(d.getHours()<10?'0':'')+d.getHours()+':'+(d.getMinutes()<10?'0':'')+d.getMinutes()+':00';};
-
-  fetch(host+'/v1/markets/timesales?symbol='+ticker+'&interval=1min&start='+encodeURIComponent(fmtTs(mStart))+'&end='+encodeURIComponent(fmtTs(mEnd))+'&session_filter=open', {
-    headers:{'Authorization':'Bearer '+tk,'Accept':'application/json'}
-  })
-  .then(function(r){return r.json();})
-  .then(function(data){
-    if(loadEl1m)loadEl1m.style.display='none';
-    var series=(data.series&&data.series.data)?data.series.data:[];
-    if(!Array.isArray(series))series=[series];
-    if(!series.length){if(loadEl1m){loadEl1m.style.display='flex';loadEl1m.textContent='NO INTRADAY DATA';}return;}
-
-    var m_labels=series.map(function(d){return d.time.slice(11,16);});
-    var m_closes=series.map(function(d){return +d.close;});
-
-    function calcEmaM(data,period){
-      var k=2/(period+1),out=[],prev=null;
-      data.forEach(function(v,i){
-        if(i<period-1){out.push(null);return;}
-        if(prev===null){prev=data.slice(0,period).reduce(function(a,b){return a+b;},0)/period;out.push(+prev.toFixed(2));return;}
-        prev=v*k+prev*(1-k);out.push(+prev.toFixed(2));
-      });
-      return out;
-    }
-    var m_ema10=calcEmaM(m_closes,10),m_ema20=calcEmaM(m_closes,20),m_ema50=calcEmaM(m_closes,50);
-
-    // VWAP
-    var cumPV=0,cumV=0;
-    var vwap=series.map(function(d){
-      var tp=(+d.high+ +d.low+ +d.close)/3;
-      cumPV+=tp* +d.volume; cumV+= +d.volume;
-      return cumV>0?+(cumPV/cumV).toFixed(2):null;
-    });
-
-    var m_min=Math.min.apply(null,series.map(function(d){return d.low;}))*0.999;
-    var m_max=Math.max.apply(null,series.map(function(d){return d.high;}))*1.001;
-
-    var ec1m=echarts.init(chart1m,null,{renderer:'canvas'});
-    ec1m.setOption({
-      backgroundColor:'transparent',animation:false,
-      tooltip:{
-        trigger:'axis',
-        axisPointer:{type:'cross',crossStyle:{color:'rgba(55,138,221,0.35)',width:1}},
-        backgroundColor:'#071018',borderColor:'rgba(0,212,255,0.2)',
-        textStyle:{color:'#c8daf8',fontSize:10},
-        formatter:function(params){
-          var c=null;for(var i=0;i<params.length;i++){if(params[i].seriesName==='1m'){c=params[i];break;}}
-          if(!c)return '';
-          var d=series[c.dataIndex],chg=(((+d.close-+d.open)/+d.open)*100).toFixed(2);
-          return '<b>'+c.name+'</b><br>O:$'+d.open+' H:$'+d.high+' L:$'+d.low+' C:$'+d.close+'<br>'+(chg>=0?'+':'')+chg+'%'
-            +(vwap[c.dataIndex]?'<br><span style="color:#00d4ff">VWAP:$'+vwap[c.dataIndex]+'</span>':'');
-        }
-      },
-      grid:{left:56,right:8,top:18,bottom:36},
-      xAxis:{type:'category',data:m_labels,axisLine:{lineStyle:{color:'rgba(120,140,180,0.1)'}},axisLabel:{color:'#7090c8',fontSize:8,interval:Math.floor(series.length/6)},splitLine:{show:false}},
-      yAxis:{scale:true,min:m_min,max:m_max,splitLine:{lineStyle:{color:'rgba(120,140,180,0.08)',type:'dashed'}},axisLabel:{color:'#7090c8',fontSize:8,formatter:function(v){return '$'+v.toFixed(2);}}},
-      dataZoom:[
-        {type:'inside',start:0,end:100},
-        {type:'slider',start:0,end:100,bottom:0,height:18,borderColor:'rgba(0,212,255,0.15)',fillerColor:'rgba(0,212,255,0.05)',handleStyle:{color:'#378ADD'},textStyle:{color:'#7090c8',fontSize:8},dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}}
-      ],
-      series:[
-        {name:'1m',type:'candlestick',data:series.map(function(d){return[+d.open,+d.close,+d.low,+d.high];}),
-          itemStyle:{color:'#1D9E75',color0:'#D85A30',borderColor:'#1D9E75',borderColor0:'#D85A30',borderWidth:1},barMaxWidth:6},
-        {name:'EMA10',type:'line',data:m_ema10,smooth:false,lineStyle:{color:'#00e676',width:1},symbol:'none',connectNulls:false},
-        {name:'EMA20',type:'line',data:m_ema20,smooth:false,lineStyle:{color:'#ffd740',width:1},symbol:'none',connectNulls:false},
-        {name:'EMA50',type:'line',data:m_ema50,smooth:false,lineStyle:{color:'#ff5252',width:1.5},symbol:'none',connectNulls:false},
-        {name:'VWAP',type:'line',data:vwap,smooth:false,lineStyle:{color:'#00d4ff',width:0},symbol:'none',connectNulls:true,silent:true}
-      ]
-    });
-    var ro2=new ResizeObserver(function(){ec1m.resize();});ro2.observe(chart1m);
-  })
-  .catch(function(e){if(loadEl1m){loadEl1m.style.display='flex';loadEl1m.textContent='1M UNAVAILABLE';}});
-}
+function renderTickerChart(ticker) { /* charts removed — no-op */ }
 
 function switchDetTab(ticker, tab){
   var sigDiv   = eid('det-signals-'+ticker);
@@ -6132,6 +5948,51 @@ function viewDetail(ticker,detId,emptyId){
  }
 }
 
+// Quick Buy Shares \u2014 places a market equity order via Tradier. Prompts for qty + confirm.
+function quickBuyShares(ticker){
+  if(!ticker) return;
+  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  if(!key){ toast('No Tradier API key \u2014 set it in the API tab'); return; }
+  var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
+  var acct='';try{acct=localStorage.getItem('rrjcar_acct')||G.acctId||'';}catch(e){}
+  if(!acct){ toast('No account ID \u2014 enter it in the API tab'); return; }
+  var qtyStr = prompt('Buy how many shares of '+ticker+'? (Market order, '+mode.toUpperCase()+')','1');
+  if(qtyStr === null) return;
+  var qty = parseInt(qtyStr, 10);
+  if(!qty || qty < 1){ toast('Invalid quantity'); return; }
+  if(!confirm('Place MARKET BUY for '+qty+' share'+(qty>1?'s':'')+' of '+ticker+' on '+mode.toUpperCase()+' account?')) return;
+  var host = mode==='live' ? 'https://api.tradier.com' : 'https://sandbox.tradier.com';
+  var body = 'class=equity&symbol='+encodeURIComponent(ticker)+'&side=buy&quantity='+qty+'&type=market&duration=day';
+  toast('Submitting BUY '+qty+' '+ticker+'...');
+  fetch(host+'/v1/accounts/'+acct+'/orders', {
+    method:'POST',
+    headers:{
+      'Authorization':'Bearer '+key,
+      'Accept':'application/json',
+      'Content-Type':'application/x-www-form-urlencoded'
+    },
+    body: body
+  })
+  .then(function(r){ return r.json(); })
+  .then(function(data){
+    if(data && data.order && (data.order.id || data.order.status)){
+      var oid = data.order.id || '?';
+      var status = data.order.status || 'submitted';
+      toast('\u2713 '+ticker+' buy '+status+' (order '+oid+')', 5000);
+      if(typeof addAlert === 'function') addAlert('BUY', ticker+' market buy '+qty+' sh \u2014 order '+oid+' ('+status+')', 'ok');
+      try{ fetchBalances(); }catch(e){}
+    } else {
+      var errMsg = (data && data.errors && data.errors.error) ? (Array.isArray(data.errors.error)?data.errors.error.join(', '):data.errors.error) : 'unknown error';
+      toast('\u2717 '+ticker+' order failed: '+errMsg, 6000);
+      if(typeof addAlert === 'function') addAlert('BUY', ticker+' order failed: '+errMsg, 'warn');
+    }
+  })
+  .catch(function(e){
+    toast('\u2717 '+ticker+' network error');
+    if(typeof addAlert === 'function') addAlert('BUY', ticker+' network error: '+e.message, 'warn');
+  });
+}
+
 // Shared helpers for search + watchlist star (Buy Signals + Full Scanner)
 function inWatchlist(t){ return G.wlTickers && G.wlTickers.indexOf(t) >= 0; }
 function toggleWatchlistTicker(t){
@@ -6195,7 +6056,10 @@ function renderBuySig(){
     var card=document.createElement('div');
     card.className='sig-card'+(r.isGo?'':' nogo-card');card.dataset.ticker=r.ticker;
     var tk=r.ticker;
-    card.innerHTML='<div class="sc-l"><div class="tk">'+starHTML(tk,14)+tk+'<button class="bs-buy-btn" data-ticker="'+tk+'" title="View all call contracts" style="font-size:9px;padding:2px 7px;margin-left:8px;border:1px solid var(--amb);color:var(--amb);background:var(--amb3);border-radius:3px;cursor:pointer;vertical-align:middle;font-family:var(--ff);">▲ BUY</button></div>'
+    card.innerHTML='<div class="sc-l"><div class="tk">'+starHTML(tk,14)+tk
+      +'<button class="bs-buy-btn" data-ticker="'+tk+'" title="View all call contracts" style="font-size:9px;padding:2px 7px;margin-left:8px;border:1px solid var(--amb);color:var(--amb);background:var(--amb3);border-radius:3px;cursor:pointer;vertical-align:middle;font-family:var(--ff);">▲ BUY</button>'
+      +'<button class="bs-sh-btn" data-ticker="'+tk+'" title="Quick market BUY for shares (Tradier)" style="font-size:9px;padding:2px 7px;margin-left:4px;border:1px solid var(--grn);color:var(--grn);background:var(--grn3);border-radius:3px;cursor:pointer;vertical-align:middle;font-family:var(--ff);">▲ SHARES</button>'
+      +'</div>'
       +'<div class="sc '+(r.isGo?'go':'nogo')+'">'+r.score+'</div>'
       +'<div class="sect">'+r.sector+'</div></div>'
       +'<div class="sc-r"><div class="pr">$'+fmt2(r.price)+'</div>'
@@ -6204,6 +6068,11 @@ function renderBuySig(){
       if(e.target && e.target.classList && e.target.classList.contains('bs-buy-btn')){
         e.stopPropagation();
         openContractPanel(e.target.dataset.ticker);
+        return;
+      }
+      if(e.target && e.target.classList && e.target.classList.contains('bs-sh-btn')){
+        e.stopPropagation();
+        quickBuyShares(e.target.dataset.ticker);
         return;
       }
       viewDetail(tk,'bs-detail','bs-empty');
@@ -8390,12 +8259,32 @@ function closePosition(symbol,type,strike,exp,qty){
 
 function fetchBalances(){
   var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
-  if(!key||!G.acctId){eid('pos-acctval').textContent='--';return;}
+  var bpEl = eid('hdr-opt-bp');
+  if(!key||!G.acctId){
+    if(eid('pos-acctval')) eid('pos-acctval').textContent='--';
+    if(bpEl) bpEl.textContent='OPT BP: --';
+    return;
+  }
   var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
   var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
   fetch(host+'/v1/accounts/'+G.acctId+'/balances',{headers:{Authorization:'Bearer '+key,Accept:'application/json'}})
   .then(function(r){return r.json();})
-  .then(function(data){try{var val=data.balances.total_equity;eid('pos-acctval').textContent=fmtD(val);}catch(e){}}).catch(function(){});
+  .then(function(data){
+    try{
+      var b = data && data.balances ? data.balances : {};
+      if(eid('pos-acctval')) eid('pos-acctval').textContent = fmtD(b.total_equity);
+      // Option buying power: margin accts use margin.option_buying_power; cash uses cash_available; pdt uses pdt.option_buying_power
+      var obp = null;
+      if(b.margin && typeof b.margin.option_buying_power === 'number') obp = b.margin.option_buying_power;
+      else if(b.pdt && typeof b.pdt.option_buying_power === 'number')  obp = b.pdt.option_buying_power;
+      else if(b.cash && typeof b.cash.cash_available === 'number')     obp = b.cash.cash_available;
+      else if(typeof b.total_cash === 'number')                         obp = b.total_cash;
+      if(bpEl){
+        bpEl.textContent = 'OPT BP: ' + (obp != null ? fmtD(obp) : '--');
+        bpEl.title = 'Option buying power (Tradier ' + mode + ') \u2014 click to refresh';
+      }
+    }catch(e){ if(bpEl) bpEl.textContent='OPT BP: err'; }
+  }).catch(function(){ if(bpEl) bpEl.textContent='OPT BP: offline'; });
 }
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
@@ -12049,9 +11938,99 @@ function pfRenderColumnCharts(data){
 function pfOpenPasteModal(colId){
   PF_PASTE_TARGET_COL = colId;
   PF_PASTE_STAGED = [];
-  eid('pf-paste-text').value = '';
-  eid('pf-paste-preview').innerHTML = '';
+  if(eid('pf-paste-text')) eid('pf-paste-text').value = '';
+  if(eid('pf-paste-preview')) eid('pf-paste-preview').innerHTML = 'Staged positions will appear here.';
+  // Clear builder fields
+  ['pf-b-tk','pf-b-strike','pf-b-exp'].forEach(function(id){ var el=eid(id); if(el) el.value=''; });
+  if(eid('pf-b-qty')) eid('pf-b-qty').value='1';
+  if(eid('pf-b-type')) eid('pf-b-type').value='CALL';
   eid('pf-paste-modal').style.display = 'flex';
+}
+
+// ── Guided builder: add a single row from the structured inputs ─────────────
+function pfBuilderAdd(){
+  var tk = (eid('pf-b-tk').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  var strike = parseFloat(eid('pf-b-strike').value);
+  var exp = eid('pf-b-exp').value; // already YYYY-MM-DD from <input type="date">
+  var type = eid('pf-b-type').value;
+  var qty = parseInt(eid('pf-b-qty').value)||1;
+  if(!tk){ toast('Enter a ticker'); return; }
+  if(!strike || strike <= 0){ toast('Enter a valid strike'); return; }
+  if(!exp){ toast('Pick an expiration date'); return; }
+  PF_PASTE_STAGED.push({ ticker:tk, strike:strike, exp:exp, type:type, qty:qty });
+  pfRenderStaged();
+  // Clear builder fields (keep ticker + exp for faster multi-row entry)
+  eid('pf-b-strike').value = '';
+  eid('pf-b-qty').value = '1';
+  eid('pf-b-strike').focus();
+}
+
+function pfBuilderClear(){
+  PF_PASTE_STAGED = [];
+  pfRenderStaged();
+}
+
+function pfRenderStaged(){
+  var out = '<div style="color:var(--amb);margin-bottom:6px;">'+PF_PASTE_STAGED.length+' position'+(PF_PASTE_STAGED.length===1?'':'s')+' staged</div>';
+  PF_PASTE_STAGED.forEach(function(p, i){
+    out += '<div style="color:var(--grn);">&#10003; '+p.ticker+' $'+p.strike+' '+p.type+' '+p.exp+' &times; '+p.qty
+        +' <span onclick="PF_PASTE_STAGED.splice('+i+',1);pfRenderStaged();" style="cursor:pointer;color:var(--wrn);margin-left:8px;" title="Remove">&#10005;</span></div>';
+  });
+  if(!PF_PASTE_STAGED.length) out += '<div style="color:var(--gry);font-style:italic;">(empty)</div>';
+  eid('pf-paste-preview').innerHTML = out;
+}
+
+// ── CSV template download + upload ──────────────────────────────────────────
+function pfDownloadCSVTemplate(){
+  var csv = 'TICKER,STRIKE,EXPIRATION,TYPE,QTY\n'
+          + '# Lines starting with # are ignored. Date formats: YYYY-MM-DD or MM/DD/YYYY. TYPE: CALL or PUT.\n'
+          + 'NVDA,150,2026-01-16,CALL,3\n'
+          + 'AAPL,240,2026-03-20,PUT,2\n';
+  var blob = new Blob([csv], {type:'text/csv'});
+  var url = URL.createObjectURL(blob);
+  var a = document.createElement('a');
+  a.href = url;
+  a.download = 'positions_template.csv';
+  a.click();
+  setTimeout(function(){ URL.revokeObjectURL(url); }, 1000);
+  toast('Template downloaded \u2014 fill in Excel/Sheets, then UPLOAD FILLED CSV');
+}
+
+function pfUploadCSV(inputEl){
+  var file = inputEl.files && inputEl.files[0];
+  if(!file){ return; }
+  var reader = new FileReader();
+  reader.onload = function(e){
+    var text = String(e.target.result||'');
+    var lines = text.split(/\r?\n/);
+    var added = 0, skipped = 0, headerSkipped = false;
+    lines.forEach(function(raw){
+      var ln = raw.trim();
+      if(!ln) return;
+      if(ln.charAt(0) === '#') return;   // comment line
+      if(!headerSkipped && /TICKER/i.test(ln) && /STRIKE/i.test(ln)){
+        headerSkipped = true;
+        return;
+      }
+      var parts = ln.split(',').map(function(p){ return p.trim(); });
+      if(parts.length < 4){ skipped++; return; }
+      var tk = (parts[0]||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+      var strike = parseFloat(parts[1]);
+      var exp = pfNormalizeDate(parts[2]);
+      var typ = (parts[3]||'').toUpperCase().indexOf('P')>=0 ? 'PUT' : 'CALL';
+      var qty = parseInt(parts[4]||'1')||1;
+      if(tk && strike && exp){
+        PF_PASTE_STAGED.push({ticker:tk, strike:strike, exp:exp, type:typ, qty:qty});
+        added++;
+      } else {
+        skipped++;
+      }
+    });
+    pfRenderStaged();
+    toast('CSV: '+added+' added'+(skipped?', '+skipped+' skipped':'')+' \u2014 review and IMPORT');
+    inputEl.value = '';  // allow re-upload of same filename
+  };
+  reader.readAsText(file);
 }
 function pfClosePasteModal(){ eid('pf-paste-modal').style.display = 'none'; }
 
@@ -12124,23 +12103,27 @@ function pfNormalizeDate(s){
 function pfParsePreview(){
   var text = eid('pf-paste-text').value;
   var lines = text.split('\n');
-  PF_PASTE_STAGED = [];
-  var preview = '';
-  var good = 0, bad = 0;
+  var good = 0, bad = 0, badLines = [];
   lines.forEach(function(ln, idx){
     if(!ln.trim()) return;
     var parsed = pfParseLine(ln);
     if(parsed){
       good++;
       PF_PASTE_STAGED.push(parsed);
-      preview += '<div style="color:var(--grn);">✓ '+parsed.ticker+' $'+parsed.strike+' '+parsed.type+' '+parsed.exp+' × '+parsed.qty+'</div>';
     } else {
       bad++;
-      preview += '<div style="color:var(--ngo);">✗ Line '+(idx+1)+': '+pfEsc(ln.slice(0,60))+'</div>';
+      badLines.push('Line '+(idx+1)+': '+ln.slice(0,60));
     }
   });
-  preview = '<div style="color:var(--amb);margin-bottom:6px;">'+good+' parsed · '+bad+' unparseable</div>' + preview;
-  eid('pf-paste-preview').innerHTML = preview;
+  pfRenderStaged();
+  if(bad){
+    var cur = eid('pf-paste-preview').innerHTML;
+    var warn = '<div style="color:var(--ngo);margin-top:6px;">'+bad+' unparseable line(s):</div>';
+    badLines.forEach(function(b){ warn += '<div style="color:var(--ngo);">&#10005; '+pfEsc(b)+'</div>'; });
+    eid('pf-paste-preview').innerHTML = cur + warn;
+  }
+  toast('Paste: '+good+' added'+(bad?', '+bad+' skipped':''));
+  eid('pf-paste-text').value = '';
 }
 
 function pfImportPasted(){
@@ -12300,6 +12283,21 @@ function init(){
   }, 300000);
 
   addAlert('SYS','Option Panda v'+APP_VERSION+' initialized — cached data loaded, no API calls on startup','go');
+
+  // Populate option buying power badge at startup, then every 2 minutes while market is open
+  try{
+    var savedAcct = localStorage.getItem('rrjcar_acct') || '';
+    if(savedAcct && !G.acctId) G.acctId = savedAcct;
+  }catch(e){}
+  if(G.acctId){ try{ fetchBalances(); }catch(e){} }
+  setInterval(function(){
+    var now=new Date();
+    var et=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
+    var mins=et.getHours()*60+et.getMinutes();
+    var day=et.getDay();
+    var isMarketHours=day>=1&&day<=5&&mins>=(9*60+30)&&mins<=(16*60);
+    if(isMarketHours && G.acctId) fetchBalances();
+  }, 120000);
 }
 window.addEventListener('DOMContentLoaded',init);</script>
 </body>
