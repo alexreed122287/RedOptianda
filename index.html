@@ -586,7 +586,6 @@ tr.sel-row td{background:var(--blu3);}
   <button class="ntab" onclick="switchTab('wl')">WATCHLIST</button>
   <button class="ntab" onclick="switchTab('pos')">POSITIONS</button>
   <button class="ntab" onclick="switchTab('order')">ORDER TICKET</button>
-  <button class="ntab" onclick="switchTab('mb')">MARKET BREADTH</button>
   <button class="ntab" onclick="switchTab('al')">ALERTS</button>
   <button class="ntab" onclick="switchTab('closed')">CLOSED POSITIONS</button>
   <button class="ntab" onclick="switchTab('api')">&#9881; API</button>
@@ -1101,30 +1100,6 @@ tr.sel-row td{background:var(--blu3);}
   </div>
 </div>
 
-<div class="tab-pane" id="tab-mb">
-  <div class="flt-bar" style="justify-content:space-between;">
-    <span style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);" id="mb-ts">Not yet loaded</span>
-    <button class="btn blu" style="font-size:10px;padding:3px 10px;" onclick="runMarketBreadth()">&#8635; REFRESH</button>
-  </div>
-  <div class="page-wrap">
-    <div class="card">
-      <div class="card-hdr">MARKET BREADTH</div>
-      <div class="card-body" id="mb-body"><div style="color:var(--gry);font-size:11px;">Click Refresh or run a scan to load...</div></div>
-    </div>
-    <div class="card">
-      <div class="card-hdr">SECTOR MOMENTUM <span style="font-size:9px;color:var(--gry);font-weight:400;">from scan results</span></div>
-      <div class="card-body" id="sect-body"><div style="color:var(--gry);font-size:11px;">Run a scan first...</div></div>
-    </div>
-    <div class="card">
-      <div class="card-hdr">MARKET INDICES</div>
-      <div class="card-body" id="mb-indices-body"><div style="color:var(--gry);font-size:11px;">Loading...</div></div>
-    </div>
-    <div class="card">
-      <div class="card-hdr">SCAN QUALITY <span style="font-size:9px;color:var(--gry);font-weight:400;">from last scan</span></div>
-      <div class="card-body" id="mb-scan-body"><div style="color:var(--gry);font-size:11px;">Run a scan first...</div></div>
-    </div>
-  </div>
-</div>
 <div class="tab-pane" id="tab-al">
   <div class="page-wrap">
 
@@ -1454,31 +1429,34 @@ tr.sel-row td{background:var(--blu3);}
     </div>
   </div>
 
-  <!-- Stats row -->
-  <div class="stats-bar" style="padding:6px 10px;">
-    <div class="stat-box"><div class="stat-label">TOTAL VALUE</div><div class="stat-val" id="pf-total-val">$0.00</div></div>
-    <div class="stat-box"><div class="stat-label">POSITIONS</div><div class="stat-val" id="pf-pos-count">0</div></div>
-    <div class="stat-box"><div class="stat-label">COLUMNS</div><div class="stat-val" id="pf-col-count">0</div></div>
-    <div class="stat-box"><div class="stat-label">DEAD</div><div class="stat-val" id="pf-dead-count" style="color:var(--ngo);">0</div></div>
-    <div class="stat-box"><div class="stat-label">TOP SECTOR</div><div class="stat-val" id="pf-top-sector">--</div></div>
-  </div>
-
-  <!-- Columns horizontal scroll -->
+  <!-- Columns horizontal scroll (now takes primary space) -->
   <div id="pf-cols-wrap" style="display:flex;gap:10px;padding:8px 10px;overflow-x:auto;align-items:flex-start;min-height:400px;">
     <!-- columns rendered dynamically by renderPortfolio() -->
   </div>
 
-  <!-- Master charts row -->
-  <div style="display:flex;gap:10px;padding:8px 10px;flex-wrap:wrap;">
-    <div style="flex:1;min-width:300px;background:var(--bg1);border:var(--bdr);border-radius:4px;padding:10px;">
-      <div style="font-family:var(--ff-brand);font-size:10px;color:var(--amb);letter-spacing:2px;margin-bottom:6px;">MASTER HOLDINGS BY TICKER</div>
-      <div style="position:relative;height:240px;"><canvas id="pf-chart-master"></canvas></div>
+  <!-- Collapsible summary + master charts (minimized by default to give positions more space) -->
+  <details id="pf-summary-details" style="margin:4px 10px 10px 10px;background:var(--bg1);border:var(--bdr);border-radius:4px;">
+    <summary style="cursor:pointer;padding:8px 12px;list-style:none;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--ff-mono);font-size:11px;user-select:none;">
+      <span style="font-family:var(--ff-brand);font-size:11px;color:var(--amb);letter-spacing:2px;">&#9662; SUMMARY &amp; ALLOCATIONS</span>
+      <span style="color:var(--gry);">TOTAL VALUE <b id="pf-total-val" style="color:var(--ambb);font-size:13px;margin-left:4px;">$0.00</b></span>
+      <span style="color:var(--gry);">POSITIONS <b id="pf-pos-count" style="color:var(--wht);font-size:13px;margin-left:4px;">0</b></span>
+      <span style="color:var(--gry);">COLUMNS <b id="pf-col-count" style="color:var(--wht);font-size:13px;margin-left:4px;">0</b></span>
+      <span style="color:var(--gry);">DEAD <b id="pf-dead-count" style="color:var(--ngo);font-size:13px;margin-left:4px;">0</b></span>
+      <span style="color:var(--gry);">TOP SECTOR <b id="pf-top-sector" style="color:var(--amb);font-size:12px;margin-left:4px;">--</b></span>
+      <span style="flex:1;"></span>
+      <span style="color:var(--gry);font-size:10px;">click to expand/minimize</span>
+    </summary>
+    <div style="display:flex;gap:10px;padding:8px 10px 10px 10px;flex-wrap:wrap;border-top:var(--bdr);">
+      <div style="flex:1;min-width:300px;background:var(--bg1);border:var(--bdr);border-radius:4px;padding:10px;">
+        <div style="font-family:var(--ff-brand);font-size:10px;color:var(--amb);letter-spacing:2px;margin-bottom:6px;">MASTER HOLDINGS BY TICKER</div>
+        <div style="position:relative;height:240px;"><canvas id="pf-chart-master"></canvas></div>
+      </div>
+      <div style="flex:1;min-width:300px;background:var(--bg1);border:var(--bdr);border-radius:4px;padding:10px;">
+        <div style="font-family:var(--ff-brand);font-size:10px;color:var(--amb);letter-spacing:2px;margin-bottom:6px;">ALLOCATION BY SECTOR</div>
+        <div style="position:relative;height:240px;"><canvas id="pf-chart-sector"></canvas></div>
+      </div>
     </div>
-    <div style="flex:1;min-width:300px;background:var(--bg1);border:var(--bdr);border-radius:4px;padding:10px;">
-      <div style="font-family:var(--ff-brand);font-size:10px;color:var(--amb);letter-spacing:2px;margin-bottom:6px;">ALLOCATION BY SECTOR</div>
-      <div style="position:relative;height:240px;"><canvas id="pf-chart-sector"></canvas></div>
-    </div>
-  </div>
+  </details>
 
   <!-- Robinhood paste modal -->
   <div id="pf-paste-modal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.82);backdrop-filter:blur(3px);align-items:flex-start;justify-content:center;padding-top:60px;">
@@ -2271,7 +2249,7 @@ var AVOID=['LULU','OXY','TDG','DIS','CMCSA','GIS','PWR','MRNA','RIVN','PLUG'];
 var SECTOR_PF={Industrials:3.53,Utilities:3.28,Finance:3.07,Healthcare:2.20,Communication:2.10,Technology:2.80,Staples:2.35,Materials:2.31,Energy:1.90,Consumer:1.80,RealEstate:1.75};
 // Full S&P 500 universe with sectors \u2014 used for dynamic Tradier screener
 var UNIVERSE_FULL=[
-  // Custom universe from alex_tickers.csv (2400 tickers)
+  // Embedded universe (2400 tickers) — sole source of truth for the scanner
   {t:'NVDA',s:'Electronic technology'},{t:'GOOG',s:'Technology services'},{t:'AAPL',s:'Electronic technology'},{t:'MSFT',s:'Technology services'},
   {t:'AMZN',s:'Retail trade'},{t:'AVGO',s:'Electronic technology'},{t:'META',s:'Technology services'},{t:'TSLA',s:'Consumer durables'},
   {t:'WMT',s:'Retail trade'},{t:'LLY',s:'Health technology'},{t:'JPM',s:'Finance'},{t:'XOM',s:'Energy minerals'},
@@ -2873,92 +2851,6 @@ var UNIVERSE_FULL=[
   {t:'TQQY',s:'Leveraged ETF'},{t:'UTSL',s:'Leveraged ETF'},{t:'MIDU',s:'Leveraged ETF'},{t:'TYD',s:'Leveraged ETF'}
 ];
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  TICKER CSV LOADER — reads alex_tickers.csv at runtime from same folder
-//  Replaces UNIVERSE_FULL on success; falls back to embedded array on failure.
-//  CSV format: Symbol,Description,Price,Price - Currency,Sector (header row required)
-// ═══════════════════════════════════════════════════════════════════════════
-function _parseCsvLine(line){
-  var out=[],cur='',q=false;
-  for(var i=0;i<line.length;i++){
-    var c=line[i];
-    if(q){
-      if(c==='"'){ if(line[i+1]==='"'){ cur+='"'; i++; } else q=false; }
-      else cur+=c;
-    } else {
-      if(c==='"') q=true;
-      else if(c===','){ out.push(cur); cur=''; }
-      else cur+=c;
-    }
-  }
-  out.push(cur);
-  return out;
-}
-async function loadTickerCSV(filename){
-  filename = filename || 'alex_tickers.csv';
-  // Cache-bust with a version param so stale browser caches don't serve
-  // an old 404. The timestamp granularity (hourly) keeps CDN-friendly
-  // caching without letting a stale 404 persist for days.
-  var bust = Math.floor(Date.now() / 3600000);
-  var url = filename + '?v=' + bust;
-  try{
-    var resp = await fetch(url, {cache:'no-cache'});
-    if(!resp.ok) throw new Error('HTTP '+resp.status+' — file not found at '+filename);
-    var txt = await resp.text();
-    // Guard: if GitHub Pages returns the repo's 404 page (HTML), bail
-    if(txt.trim().slice(0,15).toLowerCase().indexOf('<!doctype') === 0 ||
-       txt.trim().slice(0,6).toLowerCase() === '<html>'){
-      throw new Error('got HTML 404 page instead of CSV — file missing at '+filename);
-    }
-    var lines = txt.split(/\r?\n/).filter(function(l){return l.trim().length>0;});
-    if(lines.length < 2) throw new Error('CSV has no data rows');
-    var head = _parseCsvLine(lines[0]).map(function(s){return s.trim().toLowerCase();});
-    var symCol  = head.indexOf('symbol');
-    var sectCol = head.indexOf('sector');
-    if(symCol  < 0) symCol  = 0;
-    if(sectCol < 0) sectCol = head.length > 1 ? head.length - 1 : 0;
-    var seen = {}, arr = [];
-    for(var i=1;i<lines.length;i++){
-      var cols = _parseCsvLine(lines[i]);
-      var t = (cols[symCol]||'').trim().toUpperCase();
-      var s = (cols[sectCol]||'Unknown').trim() || 'Unknown';
-      if(!t || seen[t]) continue;
-      if(!/^[A-Z][A-Z0-9.\-]{0,9}$/.test(t)) continue; // skip malformed
-      seen[t] = true;
-      arr.push({t:t, s:s});
-    }
-    if(arr.length === 0) throw new Error('no valid rows parsed — check Symbol column exists');
-    UNIVERSE_FULL = arr;
-    G._tickerSource = filename+' ('+arr.length+' tickers)';
-    G._tickerLoadStatus = 'ok';
-    G._tickerLoadError = null;
-    console.log('[ticker-csv] ✓ Loaded '+arr.length+' tickers from '+filename);
-    try{
-      var el = document.getElementById('sc-universe-label');
-      if(el && !G.scanRunning){
-        el.textContent = '✓ '+filename+' — '+arr.length+' tickers loaded';
-        el.style.color = 'var(--grn)';
-      }
-    }catch(e){}
-    return arr.length;
-  }catch(e){
-    G._tickerSource = 'embedded ('+UNIVERSE_FULL.length+' tickers)';
-    G._tickerLoadStatus = 'fallback';
-    G._tickerLoadError = e.message;
-    console.warn('[ticker-csv] ✗ CSV load FAILED — using embedded fallback ('+UNIVERSE_FULL.length+' tickers). Reason: '+e.message);
-    // Silent fallback \u2014 embedded universe is always sufficient for scanning.
-    // Reason surfaced only in the small label + devtools console; no toast.
-    try{
-      var el2 = document.getElementById('sc-universe-label');
-      if(el2 && !G.scanRunning){
-        el2.textContent = 'Universe: embedded (' + UNIVERSE_FULL.length + ')';
-        el2.style.color = 'var(--gry)';
-      }
-    }catch(e2){}
-    return 0;
-  }
-}
-
 // Static fallback (original 37) used when no API key
 var UNIVERSE=[
   {t:'AAPL',s:'Technology'},{t:'MSFT',s:'Technology'},{t:'GOOG',s:'Technology'},
@@ -3031,10 +2923,9 @@ function sectorCounts(){
   return c;
 }
 function populateSectorCheckboxes(){
-  gatherKnownSectors();
   var box = eid('sc-sect-opts');
   if(!box) return;
-  var sectors = Array.from(G.knownSectors).sort(function(a,b){return a.localeCompare(b);});
+  var sectors = getVisibleSectors().sort(function(a,b){return a.localeCompare(b);});
   var counts = sectorCounts();
   var html = '';
   sectors.forEach(function(s){
@@ -3048,16 +2939,41 @@ function populateSectorCheckboxes(){
   box.innerHTML = html || '<div style="color:var(--gry);font-size:11px;padding:4px;">No sectors yet — run a scan</div>';
   updateSectorLabel();
 }
+// Returns the list of sectors that should appear in the UI picker —
+// i.e. knownSectors minus everything on the hard exclusion list, minus
+// empty/placeholder values. Used by the dropdown render, label count,
+// and select-all so the "All (N)" count reflects only pickable options.
+function getVisibleSectors(){
+  gatherKnownSectors();
+  var exSet = new Set();
+  try{
+    (G.sectorExclusions && G.sectorExclusions.sectors || []).forEach(function(s){
+      exSet.add(String(s||'').trim().toLowerCase());
+    });
+  }catch(e){}
+  return Array.from(G.knownSectors).filter(function(s){
+    var key = String(s||'').trim().toLowerCase();
+    if(exSet.has(key)) return false;
+    if(key === '' || key === '--') return false;
+    return true;
+  });
+}
 function updateSectorLabel(){
   var lbl = eid('sc-sect-label');
   if(!lbl) return;
-  gatherKnownSectors();
-  var totalKnown = G.knownSectors.size;
-  var n = G.selectedSectors.size;
-  if(n === 0 || n === totalKnown){
+  var visible = getVisibleSectors();
+  var totalKnown = visible.length;
+  // Only count selected sectors that are still visible
+  var visibleSet = new Set(visible);
+  var selectedVisible = 0;
+  G.selectedSectors.forEach(function(s){ if(visibleSet.has(s)) selectedVisible++; });
+  var n = (G.selectedSectors.has('__NONE__')) ? 0 : selectedVisible;
+  if(G.selectedSectors.size === 0 || n === totalKnown){
     lbl.innerHTML = 'All <span class="sect-cnt">('+totalKnown+')</span>';
   } else if(n === 1){
-    var only = Array.from(G.selectedSectors)[0];
+    // Find the single selected one that's visible
+    var only = '';
+    G.selectedSectors.forEach(function(s){ if(visibleSet.has(s)) only = s; });
     lbl.innerHTML = (only.length>20?only.slice(0,18)+'…':only);
   } else {
     lbl.innerHTML = n+' of '+totalKnown+' <span class="sect-cnt">selected</span>';
@@ -3099,9 +3015,8 @@ function closeSectorDropdown(){
   applyFilters();
 }
 function selectAllSectors(selectAll){
-  gatherKnownSectors();
   if(selectAll){
-    G.selectedSectors = new Set(G.knownSectors); // all
+    G.selectedSectors = new Set(getVisibleSectors()); // all visible
   } else {
     G.selectedSectors = new Set(); // treated as "none selected" — but we want "none means nothing shows"
     // Semantics: empty = all. To represent "none" we need a sentinel. Use a marker:
@@ -3117,8 +3032,7 @@ function onSectorCheckboxChange(){
   var boxes = document.querySelectorAll('.sc-sect-cb');
   var picked = [];
   boxes.forEach(function(cb){ if(cb.checked) picked.push(cb.value); });
-  gatherKnownSectors();
-  var total = G.knownSectors.size;
+  var total = getVisibleSectors().length;
   if(picked.length === 0){
     // all unchecked → treat as "show nothing"
     G.selectedSectors = new Set(['__NONE__']);
@@ -3157,7 +3071,7 @@ function sectorAllowed(sec){
 G.sectorExclusions = {
   // Sector names (case-insensitive, matched against the sector field
   // on each ticker) to exclude from scans and results.
-  sectors: ['Health technology', 'Health services'],
+  sectors: ['Health technology', 'Health services', 'ETF', 'Leveraged ETF', '3X', '--', ''],
   // Tickers that are allowed through even if their sector is on the
   // exclusion list. (Symbols, upper-case.)
   allowlist: ['HIMS', 'OSCR']
@@ -3224,28 +3138,10 @@ function switchTab(id){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.ntab').forEach(function(b){b.classList.remove('active');});
   var pane=eid('tab-'+id);if(pane)pane.classList.add('active');
-  var ids=['bs','sc','wl','pos','order','mb','al','closed','api','pf','cw'];
+  var ids=['bs','sc','wl','pos','order','al','closed','api','pf','cw'];
   var idx=ids.indexOf(id);
   var btns=document.querySelectorAll('.ntab');
   if(btns[idx])btns[idx].classList.add('active');
-  if(id==='mb'){
-    // Restore from cache immediately, refresh in background only during market hours
-    var bc=cacheGet(CACHE_KEYS.breadth);
-    if(bc){
-      try{
-        if(bc.mb   && eid('mb-body'))         eid('mb-body').innerHTML=bc.mb;
-        if(bc.idx  && eid('mb-indices-body')) eid('mb-indices-body').innerHTML=bc.idx;
-        if(bc.scan && eid('mb-scan-body'))    eid('mb-scan-body').innerHTML=bc.scan;
-        if(bc.sect && eid('sect-body'))       eid('sect-body').innerHTML=bc.sect;
-        if(bc.ts   && eid('mb-ts'))           eid('mb-ts').textContent='Cached: '+bc.ts;
-      }catch(_e){}
-      var now=new Date(),et=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
-      var mins=et.getHours()*60+et.getMinutes(),day=et.getDay();
-      if(day>=1&&day<=5&&mins>=(9*60+30)&&mins<=(16*60)) runMarketBreadth();
-    } else {
-      runMarketBreadth();
-    }
-  }
   if(id==='al')renderAlerts();
   if(id==='closed'){
     // Load from cache first, show stale banner
@@ -6329,12 +6225,6 @@ async function runScan(){
   if(G.scanRunning) return;
   G.scanRunning = true;
 
-  // Wait for alex_tickers.csv to finish loading if still in flight
-  if(G._tickerLoadPromise){
-    try{ await G._tickerLoadPromise; }catch(e){}
-    G._tickerLoadPromise = null;
-  }
-
   var key = ''; try{ key = localStorage.getItem('rrjcar_tradier') || ''; }catch(e){}
   var mode = localStorage.getItem('rrjcar_mode') || 'sandbox';
 
@@ -6559,8 +6449,6 @@ function finishScan(){
   if(G.results.length > 0 && !G.selTicker){ viewDetail(G.results[0].ticker, 'bs-detail', 'bs-empty'); }
   // Check for high-conviction signals after scan
   checkHighConvictionSignals(G.results);
-  // Refresh market breadth with new scan data
-  setTimeout(runMarketBreadth, 500);
 
   // Auto-refresh GEX after scan so GEX bonus scores are applied
   // Run in background \u2014 doesn't block UI
@@ -9270,178 +9158,6 @@ function makeMeter(label, value, max, colorClass, subtitle){
     +'</div>';
 }
 
-async function runMarketBreadth(){
-  eid('mb-ts').textContent = 'Refreshing...';
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
-  var fmpKey='';try{fmpKey=localStorage.getItem('rrjcar_fmp')||'';}catch(e){}
-  var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
-  var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
-
-  // \u2500\u2500 SECTION 1: Market Indices from Tradier \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  if(key){
-    try{
-      var idxSymbols='SPY,QQQ,DIA,IWM,VIX,GLD,$SPX.X';
-      var idxRes=await fetch(host+'/v1/markets/quotes?symbols='+encodeURIComponent(idxSymbols),{
-        headers:{Authorization:'Bearer '+key,Accept:'application/json'}
-      }).then(function(r){return r.json();});
-      var idxQuotes=[];
-      try{var q=idxRes.quotes.quote;idxQuotes=Array.isArray(q)?q:[q];}catch(e){}
-      var qmap={};idxQuotes.forEach(function(q){if(q&&q.symbol)qmap[q.symbol]=q;});
-
-      var idxHtml='';
-      [{sym:'SPY',label:'S&P 500 ETF'},{sym:'QQQ',label:'Nasdaq 100'},{sym:'DIA',label:'Dow Jones'},
-       {sym:'IWM',label:'Russell 2000'},{sym:'GLD',label:'Gold ETF'},{sym:'$SPX.X',label:'S&P 500 Index'},
-       {sym:'VIX',label:'VIX Volatility'}].forEach(function(idx){
-        var q=qmap[idx.sym];
-        if(!q)return;
-        var price=parseFloat(q.last||q.prevclose)||0;
-        var chg=parseFloat(q.change)||0;
-        var chgPct=parseFloat(q.change_percentage)||0;
-        var cls=chgPct>=0?'pnl-pos':'pnl-neg';
-        idxHtml+='<div class="meter-row" style="display:flex;justify-content:space-between;padding:5px 0;border-bottom:1px solid var(--bg3);">'
-          +'<div style="font-family:var(--ff-mono);font-size:11px;color:var(--wht);width:130px;">'+idx.label+'</div>'
-          +'<div style="font-family:var(--ff-mono);font-size:12px;color:var(--wht);">$'+fmt2(price)+'</div>'
-          +'<div class="'+cls+'" style="font-family:var(--ff-mono);font-size:11px;min-width:80px;text-align:right;">'+(chg>=0?'+':'')+fmt2(chg)+' ('+(chgPct>=0?'+':'')+chgPct.toFixed(2)+'%)</div>'
-          +'</div>';
-      });
-      if(eid('mb-indices-body')) eid('mb-indices-body').innerHTML = idxHtml||'<span style="color:var(--gry)">No data</span>';
-    }catch(e){ if(eid('mb-indices-body')) eid('mb-indices-body').innerHTML='<span style="color:var(--gry)">Tradier error</span>'; }
-  } else {
-    if(eid('mb-indices-body')) eid('mb-indices-body').innerHTML='<span style="color:var(--gry);font-size:11px;">Add Tradier key in API tab</span>';
-  }
-
-  // \u2500\u2500 SECTION 2: Breadth from scan results \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  var breadthHtml='';
-  if(G.results && G.results.length>0){
-    var total=G.results.length;
-    var goCount=G.results.filter(function(r){return r.isGo;}).length;
-    var aboveEma200=G.results.filter(function(r){return r.ind&&r.ind.ema200>0&&r.ind.price>r.ind.ema200;}).length;
-    var aboveEma50=G.results.filter(function(r){return r.ind&&r.ind.ema20>r.ind.ema50;}).length;
-    var rsPos=G.results.filter(function(r){return r.ind&&r.ind.relStr5d>0;}).length;
-    var near52hi=G.results.filter(function(r){return r.ind&&r.ind.week52hi>0&&r.ind.price>=r.ind.week52hi*0.85;}).length;
-    var callHeavy=G.gexData?G.gexData.filter(function(g){return g.call>=55;}).length:0;
-    var gexTotal=G.gexData?G.gexData.length:0;
-
-    breadthHtml+=makeMeter('GO Signals',''+goCount+' / '+total,total,'',Math.round((goCount/total)*100)+'% bullish');
-    breadthHtml+=makeMeter('Above EMA200',Math.round((aboveEma200/total)*100),100);
-    breadthHtml+=makeMeter('EMA20 > EMA50',Math.round((aboveEma50/total)*100),100);
-    breadthHtml+=makeMeter('RS > SPY (5d)',Math.round((rsPos/total)*100),100);
-    breadthHtml+=makeMeter('Near 52Wk High',Math.round((near52hi/total)*100),100);
-    if(gexTotal>0) breadthHtml+=makeMeter('Call Heavy Flow',Math.round((callHeavy/gexTotal)*100),100,'amb');
-  } else {
-    breadthHtml='<span style="color:var(--gry);font-size:11px;">Run a scan first to populate breadth data</span>';
-  }
-
-  // \u2500\u2500 FMP Sector performance \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  if(fmpKey){
-    try{
-      // FMP stable sector performance \u2014 try both endpoints, fall back to scan-derived
-      var sectRes = await window.fmpFetch('https://financialmodelingprep.com/stable/market-sector-performance?apikey='+fmpKey)
-        .then(function(r){return r.json();}).catch(function(){return [];});
-      // If empty (Starter plan limitation), try historical endpoint with today's date
-      if(!Array.isArray(sectRes)||!sectRes.length){
-        var today=new Date().toISOString().split('T')[0];
-        sectRes = await window.fmpFetch('https://financialmodelingprep.com/stable/historical-market-sector-performance?from='+today+'&to='+today+'&apikey='+fmpKey)
-          .then(function(r){return r.json();}).catch(function(){return [];});
-      }
-      if(Array.isArray(sectRes)&&sectRes.length>0){
-        breadthHtml+='<div style="font-family:var(--ff-mono);font-size:10px;color:var(--amb);letter-spacing:1px;margin-top:14px;margin-bottom:6px;">SECTOR PERFORMANCE TODAY \u2014 FMP</div>';
-        sectRes.sort(function(a,b){return parseFloat(b.changesPercentage||b.change||0)-parseFloat(a.changesPercentage||a.change||0);});
-        sectRes.forEach(function(s){
-          var pct=parseFloat(s.changesPercentage||s.change)||0;
-          var cls=pct>=0?'pnl-pos':'pnl-neg';
-          breadthHtml+='<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--bg3);">'
-            +'<span style="font-size:11px;color:var(--gry);">'+(s.sector||s.sectorName||'--')+'</span>'
-            +'<span class="'+cls+'" style="font-family:var(--ff-mono);font-size:11px;">'+(pct>=0?'+':'')+pct.toFixed(2)+'%</span>'
-            +'</div>';
-        });
-      } else {
-        // Starter plan \u2014 sector perf endpoint may require Premium
-        breadthHtml+='<div style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);margin-top:10px;">FMP sector performance requires Premium plan \u2014 sector data derived from scan results above</div>';
-      }
-    }catch(e){}
-  }
-
-  if(eid('mb-body')) eid('mb-body').innerHTML=breadthHtml;
-
-  // \u2500\u2500 SECTION 3: Scan Quality \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  var scanHtml='';
-  if(G.results && G.results.length>0){
-    var total=G.results.length;
-    var goCount=G.results.filter(function(r){return r.isGo;}).length;
-    var avgScore=Math.round(G.results.reduce(function(s,r){return s+r.score;},0)/total);
-    var avgTech=Math.round(G.results.reduce(function(s,r){return s+(r.techScore||0);},0)/total);
-    var avgFund=Math.round(G.results.reduce(function(r,s){return r+(s.fundScore||0);},0)/total);
-    var provenGo=G.results.filter(function(r){return r.isGo&&PROVEN.indexOf(r.ticker)>=0;}).length;
-    var topSector='';var sectorScores={};
-    G.results.filter(function(r){return r.isGo;}).forEach(function(r){sectorScores[r.sector]=(sectorScores[r.sector]||0)+1;});
-    var maxS=0;Object.keys(sectorScores).forEach(function(s){if(sectorScores[s]>maxS){maxS=sectorScores[s];topSector=s;}});
-    scanHtml='<div style="display:grid;grid-template-columns:1fr 1fr;gap:10px;">';
-    [{label:'Total Scanned',val:total},{label:'GO Signals',val:goCount},{label:'Avg Score',val:avgScore+'/150'},
-     {label:'Avg Tech',val:avgTech},{label:'Avg Fund',val:avgFund},{label:'PROVEN GO',val:provenGo},
-     {label:'Top Sector',val:topSector||'--'},{label:'GO Rate',val:Math.round((goCount/total)*100)+'%'}
-    ].forEach(function(item){
-      scanHtml+='<div style="background:var(--bg2);border-radius:3px;padding:8px 10px;">'
-        +'<div style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);letter-spacing:.5px;">'+item.label+'</div>'
-        +'<div style="font-size:16px;font-weight:700;color:var(--wht);margin-top:2px;">'+item.val+'</div>'
-        +'</div>';
-    });
-    scanHtml+='</div>';
-  } else {
-    scanHtml='<span style="color:var(--gry);font-size:11px;">Run a scan first</span>';
-  }
-  if(eid('mb-scan-body')) eid('mb-scan-body').innerHTML=scanHtml;
-
-  // Sector breakdown from scan
-  var sectHtml='';
-  if(G.results && G.results.length>0){
-    var bySector={};
-    G.results.forEach(function(r){
-      if(!bySector[r.sector]) bySector[r.sector]={total:0,go:0,scoreSum:0};
-      bySector[r.sector].total++;
-      if(r.isGo) bySector[r.sector].go++;
-      bySector[r.sector].scoreSum+=r.score;
-    });
-    var sectArr=Object.keys(bySector).map(function(s){
-      var d=bySector[s];
-      return{name:s,total:d.total,go:d.go,goPct:Math.round((d.go/d.total)*100),avgScore:Math.round(d.scoreSum/d.total)};
-    }).sort(function(a,b){return b.goPct-a.goPct;});
-    sectArr.forEach(function(s){
-      var cls=s.goPct>=60?'blu':s.goPct>=40?'amb':'wrn';
-      sectHtml+=makeMeter(s.name+' ('+s.go+'/'+s.total+')',s.goPct,100,cls,'avg '+s.avgScore);
-    });
-  } else {
-    sectHtml='<span style="color:var(--gry);font-size:11px;">Run a scan first</span>';
-  }
-  if(eid('sect-body')) eid('sect-body').innerHTML=sectHtml;
-
-  eid('mb-ts').textContent='Updated: '+new Date().toLocaleTimeString();
-  // Cache all breadth panel HTML for restore on reload
-  try{
-    var bc={
-      mb:  eid('mb-body')         ? eid('mb-body').innerHTML         : '',
-      idx: eid('mb-indices-body') ? eid('mb-indices-body').innerHTML : '',
-      scan:eid('mb-scan-body')    ? eid('mb-scan-body').innerHTML    : '',
-      sect:eid('sect-body')       ? eid('sect-body').innerHTML       : '',
-      ts:  new Date().toLocaleTimeString()
-    };
-    cacheSet(CACHE_KEYS.breadth, bc);
-    cacheSet(CACHE_KEYS.breadthTs, Date.now());
-  }catch(_e){}
-}
-
-function renderBreadth(){
-  // Restore from cache first, then refresh in background
-  var bc=cacheGet(CACHE_KEYS.breadth);
-  if(bc){
-    if(bc.mb   && eid('mb-body'))          eid('mb-body').innerHTML=bc.mb;
-    if(bc.idx  && eid('mb-indices-body'))  eid('mb-indices-body').innerHTML=bc.idx;
-    if(bc.scan && eid('mb-scan-body'))     eid('mb-scan-body').innerHTML=bc.scan;
-    if(bc.sect && eid('sect-body'))        eid('sect-body').innerHTML=bc.sect;
-    if(bc.ts   && eid('mb-ts'))            eid('mb-ts').textContent='Cached: '+bc.ts;
-  }
-  runMarketBreadth();
-}
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 //  NOTIFICATION ENGINE
@@ -11145,11 +10861,9 @@ var CACHE_KEYS = {
   positions:   'op_cache_positions',
   posLabel:    'op_cache_pos_label',
   headerQ:     'op_cache_header_quotes',
-  breadth:     'op_cache_breadth',
   scanResults: 'op_cache_scan_results',
   scanTs:      'op_cache_scan_ts',
   posTs:       'op_cache_pos_ts',
-  breadthTs:   'op_cache_breadth_ts',
   headerTs:    'op_cache_header_ts',
 };
 
@@ -11306,10 +11020,23 @@ function renderPortfolio(){
 
   // Compute totals & render charts from cached values
   pfRecomputeStats(data);
-  pfRenderCharts(data);
+  // Only render master charts if the details section is open (canvases need non-zero size)
+  var det = eid('pf-summary-details');
+  if(det && det.open) pfRenderCharts(data);
 
   // Init each column chart after DOM is in place
   setTimeout(function(){ pfRenderColumnCharts(data); }, 20);
+
+  // Wire up one-time listener to render master charts when details opens
+  if(det && !det._wired){
+    det._wired = true;
+    det.addEventListener('toggle', function(){
+      if(det.open){
+        var d = pfLoad();
+        pfRenderCharts(d);
+      }
+    });
+  }
 }
 
 function pfRenderColumn(col){
@@ -11679,7 +11406,10 @@ function pfRefreshAll(){
 
   if(!priceable.length){
     toast('No priceable rows yet — add ticker/exp/strike first');
-    pfRecomputeStats(data); pfRenderCharts(data); pfRenderColumnCharts(data);
+    pfRecomputeStats(data);
+    var _det = eid('pf-summary-details');
+    if(_det && _det.open) pfRenderCharts(data);
+    pfRenderColumnCharts(data);
     return;
   }
 
@@ -12178,14 +11908,14 @@ function init(){
   loadAutoTraderSettings();
   loadAutoTraderState();
   loadPortfolio();
-  // ── Load ticker universe from alex_tickers.csv (same folder) ─────────
-  // Non-blocking: succeeds → replaces UNIVERSE_FULL; fails → keeps embedded
-  G._tickerLoadPromise = loadTickerCSV('alex_tickers.csv').then(function(){
-    // Once the CSV is loaded, populate the sector checkboxes
-    try{ gatherKnownSectors(); populateSectorCheckboxes(); updateSectorLabel(); }catch(e){}
-  });
-  // Also populate immediately from embedded universe so the dropdown
-  // works before the CSV round-trip finishes.
+  // Populate sector checkboxes from the embedded universe
+  // (CSV loader removed — embedded UNIVERSE_FULL is the single source of truth)
+  try{
+    G._tickerSource = 'embedded ('+UNIVERSE_FULL.length+' tickers)';
+    G._tickerLoadStatus = 'embedded';
+    var _lbl = document.getElementById('sc-universe-label');
+    if(_lbl){ _lbl.textContent = 'Universe: embedded ('+UNIVERSE_FULL.length+')'; _lbl.style.color='var(--gry)'; }
+  }catch(e){}
   try{ gatherKnownSectors(); populateSectorCheckboxes(); updateSectorLabel(); }catch(e){}
   // Resume any GTC trailing stops from a previous session
   try{ startEquityTrailPoller(); }catch(e){}
@@ -12235,18 +11965,6 @@ function init(){
     setTimeout(updateHeaderQuotes, 5000);
   }
 
-  // 4. Market breadth — restore cached panels
-  var cachedBreadth = cacheGet(CACHE_KEYS.breadth);
-  if(cachedBreadth){
-    try{
-      if(cachedBreadth.mb   && eid('mb-body'))         eid('mb-body').innerHTML=cachedBreadth.mb;
-      if(cachedBreadth.idx  && eid('mb-indices-body')) eid('mb-indices-body').innerHTML=cachedBreadth.idx;
-      if(cachedBreadth.scan && eid('mb-scan-body'))    eid('mb-scan-body').innerHTML=cachedBreadth.scan;
-      if(cachedBreadth.sect && eid('sect-body'))       eid('sect-body').innerHTML=cachedBreadth.sect;
-      if(cachedBreadth.ts   && eid('mb-ts'))           eid('mb-ts').textContent='Cached: '+cachedBreadth.ts;
-    }catch(e){}
-  }
-
   // 5. Watchlist — no API, just re-render from stored tickers
   refreshWL();
 
@@ -12259,17 +11977,6 @@ function init(){
     var day=et.getDay();
     if(day>=1&&day<=5&&mins>=(9*60+25)&&mins<=(16*60+5)) updateHeaderQuotes();
   }, 60000);
-
-  // Market breadth: every 5 min during market hours only, active tab only
-  setInterval(function(){
-    var now=new Date();
-    var et=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
-    var mins=et.getHours()*60+et.getMinutes();
-    var day=et.getDay();
-    var isMarketHours=day>=1&&day<=5&&mins>=(9*60+30)&&mins<=(16*60);
-    var activePane=document.querySelector('.tab-pane.active');
-    if(isMarketHours && activePane && activePane.id==='tab-mb') runMarketBreadth();
-  }, 300000);
 
   // Contract watchlist: only refresh when CW tab is active and market is open
   setInterval(function(){
