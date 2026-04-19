@@ -1470,7 +1470,16 @@ tr.sel-row td{background:var(--blu3);}
         <!-- ─── METHOD 1: Guided Position Builder (fastest, no parsing) ─── -->
         <div style="background:var(--bg2);border:1px solid var(--grn);border-radius:4px;padding:10px;">
           <div style="font-family:var(--ff-brand);font-size:11px;color:var(--grn);letter-spacing:2px;margin-bottom:8px;">&#10003; METHOD 1 &mdash; GUIDED BUILDER (RECOMMENDED)</div>
-          <div style="display:grid;grid-template-columns:1fr 80px 130px 80px 60px auto;gap:6px;align-items:center;font-size:11px;">
+
+          <!-- Kind toggle -->
+          <div style="display:flex;gap:6px;align-items:center;margin-bottom:8px;font-size:11px;">
+            <label style="color:var(--gry);letter-spacing:1px;">KIND:</label>
+            <label style="color:var(--wht);"><input type="radio" name="pf-b-kind" value="option" checked onchange="pfBuilderKindChange()"> OPTION</label>
+            <label style="color:var(--wht);"><input type="radio" name="pf-b-kind" value="shares" onchange="pfBuilderKindChange()"> SHARES</label>
+          </div>
+
+          <!-- Options sub-form -->
+          <div id="pf-b-opt-row" style="display:grid;grid-template-columns:1fr 80px 130px 80px 60px auto;gap:6px;align-items:center;font-size:11px;">
             <input type="text" id="pf-b-tk" placeholder="TICKER" maxlength="6" style="text-transform:uppercase;background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
             <input type="number" id="pf-b-strike" placeholder="Strike" step="0.5" min="0" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
             <input type="date" id="pf-b-exp" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
@@ -1478,6 +1487,15 @@ tr.sel-row td{background:var(--blu3);}
             <input type="number" id="pf-b-qty" placeholder="Qty" value="1" min="1" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
             <button class="btn grn" style="font-size:10px;padding:6px 10px;" onclick="pfBuilderAdd()">+ ADD</button>
           </div>
+
+          <!-- Shares sub-form -->
+          <div id="pf-b-shr-row" style="display:none;grid-template-columns:1fr 130px 100px auto;gap:6px;align-items:center;font-size:11px;">
+            <input type="text" id="pf-b-shr-tk" placeholder="TICKER" maxlength="6" style="text-transform:uppercase;background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
+            <input type="number" id="pf-b-shr-avg" placeholder="Avg price $" step="0.01" min="0" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);" title="Your average cost per share (cost basis)">
+            <input type="number" id="pf-b-shr-qty" placeholder="# shares" value="1" min="1" step="1" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
+            <button class="btn grn" style="font-size:10px;padding:6px 10px;" onclick="pfBuilderAdd()">+ ADD</button>
+          </div>
+
           <div style="font-size:9px;color:var(--gry);margin-top:6px;">Fill fields &rarr; ADD &rarr; row lands in the staging list below. Repeat for each position, then IMPORT.</div>
         </div>
 
@@ -1487,7 +1505,7 @@ tr.sel-row td{background:var(--blu3);}
           <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
             <button class="btn" style="font-size:11px;padding:5px 12px;border-color:var(--amb);color:var(--amb);" onclick="pfDownloadCSVTemplate()">&#10515; DOWNLOAD TEMPLATE</button>
             <label class="btn" style="font-size:11px;padding:5px 12px;border-color:var(--amb);color:var(--amb);cursor:pointer;">&#128228; UPLOAD FILLED CSV<input type="file" accept=".csv,text/csv" style="display:none;" onchange="pfUploadCSV(this)"></label>
-            <span style="font-size:10px;color:var(--gry);">Columns: <b style="color:var(--ambb);">TICKER, STRIKE, EXPIRATION, TYPE, QTY</b></span>
+            <span style="font-size:10px;color:var(--gry);">Cols: <b style="color:var(--ambb);">KIND, TICKER, STRIKE, EXPIRATION, TYPE, QTY, AVG_PRICE</b> <span style="color:var(--gry);">(KIND=option/shares; option rows need strike/exp/type; shares rows need avg_price)</span></span>
           </div>
         </div>
 
@@ -11106,6 +11124,7 @@ function pfEsc(s){ return (s||'').toString().replace(/&/g,'&amp;').replace(/</g,
 
 function pfRenderRow(col, row){
   var rid = row.id;
+  var isShares = row.kind === 'shares';
   var dead = row.dead ? 'border-left:2px solid var(--ngo);' : 'border-left:2px solid var(--gry2);';
   var valStr = row.value != null ? '$'+fmt2(row.value) : '--';
   var valCls = row.value > 0 ? 'color:var(--ambb);' : 'color:var(--gry);';
@@ -11115,40 +11134,58 @@ function pfRenderRow(col, row){
 
   var html = '<div class="pf-row" data-row-id="'+rid+'" style="background:var(--bg2);'+dead+'border-radius:3px;padding:6px 8px;display:flex;flex-direction:column;gap:4px;">';
 
-  // Line 1: ticker + type + qty + delete
+  // Line 1: ticker + KIND toggle + type/qty + delete
   html += '<div style="display:flex;gap:4px;align-items:center;">';
   html +=   '<input type="text" value="'+pfEsc(row.ticker||'')+'" placeholder="TICK" maxlength="6" '+
-            'style="width:65px;background:var(--bg0);border:var(--bdr);color:var(--amb);font-family:var(--ff-mono);font-size:11px;font-weight:700;padding:3px 5px;border-radius:2px;text-transform:uppercase;" '+
+            'style="width:60px;background:var(--bg0);border:var(--bdr);color:var(--amb);font-family:var(--ff-mono);font-size:11px;font-weight:700;padding:3px 5px;border-radius:2px;text-transform:uppercase;" '+
             'onblur="pfTickerChanged(\''+col.id+'\',\''+rid+'\',this.value)">';
-  html +=   '<select style="background:var(--bg0);border:var(--bdr);color:'+typeColor+';font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'type\',this.value)">';
-  html +=     '<option value="CALL"'+(row.type!=='PUT'?' selected':'')+'>CALL</option>';
-  html +=     '<option value="PUT"'+(row.type==='PUT'?' selected':'')+'>PUT</option>';
+  // Kind toggle: OPT ⇄ SHR
+  html +=   '<select title="Position kind — OPT = options contract, SHR = common shares" style="background:var(--bg0);border:var(--bdr);color:'+(isShares?'var(--ambb)':'var(--amb)')+';font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'kind\',this.value)">';
+  html +=     '<option value="option"'+(!isShares?' selected':'')+'>OPT</option>';
+  html +=     '<option value="shares"'+( isShares?' selected':'')+'>SHR</option>';
   html +=   '</select>';
+  if(!isShares){
+    html += '<select style="background:var(--bg0);border:var(--bdr);color:'+typeColor+';font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'type\',this.value)">';
+    html +=   '<option value="CALL"'+(row.type!=='PUT'?' selected':'')+'>CALL</option>';
+    html +=   '<option value="PUT"'+(row.type==='PUT'?' selected':'')+'>PUT</option>';
+    html += '</select>';
+  }
+  var qtyTitle = isShares ? '# shares' : '# contracts';
   html +=   '<input type="number" value="'+(row.qty||1)+'" min="1" step="1" '+
-            'style="width:48px;background:var(--bg0);border:var(--bdr);color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:3px 5px;border-radius:2px;" '+
-            'onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'qty\',this.value)" title="# contracts">';
+            'style="width:62px;background:var(--bg0);border:var(--bdr);color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:3px 5px;border-radius:2px;" '+
+            'onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'qty\',this.value)" title="'+qtyTitle+'">';
   html +=   '<div style="flex:1;"></div>';
   html +=   '<button class="btn" style="font-size:9px;padding:2px 5px;border-color:var(--ngo);color:var(--ngo);" onclick="pfDeleteRow(\''+col.id+'\',\''+rid+'\')" title="Delete row">&#10005;</button>';
   html += '</div>';
 
-  // Line 2: expiry + strike dropdowns (with loading/free-text fallback)
-  html += '<div style="display:flex;gap:4px;align-items:center;">';
-  // Expiry dropdown
-  html +=   '<select id="pf-exp-'+rid+'" style="flex:1;background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'exp\',this.value);pfLoadStrikesFor(\''+col.id+'\',\''+rid+'\')">';
-  html +=     '<option value="">-- Expiry --</option>';
-  if(row.exp){ html += '<option value="'+pfEsc(row.exp)+'" selected>'+pfEsc(row.exp)+'</option>'; }
-  html +=   '</select>';
-  // Strike dropdown
-  html +=   '<select id="pf-str-'+rid+'" style="flex:1;background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'strike\',this.value)">';
-  html +=     '<option value="">-- Strike --</option>';
-  if(row.strike){ html += '<option value="'+row.strike+'" selected>$'+fmt2(row.strike)+'</option>'; }
-  html +=   '</select>';
-  html += '</div>';
+  if(isShares){
+    // Line 2 (shares variant): avg share price input
+    html += '<div style="display:flex;gap:4px;align-items:center;">';
+    html +=   '<label style="font-size:9px;color:var(--gry);">AVG PRICE $</label>';
+    html +=   '<input type="number" value="'+(row.avgPrice!=null?row.avgPrice:'')+'" min="0" step="0.01" placeholder="cost basis" '+
+              'style="flex:1;background:var(--bg0);border:var(--bdr);color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:3px 5px;border-radius:2px;" '+
+              'onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'avgPrice\',this.value)" title="Your average cost per share — used for cost-basis display">';
+    html += '</div>';
+  } else {
+    // Line 2 (options): expiry + strike dropdowns
+    html += '<div style="display:flex;gap:4px;align-items:center;">';
+    html +=   '<select id="pf-exp-'+rid+'" style="flex:1;background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'exp\',this.value);pfLoadStrikesFor(\''+col.id+'\',\''+rid+'\')">';
+    html +=     '<option value="">-- Expiry --</option>';
+    if(row.exp){ html += '<option value="'+pfEsc(row.exp)+'" selected>'+pfEsc(row.exp)+'</option>'; }
+    html +=   '</select>';
+    html +=   '<select id="pf-str-'+rid+'" style="flex:1;background:var(--bg0);border:var(--bdr);color:var(--wht);font-size:10px;padding:3px;border-radius:2px;" onchange="pfRowField(\''+col.id+'\',\''+rid+'\',\'strike\',this.value)">';
+    html +=     '<option value="">-- Strike --</option>';
+    if(row.strike){ html += '<option value="'+row.strike+'" selected>$'+fmt2(row.strike)+'</option>'; }
+    html +=   '</select>';
+    html += '</div>';
+  }
 
   // Line 3: valuation + actions
+  var valTitle = isShares ? 'Total position value = last × qty' : 'Total position value = mid × 100 × qty';
+  var midLabel = isShares ? 'Last' : 'Mid';
   html += '<div style="display:flex;gap:6px;align-items:center;font-size:10px;color:var(--gry);font-family:var(--ff-mono);">';
-  html +=   '<span title="Mid price per contract">Mid: <span style="color:var(--wht);">'+midStr+'</span></span>';
-  html +=   '<span title="Total position value = mid × 100 × qty" style="'+valCls+'">Val: <span style="font-weight:700;">'+valStr+'</span></span>';
+  html +=   '<span title="'+(isShares?'Current share price':'Mid price per contract')+'">'+midLabel+': <span style="color:var(--wht);">'+midStr+'</span></span>';
+  html +=   '<span title="'+valTitle+'" style="'+valCls+'">Val: <span style="font-weight:700;">'+valStr+'</span></span>';
   html +=   deadBadge;
   html +=   '<div style="flex:1;"></div>';
   html +=   '<button class="btn" style="font-size:9px;padding:2px 6px;" onclick="pfRefreshRow(\''+col.id+'\',\''+rid+'\')" title="Fetch live quote for this row">&#8635;</button>';
@@ -11162,7 +11199,7 @@ function pfRenderRow(col, row){
 // ── CRUD ops ───────────────────────────────────────────────────────────────
 function pfAddRow(colId){
   var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
-  col.rows.unshift({ id:pfGenId('r_'), ticker:'', type:'CALL', qty:1, strike:null, exp:'', mid:null, value:null, dead:false });
+  col.rows.unshift({ id:pfGenId('r_'), kind:'option', ticker:'', type:'CALL', qty:1, strike:null, exp:'', avgPrice:null, mid:null, value:null, dead:false });
   pfSave(data); renderPortfolio();
 }
 function pfDeleteRow(colId, rowId){
@@ -11177,10 +11214,23 @@ function pfRowField(colId, rowId, field, val){
   else if(field==='strike'){ row.strike = val ? parseFloat(val) : null; }
   else if(field==='exp'){ row.exp = val || ''; }
   else if(field==='type'){ row.type = (val==='PUT')?'PUT':'CALL'; }
+  else if(field==='kind'){
+    row.kind = (val === 'shares') ? 'shares' : 'option';
+    // Reset values so stale options math doesn't hang around on shares rows
+    row.mid = null; row.value = null; row.dead = false;
+    pfSave(data);
+    renderPortfolio();
+    // Auto-price shares row if we already have a ticker
+    if(row.kind === 'shares' && row.ticker){ pfRefreshRow(colId, rowId); }
+    return;
+  }
+  else if(field==='avgPrice'){ row.avgPrice = val ? parseFloat(val) : null; }
   else { row[field] = val; }
   pfSave(data);
   // recompute if we have enough info
-  if(row.ticker && row.exp && row.strike){
+  if(row.kind === 'shares'){
+    if(row.ticker) pfRefreshRow(colId, rowId);
+  } else if(row.ticker && row.exp && row.strike){
     pfRefreshRow(colId, rowId);
   }
 }
@@ -11346,17 +11396,40 @@ function pfLoadStrikesFor(colId, rowId){
 function pfPopulateStrikes(rowId, strikes, spot){
   var sel = eid('pf-str-'+rowId); if(!sel) return;
   var currentVal = parseFloat(sel.value) || null;
-  // Filter to ±20% of spot
-  var lo = spot * 0.80, hi = spot * 1.20;
+
+  // Scale the strike-window to spot price. A flat ±20% is too tight for
+  // low-priced names — a $3 stock with strikes at $1, $2, $5, $8 has NONE
+  // inside ±20%, and the old "if empty, show all" fallback silently swallowed
+  // any result where at least one strike happened to land in-range.
+  //
+  // New logic:
+  //   • spot < $10  → ±300% window (so $1 strike shows for a $4 stock)
+  //   • spot < $25  → ±100% window
+  //   • spot < $100 → ±50% window
+  //   • spot >=$100 → ±25% window
+  var pct;
+  if(spot < 10)       pct = 3.0;
+  else if(spot < 25)  pct = 1.0;
+  else if(spot < 100) pct = 0.50;
+  else                pct = 0.25;
+  var lo = spot * (1 - pct), hi = spot * (1 + pct);
   var filtered = strikes.filter(function(s){ return s >= lo && s <= hi; });
-  if(!filtered.length) filtered = strikes; // fallback: show all if filter too aggressive
+  // Safety nets
+  if(!filtered.length) filtered = strikes.slice(); // nothing matched — fall back to all
+  // Always include the currently-saved strike so an existing position never
+  // disappears from the dropdown just because it's deep ITM/OTM.
+  if(currentVal != null && !filtered.some(function(s){ return Math.abs(s-currentVal) < 0.01; })){
+    filtered.push(currentVal);
+    filtered.sort(function(a,b){ return a-b; });
+  }
+
   sel.innerHTML = '<option value="">-- Strike --</option>';
   filtered.forEach(function(s){
     var opt = document.createElement('option');
     opt.value = s;
-    var pct = ((s - spot)/spot*100).toFixed(1);
+    var pctDiff = ((s - spot)/spot*100).toFixed(1);
     var tag = s < spot ? 'ITM' : s > spot ? 'OTM' : 'ATM';
-    opt.textContent = '$'+fmt2(s)+' ('+tag+' '+(pct>=0?'+':'')+pct+'%)';
+    opt.textContent = '$'+fmt2(s)+' ('+tag+' '+(pctDiff>=0?'+':'')+pctDiff+'%)';
     if(currentVal && Math.abs(s-currentVal) < 0.01) opt.selected = true;
     sel.appendChild(opt);
   });
@@ -11366,8 +11439,30 @@ function pfPopulateStrikes(rowId, strikes, spot){
 function pfRefreshRow(colId, rowId){
   var data = pfLoad(); var col = pfGetCol(data, colId); if(!col) return;
   var row = pfGetRow(col, rowId); if(!row) return;
-  if(!row.ticker || !row.exp || !row.strike){ return; }
   var creds = getTradierCreds(); if(!creds){ return; }
+
+  // Shares: fetch the underlying equity quote directly
+  if(row.kind === 'shares'){
+    if(!row.ticker) return;
+    fetch(creds.host+'/v1/markets/quotes?symbols='+encodeURIComponent(row.ticker),
+      {headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}})
+      .then(function(r){ return r.ok?r.json():null; })
+      .then(function(qd){
+        var q = qd && qd.quotes && qd.quotes.quote;
+        if(!q){ toast('No quote for '+row.ticker); return; }
+        var last = +q.last || +q.prevclose || 0;
+        var qty = +row.qty || 1;
+        row.mid = last;              // repurposed for shares: stores last price
+        row.value = last * qty;      // no ×100 for shares
+        row.dead = (last === 0);
+        pfSave(data);
+        renderPortfolio();
+      }).catch(function(e){ toast('Quote fetch failed: '+e.message); });
+    return;
+  }
+
+  // Options: require exp + strike, then fetch the OCC symbol quote
+  if(!row.ticker || !row.exp || !row.strike){ return; }
   var occ = pfOccSymbol(row.ticker, row.exp, row.type, row.strike);
   if(!occ) return;
   fetch(creds.host+'/v1/markets/quotes?symbols='+occ+'&greeks=false',
@@ -11393,13 +11488,17 @@ function pfRefreshAll(){
   var creds = getTradierCreds();
   if(!creds){ toast('Set Tradier API key in ⚙ API tab first'); return; }
 
-  // Collect all rows with enough info to price
+  // Collect all rows with enough info to price — options need exp+strike,
+  // shares just need a ticker. Each entry carries a 'kind' flag so the
+  // batch handler knows how to compute value.
   var priceable = [];
   data.columns.forEach(function(col){
     col.rows.forEach(function(row){
-      if(row.ticker && row.exp && row.strike){
+      if(row.kind === 'shares'){
+        if(row.ticker) priceable.push({col:col, row:row, sym:row.ticker.toUpperCase(), kind:'shares'});
+      } else if(row.ticker && row.exp && row.strike){
         var occ = pfOccSymbol(row.ticker, row.exp, row.type, row.strike);
-        if(occ) priceable.push({col:col, row:row, occ:occ});
+        if(occ) priceable.push({col:col, row:row, sym:occ, kind:'option'});
       }
     });
   });
@@ -11435,7 +11534,7 @@ function pfRefreshAll(){
       return;
     }
     var batch = batches[idx++];
-    var syms = batch.map(function(b){ return b.occ; }).join(',');
+    var syms = batch.map(function(b){ return b.sym; }).join(',');
     fetch(creds.host+'/v1/markets/quotes?symbols='+encodeURIComponent(syms)+'&greeks=false',
       {headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}})
       .then(function(r){ return r.ok?r.json():null; })
@@ -11446,16 +11545,24 @@ function pfRefreshAll(){
           if(Array.isArray(raw)) quotes = raw;
           else if(raw) quotes = [raw];
         } catch(e){}
-        var byOcc = {};
-        quotes.forEach(function(q){ byOcc[q.symbol] = q; });
+        var bySym = {};
+        quotes.forEach(function(q){ bySym[q.symbol] = q; });
         batch.forEach(function(b){
-          var q = byOcc[b.occ];
+          var q = bySym[b.sym];
           if(!q){ b.row.mid = null; b.row.value = null; return; }
-          var bid = +q.bid || 0, ask = +q.ask || 0;
-          var mid = (bid>0 && ask>0) ? (bid+ask)/2 : (q.last || 0);
-          b.row.mid = mid;
-          b.row.value = mid * 100 * (+b.row.qty || 1);
-          b.row.dead = (bid === 0 && ask === 0);
+          var qty = +b.row.qty || 1;
+          if(b.kind === 'shares'){
+            var last = +q.last || +q.prevclose || 0;
+            b.row.mid = last;             // repurposed for shares: last price
+            b.row.value = last * qty;     // no ×100
+            b.row.dead = (last === 0);
+          } else {
+            var bid = +q.bid || 0, ask = +q.ask || 0;
+            var mid = (bid>0 && ask>0) ? (bid+ask)/2 : (q.last || 0);
+            b.row.mid = mid;
+            b.row.value = mid * 100 * qty;
+            b.row.dead = (bid === 0 && ask === 0);
+          }
         });
         setTimeout(nextBatch, 150);
       }).catch(function(e){
@@ -11466,7 +11573,7 @@ function pfRefreshAll(){
   nextBatch();
 }
 
-// ── Auto-pull Tradier positions (options only) ──────────────────────────────
+// ── Auto-pull Tradier positions (options AND shares) ───────────────────────
 function pfAutoPullTradier(){
   var creds = getTradierCreds();
   if(!creds){ toast('Set Tradier API key in ⚙ API tab first'); return; }
@@ -11490,28 +11597,59 @@ function pfAutoPullTradier(){
       if(!col){ toast('No Tradier column found'); return; }
 
       var newRows = [];
+      var optCount = 0, shrCount = 0;
       positions.forEach(function(p){
         var sym = p.symbol || '';
-        // Options symbols: 7+ chars, has digits+C|P
-        if(sym.length < 15) return;
-        var parsed = (typeof parseOccSymbol === 'function') ? parseOccSymbol(sym) : null;
-        if(!parsed || !parsed.strike) return;
-        newRows.push({
-          id: pfGenId('r_'),
-          ticker: parsed.underlying,
-          type: parsed.type,
-          qty: Math.abs(+p.quantity) || 1,
-          strike: parsed.strike,
-          exp: parsed.exp,
-          mid: null,
-          value: null,
-          dead: false
-        });
+        // Tradier positions come back with OCC symbols for options (15+ chars)
+        // and plain tickers for equity/ETF holdings. Route by length.
+        if(sym.length >= 15){
+          // Options leg
+          var parsed = (typeof parseOccSymbol === 'function') ? parseOccSymbol(sym) : null;
+          if(!parsed || !parsed.strike) return;
+          newRows.push({
+            id: pfGenId('r_'),
+            kind: 'option',
+            ticker: parsed.underlying,
+            type: parsed.type,
+            qty: Math.abs(+p.quantity) || 1,
+            strike: parsed.strike,
+            exp: parsed.exp,
+            avgPrice: null,
+            mid: null,
+            value: null,
+            dead: false
+          });
+          optCount++;
+        } else if(sym.length > 0){
+          // Equity / ETF holding — treat as shares
+          var qty = Math.abs(+p.quantity) || 0;
+          if(qty === 0) return;
+          // cost_basis = total paid; derive avg per-share price if available
+          var cost = parseFloat(p.cost_basis);
+          var avg = (cost && qty > 0) ? +(cost / qty).toFixed(4) : null;
+          newRows.push({
+            id: pfGenId('r_'),
+            kind: 'shares',
+            ticker: sym.toUpperCase(),
+            type: 'CALL',   // irrelevant for shares but kept for schema stability
+            qty: qty,
+            strike: null,
+            exp: '',
+            avgPrice: avg,
+            mid: null,
+            value: null,
+            dead: false
+          });
+          shrCount++;
+        }
       });
 
       col.rows = newRows;
       pfSave(data);
-      toast('Pulled '+newRows.length+' options positions from Tradier');
+      var parts = [];
+      if(optCount) parts.push(optCount+' option'+(optCount===1?'':'s'));
+      if(shrCount) parts.push(shrCount+' share position'+(shrCount===1?'':'s'));
+      toast('Pulled '+(parts.length ? parts.join(' + ') : '0 positions')+' from Tradier');
       // Now price them
       pfRefreshAll();
     }).catch(function(e){ toast('Tradier positions fetch failed: '+e.message); });
@@ -11670,24 +11808,60 @@ function pfOpenPasteModal(colId){
   PF_PASTE_STAGED = [];
   if(eid('pf-paste-text')) eid('pf-paste-text').value = '';
   if(eid('pf-paste-preview')) eid('pf-paste-preview').innerHTML = 'Staged positions will appear here.';
-  // Clear builder fields
+  // Clear options builder fields
   ['pf-b-tk','pf-b-strike','pf-b-exp'].forEach(function(id){ var el=eid(id); if(el) el.value=''; });
   if(eid('pf-b-qty')) eid('pf-b-qty').value='1';
   if(eid('pf-b-type')) eid('pf-b-type').value='CALL';
+  // Clear shares builder fields
+  ['pf-b-shr-tk','pf-b-shr-avg'].forEach(function(id){ var el=eid(id); if(el) el.value=''; });
+  if(eid('pf-b-shr-qty')) eid('pf-b-shr-qty').value='1';
+  // Reset kind radio to OPTION and sync form visibility
+  document.querySelectorAll('input[name="pf-b-kind"]').forEach(function(r){ r.checked = (r.value === 'option'); });
+  try{ pfBuilderKindChange(); }catch(e){}
   eid('pf-paste-modal').style.display = 'flex';
 }
 
 // ── Guided builder: add a single row from the structured inputs ─────────────
+function pfBuilderKindChange(){
+  var radios = document.querySelectorAll('input[name="pf-b-kind"]');
+  var kind = 'option';
+  radios.forEach(function(r){ if(r.checked) kind = r.value; });
+  var optRow = eid('pf-b-opt-row');
+  var shrRow = eid('pf-b-shr-row');
+  if(optRow) optRow.style.display = (kind === 'option') ? 'grid' : 'none';
+  if(shrRow) shrRow.style.display = (kind === 'shares') ? 'grid' : 'none';
+}
+
 function pfBuilderAdd(){
-  var tk = (eid('pf-b-tk').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
+  var kind = 'option';
+  document.querySelectorAll('input[name="pf-b-kind"]').forEach(function(r){ if(r.checked) kind = r.value; });
+
+  if(kind === 'shares'){
+    var tk = (eid('pf-b-shr-tk').value||'').trim().toUpperCase().replace(/[^A-Z0-9.\-]/g,'');
+    var avg = parseFloat(eid('pf-b-shr-avg').value);
+    var qty = parseInt(eid('pf-b-shr-qty').value)||0;
+    if(!tk){ toast('Enter a ticker'); return; }
+    if(!qty || qty <= 0){ toast('Enter a valid # shares'); return; }
+    // avg price is optional — skip the check so you can add shares without cost basis
+    PF_PASTE_STAGED.push({ kind:'shares', ticker:tk, qty:qty, avgPrice: (avg && avg>0) ? avg : null });
+    pfRenderStaged();
+    // Clear only the fields likely to change per row; keep ticker
+    eid('pf-b-shr-avg').value = '';
+    eid('pf-b-shr-qty').value = '1';
+    eid('pf-b-shr-avg').focus();
+    return;
+  }
+
+  // Options (default)
+  var tk2 = (eid('pf-b-tk').value||'').trim().toUpperCase().replace(/[^A-Z0-9]/g,'');
   var strike = parseFloat(eid('pf-b-strike').value);
   var exp = eid('pf-b-exp').value; // already YYYY-MM-DD from <input type="date">
   var type = eid('pf-b-type').value;
-  var qty = parseInt(eid('pf-b-qty').value)||1;
-  if(!tk){ toast('Enter a ticker'); return; }
+  var qty2 = parseInt(eid('pf-b-qty').value)||1;
+  if(!tk2){ toast('Enter a ticker'); return; }
   if(!strike || strike <= 0){ toast('Enter a valid strike'); return; }
   if(!exp){ toast('Pick an expiration date'); return; }
-  PF_PASTE_STAGED.push({ ticker:tk, strike:strike, exp:exp, type:type, qty:qty });
+  PF_PASTE_STAGED.push({ kind:'option', ticker:tk2, strike:strike, exp:exp, type:type, qty:qty2 });
   pfRenderStaged();
   // Clear builder fields (keep ticker + exp for faster multi-row entry)
   eid('pf-b-strike').value = '';
@@ -11703,7 +11877,14 @@ function pfBuilderClear(){
 function pfRenderStaged(){
   var out = '<div style="color:var(--amb);margin-bottom:6px;">'+PF_PASTE_STAGED.length+' position'+(PF_PASTE_STAGED.length===1?'':'s')+' staged</div>';
   PF_PASTE_STAGED.forEach(function(p, i){
-    out += '<div style="color:var(--grn);">&#10003; '+p.ticker+' $'+p.strike+' '+p.type+' '+p.exp+' &times; '+p.qty
+    var line;
+    if(p.kind === 'shares'){
+      var avgStr = (p.avgPrice != null) ? ' @ $'+p.avgPrice : '';
+      line = '&#10003; '+p.ticker+' SHARES '+p.qty+'sh'+avgStr;
+    } else {
+      line = '&#10003; '+p.ticker+' $'+p.strike+' '+(p.type||'CALL')+' '+p.exp+' &times; '+p.qty;
+    }
+    out += '<div style="color:var(--grn);">'+line
         +' <span onclick="PF_PASTE_STAGED.splice('+i+',1);pfRenderStaged();" style="cursor:pointer;color:var(--wrn);margin-left:8px;" title="Remove">&#10005;</span></div>';
   });
   if(!PF_PASTE_STAGED.length) out += '<div style="color:var(--gry);font-style:italic;">(empty)</div>';
@@ -11712,10 +11893,14 @@ function pfRenderStaged(){
 
 // ── CSV template download + upload ──────────────────────────────────────────
 function pfDownloadCSVTemplate(){
-  var csv = 'TICKER,STRIKE,EXPIRATION,TYPE,QTY\n'
-          + '# Lines starting with # are ignored. Date formats: YYYY-MM-DD or MM/DD/YYYY. TYPE: CALL or PUT.\n'
-          + 'NVDA,150,2026-01-16,CALL,3\n'
-          + 'AAPL,240,2026-03-20,PUT,2\n';
+  var csv = 'KIND,TICKER,STRIKE,EXPIRATION,TYPE,QTY,AVG_PRICE\n'
+          + '# Lines starting with # are ignored.\n'
+          + '# KIND = option or shares. For shares rows leave STRIKE/EXPIRATION/TYPE blank.\n'
+          + '# For option rows leave AVG_PRICE blank. Date formats: YYYY-MM-DD or MM/DD/YYYY.\n'
+          + 'option,NVDA,150,2026-01-16,CALL,3,\n'
+          + 'option,AAPL,240,2026-03-20,PUT,2,\n'
+          + 'shares,AAPL,,,,50,175.42\n'
+          + 'shares,MSFT,,,,10,\n';
   var blob = new Blob([csv], {type:'text/csv'});
   var url = URL.createObjectURL(blob);
   var a = document.createElement('a');
@@ -11733,27 +11918,41 @@ function pfUploadCSV(inputEl){
   reader.onload = function(e){
     var text = String(e.target.result||'');
     var lines = text.split(/\r?\n/);
-    var added = 0, skipped = 0, headerSkipped = false;
+    var added = 0, skipped = 0, headerSkipped = false, hasKindCol = false;
     lines.forEach(function(raw){
       var ln = raw.trim();
       if(!ln) return;
       if(ln.charAt(0) === '#') return;   // comment line
-      if(!headerSkipped && /TICKER/i.test(ln) && /STRIKE/i.test(ln)){
+      if(!headerSkipped && /TICKER/i.test(ln)){
         headerSkipped = true;
+        hasKindCol = /^\s*KIND/i.test(ln);
         return;
       }
       var parts = ln.split(',').map(function(p){ return p.trim(); });
-      if(parts.length < 4){ skipped++; return; }
-      var tk = (parts[0]||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
-      var strike = parseFloat(parts[1]);
-      var exp = pfNormalizeDate(parts[2]);
-      var typ = (parts[3]||'').toUpperCase().indexOf('P')>=0 ? 'PUT' : 'CALL';
-      var qty = parseInt(parts[4]||'1')||1;
-      if(tk && strike && exp){
-        PF_PASTE_STAGED.push({ticker:tk, strike:strike, exp:exp, type:typ, qty:qty});
-        added++;
+      // Normalize to [KIND, TICKER, STRIKE, EXPIRATION, TYPE, QTY, AVG_PRICE]
+      // If the file doesn't have a KIND column, prepend 'option' so the
+      // legacy [TICKER,STRIKE,EXP,TYPE,QTY] format still works.
+      if(!hasKindCol){ parts.unshift('option'); }
+      var kind = ((parts[0]||'').toLowerCase().indexOf('shar') >= 0) ? 'shares' : 'option';
+      var tk = (parts[1]||'').toUpperCase().replace(/[^A-Z0-9.\-]/g,'');
+      if(kind === 'shares'){
+        var qtyS = parseInt(parts[5]||'0')||0;
+        var avgS = parseFloat(parts[6]||'');
+        if(tk && qtyS > 0){
+          PF_PASTE_STAGED.push({kind:'shares', ticker:tk, qty:qtyS, avgPrice: (avgS && avgS>0) ? avgS : null});
+          added++;
+        } else { skipped++; }
       } else {
-        skipped++;
+        var strike = parseFloat(parts[2]);
+        var exp = pfNormalizeDate(parts[3]);
+        var typ = (parts[4]||'').toUpperCase().indexOf('P')>=0 ? 'PUT' : 'CALL';
+        var qty = parseInt(parts[5]||'1')||1;
+        if(tk && strike && exp){
+          PF_PASTE_STAGED.push({kind:'option', ticker:tk, strike:strike, exp:exp, type:typ, qty:qty});
+          added++;
+        } else {
+          skipped++;
+        }
       }
     });
     pfRenderStaged();
@@ -11863,12 +12062,24 @@ function pfImportPasted(){
   var col = pfGetCol(data, PF_PASTE_TARGET_COL);
   if(!col){ toast('Target column not found'); return; }
   PF_PASTE_STAGED.forEach(function(p){
-    col.rows.push({
-      id: pfGenId('r_'),
-      ticker: p.ticker, type: p.type, qty: p.qty,
-      strike: p.strike, exp: p.exp,
-      mid: null, value: null, dead: false
-    });
+    if(p.kind === 'shares'){
+      col.rows.push({
+        id: pfGenId('r_'),
+        kind: 'shares',
+        ticker: p.ticker, qty: p.qty,
+        avgPrice: (p.avgPrice != null) ? p.avgPrice : null,
+        type: 'CALL', strike: null, exp: '',
+        mid: null, value: null, dead: false
+      });
+    } else {
+      col.rows.push({
+        id: pfGenId('r_'),
+        kind: 'option',
+        ticker: p.ticker, type: p.type, qty: p.qty,
+        strike: p.strike, exp: p.exp,
+        mid: null, value: null, dead: false
+      });
+    }
   });
   pfSave(data);
   toast('Imported '+PF_PASTE_STAGED.length+' rows into '+col.name);
@@ -11881,10 +12092,23 @@ function pfImportPasted(){
 // ── Export all rows as CSV ──────────────────────────────────────────────────
 function pfExportCSV(){
   var data = pfLoad();
-  var rows = [['Column','Ticker','Type','Strike','Expiry','Qty','Mid','Value','Dead']];
+  var rows = [['Column','Kind','Ticker','Type','Strike','Expiry','Qty','AvgPrice','Mid','Value','Dead']];
   data.columns.forEach(function(col){
     col.rows.forEach(function(r){
-      rows.push([col.name, r.ticker||'', r.type||'CALL', r.strike||'', r.exp||'', r.qty||1, r.mid!=null?r.mid.toFixed(4):'', r.value!=null?r.value.toFixed(2):'', r.dead?'YES':'']);
+      var kind = r.kind || 'option';
+      rows.push([
+        col.name,
+        kind,
+        r.ticker||'',
+        kind==='shares' ? '' : (r.type||'CALL'),
+        kind==='shares' ? '' : (r.strike||''),
+        kind==='shares' ? '' : (r.exp||''),
+        r.qty||1,
+        r.avgPrice!=null ? r.avgPrice : '',
+        r.mid!=null?r.mid.toFixed(4):'',
+        r.value!=null?r.value.toFixed(2):'',
+        r.dead?'YES':''
+      ]);
     });
   });
   var csv = rows.map(function(r){ return r.map(function(c){ return '"'+String(c).replace(/"/g,'""')+'"'; }).join(','); }).join('\n');
