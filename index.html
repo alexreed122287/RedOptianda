@@ -7084,22 +7084,78 @@ function removeWL(t){G.wlTickers=G.wlTickers.filter(function(x){return x!==t;});
 function refreshWL(){
   var wrap=eid('wl-tbl-wrap');
   if(!G.wlTickers.length){wrap.innerHTML='<div class="empty-det" style="min-height:200px;"><div class="ei">\u25a0</div><p>Add tickers to watchlist</p></div>';return;}
-  var html='<table><thead><tr><th>SYMBOL</th><th>PRICE</th><th>CHG</th><th>CHG%</th><th>VOLUME</th><th>SIGNAL</th><th></th></tr></thead><tbody>';
-  G.wlTickers.forEach(function(t){
-    var q=simQuote(t);var u=null;for(var i=0;i<UNIVERSE.length;i++){if(UNIVERSE[i].t===t){u=UNIVERSE[i];break;}}if(!u)u={s:'--'};
-    var ind=simInd(t,q.price),opt=simOpt(q.price),sc=scoreIt(t,ind,opt);
-    var existing=false;for(var i=0;i<G.results.length;i++){if(G.results[i].ticker===t){existing=true;break;}}
-    if(!existing){G.results.push({ticker:t,sector:u.s,price:q.price,change:q.change,changePct:q.changePct,volume:q.volume,ind:ind,opt:opt,score:sc.score,isGo:sc.isGo,filtersPass:sc.filtersPass,rules:sc.rules,passes:sc.passes});}
-    var chgCls=q.change>=0?'pnl-pos':'pnl-neg';var sigBadge=sc.isGo?'<span class="badge go">GO</span>':'<span class="badge nogo">NO-GO</span>';
-    html+='<tr data-ticker="'+t+'" onclick="viewDetail(this.dataset.ticker,\'wl-detail\',\'wl-det-empty\')">'
-      +'<td><b>'+t+'</b></td><td>$'+fmt2(q.price)+'</td>'
-      +'<td class="'+chgCls+'">'+(q.change>=0?'+':'')+fmt2(q.change)+'</td>'
-      +'<td class="'+chgCls+'">'+(q.changePct>=0?'+':'')+fmtP(q.changePct)+'</td>'
-      +'<td>'+fmtK(q.volume)+'</td><td>'+sigBadge+'</td>'
-      +'<td><button class="cbtn" onclick="event.stopPropagation();removeWL(this.parentNode.parentNode.dataset.ticker)">\u2717</button></td>'
-      +'</tr>';
-  });
-  html+='</tbody></table>';wrap.innerHTML=html;
+
+  var creds = (typeof getTradierCreds === 'function') ? getTradierCreds() : null;
+
+  // Render a table row from a resolved quote (real or simulated) — shared
+  // by both the Tradier and fallback paths so the UI stays consistent.
+  function renderTable(quoteByTicker, label){
+    var html='<table><thead><tr><th>SYMBOL</th><th>PRICE</th><th>CHG</th><th>CHG%</th><th>VOLUME</th><th>SIGNAL</th><th></th></tr></thead><tbody>';
+    G.wlTickers.forEach(function(t){
+      var q = quoteByTicker[t] || null;
+      if(!q){
+        // Graceful: show row with dashes instead of dropping the ticker
+        html+='<tr data-ticker="'+t+'"><td><b>'+t+'</b></td><td>--</td><td>--</td><td>--</td><td>--</td><td><span class="badge nogo">--</span></td>'
+            +'<td><button class="cbtn" onclick="event.stopPropagation();removeWL(this.parentNode.parentNode.dataset.ticker)">\u2717</button></td></tr>';
+        return;
+      }
+      var u=null;for(var i=0;i<UNIVERSE.length;i++){if(UNIVERSE[i].t===t){u=UNIVERSE[i];break;}}if(!u)u={s:'--'};
+      var ind=simInd(t,q.price),opt=simOpt(q.price),sc=scoreIt(t,ind,opt);
+      var existing=false;for(var j=0;j<G.results.length;j++){if(G.results[j].ticker===t){existing=true;break;}}
+      if(!existing){G.results.push({ticker:t,sector:u.s,price:q.price,change:q.change,changePct:q.changePct,volume:q.volume,ind:ind,opt:opt,score:sc.score,isGo:sc.isGo,filtersPass:sc.filtersPass,rules:sc.rules,passes:sc.passes});}
+      var chgCls=q.change>=0?'pnl-pos':'pnl-neg';var sigBadge=sc.isGo?'<span class="badge go">GO</span>':'<span class="badge nogo">NO-GO</span>';
+      html+='<tr data-ticker="'+t+'" onclick="viewDetail(this.dataset.ticker,\'wl-detail\',\'wl-det-empty\')">'
+        +'<td><b>'+t+'</b></td><td>$'+fmt2(q.price)+'</td>'
+        +'<td class="'+chgCls+'">'+(q.change>=0?'+':'')+fmt2(q.change)+'</td>'
+        +'<td class="'+chgCls+'">'+(q.changePct>=0?'+':'')+fmtP(q.changePct)+'</td>'
+        +'<td>'+fmtK(q.volume)+'</td><td>'+sigBadge+'</td>'
+        +'<td><button class="cbtn" onclick="event.stopPropagation();removeWL(this.parentNode.parentNode.dataset.ticker)">\u2717</button></td>'
+        +'</tr>';
+    });
+    html+='</tbody></table>';
+    wrap.innerHTML=html;
+  }
+
+  if(!creds){
+    // No Tradier key → fall back to simulated quotes with a banner so the
+    // user understands why prices look wrong.
+    var simMap = {};
+    G.wlTickers.forEach(function(t){ simMap[t] = simQuote(t); });
+    renderTable(simMap, 'simulated');
+    return;
+  }
+
+  // Real Tradier quotes for the watchlist tickers
+  var syms = G.wlTickers.join(',');
+  fetch(creds.host+'/v1/markets/quotes?symbols='+encodeURIComponent(syms),
+    {headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}})
+    .then(function(r){ return r.ok ? r.json() : null; })
+    .then(function(qdata){
+      var byT = {};
+      try {
+        var raw = qdata && qdata.quotes && qdata.quotes.quote;
+        var arr = Array.isArray(raw) ? raw : (raw ? [raw] : []);
+        arr.forEach(function(q){
+          if(!q || !q.symbol) return;
+          var price = +q.last || +q.close || +q.prevclose || 0;
+          var chg   = (q.change != null) ? +q.change : (price - (+q.prevclose||price));
+          var chgP  = (q.change_percentage != null) ? +q.change_percentage : (+q.prevclose ? ((price - +q.prevclose) / +q.prevclose * 100) : 0);
+          byT[q.symbol] = {
+            price:  price,
+            change: +chg || 0,
+            changePct: +chgP || 0,
+            volume: +q.volume || 0
+          };
+        });
+      } catch(e){}
+      renderTable(byT, 'tradier');
+    })
+    .catch(function(e){
+      toast('Watchlist quote fetch failed: '+e.message+' — falling back to simulated');
+      var simMap = {};
+      G.wlTickers.forEach(function(t){ simMap[t] = simQuote(t); });
+      renderTable(simMap, 'simulated-fallback');
+    });
 }
 
 function parseOccSymbol(sym){
