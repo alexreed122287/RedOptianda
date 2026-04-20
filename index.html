@@ -658,7 +658,7 @@ tr.sel-row td{background:var(--blu3);}
       <select id="sc-sect" style="display:none;"><option value="">All</option></select>
     </label>
     <label>Signal <select id="sc-sig"><option value="">All</option><option value="GO" selected>GO</option><option value="NO-GO">NO-GO</option></select></label>
-    <label>Min Score <input type="number" id="sc-minscore" value="120" style="width:60px;"></label>
+    <label>Min Score <input type="number" id="sc-minscore" value="89" style="width:60px;" onchange="reclassifyGoThreshold()"></label>
     <button class="btn" onclick="applyFilters()">FILTER</button>
     <button class="btn" onclick="clearFilters()" style="border-color:var(--gry2);color:var(--gry);">CLEAR</button>
   </div>
@@ -3120,6 +3120,32 @@ function excludedFilteredResults(){
   });
 }
 
+// Re-classify every scanned ticker's GO/NO-GO status against the current
+// Min Score threshold, without re-fetching or re-scoring. Rules are unchanged
+// so we just flip isGo based on total score. Then re-render + re-filter.
+function reclassifyGoThreshold(){
+  var el = eid('sc-minscore');
+  var thresh = el && el.value !== '' ? parseInt(el.value) : 110;
+  if(isNaN(thresh)) thresh = 110;
+  if(!G.results || !G.results.length) return;
+  G.results.forEach(function(r){
+    var avoidBad = false;
+    if(r.rules){
+      // Re-evaluate the avoid condition from the rule scorecard — a rule with
+      // negative points that passed means a red flag was detected.
+      r.rules.forEach(function(rl){ if(rl.pass && rl.pts && rl.pts < 0) avoidBad = true; });
+    }
+    r.isGo = (r.score >= thresh) && !avoidBad;
+  });
+  // Recompute stats bar and re-filter results
+  var goCount = G.results.filter(function(r){ return r.isGo; }).length;
+  if(eid('bs-go'))   eid('bs-go').textContent   = goCount;
+  if(eid('bs-nogo')) eid('bs-nogo').textContent = G.results.length - goCount;
+  applyFilters();
+  renderBuySig();
+  toast('GO threshold set to '+thresh+' \u2014 '+goCount+' GOs');
+}
+
 // ── Mobile: collapse/expand the scanner filter bars ──
 function toggleMobileFilters(){
   var wrap = eid('sc-filter-bars');
@@ -5447,7 +5473,17 @@ function scoreIt(ticker, ind, opt){
 
   // \u2500\u2500 GO DECISION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   var total = clamp(score, 0, 150); // 144 base + 6 GEX bonus
-  var isGo  = total >= 110 && !avoidBad;
+  // GO threshold reads from the Min Score input in the scanner tab so the
+  // user can tune what counts as a "GO". Falls back to 110 if input missing.
+  var goThreshold = 110;
+  try {
+    var el = (typeof document !== 'undefined') ? document.getElementById('sc-minscore') : null;
+    if(el && el.value !== ''){
+      var v = parseInt(el.value);
+      if(!isNaN(v) && v >= 0 && v <= 150) goThreshold = v;
+    }
+  } catch(e){}
+  var isGo  = total >= goThreshold && !avoidBad;
 
   return {
     score:      total,
@@ -6594,8 +6630,8 @@ function applyFilters(){
 function clearFilters(){
   // Reset dropdowns
   if(eid('sc-sect'))        eid('sc-sect').value = '';
-  if(eid('sc-sig'))         eid('sc-sig').value  = 'GO';
-  if(eid('sc-minscore'))    eid('sc-minscore').value = '120';
+  if(eid('sc-sig'))         eid('sc-sig').value  = '';   // 'All' — shows both GO and NO-GO
+  if(eid('sc-minscore'))    eid('sc-minscore').value = '89';  // permissive default; matches strategy floors
   if(eid('sc-maxoptprice')) eid('sc-maxoptprice').value = '';
   // Reset sector multi-select to "all"
   G.selectedSectors = new Set();
@@ -6610,8 +6646,8 @@ function clearFilters(){
   });
   var countEl = eid('sc-filter-count');
   if(countEl) countEl.textContent = '';
-  G.filtered = excludedFilteredResults();
-  renderScan();
+  // Re-classify GO/NO-GO under the new threshold, then re-filter and render
+  reclassifyGoThreshold();
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
@@ -9961,6 +9997,9 @@ function applyStrategyMode(mode){
   if(eid('strategy-desc')) eid('strategy-desc').textContent = sm.desc;
   if(eid('strategy-desc-sc')) eid('strategy-desc-sc').textContent = sm.desc;
 
+  // Reclassify GO/NO-GO with the strategy's threshold BEFORE applying filters
+  // so the table reflects the new signal status.
+  if(typeof reclassifyGoThreshold === 'function') reclassifyGoThreshold();
   // Apply filters and switch to Full Scanner to see results
   applyFilters();
   switchTab('sc');
