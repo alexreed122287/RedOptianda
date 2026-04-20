@@ -685,10 +685,10 @@ tr.sel-row td{background:var(--blu3);}
     <button class="btn blu" id="sc-run-btn" onclick="runScan()">↻ SCAN</button>
     <div style="display:flex;align-items:center;gap:6px;margin-left:8px;border-left:1px solid var(--gry2);padding-left:10px;">
       <span style="color:var(--gry);font-size:10px;letter-spacing:.5px;">SCREENER</span>
-      <label style="font-size:11px;color:var(--gry);">Min Price $<input type="number" id="sc-minprice" value="20" min="1" style="width:52px;font-size:11px;" title="Only include stocks above this price"></label>
+      <label style="font-size:11px;color:var(--gry);">Min Price $<input type="number" id="sc-minprice" value="1" min="1" style="width:52px;font-size:11px;" title="Only include stocks above this price"></label>
       <label style="font-size:11px;color:var(--gry);">Max Price $<input type="number" id="sc-maxprice" placeholder="any" min="1" style="width:62px;font-size:11px;" title="Only include stocks below this price — leave blank for no limit"></label>
       <label style="font-size:11px;color:var(--gry);">Min AvgVol <input type="number" id="sc-minavgvol" value="500000" min="100000" step="100000" style="width:80px;font-size:11px;" title="Min average daily volume"></label>
-      <label style="font-size:11px;color:var(--gry);">Today Vol % <input type="number" id="sc-volratio" value="10" min="0" max="200" style="width:46px;font-size:11px;" title="Today volume must be at least X% of avg volume. Lower this if scanning early in the day.">%</label>
+      <label style="font-size:11px;color:var(--gry);">Today Vol % <input type="number" id="sc-volratio" placeholder="any" min="0" max="200" style="width:46px;font-size:11px;" title="Today volume must be at least X% of avg volume. Leave blank to skip this filter.">%</label>
       <label style="font-size:11px;color:var(--gry);" title="Filter OUT tickers where the option contract costs more than this amount. Uses last scanned option price.">Max Opt $ <input type="number" id="sc-maxoptprice" placeholder="any" min="0" step="0.50" style="width:58px;font-size:11px;"></label>
     </div>
     <span id="sc-universe-label" style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);margin-left:4px;"></span>
@@ -9959,7 +9959,7 @@ var STRATEGY_MODES = {
   }
 };
 
-function applyStrategyMode(mode){
+function applyStrategyMode(mode, silent){
   if(mode === 'clear'){
     clearFilters();
     switchTab('sc');
@@ -10000,10 +10000,12 @@ function applyStrategyMode(mode){
   // Reclassify GO/NO-GO with the strategy's threshold BEFORE applying filters
   // so the table reflects the new signal status.
   if(typeof reclassifyGoThreshold === 'function') reclassifyGoThreshold();
-  // Apply filters and switch to Full Scanner to see results
+  // Apply filters. Only switch tabs / toast when user-initiated (not silent init).
   applyFilters();
-  switchTab('sc');
-  toast(sm.label + ' mode applied');
+  if(!silent){
+    switchTab('sc');
+    toast(sm.label + ' mode applied');
+  }
 }
 
 function renderAlerts(){
@@ -12612,6 +12614,20 @@ function init(){
     if(_lbl){ _lbl.textContent = 'Universe: embedded ('+UNIVERSE_FULL.length+')'; _lbl.style.color='var(--gry)'; }
   }catch(e){}
   try{ gatherKnownSectors(); populateSectorCheckboxes(); updateSectorLabel(); }catch(e){}
+
+  // Pre-select High Conviction strategy as the default scanner mode.
+  // This seeds Signal=GO, Min Score=120, and the 3 MUST PASS confirmation
+  // boxes (PROVEN, Analyst Revisions ↑, GEX Call Heavy). Runs silently;
+  // the user can click CLEAR or any other strategy button to override.
+  try{
+    if(typeof applyStrategyMode === 'function'){
+      // Defer slightly so sector checkboxes and other UI have mounted first
+      setTimeout(function(){
+        try{ applyStrategyMode('highConviction', true); }catch(_e){}
+      }, 50);
+    }
+  }catch(e){}
+
   // Resume any GTC trailing stops from a previous session
   try{ startEquityTrailPoller(); }catch(e){}
   // Initialize order ticket UI mode (stock vs options field visibility)
