@@ -8546,8 +8546,16 @@ function rollLoadChain(){
         +'style="background:none;border:1px solid rgba(0,212,255,0.3);color:var(--amb);font-size:9px;padding:1px 6px;cursor:pointer;border-radius:2px;">SELECT</button></td>'
         +'</tr>';
     }).join('');
-    // Auto-highlight best
-    rollSelectBest();
+    // Auto-select the best contract WITHIN this expiry only \u2014 local pick, no
+    // async global search (which would overwrite the user's expiry choice).
+    // Still respects _userSelected in case the user clicked before this resolved.
+    if(!G_roll._userSelected){
+      var localBest = null;
+      for(var i=0;i<chain.length;i++){
+        if(chain[i]._score === bestScore){ localBest = chain[i]; break; }
+      }
+      if(localBest) rollSelectContract(localBest.symbol);
+    }
   }).catch(function(e){
     eid('roll-chain-body').innerHTML='<tr><td colspan="7" style="padding:8px;color:var(--ngo);text-align:center;">Error: '+e.message+'</td></tr>';
   });
