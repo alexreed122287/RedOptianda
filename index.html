@@ -142,23 +142,30 @@ a{color:var(--blu);text-decoration:none;}
 .empty-det{align-items:center;color:var(--gry);display:flex;flex-direction:column;height:100%;justify-content:center;gap:8px;padding:20px;}
 .empty-det .ei{color:var(--amb3);font-size:36px;}
 .empty-det p{font-size:12px;}
-/* Large panda hero used in scanner + watchlist empty states. mix-blend-mode:lighten
-   lets the image's own dark-blue backdrop disappear into the dashboard's dark-blue
-   background so no hard edges show. */
+/* Large panda hero used in scanner + watchlist empty states.
+   A radial mask fades the image's rectangular edges to transparent so the
+   image's own square backdrop never shows — works on any page color.
+   mix-blend-mode:lighten layered on top gently merges the remaining dark
+   backdrop into the dashboard's dark background in dark mode. */
 .empty-det-panda{
-  width:clamp(220px, 42%, 460px);
-  max-height:58vh;
+  width:clamp(240px, 46%, 500px);
+  max-height:60vh;
   object-fit:contain;
+  -webkit-mask-image:radial-gradient(ellipse at center, #000 32%, rgba(0,0,0,.85) 52%, transparent 78%);
+          mask-image:radial-gradient(ellipse at center, #000 32%, rgba(0,0,0,.85) 52%, transparent 78%);
+  -webkit-mask-repeat:no-repeat; mask-repeat:no-repeat;
+  -webkit-mask-size:100% 100%;   mask-size:100% 100%;
   mix-blend-mode:lighten;
-  opacity:.92;
+  opacity:.95;
   margin:0 auto 6px;
   pointer-events:none;user-select:none;
-  filter:drop-shadow(0 0 24px rgba(0,212,255,.12));
+  filter:drop-shadow(0 0 40px rgba(0,212,255,.18));
 }
 body.light-mode .empty-det-panda{
-  mix-blend-mode:multiply;
-  opacity:.85;
-  filter:drop-shadow(0 4px 10px rgba(0,0,0,.15));
+  /* The mask alone carries the blending on white \u2014 no color blend needed. */
+  mix-blend-mode:normal;
+  opacity:.9;
+  filter:drop-shadow(0 6px 18px rgba(0,0,0,.18));
 }
 .s-hdr{background:var(--bg2);border-bottom:var(--bdr);border-top:var(--bdr);color:var(--amb);font-size:10px;font-weight:700;letter-spacing:1px;padding:5px 12px;text-transform:uppercase;}
 .ind-grid{display:grid;grid-template-columns:repeat(4,1fr);border-bottom:var(--bdr);}
