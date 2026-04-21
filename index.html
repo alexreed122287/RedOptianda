@@ -763,7 +763,7 @@ tr.sel-row td{background:var(--blu3);}
     <div class="split-l"><div class="tbl-wrap" id="wl-tbl-wrap"><div class="empty-det" id="wl-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Add tickers to watchlist</p></div></div></div>
     <div class="split-r">
       <div class="det-wrap" style="display:flex;flex-direction:column;height:100%;">
-        <div class="empty-det" id="wl-det-empty"><img src="assets/panda-transparent.png" alt="" class="empty-det-panda"><p>Select a ticker to view chart</p></div>
+        <div class="empty-det" id="wl-det-empty"><img src="assets/panda-transparent.png?v=3" alt="" class="empty-det-panda"><p>Select a ticker to view chart</p></div>
         <div id="wl-chart-wrap" style="display:none;flex-direction:column;height:100%;">
           <div style="padding:6px 10px;border-bottom:var(--bdr);font-family:var(--ff-mono);font-size:11px;letter-spacing:1.5px;color:var(--amb);display:flex;justify-content:space-between;align-items:center;">
             <span id="wl-chart-title">--</span>
@@ -6948,7 +6948,7 @@ function sortTable(col){
 
 function renderScan(){
   var wrap=eid('sc-tbl-wrap');
-  if(!G.filtered.length){wrap.innerHTML='<div class="empty-det" style="min-height:400px;"><img src="assets/panda-transparent.png" alt="" class="empty-det-panda"><p>No results \u2014 run a scan first</p></div>';return;}
+  if(!G.filtered.length){wrap.innerHTML='<div class="empty-det" style="min-height:400px;"><img src="assets/panda-transparent.png?v=3" alt="" class="empty-det-panda"><p>No results \u2014 run a scan first</p></div>';return;}
 
   // Apply text search (post-filter layer so it composes with all filters)
   var q = (G.scQuery||'');
