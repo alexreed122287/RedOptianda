@@ -531,6 +531,119 @@ tr.sel-row td{background:var(--blu3);}
   .card-hdr{padding:7px 10px;}
 }
 
+/* ══════════════════════════════════════════════════════════════════════════
+   IPAD LAYER — tablet-optimized (769px–1366px, touch-capable)
+   Keeps the desktop layout but scales up tap targets, inputs, and the
+   order-ticket controls so nothing is too small to select with a fingertip.
+   Desktop (mouse-based) users on the same width are unaffected because of
+   the (pointer:coarse) check.
+   ══════════════════════════════════════════════════════════════════════════ */
+@media (min-width:769px) and (max-width:1366px) and (pointer:coarse){
+  /* Base typography: bump slightly for readability at arm's length */
+  body{font-size:14px;}
+  label{font-size:11px;}
+
+  /* ── Tab bar: larger tap zones ── */
+  .ntab{font-size:13px;padding:12px 18px;min-height:48px;}
+
+  /* ── Every button: finger-sized (Apple HIG minimum is 44×44) ── */
+  .btn, button.btn, .sect-btn, .cbtn{
+    min-height:40px;
+    font-size:13px !important;
+    padding:8px 14px !important;
+  }
+
+  /* ── Inputs & selects: prevent iOS zoom-on-focus (needs ≥16px) ── */
+  input[type="number"], input[type="text"], input[type="date"],
+  input[type="password"], input[type="email"], select, textarea{
+    font-size:16px !important;
+    padding:8px 10px !important;
+    min-height:42px;
+  }
+  /* Inline/compact inputs inside tables (chain, etc.) can stay small */
+  .chain-tbl input, .chain-tbl select{min-height:0;font-size:11px !important;padding:3px 6px !important;}
+
+  /* ── Checkboxes: large enough to tap reliably ── */
+  input[type="checkbox"]{width:22px;height:22px;}
+  .ind-filter-lbl{min-height:40px;display:inline-flex;align-items:center;padding:6px 8px;}
+  .ind-filter-lbl input[type="checkbox"]{width:20px;height:20px;}
+
+  /* ── Order Ticket: widen the form so two columns of fields fit comfortably ── */
+  .ord-form{max-width:860px !important;padding:18px !important;}
+  .ord-row{gap:14px;margin-bottom:14px;}
+  .ord-row input, .ord-row select{font-size:15px !important;padding:9px 11px !important;}
+  .ord-field{min-width:140px;}
+
+  /* ── Live-quote panel: keep 5 cells but pad more so BID/ASK are bigger tap targets ── */
+  .quote-panel{margin-bottom:14px;}
+  .qp-cell{padding:10px 14px;}
+  .qp-val{font-size:22px;}
+  .qp-lbl{font-size:10px;}
+
+  /* ── Step fill config: give each field more room and don't let them cram ── */
+  .step-fill-box{padding:14px 16px;}
+  .step-fill-cfg{gap:14px;}
+  .step-cfg-field input, .step-cfg-field select{min-width:110px;font-size:15px !important;padding:7px 10px !important;min-height:40px;}
+  .step-fill-hdr label{font-size:12px;line-height:1.4;}
+
+  /* ── Multi-select sector dropdown: wider with finger-friendly rows ── */
+  .sect-btn{min-height:40px;min-width:200px;font-size:13px;padding:8px 12px;}
+  .sect-opt{min-height:40px;padding:8px 8px;font-size:13px;}
+  .sect-opt input{width:20px;height:20px;}
+  .sect-dd{min-width:320px;max-height:60vh;}
+
+  /* ── Positions / scan / watchlist tables ── */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+  .tbl-wrap table{font-size:14px;}
+  .tbl-wrap thead th{padding:12px 14px;font-size:11px;}
+  .tbl-wrap tbody td{padding:10px 14px;}
+  /* Row close/roll/trail/p&l buttons inside the positions table */
+  .tbl-wrap .btn, .tbl-wrap .cbtn{font-size:12px !important;padding:7px 12px !important;min-height:36px;}
+  /* Trail stop inline-config row: stack into 2 columns so controls don't overflow */
+  .ts-inline{flex-wrap:wrap;gap:10px 14px;}
+  .ts-inline-field{min-width:44%;}
+  .ts-inline-field input, .ts-inline-field select{font-size:15px !important;padding:7px 9px !important;min-height:40px;}
+
+  /* ── Trailing stop panel: more breathing room ── */
+  .ts-cfg{gap:12px;}
+  .ts-field input, .ts-field select{font-size:15px !important;padding:7px 9px !important;min-height:40px;}
+
+  /* ── Split detail views: reasonable min-heights on iPad ── */
+  .split-l{min-height:320px;}
+  .det-tv{min-height:360px;}
+
+  /* ── Grids: keep 2 columns minimum ── */
+  .ind-grid{grid-template-columns:repeat(3,1fr) !important;}
+  .rules-grid{grid-template-columns:1fr 1fr !important;}
+  .stat-grid, .stats-grid{grid-template-columns:repeat(4,1fr) !important;}
+  .stat-val{font-size:20px !important;}
+
+  /* ── API tab form ── */
+  .api-form{max-width:640px;}
+  .api-row input{font-size:15px;padding:9px 12px;min-height:42px;}
+
+  /* ── Card headers scale up a hair ── */
+  .card-hdr{font-size:12px;padding:10px 14px;}
+
+  /* ── Toast: positioned so it doesn't sit under the home indicator ── */
+  #toast{bottom:32px;font-size:13px;padding:14px 20px;}
+
+  /* ── Chain table: keep small, but make the tap targets friendlier ── */
+  .chain-tbl td{padding:5px 8px;}
+  .chain-tab{padding:9px 16px;min-height:42px;font-size:12px;}
+}
+
+/* iPad PORTRAIT specific (narrow tablets): stack order-ticket rows so
+   all form fields get full width and the SUBMIT button is easy to reach */
+@media (min-width:769px) and (max-width:900px) and (pointer:coarse) and (orientation:portrait){
+  .ord-row{flex-direction:column;gap:10px;}
+  .ord-field{width:100%;min-width:0;}
+  .quote-panel{grid-template-columns:repeat(3,1fr);}
+  /* Sidebar-style stacking for step fill config on portrait */
+  .step-fill-cfg{grid-template-columns:1fr 1fr;display:grid;}
+  .step-cfg-field{width:auto;}
+}
+
 .chain-tabs{display:flex;gap:0;border-bottom:var(--bdr);background:var(--bg1);flex-shrink:0;}
 .chain-tab{padding:6px 14px;font-family:var(--ff-mono);font-size:11px;color:var(--gry);cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.5px;}
 .chain-tab.active{color:var(--ambb);border-bottom-color:var(--ambb);}
@@ -3689,13 +3802,15 @@ function updateStepFillMode(){
   var lbl=eid('sf-mode-label');
   var sfStart=eid('sf-start');
   if(closing){
-    lbl.innerHTML='\u25bc STEP FILL MODE \u2014 start at ask, step toward bid (best close price)';
+    lbl.innerHTML='\u25bc STEP FILL MODE \u2014 start at ASK, step DOWN toward bid (best close price)';
     lbl.style.color='var(--wrn)';
-    if(sfStart.value==='bid')sfStart.value='ask'; // auto-flip default
+    // Force to 'ask' for close orders regardless of prior value. Submit logic
+    // also force-overrides, but keeping the UI honest prevents confusion.
+    if(sfStart && sfStart.value !== 'ask') sfStart.value='ask';
   } else {
-    lbl.innerHTML='\u25b2 STEP FILL MODE \u2014 start at bid, step toward ask until filled';
+    lbl.innerHTML='\u25b2 STEP FILL MODE \u2014 start at bid, step UP toward ask until filled';
     lbl.style.color='var(--grn)';
-    if(sfStart.value==='ask')sfStart.value='bid'; // auto-flip default
+    if(sfStart && sfStart.value==='ask') sfStart.value='bid'; // auto-flip default
   }
 }
 
@@ -4120,18 +4235,26 @@ function submitOrder(){
 
     // Determine start and limit prices based on direction
     var startPrice, limitPrice;
-    if(lmt&&lmt>0){
-      // Manual limit entered \u2014 use it as the start
-      startPrice=lmt;
-      limitPrice=closing?bid:ask;
-    } else if(closing){
-      // Close: start at ask, step DOWN toward bid
-      if(startFrom==='bid') startPrice=bid;
-      else if(startFrom==='mid') startPrice=mid||ask;
-      else startPrice=ask; // default for close
-      limitPrice=bid||startPrice*0.98;
+    if(closing){
+      // \u2550\u2550 CLOSE \u2550\u2550 ALWAYS start at ASK and step DOWN toward bid.
+      // SAFETY OVERRIDE: ignore sf-start dropdown for close orders. Selling at
+      // the bid first gives away the entire spread; we must always start high
+      // and walk down to find the best fill. This prevents the "started at bid"
+      // bug where a stale saved setting or missed auto-flip would submit at the
+      // worst possible price.
+      startPrice = ask || mid || (lmt && lmt > 0 ? lmt : 0);
+      limitPrice = bid || (startPrice ? +(startPrice * 0.98).toFixed(2) : 0);
+      // Honor a manual limit ONLY if it is ABOVE the ask (user explicitly
+      // wants to try higher first). Never let a manual limit pull us down to bid.
+      if(lmt && lmt > 0 && lmt > startPrice){
+        startPrice = lmt;
+      }
+    } else if(lmt && lmt > 0){
+      // Open with manual limit entered \u2014 use it as the start
+      startPrice = lmt;
+      limitPrice = ask;
     } else {
-      // Open: start at bid, step UP toward ask
+      // \u2550\u2550 OPEN \u2550\u2550 start at bid, step UP toward ask
       if(startFrom==='mid') startPrice=mid||bid||(ask*0.98);
       else if(startFrom==='ask') startPrice=ask;
       else startPrice=bid; // default for open
@@ -4146,9 +4269,14 @@ function submitOrder(){
         var a=G.liveQuote?G.liveQuote.ask:0;
         var m=G.liveQuote?G.liveQuote.mid:0;
         var closing2=isCloseAction(eid('ord-action').value);
-        var sp=closing2?(a||m):( (eid('sf-start').value==='mid')?(m||b):b );
-        var lp=closing2?(b||sp*0.98):(a||sp*1.02);
+        // SAFETY: close orders MUST start at ask (never bid, never mid)
+        var sp = closing2 ? (a||m) : ((eid('sf-start').value==='mid')?(m||b):b);
+        var lp = closing2 ? (b||+(sp*0.98).toFixed(2)) : (a||+(sp*1.02).toFixed(2));
         if(!sp){toast('Could not determine start price \u2014 enter limit manually');return;}
+        if(closing2 && !a){
+          toast('\u26a0 No ask price available \u2014 refresh quote before closing');
+          return;
+        }
         runStepFill(creds,acct,occSym,sym,side,qty,sp,lp,stepSize,maxAtt,delaySec,closing2?'down':'up');
       },1500);
       return;
@@ -7755,6 +7883,41 @@ function toggleTsRow(sym){
   if(!isOpen) cfgRow.classList.add('open');
 }
 
+// Format a position's open timestamp as two lines: date on top, time on bottom.
+// Prefers the local capture (p.openTs, full ISO with time) over Tradier's
+// p.dateAcquired (often just the date). Returns HTML string for a <td>.
+function formatOpenedDateTime(p){
+  // openTs is the local first-seen timestamp (ISO 8601 w/ time).
+  // dateAcquired is from Tradier; format varies — sometimes date-only, sometimes full ISO.
+  var src = p.openTs || p.dateAcquired || null;
+  if(!src){
+    return '<td style="white-space:nowrap;color:var(--gry2);font-size:10px;">--</td>';
+  }
+  var d = new Date(src);
+  if(isNaN(d.getTime())){
+    return '<td style="white-space:nowrap;color:var(--gry2);font-size:10px;">'+String(src).slice(0,10)+'</td>';
+  }
+  var mm = String(d.getMonth()+1).padStart(2,'0');
+  var dd = String(d.getDate()).padStart(2,'0');
+  var yy = String(d.getFullYear()).slice(-2);
+  var dateStr = mm+'/'+dd+'/'+yy;
+  // Time: 12-hour with am/pm, lowercase, no seconds
+  var hh = d.getHours();
+  var mn = String(d.getMinutes()).padStart(2,'0');
+  var ampm = hh >= 12 ? 'pm' : 'am';
+  var h12 = hh % 12; if(h12 === 0) h12 = 12;
+  var timeStr = h12+':'+mn+ampm;
+  // If the source had no time component (Tradier date-only), skip the time line
+  var hasTime = /T\d{2}:\d{2}/.test(String(src)) || (d.getHours() + d.getMinutes() + d.getSeconds()) > 0;
+  var timeHtml = hasTime
+    ? '<div style="color:var(--gry);font-size:10px;line-height:1.1;">'+timeStr+'</div>'
+    : '';
+  return '<td style="white-space:nowrap;padding-top:6px;padding-bottom:6px;">'
+    + '<div style="color:var(--wht);font-size:11px;font-weight:600;line-height:1.1;">'+dateStr+'</div>'
+    + timeHtml
+    + '</td>';
+}
+
 function renderPositionsTable(pos,srcLabel){
   // Cache live positions so page reload doesn't need an API call
   if(pos&&pos.length&&srcLabel&&srcLabel.indexOf('cached')===-1){
@@ -7787,10 +7950,10 @@ function renderPositionsTable(pos,srcLabel){
     +'<th>TICKER</th><th>CLOSE</th><th>ROLL</th>'
     +'<th>P/L $</th><th>P/L %</th>'
     +'<th>STRIKE</th><th>EXP</th><th>DTE</th>'
-    +'<th>QTY</th><th>ENTRY</th><th>MARK</th><th>UL</th>'
+    +'<th>QTY</th><th>ENTRY</th><th class="col-opened">OPENED</th><th>MARK</th><th>UL</th>'
     +'<th>TRAIL</th><th></th><th></th>'
     +'</tr></thead><tbody>';
-  colCount = 15; // total columns (used by inline config/chart rows)
+  colCount = 16; // total columns (used by inline config/chart rows)
 
   pos.forEach(function(p){
     var pnlCls  = p.pnl>=0?'pnl-pos':'pnl-neg';
@@ -7892,6 +8055,7 @@ function renderPositionsTable(pos,srcLabel){
       +'<td style="'+dteCls+';">'+(dteDays!=='--'?dteDays+'d':'--')+'</td>'          // DTE
       +'<td>'+qty+'</td>'                                                             // QTY
       +'<td>$'+fmt2(p.cost)+'</td>'                                                  // ENTRY
+      +formatOpenedDateTime(p)                                                        // OPENED (date/time bought)
       +'<td>$'+fmt2(p.last)+'</td>'                                                  // MARK
       +'<td style="color:var(--gry3)">'+ulCell+'</td>'                               // UL
       +'<td>'+trailBadge+'</td>'                                                      // TRAIL badge
@@ -8616,11 +8780,38 @@ function closePosition(symbol,type,strike,exp,qty){
     eid('ord-sym').value=symbol;eid('ord-type').value=type==='STOCK'?'STOCK':(type==='PUT'?'PUT':'CALL');
     eid('ord-strike').value=strike;eid('ord-exp').value=exp;eid('ord-action').value=action;eid('ord-qty').value=qty;
     updateStepFillMode(); // flip step fill to close mode (ask\u2192bid)
+    // SAFETY: force sf-start to 'ask' for close orders even if user previously
+    // set it to 'mid'. This is belt-and-suspenders \u2014 the submitOrder() close
+    // branch already ignores sf-start, but reflecting it in the UI prevents
+    // confusion and protects legacy code paths.
+    var sfStart = eid('sf-start');
+    if(sfStart) sfStart.value = 'ask';
+    // Clear any stale limit price from a prior order
+    var lmtEl = eid('ord-lmt');
+    if(lmtEl) lmtEl.value = '';
     var res=eid('ord-result');
     res.innerHTML='\u26a0 Close order pre-filled for <b>'+symbol+'</b> \u2014 review and submit.';
     res.className='ord-result show';res.style.borderColor='var(--wrn)';
     toast('Close order pre-filled for '+symbol);
     fetchLiveQuote();
+    // After the quote resolves, drop the ASK into ord-lmt so a standard
+    // (non-step-fill) submit also starts at the ask. Poll briefly since
+    // fetchLiveQuote is async.
+    var tries = 0;
+    var stamp = setInterval(function(){
+      tries++;
+      if(G.liveQuote && G.liveQuote.ask){
+        clearInterval(stamp);
+        var lmt = eid('ord-lmt');
+        if(lmt && !lmt.value){
+          lmt.value = G.liveQuote.ask.toFixed(2);
+          var hint = eid('lmt-hint');
+          if(hint) hint.textContent = 'ask $'+fmt2(G.liveQuote.ask)+' (pre-filled for close)';
+        }
+      } else if(tries > 20){
+        clearInterval(stamp);
+      }
+    }, 250);
   },120);
 }
 
