@@ -532,116 +532,147 @@ tr.sel-row td{background:var(--blu3);}
 }
 
 /* ══════════════════════════════════════════════════════════════════════════
-   IPAD LAYER — tablet-optimized (769px–1366px, touch-capable)
-   Keeps the desktop layout but scales up tap targets, inputs, and the
-   order-ticket controls so nothing is too small to select with a fingertip.
-   Desktop (mouse-based) users on the same width are unaffected because of
-   the (pointer:coarse) check.
+   IPAD LAYER — tablet-optimized (769px–1366px)
+   IMPORTANT: We do NOT use (pointer:coarse) here because Safari on iPadOS
+   reports (pointer:fine) like a desktop. Targeting screen size alone catches
+   all iPads (744–1366px) and only affects desktop users with very narrow
+   windows, which is acceptable.
    ══════════════════════════════════════════════════════════════════════════ */
-@media (min-width:769px) and (max-width:1366px) and (pointer:coarse){
+@media (min-width:769px) and (max-width:1366px){
   /* Base typography: bump slightly for readability at arm's length */
   body{font-size:14px;}
   label{font-size:11px;}
 
+  /* ── HEADER: prevent horizontal overflow so iPad doesn't shrink-to-fit ── */
+  /* The default 32px header is too short to fit finger-sized buttons.
+     Allow it to grow and wrap so the light/dark toggle, notify button,
+     OPT BP indicator, etc. are all big enough to actually tap. */
+  html, body{overflow-x:hidden !important;}
+  #hdr{height:auto !important;min-height:48px;padding:6px 10px !important;flex-wrap:wrap !important;gap:6px 8px !important;align-items:center !important;}
+  #hdr-tickers{flex-wrap:wrap !important;gap:8px 12px !important;justify-content:flex-start !important;flex:1 1 100%;order:3;padding:4px 0;border-top:1px solid rgba(0,212,255,0.1);}
+  .htick{font-size:12px;}
+  #hdr-logo{font-size:16px !important;letter-spacing:2px !important;flex:0 0 auto;order:1;}
+  #hdr-logo .panda-icon{height:36px !important;}
+  #hdr-right{flex-wrap:wrap !important;gap:6px !important;font-size:12px !important;flex:1 1 auto;order:2;justify-content:flex-end;}
+
+  /* Header buttons (light/dark toggle, NOTIFY, OPT BP, API counter, etc.)
+     have inline style="" attributes so EVERY override needs !important. */
+  #theme-toggle, #push-toggle, #hdr-opt-bp, #api-counter-badge, #mode-badge{
+    font-size:13px !important;
+    padding:9px 14px !important;
+    min-height:40px !important;
+    min-width:44px !important;
+    line-height:1.2 !important;
+    display:inline-flex !important;
+    align-items:center !important;
+    justify-content:center !important;
+    border-radius:6px !important;
+    letter-spacing:.5px !important;
+    cursor:pointer !important;
+    white-space:nowrap !important;
+  }
+  #clk, #mkt-status{font-size:12px !important;padding:4px 6px !important;white-space:nowrap;}
+
+  /* App body needs to recompute height since header is taller now */
+  #app{height:auto !important;min-height:calc(100vh - 130px) !important;}
+
   /* ── Tab bar: larger tap zones ── */
-  .ntab{font-size:13px;padding:12px 18px;min-height:48px;}
+  .ntab{font-size:13px !important;padding:14px 18px !important;min-height:50px !important;}
 
   /* ── Every button: finger-sized (Apple HIG minimum is 44×44) ── */
   .btn, button.btn, .sect-btn, .cbtn{
-    min-height:40px;
+    min-height:42px !important;
     font-size:13px !important;
-    padding:8px 14px !important;
+    padding:9px 14px !important;
   }
 
   /* ── Inputs & selects: prevent iOS zoom-on-focus (needs ≥16px) ── */
   input[type="number"], input[type="text"], input[type="date"],
   input[type="password"], input[type="email"], select, textarea{
     font-size:16px !important;
-    padding:8px 10px !important;
-    min-height:42px;
+    padding:9px 11px !important;
+    min-height:44px !important;
   }
-  /* Inline/compact inputs inside tables (chain, etc.) can stay small */
-  .chain-tbl input, .chain-tbl select{min-height:0;font-size:11px !important;padding:3px 6px !important;}
+  /* Inline/compact inputs inside chain table can stay small */
+  .chain-tbl input, .chain-tbl select{min-height:0 !important;font-size:11px !important;padding:3px 6px !important;}
 
   /* ── Checkboxes: large enough to tap reliably ── */
-  input[type="checkbox"]{width:22px;height:22px;}
-  .ind-filter-lbl{min-height:40px;display:inline-flex;align-items:center;padding:6px 8px;}
-  .ind-filter-lbl input[type="checkbox"]{width:20px;height:20px;}
+  input[type="checkbox"]{width:24px !important;height:24px !important;}
+  .ind-filter-lbl{min-height:44px;display:inline-flex;align-items:center;padding:8px 10px;}
+  .ind-filter-lbl input[type="checkbox"]{width:22px !important;height:22px !important;}
 
   /* ── Order Ticket: widen the form so two columns of fields fit comfortably ── */
-  .ord-form{max-width:860px !important;padding:18px !important;}
+  .ord-form{max-width:920px !important;padding:18px !important;}
   .ord-row{gap:14px;margin-bottom:14px;}
-  .ord-row input, .ord-row select{font-size:15px !important;padding:9px 11px !important;}
+  .ord-row input, .ord-row select{font-size:16px !important;padding:10px 12px !important;}
   .ord-field{min-width:140px;}
 
-  /* ── Live-quote panel: keep 5 cells but pad more so BID/ASK are bigger tap targets ── */
+  /* ── Live-quote panel: bigger BID/ASK numbers and tap zones ── */
   .quote-panel{margin-bottom:14px;}
-  .qp-cell{padding:10px 14px;}
-  .qp-val{font-size:22px;}
-  .qp-lbl{font-size:10px;}
+  .qp-cell{padding:12px 14px;}
+  .qp-val{font-size:24px;}
+  .qp-lbl{font-size:11px;}
 
-  /* ── Step fill config: give each field more room and don't let them cram ── */
+  /* ── Step fill config: each field gets enough room to tap ── */
   .step-fill-box{padding:14px 16px;}
   .step-fill-cfg{gap:14px;}
-  .step-cfg-field input, .step-cfg-field select{min-width:110px;font-size:15px !important;padding:7px 10px !important;min-height:40px;}
-  .step-fill-hdr label{font-size:12px;line-height:1.4;}
+  .step-cfg-field input, .step-cfg-field select{
+    min-width:120px !important;
+    font-size:16px !important;
+    padding:9px 11px !important;
+    min-height:44px !important;
+  }
+  .step-fill-hdr label{font-size:13px;line-height:1.4;}
 
   /* ── Multi-select sector dropdown: wider with finger-friendly rows ── */
-  .sect-btn{min-height:40px;min-width:200px;font-size:13px;padding:8px 12px;}
-  .sect-opt{min-height:40px;padding:8px 8px;font-size:13px;}
-  .sect-opt input{width:20px;height:20px;}
-  .sect-dd{min-width:320px;max-height:60vh;}
+  .sect-btn{min-height:44px !important;min-width:200px !important;font-size:14px !important;padding:10px 14px !important;}
+  .sect-opt{min-height:44px;padding:10px 10px;font-size:14px;}
+  .sect-opt input{width:22px !important;height:22px !important;}
+  .sect-dd{min-width:340px;max-height:60vh;}
 
   /* ── Positions / scan / watchlist tables ── */
   .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
   .tbl-wrap table{font-size:14px;}
-  .tbl-wrap thead th{padding:12px 14px;font-size:11px;}
-  .tbl-wrap tbody td{padding:10px 14px;}
-  /* Row close/roll/trail/p&l buttons inside the positions table */
-  .tbl-wrap .btn, .tbl-wrap .cbtn{font-size:12px !important;padding:7px 12px !important;min-height:36px;}
-  /* Trail stop inline-config row: stack into 2 columns so controls don't overflow */
-  .ts-inline{flex-wrap:wrap;gap:10px 14px;}
+  .tbl-wrap thead th{padding:14px 14px;font-size:11px;}
+  .tbl-wrap tbody td{padding:12px 14px;}
+  .tbl-wrap .btn, .tbl-wrap .cbtn{font-size:13px !important;padding:9px 14px !important;min-height:40px !important;}
+  .ts-inline{flex-wrap:wrap !important;gap:12px 14px !important;}
   .ts-inline-field{min-width:44%;}
-  .ts-inline-field input, .ts-inline-field select{font-size:15px !important;padding:7px 9px !important;min-height:40px;}
+  .ts-inline-field input, .ts-inline-field select{font-size:16px !important;padding:9px 11px !important;min-height:44px !important;}
 
-  /* ── Trailing stop panel: more breathing room ── */
   .ts-cfg{gap:12px;}
-  .ts-field input, .ts-field select{font-size:15px !important;padding:7px 9px !important;min-height:40px;}
+  .ts-field input, .ts-field select{font-size:16px !important;padding:9px 11px !important;min-height:44px !important;}
 
-  /* ── Split detail views: reasonable min-heights on iPad ── */
-  .split-l{min-height:320px;}
-  .det-tv{min-height:360px;}
+  .split-l{min-height:340px;}
+  .det-tv{min-height:380px;}
 
-  /* ── Grids: keep 2 columns minimum ── */
   .ind-grid{grid-template-columns:repeat(3,1fr) !important;}
   .rules-grid{grid-template-columns:1fr 1fr !important;}
   .stat-grid, .stats-grid{grid-template-columns:repeat(4,1fr) !important;}
-  .stat-val{font-size:20px !important;}
+  .stat-val{font-size:22px !important;}
 
-  /* ── API tab form ── */
-  .api-form{max-width:640px;}
-  .api-row input{font-size:15px;padding:9px 12px;min-height:42px;}
+  .api-form{max-width:680px;}
+  .api-row input{font-size:16px;padding:10px 12px;min-height:44px;}
 
-  /* ── Card headers scale up a hair ── */
-  .card-hdr{font-size:12px;padding:10px 14px;}
-
-  /* ── Toast: positioned so it doesn't sit under the home indicator ── */
+  .card-hdr{font-size:13px;padding:12px 14px;}
   #toast{bottom:32px;font-size:13px;padding:14px 20px;}
-
-  /* ── Chain table: keep small, but make the tap targets friendlier ── */
-  .chain-tbl td{padding:5px 8px;}
-  .chain-tab{padding:9px 16px;min-height:42px;font-size:12px;}
+  .chain-tbl td{padding:6px 8px;}
+  .chain-tab{padding:11px 18px !important;min-height:44px !important;font-size:13px !important;}
+  .flt-bar{padding:10px 12px !important;gap:10px !important;}
+  .flt-bar label{font-size:13px !important;}
 }
 
-/* iPad PORTRAIT specific (narrow tablets): stack order-ticket rows so
-   all form fields get full width and the SUBMIT button is easy to reach */
-@media (min-width:769px) and (max-width:900px) and (pointer:coarse) and (orientation:portrait){
-  .ord-row{flex-direction:column;gap:10px;}
-  .ord-field{width:100%;min-width:0;}
-  .quote-panel{grid-template-columns:repeat(3,1fr);}
-  /* Sidebar-style stacking for step fill config on portrait */
-  .step-fill-cfg{grid-template-columns:1fr 1fr;display:grid;}
-  .step-cfg-field{width:auto;}
+/* iPad PORTRAIT (narrow tablets, ≤900px portrait): reduce header to one
+   compact row by hiding the ticker strip — users can see those numbers on
+   the dashboard tabs. This is the key to NOT making the page horizontally
+   overflow on portrait iPad, which is what was forcing pinch-zoom. */
+@media (min-width:769px) and (max-width:900px) and (orientation:portrait){
+  #hdr-tickers{display:none !important;}
+  .ord-row{flex-direction:column !important;gap:12px !important;}
+  .ord-field{width:100% !important;min-width:0 !important;}
+  .quote-panel{display:grid !important;grid-template-columns:repeat(3,1fr) !important;}
+  .step-fill-cfg{display:grid !important;grid-template-columns:1fr 1fr !important;}
+  .step-cfg-field{width:auto !important;}
 }
 
 .chain-tabs{display:flex;gap:0;border-bottom:var(--bdr);background:var(--bg1);flex-shrink:0;}
@@ -834,7 +865,9 @@ tr.sel-row td{background:var(--blu3);}
       <input type="text" id="sc-custom-tickers" placeholder="TSLA, COIN, PLTR..." 
         style="background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:4px 8px;width:180px;"
         title="Manually add tickers to scan — always included regardless of screener filters"
-        onchange="saveCustomTickers()">
+        onchange="saveCustomTickers()"
+        onkeydown="if(event.key==='Enter'){event.preventDefault();searchCustomTicker();}">
+      <button class="btn blu" style="font-size:10px;padding:2px 10px;" onclick="searchCustomTicker()" title="Save custom tickers and immediately run a scan">&#128269; SEARCH</button>
       <button class="btn" style="font-size:10px;padding:2px 8px;" onclick="clearCustomTickers()">CLR</button>
     </div>
   </div>
@@ -1113,6 +1146,9 @@ tr.sel-row td{background:var(--blu3);}
         </div>
         <div class="ord-field" style="flex:0.5;display:flex;align-items:flex-end;">
           <button class="btn" style="font-size:10px;padding:3px 8px;width:100%;" onclick="setLimitToMid()" title="Set limit price to current mid">SET MID</button>
+        </div>
+        <div class="ord-field" style="flex:0.5;display:flex;align-items:flex-end;">
+          <button class="btn" style="font-size:10px;padding:3px 8px;width:100%;border-color:var(--blu3);color:var(--blub);" onclick="setLimitToAsk()" title="Set limit price to current ask (best for closing/selling)">SET ASK</button>
         </div>
       </div>
 
@@ -3369,6 +3405,30 @@ function switchTab(id){
     var sym=eid('ord-sym').value.trim();
     if(sym)fetchLiveQuote();
   }
+  // Scanner / Buy-Signals tabs: restore last-cached scan if in-memory state
+  // is empty (e.g. after a page reload or initial tab switch). This makes
+  // results persist between tab switches and across page reloads.
+  if(id==='bs' || id==='sc'){
+    if((!G.results || !G.results.length) || (!G.filtered || !G.filtered.length)){
+      var cs = cacheGet(CACHE_KEYS.scanResults);
+      if(cs && cs.length){
+        G.results = cs;
+        G.filtered = cs.filter(function(r){
+          try{ return tickerPassesSectorExclusion(r.ticker, r.sector); }
+          catch(e){ return true; }
+        });
+        try{ if(typeof renderBuySig==='function') renderBuySig(); }catch(e){}
+        try{ if(typeof renderScan==='function') renderScan(); }catch(e){}
+        var sa = cacheAge(CACHE_KEYS.scanTs);
+        try{ showStaleBanner(id==='bs'?'tab-bs':'tab-sc','Showing last scan'+(sa?' ('+sa+')':'')+' \u2014 click SCAN to refresh','runScan'); }catch(e){}
+      }
+    } else {
+      // Already have results in memory \u2014 just re-render in case the user
+      // switched away and the DOM was cleared by something
+      try{ if(id==='bs' && typeof renderBuySig==='function') renderBuySig(); }catch(e){}
+      try{ if(id==='sc' && typeof renderScan==='function') renderScan(); }catch(e){}
+    }
+  }
   // Positions tab: restore from cache, no auto-fetch, no poller on tab switch
   if(G.posRefreshTimer){ clearInterval(G.posRefreshTimer); G.posRefreshTimer=null; }
   if(id==='pos'){
@@ -3532,15 +3592,79 @@ function autoSelectContract(){
       eid('asr-gex').textContent=gL; eid('asr-gex').className='asr-val '+(gexScore>=1?'good':'warn');
     } else { eid('asr-gex').textContent='N/A'; eid('asr-gex').className='asr-val'; }
 
-    // Best-per-expiry candidates list
+    // Best-per-expiry candidates list \u2014 now shows up to 3 contracts per
+    // expiration (highest volume) AND guarantees at least one deep-ITM option
+    // (delta 0.70-0.90 for calls, -0.70 to -0.90 for puts) is included per
+    // expiration when one exists in the chain.
     var pool2=best._pool||[];
     if(!pool2.length) pool2=[{opt:{strike:best.strike,greeks:{delta:best.delta},open_interest:best.oi,volume:best.vol,bid:best.bid,ask:best.ask},expDate:best.exp,dte:best.dte,atmStrike:best.atmStrike,vol:best.vol}];
-    var byExp={};
-    pool2.forEach(function(c){ var k=c.expDate; if(!byExp[k]||c.vol>byExp[k].vol) byExp[k]=c; });
-    var perExp=Object.keys(byExp).map(function(k){return byExp[k];}).sort(function(a,b){return a.dte-b.dte;});
+    // Group by expiration
+    var byExp = {};
+    pool2.forEach(function(c){
+      var k = c.expDate;
+      if(!byExp[k]) byExp[k] = [];
+      byExp[k].push(c);
+    });
+    // For each expiration, build a curated list of up to 3 candidates:
+    //   1. The highest-volume contract (the original "best")
+    //   2. The next-best by volume that's NOT a duplicate strike
+    //   3. A guaranteed deep-ITM contract (0.70-0.90 delta) if one exists
+    //      that isn't already in the list
+    var perExp = [];
+    Object.keys(byExp).forEach(function(k){
+      var arr = byExp[k].slice();
+      arr.sort(function(a,b){ return (b.vol||0) - (a.vol||0); });
+      var picked = [];
+      var seenStrikes = {};
+      function pick(c){
+        if(!c) return;
+        if(seenStrikes[c.opt.strike]) return;
+        picked.push(c);
+        seenStrikes[c.opt.strike] = true;
+      }
+      // Top 2 by volume
+      pick(arr[0]);
+      if(arr.length > 1) pick(arr[1]);
+      // Deep ITM: find a 0.70-0.90 |delta| candidate, prefer highest volume
+      var isCall = type === 'CALL';
+      var deepItm = arr.filter(function(c){
+        var d = c.opt && c.opt.greeks ? c.opt.greeks.delta : null;
+        if(d == null) return false;
+        var abs = Math.abs(d);
+        return isCall ? (d >= 0.70 && d <= 0.90) : (d <= -0.70 && d >= -0.90);
+      });
+      if(deepItm.length){
+        // Already sorted by vol desc; pick the first one not already in picked
+        for(var i=0; i<deepItm.length; i++){
+          if(!seenStrikes[deepItm[i].opt.strike]){
+            pick(deepItm[i]);
+            break;
+          }
+        }
+      }
+      // Sort the picked set by absolute delta descending so the deepest ITM
+      // appears first within each expiration (biggest directional exposure)
+      picked.sort(function(a,b){
+        var da = a.opt && a.opt.greeks ? Math.abs(a.opt.greeks.delta||0) : 0;
+        var db = b.opt && b.opt.greeks ? Math.abs(b.opt.greeks.delta||0) : 0;
+        return db - da;
+      });
+      picked.forEach(function(c){ perExp.push(c); });
+    });
+    // Sort the whole list by DTE ascending so nearest expiry is at the top
+    perExp.sort(function(a,b){
+      if(a.expDate === b.expDate){
+        // Within an expiration, deepest ITM (highest |delta|) first
+        var da = a.opt && a.opt.greeks ? Math.abs(a.opt.greeks.delta||0) : 0;
+        var db = b.opt && b.opt.greeks ? Math.abs(b.opt.greeks.delta||0) : 0;
+        return db - da;
+      }
+      return a.dte - b.dte;
+    });
 
     var mfBadge=best.monthFilter?'<span style="font-size:9px;color:var(--amb);margin-left:4px;">'+best.monthFilter+'</span>':'';
-    var candHtml='<div style="color:var(--gry);font-size:9px;padding:4px 0 2px;letter-spacing:.5px;font-weight:700;">BEST PER EXPIRY'+mfBadge+' \u2014 shortest DTE first</div>';
+    var candHtml='<div style="color:var(--gry);font-size:9px;padding:4px 0 2px;letter-spacing:.5px;font-weight:700;">UP TO 3 PER EXPIRY'+mfBadge+' \u2014 deep-ITM (\u03b4 0.70-0.90) guaranteed when available</div>';
+    var lastExp = null;
     perExp.forEach(function(c,idx){
       var isSel=c.expDate===best.exp&&c.opt.strike===best.strike;
       var o=c.opt;
@@ -3548,7 +3672,20 @@ function autoSelectContract(){
       var diff=+(o.strike-atm).toFixed(2);
       var atmTag=diff===0?'<span style="font-size:9px;color:var(--amb);"> ATM</span>':'<span style="font-size:9px;color:var(--gry);">'+(diff>0?'+':'')+diff+'</span>';
       var mid2=(o.bid+o.ask)/2;
-      candHtml+='<div class="asr-cand"'+(isSel?' style="background:rgba(59,130,246,0.07);"':'')+' onclick="applyCandidate('+o.strike+',\''+c.expDate+'\')">'        +'<span class="asr-cand-rank">'+(idx+1)+'.</span>'        +'<span style="color:'+(isSel?'var(--wht)':'var(--gry2)')+';font-weight:700;font-size:11px;width:60px;">'+DS+fmt2(o.strike)+atmTag+'</span>'        +'<span style="color:var(--gry);font-size:10px;width:90px;">'+c.expDate+'</span>'        +'<span style="color:'+(c.dte<=20?'var(--grn)':'var(--gry)')+';font-size:10px;width:42px;">'+c.dte+'d</span>'        +'<span class="asr-cand-detail">vol:<b style="color:var(--grn);">'+fmtK(c.vol)+'</b> oi:'+fmtK(o.open_interest||0)+' \u03b4'+fmt2(o.greeks?o.greeks.delta:0)+' mid:'+DS+fmt2(mid2)+'</span>'        +(isSel?'<span style="font-size:9px;color:var(--blub);font-weight:700;">\u2713</span>':'<button class="btn" style="font-size:9px;padding:1px 6px;border-color:var(--gry2);color:var(--gry);" onclick="event.stopPropagation();applyCandidate('+o.strike+',\''+c.expDate+'\')">USE</button>')        +'</div>';
+      var dlt = (o.greeks && o.greeks.delta != null) ? o.greeks.delta : 0;
+      var dltAbs = Math.abs(dlt);
+      // Tag deep-ITM contracts with a badge so they're easy to spot
+      var deepBadge = (dltAbs >= 0.70 && dltAbs <= 0.90)
+        ? '<span style="background:rgba(0,230,118,0.15);color:var(--grn);font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;border:1px solid rgba(0,230,118,0.4);margin-left:3px;">ITM\u2605</span>'
+        : (dltAbs >= 0.45 && dltAbs <= 0.55)
+          ? '<span style="background:rgba(0,212,255,0.12);color:var(--ambb);font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;border:1px solid rgba(0,212,255,0.35);margin-left:3px;">ATM</span>'
+          : '';
+      // Visually separate each expiration group with a thin divider
+      if(c.expDate !== lastExp){
+        if(lastExp !== null) candHtml += '<div style="border-top:1px solid var(--bg3);margin:3px 0;"></div>';
+        lastExp = c.expDate;
+      }
+      candHtml+='<div class="asr-cand"'+(isSel?' style="background:rgba(59,130,246,0.07);"':'')+' onclick="applyCandidate('+o.strike+',\''+c.expDate+'\')">'        +'<span class="asr-cand-rank">'+(idx+1)+'.</span>'        +'<span style="color:'+(isSel?'var(--wht)':'var(--gry2)')+';font-weight:700;font-size:11px;width:60px;">'+DS+fmt2(o.strike)+atmTag+'</span>'        +'<span style="color:var(--gry);font-size:10px;width:90px;">'+c.expDate+'</span>'        +'<span style="color:'+(c.dte<=20?'var(--grn)':'var(--gry)')+';font-size:10px;width:42px;">'+c.dte+'d</span>'        +'<span class="asr-cand-detail">vol:<b style="color:var(--grn);">'+fmtK(c.vol)+'</b> oi:'+fmtK(o.open_interest||0)+' \u03b4'+fmt2(dlt)+deepBadge+' mid:'+DS+fmt2(mid2)+'</span>'        +(isSel?'<span style="font-size:9px;color:var(--blub);font-weight:700;">\u2713</span>':'<button class="btn" style="font-size:9px;padding:1px 6px;border-color:var(--gry2);color:var(--gry);" onclick="event.stopPropagation();applyCandidate('+o.strike+',\''+c.expDate+'\')">USE</button>')        +'</div>';
     });
     eid('asr-candidates').innerHTML=candHtml;
     resultBox.classList.add('show');
@@ -3786,6 +3923,14 @@ function setLimitToMid(){
     toast('No live quote \u2014 click REFRESH first');
   }
 }
+function setLimitToAsk(){
+  if(G.liveQuote&&G.liveQuote.ask){
+    eid('ord-lmt').value=G.liveQuote.ask.toFixed(2);
+    toast('Limit set to ask: $'+fmt2(G.liveQuote.ask));
+  } else {
+    toast('No live quote \u2014 click REFRESH first');
+  }
+}
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 //  STEP FILL ENGINE
@@ -4014,6 +4159,8 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       res2.innerHTML='<span style="color:var(--grn)">\u2713 STEP FILL: Filled '+qty+' x '+occSym+' @ $'+fmt2(currentPrice)+' on attempt '+attempt+'/'+maxAttempts+'</span>';
       res2.className='ord-result show';
       res2.style.borderColor='var(--grn)';
+      // Reset the form after a short delay so the user can see the success
+      setTimeout(function(){ try{ resetOrderForm({keepResult:true}); }catch(e){} }, 3500);
       break;
     } else if(status==='pending'||status==='open'||status==='partially_filled'){
       var stepDir=goingUp?'stepping up':'stepping down';
@@ -4454,6 +4601,8 @@ function submitOrder(){
         toast('Order submitted: '+data.order.id);
         // Auto-refresh positions after broker processes the order
         setTimeout(function(){ if(G.acctId) fetchPositions(); }, 3000);
+        // Reset the form so the next order doesn't inherit stale state
+        setTimeout(function(){ try{ resetOrderForm({keepResult:true}); }catch(e){} }, 3500);
       } else if(data.errors){
         var errs=data.errors.error;if(!Array.isArray(errs))errs=[errs];
         res.innerHTML='<span style="color:var(--wrn)">Error: '+errs.join(' | ')+
@@ -6343,6 +6492,26 @@ function getCustomTickerList(){
     .filter(function(t){ return t.length > 0 && t.length <= 6 && /^[A-Z]+$/.test(t); });
 }
 
+// Search button next to the custom-ticker input: validates input, saves it,
+// and immediately runs a scan. Bound to the SEARCH button and to Enter on
+// the input field.
+function searchCustomTicker(){
+  var input = eid('sc-custom-tickers');
+  if(!input){ toast('Custom ticker input not found'); return; }
+  var raw = (input.value || '').trim();
+  if(!raw){ toast('Enter a ticker (e.g. TSLA, COIN) before searching'); input.focus(); return; }
+  // Force-uppercase so the user doesn't have to think about case
+  input.value = raw.toUpperCase();
+  saveCustomTickers();
+  var list = getCustomTickerList();
+  if(!list.length){ toast('No valid tickers \u2014 use letters only, max 6 chars each'); return; }
+  toast('Scanning '+list.length+' custom ticker'+(list.length>1?'s':'')+': '+list.join(', '));
+  // Make sure we're on the scanner tab so the user sees results
+  try{ switchTab('sc'); }catch(e){}
+  // Defer the scan one tick so the tab switch animation doesn't drop the toast
+  setTimeout(function(){ try{ runScan(); }catch(e){ toast('Scan error: '+e.message); } }, 100);
+}
+
 function setScanProgress(pct, label){
   var bar = eid('sc-prog-bar');
   var lbl = eid('sc-prog-label');
@@ -7691,8 +7860,13 @@ function _wlDrawCandles(ticker, days, kind){
 }
 
 function parseOccSymbol(sym){
+  // OCC format: ROOT(1-6 chars) + YYMMDD(6) + C/P + STRIKE(8 digits)
+  // Anything that doesn't match this pattern is a stock/ETF, NOT an option.
   var m=sym.match(/^([A-Z1-9]+)(\d{6})([CP])(\d{8})$/);
-  if(!m)return{underlying:sym,type:'CALL',strike:0,exp:''};
+  if(!m){
+    // Stock/ETF: no strike, no expiry, no call/put type
+    return{underlying:sym,type:'STOCK',strike:0,exp:''};
+  }
   var underlying=m[1];var dateStr=m[2];var typ=m[3]==='C'?'CALL':'PUT';var strike=parseInt(m[4])/1000;
   var yr='20'+dateStr.slice(0,2),mo=dateStr.slice(2,4),dy=dateStr.slice(4,6);
   return{underlying:underlying,type:typ,strike:strike,exp:yr+'-'+mo+'-'+dy};
@@ -7745,7 +7919,15 @@ function fetchPositionsDirect(key,mode,host,acct){
         var now = new Date().toISOString();
         pos.forEach(function(p){
           var q=quotes[p.symbol];
-          if(q){var mid=q.bid&&q.ask?(q.bid+q.ask)/2:(q.last||0);p.last=mid;p.bid=q.bid||0;p.ask=q.ask||0;var contractVal=mid*Math.abs(p.qty)*100;p.pnl=contractVal-p.cost;p.pnlPct=p.cost?((p.pnl/p.cost)*100):0;}
+          if(q){
+            var mid=q.bid&&q.ask?(q.bid+q.ask)/2:(q.last||0);
+            p.last=mid;p.bid=q.bid||0;p.ask=q.ask||0;
+            // Multiplier: stocks/ETFs settle 1:1 per share; options are 100x per contract
+            var mult = (p.type === 'STOCK') ? 1 : 100;
+            var contractVal=mid*Math.abs(p.qty)*mult;
+            p.pnl=contractVal-p.cost;
+            p.pnlPct=p.cost?((p.pnl/p.cost)*100):0;
+          }
           // Record first-seen data (open timestamp + underlying price at open)
           if(!G.posOpenData[p.symbol]){
             G.posOpenData[p.symbol]={
@@ -7950,10 +8132,15 @@ function renderPositionsTable(pos,srcLabel){
     +'<th>TICKER</th><th>CLOSE</th><th>ROLL</th>'
     +'<th>P/L $</th><th>P/L %</th>'
     +'<th>STRIKE</th><th>EXP</th><th>DTE</th>'
-    +'<th>QTY</th><th>ENTRY</th><th class="col-opened">OPENED</th><th>MARK</th><th>UL</th>'
+    +'<th>QTY</th><th>ENTRY</th><th class="col-opened">OPENED</th>'
+    +'<th title="Underlying stock price at the time you bought this position">UL@ENTRY</th>'
+    +'<th>MARK</th>'
+    +'<th title="Underlying price needed for the contract to break even at expiration">B/E</th>'
+    +'<th>UL</th>'
+    +'<th title="Current value of your position (mark x qty x multiplier)">EQUITY</th>'
     +'<th>TRAIL</th><th></th><th></th>'
     +'</tr></thead><tbody>';
-  colCount = 16; // total columns (used by inline config/chart rows)
+  colCount = 19; // total columns (used by inline config/chart rows)
 
   pos.forEach(function(p){
     var pnlCls  = p.pnl>=0?'pnl-pos':'pnl-neg';
@@ -8030,7 +8217,12 @@ function renderPositionsTable(pos,srcLabel){
     var dteCls = dteDays!=='--'&&dteDays<=7?'color:var(--red)':dteDays!=='--'&&dteDays<=14?'color:var(--ambb)':'color:var(--gry3)';
     var ditCls = 'color:var(--gry3)';
     // Strike cell with C/P suffix + ITM/OTM badge (folded TYPE column into STRIKE)
+    var isStock = p.type === 'STOCK';
     var strikeCell = (function(){
+      if(isStock){
+        // Stock: show "SHARES" badge instead of a strike with ITM/OTM
+        return '<td style="white-space:nowrap;"><span style="background:rgba(0,212,255,0.12);color:var(--ambb);font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;border:1px solid rgba(0,212,255,0.35);letter-spacing:.5px;">SHARES</span></td>';
+      }
       var ul = p.ulNow || p.underlyingNow || 0;
       var typeSfx = p.type === 'CALL' ? 'C' : 'P';
       var base = '$'+fmt2(p.strike)+'<span style="color:var(--gry);font-size:10px;margin-left:2px;">'+typeSfx+'</span>';
@@ -8043,21 +8235,68 @@ function renderPositionsTable(pos,srcLabel){
       return '<td style="white-space:nowrap;">'+base+badge+'</td>';
     })();
     var ulCell = p.underlyingNow ? '$'+fmt2(p.underlyingNow) : '--';
+    // Stock rows don't have expiry, DTE, or rollover — render dashes
+    var expCell = isStock ? '<td style="color:var(--gry2);">\u2014</td>' : '<td>'+(p.exp||'--')+'</td>';
+    var dteCell = isStock ? '<td style="color:var(--gry2);">\u2014</td>' : '<td style="'+dteCls+';">'+(dteDays!=='--'?dteDays+'d':'--')+'</td>';
+    // Roll button: hide for stocks (no contract to roll)
+    var rollCell = isStock
+      ? '<td style="white-space:nowrap;color:var(--gry2);text-align:center;">\u2014</td>'
+      : '<td style="white-space:nowrap;"><button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--amb);color:var(--amb);" onclick="doRoll(this)">&#8635; ROLL</button></td>';
+
+    // ── New columns: UL@ENTRY (price of underlying when position was first seen),
+    // B/E (breakeven for options), EQUITY (current value of the position)
+    var ulEntryCell = (function(){
+      // For stocks, the underlying-at-entry IS just the cost basis per share
+      if(isStock){
+        var cb = p.cost && qty ? (p.cost/qty) : 0;
+        return cb ? '<td style="color:var(--gry3);">$'+fmt2(cb)+'</td>' : '<td style="color:var(--gry2);">--</td>';
+      }
+      var ue = p.underlyingAtOpen || 0;
+      return ue ? '<td style="color:var(--gry3);">$'+fmt2(ue)+'</td>' : '<td style="color:var(--gry2);" title="Underlying price was not captured at the time this position was first seen by the dashboard">--</td>';
+    })();
+
+    var beCell = (function(){
+      if(isStock){
+        // For stocks, breakeven is just the cost basis per share
+        var cb = p.cost && qty ? (p.cost/qty) : 0;
+        return cb ? '<td style="color:var(--ambb);">$'+fmt2(cb)+'</td>' : '<td style="color:var(--gry2);">--</td>';
+      }
+      // Breakeven for an option = strike + premium per share (call) or strike - premium per share (put)
+      // Premium per share = cost basis / (qty * 100)
+      var prem = (p.cost && qty) ? (p.cost / (qty * 100)) : 0;
+      if(!prem || !p.strike) return '<td style="color:var(--gry2);">--</td>';
+      var be = p.type === 'CALL' ? p.strike + prem : p.strike - prem;
+      // Color based on whether we're above/below B/E
+      var ulNow = p.underlyingNow || 0;
+      var atOrPast = ulNow && (p.type === 'CALL' ? ulNow >= be : ulNow <= be);
+      var color = atOrPast ? 'var(--grn)' : 'var(--ambb)';
+      return '<td style="color:'+color+';white-space:nowrap;" title="Underlying must reach $'+fmt2(be)+' for break-even at expiration">$'+fmt2(be)+'</td>';
+    })();
+
+    var equityCell = (function(){
+      var mult = isStock ? 1 : 100;
+      var equity = (p.last || 0) * Math.abs(p.qty) * mult;
+      var equityCls = equity >= (p.cost||0) ? 'pnl-pos' : 'pnl-neg';
+      return '<td class="'+equityCls+'" style="white-space:nowrap;">'+fmtD(equity)+'</td>';
+    })();
 
     html += '<tr data-tk="'+tk+'" data-tp="'+tp+'" data-st="'+st+'" data-ex="'+ex+'" data-qty="'+qty+'" data-sym="'+sym+'">'
-      +'<td><b>'+tk+'</b></td>'                                                      // TICKER only
+      +'<td><b>'+tk+'</b>'+(isStock?' <span style="color:var(--gry);font-size:10px;">EQ</span>':'')+'</td>'  // TICKER (with EQ marker for stocks)
       +'<td style="white-space:nowrap;"><button class="cbtn" onclick="doClose(this)">CLOSE</button></td>'
-      +'<td style="white-space:nowrap;"><button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--amb);color:var(--amb);" onclick="doRoll(this)">&#8635; ROLL</button></td>'
+      +rollCell
       +'<td class="'+pnlCls+'">'+(p.pnl>=0?'+':'')+fmtD(p.pnl)+'</td>'               // P/L $
       +'<td class="'+pnlCls+'">'+(p.pnlPct>=0?'+':'')+fmtP(p.pnlPct)+'</td>'         // P/L %
-      +strikeCell                                                                     // STRIKE ($NNN C/P + ITM/OTM)
-      +'<td>'+(p.exp||'--')+'</td>'                                                   // EXP
-      +'<td style="'+dteCls+';">'+(dteDays!=='--'?dteDays+'d':'--')+'</td>'          // DTE
-      +'<td>'+qty+'</td>'                                                             // QTY
-      +'<td>$'+fmt2(p.cost)+'</td>'                                                  // ENTRY
+      +strikeCell                                                                     // STRIKE ($NNN C/P + ITM/OTM) or SHARES
+      +expCell                                                                        // EXP (— for stocks)
+      +dteCell                                                                        // DTE (— for stocks)
+      +'<td>'+qty+(isStock?' <span style="color:var(--gry2);font-size:9px;">sh</span>':'')+'</td>'  // QTY (with sh suffix for stocks)
+      +'<td>$'+fmt2(p.cost)+'</td>'                                                  // ENTRY (total cost basis)
       +formatOpenedDateTime(p)                                                        // OPENED (date/time bought)
+      +ulEntryCell                                                                    // UL@ENTRY (underlying price when bought)
       +'<td>$'+fmt2(p.last)+'</td>'                                                  // MARK
-      +'<td style="color:var(--gry3)">'+ulCell+'</td>'                               // UL
+      +beCell                                                                         // B/E (breakeven)
+      +'<td style="color:var(--gry3)">'+(isStock?'\u2014':ulCell)+'</td>'            // UL
+      +equityCell                                                                     // EQUITY (current value)
       +'<td>'+trailBadge+'</td>'                                                      // TRAIL badge
       +'<td><button class="btn ts-enable-btn" style="'+(cfgEnabled?'border-color:var(--grn);color:var(--grn);':'')+'" onclick="toggleTsRow(\''+sym+'\')">\u25b4 TRAIL</button></td>'
       +'<td><button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--blu3);color:var(--blub);" onclick="togglePosChart(\''+sym+'\')">\u25b2 P&L</button></td>'
@@ -8773,46 +9012,117 @@ function buyOrder(ticker,type,strike,exp){
 function doBuyCall(){if(G.detailOpt)buyOrder(G.detailOpt.ticker,'CALL',G.detailOpt.strike,G.detailOpt.exp);}
 function doBuyPut(){if(G.detailOpt)buyOrder(G.detailOpt.ticker,'PUT',G.detailOpt.strike,G.detailOpt.exp);}
 function doClose(btn){var tr=btn.closest('tr');closePosition(tr.dataset.tk,tr.dataset.tp,+tr.dataset.st,tr.dataset.ex,+tr.dataset.qty);}
+
+// Reset the Order Ticket back to safe defaults after a successful order so
+// that the next order doesn't inherit stale ticker/qty/limit/step-fill state.
+// Called from the step-fill success path and the standard submit success path.
+function resetOrderForm(opts){
+  opts = opts || {};
+  // Clear text fields
+  ['ord-sym','ord-strike','ord-exp','ord-lmt','ord-stop','ord-trail-val'].forEach(function(id){
+    var el = eid(id); if(el) el.value = '';
+  });
+  // Reset selects to defaults
+  if(eid('ord-action')) eid('ord-action').value = 'BUY_TO_OPEN';
+  if(eid('ord-type')) eid('ord-type').value = 'CALL';
+  if(eid('ord-otype')) eid('ord-otype').value = 'limit';
+  if(eid('ord-qty')) eid('ord-qty').value = 1;
+  if(eid('ord-duration')) eid('ord-duration').value = 'day';
+  // Step-fill controls back to default (start at BID for opens)
+  var sfStart = eid('sf-start'); if(sfStart) sfStart.value = 'bid';
+  var sfToggle = eid('step-fill-toggle');
+  if(sfToggle && sfToggle.checked){ sfToggle.checked = false; toggleStepFill(); }
+  // Clear stale liveQuote so next order doesn't use the previous symbol's prices
+  G.liveQuote = null;
+  // Clear quote-panel display
+  ['qp-bid','qp-ask','qp-mid','qp-last','qp-mark'].forEach(function(id){
+    var el = eid(id); if(el) el.textContent = '--';
+  });
+  ['qp-bid-sz','qp-ask-sz','qp-spread','qp-chg','qp-iv'].forEach(function(id){
+    var el = eid(id); if(el) el.textContent = '';
+  });
+  var hint = eid('lmt-hint'); if(hint) hint.textContent = '';
+  // Re-sync UI label/colors for OPEN mode
+  try{ updateStepFillMode(); }catch(e){}
+  // Clear any leftover poll timer
+  if(G._closePollTimer){ clearInterval(G._closePollTimer); G._closePollTimer = null; }
+  // If caller wants the result message preserved, skip clearing it
+  if(!opts.keepResult){
+    var res = eid('ord-result');
+    if(res){ res.classList.remove('show'); res.innerHTML = ''; }
+  }
+}
+
 function closePosition(symbol,type,strike,exp,qty){
-  var action=type==='STOCK'?'SELL':'SELL_TO_CLOSE';
+  var isStock = (type === 'STOCK');
+  var action = isStock ? 'SELL' : 'SELL_TO_CLOSE';
+  // Coerce qty to positive integer (Tradier returns negative qty for short positions)
+  var absQty = Math.abs(parseInt(qty)||1) || 1;
+  // CRITICAL: clear stale liveQuote BEFORE switching tabs. If the previous
+  // order had liveQuote populated for a different symbol, the polling loop
+  // below would immediately match it and pre-fill the WRONG ask.
+  G.liveQuote = null;
+  // Also clear any stale poll/timer from a prior closePosition call
+  if(G._closePollTimer){ clearInterval(G._closePollTimer); G._closePollTimer = null; }
   switchTab('order');
   setTimeout(function(){
-    eid('ord-sym').value=symbol;eid('ord-type').value=type==='STOCK'?'STOCK':(type==='PUT'?'PUT':'CALL');
-    eid('ord-strike').value=strike;eid('ord-exp').value=exp;eid('ord-action').value=action;eid('ord-qty').value=qty;
-    updateStepFillMode(); // flip step fill to close mode (ask\u2192bid)
-    // SAFETY: force sf-start to 'ask' for close orders even if user previously
-    // set it to 'mid'. This is belt-and-suspenders \u2014 the submitOrder() close
-    // branch already ignores sf-start, but reflecting it in the UI prevents
-    // confusion and protects legacy code paths.
+    eid('ord-sym').value = symbol;
+    eid('ord-type').value = isStock ? 'STOCK' : (type==='PUT' ? 'PUT' : 'CALL');
+    eid('ord-strike').value = isStock ? '' : strike;
+    eid('ord-exp').value = isStock ? '' : exp;
+    eid('ord-action').value = action;
+    eid('ord-qty').value = absQty;
+    // Stocks/ETFs use SELL not SELL_TO_CLOSE — make sure mode-stock UI class is applied
+    var ordForm = document.querySelector('.ord-form');
+    if(ordForm){
+      if(isStock) ordForm.classList.add('mode-stock');
+      else ordForm.classList.remove('mode-stock');
+    }
+    updateStepFillMode(); // flip step fill UI to close mode (ASK\u2192BID)
+    // Force step fill ON for close orders \u2014 prevents accidental single-shot
+    // limit at the wrong price.
+    var sfToggle = eid('step-fill-toggle');
+    if(sfToggle && !sfToggle.checked){ sfToggle.checked = true; toggleStepFill(); }
+    // SAFETY: force sf-start to 'ask' regardless of prior value. The
+    // submitOrder() close branch already ignores sf-start as a backup, but
+    // keeping the UI honest prevents confusion.
     var sfStart = eid('sf-start');
     if(sfStart) sfStart.value = 'ask';
     // Clear any stale limit price from a prior order
     var lmtEl = eid('ord-lmt');
     if(lmtEl) lmtEl.value = '';
-    var res=eid('ord-result');
-    res.innerHTML='\u26a0 Close order pre-filled for <b>'+symbol+'</b> \u2014 review and submit.';
-    res.className='ord-result show';res.style.borderColor='var(--wrn)';
-    toast('Close order pre-filled for '+symbol);
+    var res = eid('ord-result');
+    res.innerHTML = '\u26a0 Close order pre-filled for <b>'+symbol+'</b> ('+absQty+(isStock?' shares':' contracts')+') \u2014 fetching fresh quote...';
+    res.className = 'ord-result show';
+    res.style.borderColor = 'var(--wrn)';
+    toast('Close order pre-filled for '+symbol+' ('+absQty+(isStock?' shares':' contracts')+')');
+    // Now fetch a FRESH quote (we cleared G.liveQuote above so the poll will
+    // only match real new data, never stale carry-over)
     fetchLiveQuote();
-    // After the quote resolves, drop the ASK into ord-lmt so a standard
-    // (non-step-fill) submit also starts at the ask. Poll briefly since
-    // fetchLiveQuote is async.
     var tries = 0;
-    var stamp = setInterval(function(){
+    G._closePollTimer = setInterval(function(){
       tries++;
-      if(G.liveQuote && G.liveQuote.ask){
-        clearInterval(stamp);
+      // Match only when liveQuote belongs to the symbol we just pre-filled
+      var q = G.liveQuote;
+      var symMatches = q && (
+        (q.symbol && q.symbol.indexOf(symbol) !== -1) ||
+        (eid('ord-sym').value === symbol) // fallback: assume current quote is for current symbol
+      );
+      if(q && q.ask && symMatches){
+        clearInterval(G._closePollTimer); G._closePollTimer = null;
         var lmt = eid('ord-lmt');
         if(lmt && !lmt.value){
-          lmt.value = G.liveQuote.ask.toFixed(2);
+          lmt.value = q.ask.toFixed(2);
           var hint = eid('lmt-hint');
-          if(hint) hint.textContent = 'ask $'+fmt2(G.liveQuote.ask)+' (pre-filled for close)';
+          if(hint) hint.textContent = 'ASK $'+fmt2(q.ask)+' (pre-filled for close \u2014 step fill will start here)';
         }
-      } else if(tries > 20){
-        clearInterval(stamp);
+        res.innerHTML = '\u26a0 Close order pre-filled for <b>'+symbol+'</b> \u2014 step fill will start at ASK $'+fmt2(q.ask)+' and walk down toward BID $'+fmt2(q.bid||0)+'.';
+      } else if(tries > 24){ // 6 seconds total
+        clearInterval(G._closePollTimer); G._closePollTimer = null;
+        res.innerHTML = '\u26a0 Close order pre-filled for <b>'+symbol+'</b> \u2014 quote did not arrive. Click REFRESH on the quote panel before submitting.';
       }
     }, 250);
-  },120);
+  }, 120);
 }
 
 function fetchBalances(){
@@ -13249,37 +13559,64 @@ function pfParsePreview(){
 }
 
 function pfImportPasted(){
-  if(!PF_PASTE_TARGET_COL){ toast('No target column'); return; }
-  if(!PF_PASTE_STAGED.length){ pfParsePreview(); if(!PF_PASTE_STAGED.length){ toast('Nothing parseable to import'); return; } }
+  if(!PF_PASTE_TARGET_COL){ toast('No target column \u2014 close the modal and click PASTE RH on a column first'); return; }
+  if(!PF_PASTE_STAGED.length){
+    pfParsePreview();
+    if(!PF_PASTE_STAGED.length){ toast('Nothing parseable to import'); return; }
+  }
   var data = pfLoad();
   var col = pfGetCol(data, PF_PASTE_TARGET_COL);
-  if(!col){ toast('Target column not found'); return; }
+  if(!col){ toast('Target column not found \u2014 try refreshing the page'); return; }
+  var addedShares = 0, addedOptions = 0;
   PF_PASTE_STAGED.forEach(function(p){
     if(p.kind === 'shares'){
+      // Validate: must have ticker and positive qty
+      if(!p.ticker || !p.qty || p.qty <= 0){ return; }
       col.rows.push({
         id: pfGenId('r_'),
         kind: 'shares',
-        ticker: p.ticker, qty: p.qty,
-        avgPrice: (p.avgPrice != null) ? p.avgPrice : null,
+        ticker: String(p.ticker).toUpperCase(),
+        qty: parseInt(p.qty) || 1,
+        avgPrice: (p.avgPrice != null && p.avgPrice > 0) ? parseFloat(p.avgPrice) : null,
         type: 'CALL', strike: null, exp: '',
         mid: null, value: null, dead: false
       });
+      addedShares++;
     } else {
+      // Options: must have ticker, strike, exp
+      if(!p.ticker || !p.strike || !p.exp){ return; }
       col.rows.push({
         id: pfGenId('r_'),
         kind: 'option',
-        ticker: p.ticker, type: p.type, qty: p.qty,
-        strike: p.strike, exp: p.exp,
+        ticker: String(p.ticker).toUpperCase(),
+        type: p.type || 'CALL',
+        qty: parseInt(p.qty) || 1,
+        strike: parseFloat(p.strike) || 0,
+        exp: p.exp,
         mid: null, value: null, dead: false
       });
+      addedOptions++;
     }
   });
+  var totalAdded = addedShares + addedOptions;
+  if(!totalAdded){
+    toast('No valid rows in staging \u2014 each row needs at least ticker + qty (and strike/exp for options)');
+    return;
+  }
   pfSave(data);
-  toast('Imported '+PF_PASTE_STAGED.length+' rows into '+col.name);
-  pfClosePasteModal();
+  // Clear staging IMMEDIATELY so accidental double-clicks don't duplicate rows
+  PF_PASTE_STAGED = [];
+  // Render BEFORE closing modal and BEFORE async refresh so the new rows
+  // appear instantly. Even if pfRefreshAll fails, the user sees their data.
   renderPortfolio();
-  // Auto-refresh prices
-  setTimeout(pfRefreshAll, 300);
+  pfClosePasteModal();
+  var msg = 'Imported '+totalAdded+' row'+(totalAdded>1?'s':'')+' into '+col.name;
+  if(addedShares && addedOptions){ msg += ' ('+addedOptions+' opt, '+addedShares+' shr)'; }
+  else if(addedShares){ msg += ' ('+addedShares+' shares)'; }
+  else { msg += ' ('+addedOptions+' options)'; }
+  toast(msg);
+  // Now try to refresh quotes; if it errors, the rows are still visible
+  setTimeout(function(){ try{ pfRefreshAll(); }catch(e){ console.error('pfRefreshAll error:', e); } }, 300);
 }
 
 // ── Export all rows as CSV ──────────────────────────────────────────────────
