@@ -1063,6 +1063,7 @@ tr.sel-row td{background:var(--blu3);}
           <div class="qp-lbl">LAST</div>
           <div class="qp-val" style="color:var(--wht);" id="qp-last">--</div>
           <div class="qp-spread" id="qp-chg"></div>
+          <div class="qp-spread" id="qp-ah" style="font-size:9px;display:none;font-weight:600;"></div>
         </div>
         <div class="qp-cell">
           <div class="qp-lbl">MARK</div>
@@ -3844,7 +3845,8 @@ function fetchStockQuote(creds,sym){
       bid:bid,ask:ask,mid:mid,last:last,mark:mid||last,
       bidSz:q.bidsize||0,askSz:q.asksize||0,
       spread:+(ask-bid).toFixed(2),iv:null,
-      chg:chg,chgPct:chgPct,isOption:false,sym:sym
+      chg:chg,chgPct:chgPct,isOption:false,sym:sym,
+      rawQuote:q
     });
   }).catch(function(){showSimQuote(sym,'STOCK');});
 }
@@ -3891,6 +3893,32 @@ function showSimQuote(sym,type){
   });
 }
 
+// Returns true if the quote's last trade occurred outside 09:30–16:00 ET.
+// Uses Tradier's `trade_date` (milliseconds since epoch).
+function isAHTrade(q){
+  if(!q || !q.trade_date) return false;
+  var ms = +q.trade_date;
+  if(!ms || ms <= 0) return false;
+  var parts = new Date(ms).toLocaleString('en-US', {
+    timeZone: 'America/New_York', hour: 'numeric', minute: 'numeric', hour12: false
+  }).split(':').map(Number);
+  var mins = parts[0] * 60 + parts[1];
+  return mins < 570 || mins >= 960;  // <9:30 or ≥16:00 ET
+}
+
+// Computes the AH-only delta relative to today's RTH close. Returns null if
+// we can't compute it confidently (no close, close === prevclose meaning the
+// regular session hasn't ended yet, or trivial delta).
+function ahDelta(q){
+  if(!isAHTrade(q)) return null;
+  var last = parseFloat(q.last), close = parseFloat(q.close), prev = parseFloat(q.prevclose);
+  if(!last || !close) return null;
+  if(close === prev) return null;  // session not yet closed — `close` is just yesterday's
+  var delta = last - close;
+  if(Math.abs(delta) < 0.005) return null;
+  return { delta: delta, pct: (delta / close) * 100, close: close };
+}
+
 function renderQuotePanel(q){
   G.liveQuote=q;
   eid('qp-bid').textContent='$'+fmt2(q.bid);
@@ -3907,6 +3935,21 @@ function renderQuotePanel(q){
   eid('qp-chg').style.color=q.chg>=0?'var(--blu)':'var(--wrn)';
   eid('qp-iv').textContent=q.iv?'IV '+(q.iv*100).toFixed(1)+'%':'';
   eid('qp-ts').textContent='Updated '+new Date().toLocaleTimeString();
+  // AH line — only for stocks (options don't trade AH)
+  var ahEl = eid('qp-ah');
+  if(ahEl){
+    var ah = !q.isOption ? ahDelta(q.rawQuote) : null;
+    if(ah){
+      var sign = ah.delta >= 0 ? '+' : '';
+      ahEl.textContent = 'AH ' + sign + '$' + fmt2(ah.delta) + ' (' + sign + fmt2(ah.pct) + '%)';
+      ahEl.style.color = ah.delta >= 0 ? 'var(--grn)' : 'var(--red)';
+      ahEl.style.display = '';
+      ahEl.title = "After-hours move from today's 4pm close ($" + fmt2(ah.close) + ")";
+    } else {
+      ahEl.textContent = '';
+      ahEl.style.display = 'none';
+    }
+  }
   // Hint on limit price input
   if(q.bid&&q.ask){
     eid('lmt-hint').textContent='bid $'+fmt2(q.bid)+' | ask $'+fmt2(q.ask);
@@ -11672,7 +11715,19 @@ function updateHeaderQuotes(){
       hqCache[p.id]=price;
       var cel=eid('h-'+p.id+'-c');
       if(cel){
-        cel.textContent='('+(chgPct>=0?'+':'')+chgPct.toFixed(2)+'%)';
+        var ahMark = '';
+        // Show a tiny AH marker when the print is after-hours (and we can
+        // compute it — VIX and some indices don't report trade_date)
+        if(typeof isAHTrade === 'function' && isAHTrade(q)){
+          var ah = typeof ahDelta === 'function' ? ahDelta(q) : null;
+          if(ah){
+            var s = ah.pct >= 0 ? '+' : '';
+            ahMark = ' <span style="font-size:8px;opacity:0.75;letter-spacing:0;">·AH ' + s + ah.pct.toFixed(2) + '%</span>';
+          } else {
+            ahMark = ' <span style="font-size:8px;opacity:0.6;letter-spacing:0;">·AH</span>';
+          }
+        }
+        cel.innerHTML='('+(chgPct>=0?'+':'')+chgPct.toFixed(2)+'%)'+ahMark;
         cel.className='tc '+(chgPct>=0?'up':'dn');
       }
     });
