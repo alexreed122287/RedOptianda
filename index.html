@@ -635,7 +635,7 @@ tr.sel-row td{background:var(--blu3);}
   .tbl-wrap table{font-size:14px;}
   .tbl-wrap thead th{padding:14px 14px;font-size:11px;}
   .tbl-wrap tbody td{padding:12px 14px;}
-  .tbl-wrap .btn, .tbl-wrap .cbtn{font-size:13px !important;padding:9px 14px !important;min-height:40px !important;}
+  .tbl-wrap .btn, .tbl-wrap .cbtn{font-size:13px !important;padding:9px 14px !important;min-height:44px !important;min-width:44px !important;}
   .ts-inline{flex-wrap:wrap !important;gap:12px 14px !important;}
   .ts-inline-field{min-width:44%;}
   .ts-inline-field input, .ts-inline-field select{font-size:16px !important;padding:9px 11px !important;min-height:44px !important;}
@@ -756,6 +756,7 @@ tr.sel-row td{background:var(--blu3);}
   <button class="ntab" onclick="switchTab('pos')">POSITIONS</button>
   <button class="ntab" onclick="switchTab('order')">ORDER TICKET</button>
   <button class="ntab" onclick="switchTab('al')">ALERTS</button>
+  <button class="ntab" onclick="switchTab('sent')">&#9678; SENTIMENT</button>
   <button class="ntab" onclick="switchTab('api')">&#9881; API</button>
   <button class="ntab" onclick="switchTab('pf')">PORTFOLIO</button>
   <button class="ntab" onclick="switchTab('cw')">&#9734; OPTIONS WATCHLIST</button>
@@ -802,6 +803,7 @@ tr.sel-row td{background:var(--blu3);}
     <button class="btn blu" style="font-size:11px;" onclick="applyStrategyMode('highConviction')">&#9733; HIGH CONVICTION</button>
     <button class="btn" style="font-size:11px;" onclick="applyStrategyMode('breakout')">&#9650; BREAKOUT</button>
     <button class="btn" style="font-size:11px;" onclick="applyStrategyMode('momentum')">&#9654; MOMENTUM</button>
+    <button class="btn" style="font-size:11px;border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')">&#9670; BEST ITM CALLS</button>
     <button class="btn" style="font-size:11px;border-color:var(--gry2);color:var(--gry);" onclick="applyStrategyMode('clear')">&#10005; CLEAR</button>
     <span id="strategy-desc-sc" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);margin-left:4px;font-style:italic;"></span>
   </div>
@@ -1292,6 +1294,12 @@ tr.sel-row td{background:var(--blu3);}
   </div>
 </div>
 
+<div class="tab-pane" id="tab-sent">
+  <div class="page-wrap" id="tab-sent-body">
+    <div style="color:var(--gry);font-family:var(--ff-mono);font-size:11px;padding:20px;">Loading sentiment data...</div>
+  </div>
+</div>
+
 <div class="tab-pane" id="tab-al">
   <div class="page-wrap">
 
@@ -1487,6 +1495,7 @@ tr.sel-row td{background:var(--blu3);}
         <button class="btn blu" style="font-size:11px;" onclick="applyStrategyMode('highConviction')">&#9733; HIGH CONVICTION</button>
         <button class="btn" style="font-size:11px;" onclick="applyStrategyMode('breakout')">&#9650; BREAKOUT</button>
         <button class="btn" style="font-size:11px;" onclick="applyStrategyMode('momentum')">&#9654; MOMENTUM</button>
+        <button class="btn" style="font-size:11px;border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')">&#9670; BEST ITM CALLS</button>
         <button class="btn" style="font-size:11px;border-color:var(--gry2);color:var(--gry);" onclick="applyStrategyMode('clear')">CLEAR ALL</button>
       </div>
       <div id="strategy-desc" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);line-height:1.7;min-height:32px;"></div>
@@ -3381,11 +3390,12 @@ function switchTab(id){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.ntab').forEach(function(b){b.classList.remove('active');});
   var pane=eid('tab-'+id);if(pane)pane.classList.add('active');
-  var ids=['bs','sc','wl','pos','order','al','closed','api','pf','cw'];
+  var ids=['bs','sc','wl','pos','order','al','sent','closed','api','pf','cw'];
   var idx=ids.indexOf(id);
   var btns=document.querySelectorAll('.ntab');
   if(btns[idx])btns[idx].classList.add('active');
   if(id==='al')renderAlerts();
+  if(id==='sent'){ if(typeof renderSentimentTab==='function') renderSentimentTab(); }
   if(id==='closed'){
     // Load from cache first, show stale banner
     var cachedClosed = cacheGet('op_cache_closed');
@@ -7243,6 +7253,291 @@ function sortTable(col){
   renderScan();
 }
 
+// ══════════════════════════════════════════════════════════════════════════
+//  SENTIMENT OVERLAY — consumes sentiment-panel/data/latest.json
+//  Three read-only uses: header regime badge, per-row loud-ticker badge,
+//  visual tiebreaker via color. Never used to time entries.
+// ══════════════════════════════════════════════════════════════════════════
+var SENT = { regime: null, loudMap: {}, loadedAt: 0, status: 'idle' };
+var SENT_URL = 'https://alexreed122287.github.io/sentiment-panel/data/latest.json';
+var SENT_REFRESH_MS = 30 * 60 * 1000;  // 30 minutes
+
+function loadSentiment(){
+  SENT.status = 'loading';
+  fetch(SENT_URL, {cache:'no-cache'}).then(function(r){
+    if(!r.ok) throw new Error('HTTP '+r.status);
+    return r.json();
+  }).then(function(j){
+    SENT.raw = j;
+    SENT.regime = j.regime || null;
+    SENT.loudMap = {};
+    (j.loud_tickers || []).forEach(function(t){ SENT.loudMap[t.ticker] = t; });
+    SENT.tickerSent = j.ticker_sentiment || {};
+    SENT.trending = j.trending || [];
+    SENT.redditCashtags = j.reddit_cashtags || [];
+    SENT.loadedAt = Date.now();
+    SENT.status = 'ok';
+    updateRegimeBadge();
+    if(typeof decorateSentiment === 'function') decorateSentiment();
+    // Re-render sent tab if it's currently visible
+    var sentPane = document.getElementById('tab-sent');
+    if(sentPane && sentPane.classList.contains('active') && typeof renderSentimentTab === 'function') renderSentimentTab();
+  }).catch(function(e){
+    SENT.status = 'error';
+    SENT.error = String(e);
+    updateRegimeBadge();
+  });
+}
+
+// Build a compact 30-day F&G sparkline as inline SVG
+function fgSparklineSVG(history, w, h){
+  if(!history || !history.length) return '';
+  w = w || 52; h = h || 12;
+  var vals = history.map(function(p){ return p.score; });
+  var min = Math.min.apply(null, vals);
+  var max = Math.max.apply(null, vals);
+  var range = Math.max(max - min, 1);
+  var pts = vals.map(function(v, i){
+    var x = (i / (vals.length - 1 || 1)) * w;
+    var y = h - ((v - min) / range) * h;
+    return x.toFixed(1) + ',' + y.toFixed(1);
+  }).join(' ');
+  var last = vals[vals.length - 1];
+  var color = regimeColor(last);
+  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h +
+         '" style="vertical-align:middle;margin-left:4px;overflow:visible;">' +
+         '<polyline fill="none" stroke="' + color + '" stroke-width="1.2" points="' + pts + '"/>' +
+         '</svg>';
+}
+
+function regimeColor(score){
+  if(score == null) return 'var(--gry)';
+  if(score <= 24) return '#ef4444';      // extreme fear — red
+  if(score <= 44) return '#f59e0b';      // fear — orange
+  if(score <= 55) return 'var(--gry)';   // neutral — gray
+  if(score <= 75) return 'var(--grn)';   // greed — green
+  return '#fbbf24';                       // extreme greed — yellow (contrarian signal)
+}
+
+function updateRegimeBadge(){
+  var el = document.getElementById('hdr-sent');
+  if(!el) return;
+  if(SENT.status === 'loading' && !SENT.regime){ el.innerHTML = 'F&G: …'; return; }
+  if(SENT.status === 'error' || !SENT.regime || SENT.regime.ok === false){
+    el.innerHTML = 'F&G: --';
+    el.style.color = 'var(--gry)';
+    el.style.borderColor = 'var(--gry2)';
+    el.title = 'Sentiment feed unavailable' + (SENT.error ? ': ' + SENT.error : '');
+    return;
+  }
+  var r = SENT.regime;
+  var c = regimeColor(r.score);
+  var spark = fgSparklineSVG(r.history || [], 48, 12);
+  el.innerHTML = '<span style="vertical-align:middle;">F&amp;G: ' + Math.round(r.score) + ' ' + (r.rating || '').toUpperCase() + '</span>' + spark;
+  el.style.color = c;
+  el.style.borderColor = c;
+  var age = Math.round((Date.now() - new Date(r.timestamp || SENT.loadedAt).getTime()) / 60000);
+  el.title = 'CNN Fear & Greed: ' + r.score.toFixed(1) + ' (' + r.rating + ')\n' +
+             'Prev close: ' + r.previous_close + ' · 1wk: ' + r.previous_1_week + ' · 1mo: ' + r.previous_1_month + '\n' +
+             'Sparkline: last ' + (r.history ? r.history.length : 0) + ' sessions. Updated ' + age + ' min ago. Click to refresh.';
+}
+
+function injectSentimentBadge(){
+  if(document.getElementById('hdr-sent')) return;
+  var host = document.getElementById('hdr-right');
+  if(!host) return;
+  var span = document.createElement('span');
+  span.id = 'hdr-sent';
+  span.style.cssText = 'cursor:pointer;background:rgba(0,212,255,0.04);border:1px solid var(--gry2);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--gry);letter-spacing:.5px;';
+  span.textContent = 'F&G: …';
+  span.onclick = loadSentiment;
+  // Place before the mode-badge if possible (keeps OPT BP adjacent to API counter)
+  var modeBadge = document.getElementById('mode-badge');
+  if(modeBadge) host.insertBefore(span, modeBadge);
+  else host.appendChild(span);
+}
+
+// Called at the end of renderScan() to paint loud-ticker badges on rows.
+// Color is driven by `net` (bull-bear normalized to -1..+1) which accounts
+// for neutral messages; falls back to bull_pct if net is unavailable.
+function decorateSentiment(){
+  if(!SENT.loudMap || SENT.status !== 'ok') return;
+  var wrap = document.getElementById('sc-tbl-wrap');
+  if(!wrap) return;
+  var rows = wrap.querySelectorAll('tr[data-ticker]');
+  rows.forEach(function(tr){
+    var tk = tr.dataset.ticker;
+    var loud = SENT.loudMap[tk];
+    if(!loud) return;
+    var tdTk = tr.children[1];
+    if(!tdTk || tdTk.querySelector('.sent-badge')) return;
+    var net = loud.net;           // -1..+1, tagged-messages-only
+    var bp  = loud.bull_pct;      // 0..100, tagged-messages-only
+    var color, label;
+    if(net != null){
+      color = net >= 0.3 ? 'var(--grn)' : net <= -0.3 ? 'var(--red)' : 'var(--amb)';
+      label = (net >= 0 ? '+' : '') + net.toFixed(2);
+    } else if(bp != null){
+      color = bp >= 60 ? 'var(--grn)' : bp <= 40 ? 'var(--red)' : 'var(--amb)';
+      label = bp + '% bull';
+    } else {
+      color = 'var(--amb)';
+      label = 'untagged';
+    }
+    var srcs = (loud.sources || []).join('+');
+    var tip = 'Loud on ' + srcs + ' · net ' + label +
+              (bp != null ? ' (' + bp + '% bull)' : '') +
+              (loud.reddit_mentions ? ' · ' + loud.reddit_mentions + ' Reddit posts' : '') +
+              (loud.stocktwits_score ? ' · StT score ' + loud.stocktwits_score : '') +
+              (loud.message_count ? ' · ' + loud.message_count + ' msgs' : '');
+    var badge = document.createElement('span');
+    badge.className = 'sent-badge';
+    badge.style.cssText = 'margin-left:4px;font-size:9px;color:'+color+';vertical-align:middle;';
+    badge.title = tip;
+    badge.textContent = '\u25c9';  // fisheye glyph
+    tdTk.appendChild(badge);
+  });
+}
+
+// ── SENT tab renderer ──────────────────────────────────────────────────
+function renderSentimentTab(){
+  var host = document.getElementById('tab-sent-body');
+  if(!host) return;
+  if(SENT.status !== 'ok'){
+    host.innerHTML = '<div style="color:var(--gry);font-family:var(--ff-mono);font-size:11px;padding:20px;">' +
+      (SENT.status === 'error' ? 'Sentiment feed error: ' + (SENT.error||'unknown') : 'Loading sentiment data...') +
+      '</div>';
+    return;
+  }
+  var r = SENT.regime || {};
+
+  // ── F&G 30-day history bar chart ──
+  var hist = r.history || [];
+  var chartH = 80;
+  var chartW = 600;
+  var barW = hist.length ? Math.max(4, Math.floor(chartW / hist.length) - 2) : 0;
+  var bars = hist.map(function(p, i){
+    var x = i * (barW + 2);
+    var h = Math.max(1, (p.score / 100) * chartH);
+    var y = chartH - h;
+    return '<rect x="' + x + '" y="' + y + '" width="' + barW + '" height="' + h +
+           '" fill="' + regimeColor(p.score) + '" opacity="0.85"><title>' +
+           p.t + ': ' + p.score + ' (' + p.rating + ')</title></rect>';
+  }).join('');
+  // Horizontal reference lines at 25/55/75 (fear/neutral/greed boundaries)
+  var gridLines = [25, 55, 75].map(function(v){
+    var y = chartH - (v / 100) * chartH;
+    return '<line x1="0" y1="' + y + '" x2="' + chartW + '" y2="' + y +
+           '" stroke="var(--bg3)" stroke-width="0.5" stroke-dasharray="2,3"/>';
+  }).join('');
+  var regimeHTML =
+    '<div class="card"><div class="card-hdr">\u25ce MARKET REGIME \u2014 CNN FEAR &amp; GREED</div>' +
+    '<div class="card-body" style="padding:16px;">' +
+      '<div style="display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin-bottom:12px;">' +
+        '<div style="font-family:var(--ff-mono);">' +
+          '<div style="font-size:36px;font-weight:700;color:' + regimeColor(r.score) + ';line-height:1;">' +
+          Math.round(r.score || 0) + '</div>' +
+          '<div style="font-size:11px;color:' + regimeColor(r.score) + ';letter-spacing:1px;margin-top:4px;">' +
+          (r.rating || '').toUpperCase() + '</div>' +
+        '</div>' +
+        '<div style="font-family:var(--ff-mono);font-size:11px;color:var(--gry);line-height:1.8;">' +
+          'Prev close: <span style="color:var(--wht);">' + (r.previous_close ?? '--') + '</span><br>' +
+          '1 week ago: <span style="color:var(--wht);">' + (r.previous_1_week ?? '--') + '</span><br>' +
+          '1 month ago: <span style="color:var(--wht);">' + (r.previous_1_month ?? '--') + '</span>' +
+        '</div>' +
+      '</div>' +
+      '<svg width="100%" viewBox="0 0 ' + chartW + ' ' + (chartH + 18) + '" style="display:block;">' +
+        gridLines + bars +
+        '<text x="0" y="' + (chartH + 14) + '" fill="var(--gry)" font-size="9" font-family="var(--ff-mono)">' +
+          (hist.length ? hist[0].t : '') + '</text>' +
+        '<text x="' + chartW + '" y="' + (chartH + 14) + '" fill="var(--gry)" font-size="9" font-family="var(--ff-mono)" text-anchor="end">' +
+          (hist.length ? hist[hist.length - 1].t : '') + '</text>' +
+      '</svg>' +
+      '<div style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);margin-top:6px;">' +
+        'Hover bars for daily values. Dashed lines at 25 (fear), 55 (neutral), 75 (greed) thresholds.' +
+      '</div>' +
+    '</div></div>';
+
+  // ── Stocktwits trending ──
+  var trending = SENT.trending || [];
+  var stwRows = trending.map(function(s){
+    var sent = SENT.tickerSent[s.ticker];
+    var net = sent && sent.net;
+    var netTxt = net == null ? '<span style="color:var(--gry);">--</span>' :
+      '<span style="color:' + (net >= 0.3 ? 'var(--grn)' : net <= -0.3 ? 'var(--red)' : 'var(--amb)') + ';">' +
+      (net >= 0 ? '+' : '') + net.toFixed(2) + '</span>';
+    var bullTxt = sent && sent.bull_pct != null ? sent.bull_pct + '%' : '--';
+    return '<tr data-ticker="' + s.ticker + '" onclick="addToScanner(\'' + s.ticker + '\')">' +
+      '<td><b>' + s.ticker + '</b></td>' +
+      '<td style="color:var(--gry);font-size:11px;">' + (s.title || '') + '</td>' +
+      '<td style="text-align:right;">' + (s.score != null ? s.score.toFixed(1) : '--') + '</td>' +
+      '<td style="text-align:right;color:var(--gry);font-size:11px;">' + fmtK(s.watchlist_count || 0) + '</td>' +
+      '<td style="text-align:right;">' + netTxt + '</td>' +
+      '<td style="text-align:right;color:var(--gry);font-size:11px;">' + bullTxt + '</td>' +
+      '</tr>';
+  }).join('');
+
+  // ── Reddit cashtags ──
+  var reddit = SENT.redditCashtags || [];
+  var rdRows = reddit.map(function(s){
+    var sent = SENT.tickerSent[s.ticker];
+    var net = sent && sent.net;
+    var netTxt = net == null ? '<span style="color:var(--gry);">--</span>' :
+      '<span style="color:' + (net >= 0.3 ? 'var(--grn)' : net <= -0.3 ? 'var(--red)' : 'var(--amb)') + ';">' +
+      (net >= 0 ? '+' : '') + net.toFixed(2) + '</span>';
+    var subsTxt = (s.subs || []).map(function(sub){ return 'r/' + sub; }).join(', ');
+    return '<tr data-ticker="' + s.ticker + '" onclick="addToScanner(\'' + s.ticker + '\')">' +
+      '<td><b>' + s.ticker + '</b></td>' +
+      '<td style="text-align:right;">' + s.mentions + '</td>' +
+      '<td style="color:var(--gry);font-size:11px;">' + subsTxt + '</td>' +
+      '<td style="text-align:right;">' + netTxt + '</td>' +
+      '</tr>';
+  }).join('');
+
+  var ts = SENT.raw && SENT.raw.fetched_at ? new Date(SENT.raw.fetched_at).toLocaleString() : '--';
+
+  host.innerHTML = regimeHTML +
+    '<div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-top:16px;" id="sent-lists">' +
+      '<div class="card"><div class="card-hdr">\u25b2 STOCKTWITS TRENDING (top ' + trending.length + ')</div>' +
+      '<div class="tbl-wrap" style="max-height:420px;overflow:auto;">' +
+        '<table><thead><tr><th>SYMBOL</th><th>NAME</th><th style="text-align:right;">SCORE</th><th style="text-align:right;">WATCH</th><th style="text-align:right;">NET</th><th style="text-align:right;">BULL%</th></tr></thead>' +
+        '<tbody>' + (stwRows || '<tr><td colspan="6" style="color:var(--gry);text-align:center;padding:20px;">No trending data</td></tr>') + '</tbody></table>' +
+      '</div></div>' +
+      '<div class="card"><div class="card-hdr">\u25c9 REDDIT CASHTAGS (r/wsb · r/stocks · r/options, top ' + reddit.length + ')</div>' +
+      '<div class="tbl-wrap" style="max-height:420px;overflow:auto;">' +
+        '<table><thead><tr><th>SYMBOL</th><th style="text-align:right;">MENTIONS</th><th>SUBREDDITS</th><th style="text-align:right;">NET</th></tr></thead>' +
+        '<tbody>' + (rdRows || '<tr><td colspan="4" style="color:var(--gry);text-align:center;padding:20px;">No cashtag data</td></tr>') + '</tbody></table>' +
+      '</div></div>' +
+    '</div>' +
+    '<div style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);text-align:right;margin-top:12px;">' +
+      'Snapshot: ' + ts + ' · Click any row to prefill the scanner with that ticker.' +
+    '</div>';
+}
+
+// Helper: called from SENT tab row clicks — drops ticker into the scanner's
+// CUSTOM box and switches tabs, so the user can immediately run a scan.
+function addToScanner(tk){
+  var el = document.getElementById('sc-custom-tickers');
+  if(el){
+    var existing = (el.value || '').split(',').map(function(s){return s.trim();}).filter(Boolean);
+    if(existing.indexOf(tk) < 0){ existing.push(tk); el.value = existing.join(', '); }
+    if(typeof saveCustomTickers === 'function') saveCustomTickers();
+  }
+  if(typeof switchTab === 'function') switchTab('sc');
+  if(typeof toast === 'function') toast('Added ' + tk + ' to scanner');
+}
+
+// Boot: load sentiment on startup and refresh periodically
+(function(){
+  function boot(){
+    injectSentimentBadge();
+    loadSentiment();
+    setInterval(loadSentiment, SENT_REFRESH_MS);
+  }
+  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
+  else boot();
+})();
+
 function renderScan(){
   var wrap=eid('sc-tbl-wrap');
   if(!G.filtered.length){wrap.innerHTML='<div class="empty-det" style="min-height:400px;"><img src="assets/panda-transparent.png?v=3" alt="" class="empty-det-panda"><p>No results \u2014 run a scan first</p></div>';return;}
@@ -7339,6 +7634,7 @@ function renderScan(){
   });
 
   wrap.innerHTML='<table><thead><tr>'+th+'</tr></thead><tbody>'+rows+'</tbody></table>';
+  if(typeof decorateSentiment === 'function') decorateSentiment();
 }
 </script>
 
@@ -10975,6 +11271,12 @@ var STRATEGY_MODES = {
     label: '\u25b6 MOMENTUM',
     desc: 'MACD + + Above EMA200 + Vol > Avg + RS > SPY \u2014 strong trending stocks with volume confirmation',
     filters: {sig:'GO', minScore:89, macd:true, ema200:true, vol:true, rs:true}
+  },
+  bestItmCalls: {
+    label: '\u25c6 BEST ITM CALLS',
+    desc: 'Score \u2265110 + liquid ($5+, 1M+ avg vol) + in-play today (vol \u2265 avg) + contract \u2264$8 \u2014 deep-ITM (\u03b4 0.70\u20130.90) calls on bullish momentum names. Click SCAN to run.',
+    filters: {sig:'GO', minScore:110, macd:true, ema200:true, vol:true, rs:true,
+              minPrice:5, minAvgVol:1000000, volRatio:100, maxOptPrice:8}
   }
 };
 
@@ -11011,6 +11313,13 @@ function applyStrategyMode(mode, silent){
   if(f.tf       && eid('filt-tf'))       eid('filt-tf').checked       = true;
   if(f.ema200   && eid('filt-ema200'))   eid('filt-ema200').checked   = true;
   if(f.vol      && eid('filt-vol'))      eid('filt-vol').checked      = true;
+
+  // Optional screener inputs — only written when the preset specifies them
+  if(f.minPrice    !== undefined && eid('sc-minprice'))    eid('sc-minprice').value    = f.minPrice;
+  if(f.maxPrice    !== undefined && eid('sc-maxprice'))    eid('sc-maxprice').value    = f.maxPrice;
+  if(f.minAvgVol   !== undefined && eid('sc-minavgvol'))   eid('sc-minavgvol').value   = f.minAvgVol;
+  if(f.volRatio    !== undefined && eid('sc-volratio'))    eid('sc-volratio').value    = f.volRatio;
+  if(f.maxOptPrice !== undefined && eid('sc-maxoptprice')) eid('sc-maxoptprice').value = f.maxOptPrice;
 
   // Show description in alerts tab
   if(eid('strategy-desc')) eid('strategy-desc').textContent = sm.desc;
