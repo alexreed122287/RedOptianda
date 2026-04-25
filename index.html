@@ -1086,14 +1086,19 @@ tr.sel-row td{background:var(--blu3);}
     </div>
   </div>
 
+  <!-- Stats moved ABOVE the position table so they're always visible at a glance.
+       TOTAL P&L = lifetime realized (sum of closed trades) + open unrealized.
+       DAY P&L  = today's account-equity change tracked via localStorage history.
+       CASH     = b.total_cash from Tradier balances (purchasing power slice). -->
+  <div class="stats-bar" id="pos-stats" style="border-bottom:var(--bdr);border-top:none;">
+    <div class="stat-box"><div class="stat-label">TOTAL P&amp;L</div><div class="stat-val" id="pos-pnl" title="Lifetime: realized (closed trades) + unrealized (open positions)">$0.00</div></div>
+    <div class="stat-box"><div class="stat-label">DAY P&amp;L</div><div class="stat-val" id="pos-daypnl" title="Today's change in total account equity">$0.00</div></div>
+    <div class="stat-box"><div class="stat-label">OPEN POSITIONS</div><div class="stat-val amb" id="pos-count">0</div></div>
+    <div class="stat-box"><div class="stat-label">CASH</div><div class="stat-val amb" id="pos-cash" title="Total cash available (from Tradier balances)">--</div></div>
+    <div class="stat-box"><div class="stat-label">ACCOUNT VALUE</div><div class="stat-val amb" id="pos-acctval" title="Total equity = positions market value + cash">--</div></div>
+  </div>
   <div class="tbl-wrap" id="pos-tbl-wrap">
     <div class="empty-det" id="pos-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Click Refresh Positions to load</p></div>
-  </div>
-  <div style="display:flex;gap:0;border-top:var(--bdr);flex-shrink:0;">
-    <div class="stat-box"><div class="stat-label">TOTAL P&amp;L</div><div class="stat-val" id="pos-pnl">$0.00</div></div>
-    <div class="stat-box"><div class="stat-label">DAY P&amp;L</div><div class="stat-val" id="pos-daypnl">$0.00</div></div>
-    <div class="stat-box"><div class="stat-label">OPEN POSITIONS</div><div class="stat-val amb" id="pos-count">0</div></div>
-    <div class="stat-box"><div class="stat-label">ACCOUNT VALUE</div><div class="stat-val amb" id="pos-acctval">--</div></div>
   </div>
 </div>
 
@@ -8450,7 +8455,7 @@ function fetchPositions(){
   if(!key){
     eid('pos-src').textContent='[NO API KEY]';
     eid('pos-tbl-wrap').innerHTML='<div class="empty-det" style="min-height:200px;"><div class="ei">\u25a0</div><p>No Tradier API key configured.<br>Go to the API tab to enter your key.</p></div>';
-    eid('pos-pnl').textContent='$0.00';eid('pos-daypnl').textContent='$0.00';eid('pos-count').textContent='0';eid('pos-acctval').textContent='--';return;
+    eid('pos-pnl').textContent='$0.00';eid('pos-daypnl').textContent='$0.00';eid('pos-count').textContent='0';eid('pos-cash').textContent='--';eid('pos-acctval').textContent='--';return;
   }
   var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
   eid('pos-src').textContent='Loading from Tradier '+mode+'...';
@@ -8942,8 +8947,84 @@ function renderPositionsTable(pos,srcLabel){
 
   html += '</tbody></table>';
   wrap.innerHTML = html;
-  var pnlEl=eid('pos-pnl');pnlEl.textContent=fmtD(totalPnl);pnlEl.className='stat-val '+(totalPnl>=0?'go':'nogo');
-  eid('pos-daypnl').textContent=fmtD(totalPnl*0.3);eid('pos-count').textContent=pos.length;
+  // Stash the open-position unrealized P&L on G; updatePosStats() combines it
+  // with realized closed-trade history + Tradier-reported close_pl to produce
+  // a true cumulative TOTAL P&L (no longer resets when a trade closes).
+  G.openUnrealizedPnl = totalPnl;
+  eid('pos-count').textContent = pos.length;
+  if(typeof updatePosStats === 'function') updatePosStats();
+}
+
+// ── Persistent / cumulative P&L stats ──────────────────────────────────────
+// Combines: open unrealized (current positions) + realized (closed trades
+// history) + Tradier's reported close_pl. Tracks day-over-day equity in
+// localStorage so DAY P&L reflects today's actual change instead of the
+// 30%-of-totalPnl placeholder it was before.
+function updatePosStats(){
+  // ── TOTAL P&L (cumulative) ─────────────────────────────────────────────
+  var openPnl = (typeof G.openUnrealizedPnl === 'number') ? G.openUnrealizedPnl : 0;
+  // Sum realized P&L from closed-trades history (the local closed-positions engine)
+  var realized = 0;
+  if(typeof G_closed !== 'undefined' && G_closed.trades && G_closed.trades.length){
+    G_closed.trades.forEach(function(t){
+      var g = (t.realized != null) ? +t.realized
+            : (t.gain     != null) ? +t.gain
+            : (t.pnl      != null) ? +t.pnl
+            : 0;
+      if(!isNaN(g)) realized += g;
+    });
+  }
+  // If Tradier already reports a close_pl for the period, prefer the larger
+  // of the two (handles cases where local closed-trades history is empty
+  // because the user hasn't loaded it yet this session).
+  var brokerClose = (G.lastBalances && typeof G.lastBalances.close_pl === 'number')
+                  ? G.lastBalances.close_pl : 0;
+  var realizedTotal = Math.abs(brokerClose) > Math.abs(realized) ? brokerClose : realized;
+  var totalPnl = openPnl + realizedTotal;
+  var pnlEl = eid('pos-pnl');
+  if(pnlEl){
+    pnlEl.textContent = fmtD(totalPnl);
+    pnlEl.className = 'stat-val ' + (totalPnl >= 0 ? 'go' : 'nogo');
+    pnlEl.title = 'Lifetime: open ' + fmtD(openPnl) + ' + realized ' + fmtD(realizedTotal);
+  }
+  // ── DAY P&L (today's equity change) ────────────────────────────────────
+  var equity = (G.lastBalances && typeof G.lastBalances.total_equity === 'number')
+             ? G.lastBalances.total_equity : null;
+  var dayPnl = 0;
+  if(equity != null){
+    var todayKey = new Date().toISOString().slice(0,10);
+    var hist = [];
+    try { hist = JSON.parse(localStorage.getItem('rrjcar_eq_hist') || '[]'); }
+    catch(_) { hist = []; }
+    // Find the most recent entry from a PRIOR trading day
+    var prior = null;
+    for(var i = hist.length - 1; i >= 0; i--){
+      if(hist[i].date && hist[i].date !== todayKey){ prior = hist[i]; break; }
+    }
+    if(prior && typeof prior.equity === 'number') dayPnl = equity - prior.equity;
+    // Append/update today's entry (keeps last 60 days)
+    var todayIdx = -1;
+    for(var j = hist.length - 1; j >= 0; j--){
+      if(hist[j].date === todayKey){ todayIdx = j; break; }
+    }
+    if(todayIdx >= 0) hist[todayIdx] = { date: todayKey, equity: equity, ts: Date.now() };
+    else              hist.push({ date: todayKey, equity: equity, ts: Date.now() });
+    if(hist.length > 60) hist = hist.slice(-60);
+    try { localStorage.setItem('rrjcar_eq_hist', JSON.stringify(hist)); } catch(_) {}
+  }
+  var dayEl = eid('pos-daypnl');
+  if(dayEl){
+    dayEl.textContent = fmtD(dayPnl);
+    dayEl.className = 'stat-val ' + (dayPnl >= 0 ? 'go' : 'nogo');
+    dayEl.title = equity != null
+      ? 'Day change vs. last-recorded equity from a prior day'
+      : 'Awaiting balance data — refresh positions to populate';
+  }
+  // ── CASH ───────────────────────────────────────────────────────────────
+  var cash = (G.lastBalances && typeof G.lastBalances.total_cash === 'number')
+           ? G.lastBalances.total_cash : null;
+  var cashEl = eid('pos-cash');
+  if(cashEl) cashEl.textContent = (cash != null) ? fmtD(cash) : '--';
 }
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
@@ -9562,7 +9643,7 @@ function clearPositions(){
   if(eid('ts-cfg'))eid('ts-cfg').style.display='none';
   G.tsActive=false;
   eid('pos-tbl-wrap').innerHTML='<div class="empty-det" style="min-height:200px;"><div class="ei">\u25a0</div><p>Positions cleared. Click Refresh to reload.</p></div>';
-  eid('pos-pnl').textContent='$0.00';eid('pos-daypnl').textContent='$0.00';eid('pos-count').textContent='0';
+  eid('pos-pnl').textContent='$0.00';eid('pos-daypnl').textContent='$0.00';eid('pos-count').textContent='0';eid('pos-cash').textContent='--';
   eid('pos-src').textContent='[Cleared]';toast('Positions cleared');
 }
 
@@ -9711,7 +9792,11 @@ function fetchBalances(){
   .then(function(data){
     try{
       var b = data && data.balances ? data.balances : {};
+      // Stash for updatePosStats() — feeds CASH, DAY P&L history, and the
+      // realized-side fallback for TOTAL P&L when local closed_trades is empty.
+      G.lastBalances = b;
       if(eid('pos-acctval')) eid('pos-acctval').textContent = fmtD(b.total_equity);
+      if(typeof updatePosStats === 'function') updatePosStats();
       // Option buying power: margin accts use margin.option_buying_power; cash uses cash_available; pdt uses pdt.option_buying_power
       var obp = null;
       if(b.margin && typeof b.margin.option_buying_power === 'number') obp = b.margin.option_buying_power;
@@ -14565,10 +14650,27 @@ function indSetTF(tf){
   if(IND.loaded) indDraw();
 }
 
+function indFmtAsOf(genAt, asOf){
+  // Prefer generated_at (full ISO timestamp) for time precision; fall back to
+  // as_of (date-only) when the generator didn't emit a timestamp.
+  if(genAt){
+    var dt = new Date(genAt);
+    if(!isNaN(dt.getTime())){
+      var pad = function(n){ return String(n).padStart(2,'0'); };
+      return pad(dt.getDate()) + '-' + pad(dt.getMonth()+1) + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+    }
+  }
+  if(asOf){
+    var m = String(asOf).match(/^(\d{4})-(\d{2})-(\d{2})/);
+    if(m) return m[3] + '-' + m[2];
+  }
+  return '--';
+}
+
 function indDraw(){
   if(!IND.data) return;
   var d = IND.data, themes = d.themes || {};
-  document.getElementById('ind-asof').textContent = d.as_of || '--';
+  document.getElementById('ind-asof').textContent = indFmtAsOf(d.generated_at, d.as_of);
   document.getElementById('ind-bench').textContent = d.benchmark || 'SPY';
   var keys = Object.keys(themes);
   document.getElementById('ind-count').textContent = keys.length;
@@ -14592,15 +14694,17 @@ function indDraw(){
   // Main table
   var rows = ranked.map(function(r,i){
     var t = r.t;
-    var isTV = r.name.indexOf('[TV] ') === 0;
-    var disp = isTV ? r.name.slice(5) : r.name;
-    var tagHTML = isTV ? '<span class="ind-tv">[TV]</span>' : '';
+    // Strip the legacy "[TV] " prefix for display — the user prefers clean names
+    // (the prefix originally distinguished TradingView-sector auto-themes from
+    // hand-curated themes; that distinction is now conveyed via curated_members
+    // vs auto_members in the expand row instead).
+    var disp = r.name.indexOf('[TV] ') === 0 ? r.name.slice(5) : r.name;
     var expanded = !!IND.expanded[r.name];
     var rk = t.rs_rank || {};
     var memberPerf = t.member_perf || {};
     var html = '<tr data-theme="'+indEsc(r.name)+'" class="'+(expanded?'expanded':'')+'">'
       + '<td><span class="ind-rank">'+(i+1)+'</span></td>'
-      + '<td class="tname">'+tagHTML+indEsc(disp)+'</td>'
+      + '<td class="tname">'+indEsc(disp)+'</td>'
       + '<td class="r"><span class="ind-sb '+indScoreClass(r.score)+'"><span class="ind-fill" style="width:'+Math.max(2,Math.min(100,r.score))+'%"></span><span class="ind-v">'+indFmt(r.score)+'</span></span></td>'
       + '<td class="r"><span class="ind-rs '+indRsClass(rk['1W'])+'">'+indFmt(rk['1W'],0)+'</span></td>'
       + '<td class="r"><span class="ind-rs '+indRsClass(rk['1M'])+'">'+indFmt(rk['1M'],0)+'</span></td>'
