@@ -5383,10 +5383,11 @@ function loadHistCache(ticker){
 }
 
 function saveHistCache(ticker, days){
-  try{
-    localStorage.setItem(histCacheKey(ticker), JSON.stringify({days:days, ts:Date.now()}));
-    G_HIST_CACHE[ticker] = days;
-  } catch(e){}
+  // 100-entry cap (~150 KB total). 24h TTL; older entries GC'd on each save.
+  bsSet(histCacheKey(ticker),
+        JSON.stringify({days:days, ts:Date.now()}),
+        'rrjcar_hist_', 86400000, 100);
+  G_HIST_CACHE[ticker] = days;
 }
 
 async function fetchIndicatorHistory(ticker){
@@ -5435,10 +5436,12 @@ function loadOBCache(ticker){
 }
 
 function saveOBCache(ticker, days){
-  try{
-    localStorage.setItem(obCacheKey(ticker), JSON.stringify({days:days, ts:Date.now()}));
-    G_OB_CACHE[ticker] = days;
-  } catch(e){}
+  // Each entry is ~18 KB (260 days of OHLC). 50-entry cap = ~900 KB ceiling.
+  // Was the runaway: 224 entries × 18 KB = 4 MB had filled localStorage.
+  bsSet(obCacheKey(ticker),
+        JSON.stringify({days:days, ts:Date.now()}),
+        'rrjcar_ob_hist_', 86400000, 50);
+  G_OB_CACHE[ticker] = days;
 }
 
 async function fetchOBHistory(ticker){
@@ -5859,11 +5862,12 @@ function loadFmpCache(ticker){
 }
 
 function saveFmpCache(ticker, data){
-  try{
-    data.fetched = Date.now();
-    localStorage.setItem(fmpCacheKey(ticker), JSON.stringify(data));
-    G_FMP_CACHE[ticker] = data;
-  } catch(e){}
+  // Tiny entries (~0.2 KB each); 200-entry cap = ~40 KB ceiling.
+  data.fetched = Date.now();
+  bsSet(fmpCacheKey(ticker),
+        JSON.stringify(data),
+        'rrjcar_fmp_', 86400000, 200);
+  G_FMP_CACHE[ticker] = data;
 }
 
 async function fetchFmpData(ticker){
@@ -12458,7 +12462,61 @@ function cacheSet(key, val){
   try{ localStorage.setItem(key, JSON.stringify(val)); }catch(e){}
 }
 function cacheGet(key){
-  try{ var v=localStorage.getItem(key); return v?JSON.parse(v):null; }catch(e){return null;} 
+  try{ var v=localStorage.getItem(key); return v?JSON.parse(v):null; }catch(e){return null;}
+}
+
+// ── Bounded localStorage for per-ticker caches ─────────────────────────────
+// Per-ticker caches (rrjcar_hist_*, rrjcar_ob_hist_*, rrjcar_fmp_*) used to
+// grow unbounded — every ticker ever clicked stuck around forever even after
+// its 24h TTL. With 224 tickers the rrjcar_ob_hist_* prefix alone hit 4 MB
+// and crashed the embedded sentiment-panel iframe with QuotaExceededError.
+// bsSet GCs stale (>ttlMs) and over-cap entries on every save, plus recovers
+// from quota errors by hard-pruning all known prefixes and retrying once.
+function bsSet(key, value, prefix, ttlMs, maxEntries){
+  bsGC(prefix, ttlMs, maxEntries);
+  try { localStorage.setItem(key, value); }
+  catch (e) {
+    if (e && (e.name === 'QuotaExceededError' || /quota/i.test(e.message||''))) {
+      bsHardPrune();
+      try { localStorage.setItem(key, value); } catch(_) { /* give up silently */ }
+    }
+  }
+}
+function bsGC(prefix, ttlMs, maxEntries){
+  var now = Date.now();
+  var entries = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (!k || k.indexOf(prefix) !== 0) continue;
+    var ts = 0;
+    try { var o = JSON.parse(localStorage.getItem(k) || '{}'); ts = o.ts || o.fetched || 0; }
+    catch(_) {}
+    entries.push({ k:k, ts:ts });
+  }
+  // Drop stale
+  if (ttlMs > 0) {
+    entries = entries.filter(function(e){
+      if (e.ts && (now - e.ts) > ttlMs) {
+        try { localStorage.removeItem(e.k); } catch(_) {}
+        return false;
+      }
+      return true;
+    });
+  }
+  // Enforce cap (oldest-by-ts evicted; +1 to make room for the incoming write)
+  if (maxEntries > 0 && entries.length >= maxEntries) {
+    entries.sort(function(a,b){ return (a.ts||0) - (b.ts||0); });
+    var drop = entries.length - maxEntries + 1;
+    for (var j = 0; j < drop; j++) {
+      try { localStorage.removeItem(entries[j].k); } catch(_) {}
+    }
+  }
+}
+function bsHardPrune(){
+  // Emergency: ignore TTL, slash to small caps to free maximum space
+  bsGC('rrjcar_ob_hist_', 0, 25);
+  bsGC('rrjcar_hist_',    0, 50);
+  bsGC('rrjcar_fmp_',     0, 100);
 }
 function cacheAge(tsKey){
   var ts=cacheGet(tsKey);
