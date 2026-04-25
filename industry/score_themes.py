@@ -456,6 +456,21 @@ def append_history(theme_scores: dict[str, dict], asof: str) -> None:
             for theme in history[tf]:
                 history[tf][theme] = history[tf][theme][cut:]
 
+    # Prune zombie themes — any series in history that's not in today's
+    # theme_scores gets dropped. Without this, every theme rename or removal
+    # leaves a stale series trailing forever (one None per day) that the
+    # frontend either renders flat or lookup-errors on.
+    current = set(theme_scores.keys())
+    pruned: list[str] = []
+    for tf in ("daily", "weekly", "monthly"):
+        for theme in list(history[tf].keys()):
+            if theme not in current:
+                del history[tf][theme]
+                if theme not in pruned:
+                    pruned.append(theme)
+    if pruned:
+        print(f"      pruned {len(pruned)} zombie theme(s) from history: {sorted(pruned)}")
+
     HISTORY_JSON.write_text(json.dumps(history))
 
 
@@ -477,6 +492,26 @@ def main():
     if BENCHMARK not in prices.columns:
         print(f"FATAL: {BENCHMARK} not in fetched data. aborting.")
         sys.exit(1)
+    # Coverage guard — refuse to commit a partial-data day. Prevents
+    # rate-limited runs (e.g. yfinance throttle) from producing a half-empty
+    # scores file that masquerades as a real snapshot.
+    coverage = prices.shape[1] / max(1, len(needed))
+    print(f"      coverage: {prices.shape[1]}/{len(needed)} tickers ({coverage:.1%})")
+    if coverage < 0.85:
+        print(f"FATAL: coverage {coverage:.1%} below 85% threshold; refusing to write degraded snapshot.")
+        sys.exit(2)
+    # Holiday/weekend guard — if the most recent bar isn't from today (or
+    # we're running on a weekend), skip the commit. Otherwise we'd overwrite
+    # Friday's snapshot with a duplicate "as_of" pointing at the same Friday.
+    last_bar_date = prices.index[-1].date()
+    today_utc = datetime.now(timezone.utc).date()
+    if last_bar_date != today_utc:
+        days_stale = (today_utc - last_bar_date).days
+        # Allow up to 3 days stale (covers Friday → Monday weekend gap)
+        if days_stale > 3:
+            print(f"FATAL: most recent bar is {last_bar_date} ({days_stale} days stale); skipping.")
+            sys.exit(3)
+        print(f"      note: most recent bar is {last_bar_date} ({days_stale} day(s) ago — holiday/weekend?)")
     spy_rets = prices[BENCHMARK].pct_change()
 
     print(f"[3/4] scoring themes...")

@@ -283,12 +283,23 @@ def fetch_industry_tag(ticker: str, session: requests.Session) -> str | None:
 
 
 def load_universe() -> dict[str, dict]:
-    """Read alex_tickers.csv into {ticker: {name, tv_sector}}."""
+    """Read alex_tickers.csv into {ticker: {name, tv_sector}}.
+
+    Drops symbols containing "/" or "." (preferred shares / class shares like
+    BRK.B / BF.B) — yfinance doesn't accept the dot form. Logs the drop count
+    so silent loss of a curated-theme ticker is surfaced. To include class
+    shares later, normalize "." → "-" here AND wherever the symbol is used
+    downstream (Tradier/yfinance/stockanalysis URLs).
+    """
     out = {}
+    dropped = []
     with open(TICKERS_CSV, encoding="utf-8-sig") as f:
         for row in csv.DictReader(f):
             sym = (row.get("Symbol") or "").strip().upper()
-            if not sym or "/" in sym or "." in sym:
+            if not sym:
+                continue
+            if "/" in sym or "." in sym:
+                dropped.append(sym)
                 continue
             out[sym] = {
                 "name": (row.get("Description") or "").strip(),
@@ -296,6 +307,9 @@ def load_universe() -> dict[str, dict]:
                 "industry": None,
                 "themes": [],
             }
+    if dropped:
+        sample = ", ".join(dropped[:8]) + ("…" if len(dropped) > 8 else "")
+        print(f"      dropped {len(dropped)} non-standard symbols (preferred/class shares, warrants): {sample}")
     return out
 
 
@@ -315,8 +329,13 @@ def apply_curated_themes(
         kept, dropped = [], []
         for sym in members:
             if sym in tickers:
-                tickers[sym]["themes"].append(theme)
-                kept.append(sym)
+                # Defensive de-dup — if the same theme lists a ticker twice,
+                # or this fn is ever re-run on an already-tagged dict (e.g.
+                # incremental rebuild), don't double-append.
+                if theme not in tickers[sym]["themes"]:
+                    tickers[sym]["themes"].append(theme)
+                if sym not in kept:
+                    kept.append(sym)
             else:
                 dropped.append(sym)
         themes[theme] = kept
@@ -353,26 +372,52 @@ def write_missing_report(missing: dict[str, list[str]]) -> None:
 
 
 def enrich_with_industry_tags(tickers: dict[str, dict], limit: int | None = None,
-                              sleep_s: float = 0.25) -> None:
+                              sleep_s: float = 0.05, workers: int = 8) -> None:
     """OPTIONAL: Hit stockanalysis.com to get a granular industry tag.
 
-    Slow (~0.25s/ticker, so ~10 min for 2,400 tickers). Skip with limit=0
-    on first run; run later as a one-time enrichment pass.
+    Parallelized with ThreadPoolExecutor — ~10 min sequential becomes ~2 min
+    at 8 workers. stockanalysis serves static-ish HTML; this is pure I/O wait.
+    `sleep_s` is a small jitter between submissions; the in-flight cap is the
+    real throttle. Bumped session pool size to match.
     """
+    from concurrent.futures import ThreadPoolExecutor, as_completed
+    from requests.adapters import HTTPAdapter
+
     sess = requests.Session()
+    adapter = HTTPAdapter(pool_connections=workers, pool_maxsize=workers)
+    sess.mount("https://", adapter)
+    sess.mount("http://", adapter)
+
     syms = list(tickers.keys())
     if limit is not None:
         syms = syms[:limit]
-    total = len(syms)
-    for i, sym in enumerate(syms, 1):
-        if tickers[sym].get("industry"):
-            continue
-        ind = fetch_industry_tag(sym, sess)
-        if ind:
-            tickers[sym]["industry"] = ind
-        if i % 50 == 0:
-            print(f"  [industry tags] {i}/{total}  last={sym}->{ind}", flush=True)
-        time.sleep(sleep_s)
+    todo = [s for s in syms if not tickers[s].get("industry")]
+    total = len(todo)
+    if not total:
+        print("      no tickers need enrichment (all already tagged)", flush=True)
+        return
+    print(f"      enriching {total} tickers via stockanalysis.com (workers={workers})", flush=True)
+
+    done = 0
+    with ThreadPoolExecutor(max_workers=workers) as ex:
+        # Submit with small inter-submission jitter to avoid synchronous bursts
+        futures = {}
+        for s in todo:
+            futures[ex.submit(fetch_industry_tag, s, sess)] = s
+            if sleep_s:
+                time.sleep(sleep_s)
+        for fut in as_completed(futures):
+            sym = futures[fut]
+            try:
+                ind = fut.result()
+            except Exception as e:
+                ind = None
+                print(f"  [industry tags] {sym} ERROR: {e}", flush=True)
+            if ind:
+                tickers[sym]["industry"] = ind
+            done += 1
+            if done % 50 == 0 or done == total:
+                print(f"  [industry tags] {done}/{total}  last={sym}->{ind}", flush=True)
 
 
 def main(industry_scrape_limit: int | None = 0) -> None:

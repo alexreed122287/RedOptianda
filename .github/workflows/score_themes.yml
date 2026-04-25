@@ -21,7 +21,11 @@ jobs:
           cache: 'pip'
 
       - name: Install deps
-        run: pip install yfinance pandas numpy requests
+        # Pinned to prevent silent breakage from upstream regressions.
+        # yfinance has had ≥4 major schema changes in 18 months — an unpinned
+        # install ships with whatever the latest is and can quietly produce
+        # all-NaN scores that get committed without anyone noticing.
+        run: pip install 'yfinance==0.2.55' 'pandas>=2.2,<3' 'numpy>=2,<3' 'requests>=2.32,<3'
 
       - name: Run scoring engine
         env:
