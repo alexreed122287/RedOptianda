@@ -842,6 +842,7 @@ tr.sel-row td{background:var(--blu3);}
     <span id="mkt-status">--</span>
     <span id="mode-badge">SANDBOX</span>
     <span id="api-counter-badge" title="Tradier API calls today (resets at midnight). Click to view breakdown." onclick="showApiBreakdown()" style="cursor:pointer;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;user-select:none;">API: 0</span>
+    <span id="hdr-scan-status" title="Scan status — click to jump to FULL SCANNER" onclick="switchTab('sc')" style="display:none;cursor:pointer;background:rgba(112,144,200,0.08);border:1px solid rgba(112,144,200,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--gry);letter-spacing:.5px;user-select:none;">SCAN: idle</span>
   </div>
 </div>
 <div id="nav">
@@ -2647,7 +2648,8 @@ var AVOID=['LULU','OXY','TDG','DIS','CMCSA','GIS','PWR','MRNA','RIVN','PLUG'];
 var SECTOR_PF={Industrials:3.53,Utilities:3.28,Finance:3.07,Healthcare:2.20,Communication:2.10,Technology:2.80,Staples:2.35,Materials:2.31,Energy:1.90,Consumer:1.80,RealEstate:1.75};
 // Full S&P 500 universe with sectors \u2014 used for dynamic Tradier screener
 var UNIVERSE_FULL=[
-  // Embedded universe (2400 tickers) — sole source of truth for the scanner
+  // Auto-generated from alex_tickers.csv (canonical universe).
+  // Regenerate when CSV changes; both INDUSTRY tab and scanner consume the same source.
   {t:'NVDA',s:'Electronic technology'},{t:'GOOG',s:'Technology services'},{t:'AAPL',s:'Electronic technology'},{t:'MSFT',s:'Technology services'},
   {t:'AMZN',s:'Retail trade'},{t:'AVGO',s:'Electronic technology'},{t:'META',s:'Technology services'},{t:'TSLA',s:'Consumer durables'},
   {t:'WMT',s:'Retail trade'},{t:'LLY',s:'Health technology'},{t:'JPM',s:'Finance'},{t:'XOM',s:'Energy minerals'},
@@ -2867,7 +2869,8 @@ var UNIVERSE_FULL=[
   {t:'ACLX',s:'Health technology'},{t:'PAYC',s:'Technology services'},{t:'STWD',s:'Finance'},{t:'TEX',s:'Producer manufacturing'},
   {t:'SAIL',s:'Technology services'},{t:'RIOT',s:'Technology services'},{t:'SWX',s:'Utilities'},{t:'MIDD',s:'Producer manufacturing'},
   {t:'WH',s:'Consumer services'},{t:'ECG',s:'Industrial services'},{t:'INGM',s:'Technology services'},{t:'FAF',s:'Finance'},
-  {t:'SM',s:'Energy minerals'},{t:'STEP',s:'Finance'},{t:'MBLY',s:'Technology services'},{t:'BYD',s:'Consumer services'},  {t:'RYN',s:'Finance'},{t:'BZ',s:'Commercial services'},{t:'TXNM',s:'Utilities'},{t:'RHP',s:'Finance'},
+  {t:'SM',s:'Energy minerals'},{t:'STEP',s:'Finance'},{t:'MBLY',s:'Technology services'},{t:'BYD',s:'Consumer services'},
+  {t:'RYN',s:'Finance'},{t:'BZ',s:'Commercial services'},{t:'TXNM',s:'Utilities'},{t:'RHP',s:'Finance'},
   {t:'CHDN',s:'Consumer services'},{t:'GXO',s:'Transportation'},{t:'MHK',s:'Producer manufacturing'},{t:'SSRM',s:'Non-energy minerals'},
   {t:'AROC',s:'Industrial services'},{t:'FNB',s:'Finance'},{t:'BEPC',s:'Utilities'},{t:'RGTI',s:'Electronic technology'},
   {t:'VAL',s:'Industrial services'},{t:'CENX',s:'Non-energy minerals'},{t:'GTES',s:'Producer manufacturing'},{t:'HXL',s:'Electronic technology'},
@@ -3239,17 +3242,51 @@ var UNIVERSE_FULL=[
   {t:'KIDZ',s:'Technology services'},{t:'MASK',s:'Technology services'},{t:'NCT',s:'Transportation'},{t:'RDGT',s:'Distribution services'},
   {t:'JDZG',s:'Commercial services'},{t:'PAVS',s:'Health technology'},{t:'FCHL',s:'Commercial services'},{t:'IPW',s:'Retail trade'},
   {t:'BDRX',s:'Health technology'},{t:'BOXL',s:'Electronic technology'},{t:'RNA',s:'Health technology'},{t:'MMED',s:'Health technology'},
-  {t:'UMDD',s:'Leveraged ETF'},{t:'WEBL',s:'Leveraged ETF'},{t:'FAS',s:'Leveraged ETF'},{t:'TPOR',s:'Leveraged ETF'},
-  {t:'YSPY',s:'Leveraged ETF'},{t:'HIBL',s:'Leveraged ETF'},{t:'UDOW',s:'Leveraged ETF'},{t:'SPXL',s:'Leveraged ETF'},
-  {t:'UPRO',s:'Leveraged ETF'},{t:'DPST',s:'Leveraged ETF'},{t:'TQQQ',s:'Leveraged ETF'},{t:'TECL',s:'Leveraged ETF'},
-  {t:'SEMY',s:'Leveraged ETF'},{t:'URTY',s:'Leveraged ETF'},{t:'DUSL',s:'Leveraged ETF'},{t:'TNA',s:'Leveraged ETF'},
-  {t:'MEXX',s:'Leveraged ETF'},{t:'RETL',s:'Leveraged ETF'},{t:'DFEN',s:'Leveraged ETF'},{t:'NAIL',s:'Leveraged ETF'},
-  {t:'TMF',s:'Leveraged ETF'},{t:'SOXL',s:'Leveraged ETF'},{t:'DRN',s:'Leveraged ETF'},{t:'EDC',s:'Leveraged ETF'},
-  {t:'YINN',s:'Leveraged ETF'},{t:'KORU',s:'Leveraged ETF'},{t:'WANT',s:'Leveraged ETF'},{t:'EURL',s:'Leveraged ETF'},
-  {t:'TQQY',s:'Leveraged ETF'},{t:'UTSL',s:'Leveraged ETF'},{t:'MIDU',s:'Leveraged ETF'},{t:'TYD',s:'Leveraged ETF'},
-  // Added 2026-04-22 from TradingView Oversold screener — tickers missing from universe
-  {t:'AKAN',s:'Process industries'},{t:'BIDU',s:'Technology services'},{t:'CHNR',s:'Distribution services'},{t:'EEIQ',s:'Commercial services'},
-  {t:'EFOI',s:'Producer manufacturing'},{t:'P',s:'Electronic technology'},{t:'RAYA',s:'Producer manufacturing'},{t:'WSHP',s:'Technology services'}
+  {t:'UMDD',s:'3X'},{t:'WEBL',s:'3X'},{t:'FAS',s:'3X'},{t:'TPOR',s:'3X'},
+  {t:'YSPY',s:'3X'},{t:'HIBL',s:'3X'},{t:'UDOW',s:'3X'},{t:'SPXL',s:'3X'},
+  {t:'UPRO',s:'3X'},{t:'DPST',s:'3X'},{t:'TQQQ',s:'3X'},{t:'TECL',s:'3X'},
+  {t:'SEMY',s:'3X'},{t:'URTY',s:'3X'},{t:'DUSL',s:'3X'},{t:'TNA',s:'3X'},
+  {t:'MEXX',s:'3X'},{t:'RETL',s:'3X'},{t:'DFEN',s:'3X'},{t:'NAIL',s:'3X'},
+  {t:'TMF',s:'3X'},{t:'SOXL',s:'3X'},{t:'DRN',s:'3X'},{t:'EDC',s:'3X'},
+  {t:'YINN',s:'3X'},{t:'KORU',s:'3X'},{t:'WANT',s:'3X'},{t:'EURL',s:'3X'},
+  {t:'TQQY',s:'3X'},{t:'UTSL',s:'3X'},{t:'MIDU',s:'3X'},{t:'TYD',s:'3X'},
+  {t:'ABEV',s:'Consumer non-durables'},{t:'ABG',s:'Consumer durables'},{t:'ACB',s:'Health technology'},{t:'AEM',s:'Non-energy minerals'},
+  {t:'AERT',s:'Commercial services'},{t:'AGI',s:'Non-energy minerals'},{t:'AMG',s:'Finance'},{t:'AN',s:'Consumer durables'},
+  {t:'ARCB',s:'Transportation'},{t:'ARQQ',s:'Technology services'},{t:'ASML',s:'Electronic technology'},{t:'AZO',s:'Producer manufacturing'},
+  {t:'BBD',s:'Finance'},{t:'BEKE',s:'Finance'},{t:'BETZ',s:'Miscellaneous'},{t:'BHP',s:'Non-energy minerals'},
+  {t:'BIDU',s:'Technology services'},{t:'BITF',s:'Finance'},{t:'BJRI',s:'Consumer services'},{t:'BLNK',s:'Producer manufacturing'},
+  {t:'BTG',s:'Non-energy minerals'},{t:'BTI',s:'Consumer non-durables'},{t:'BUD',s:'Consumer non-durables'},{t:'CCJ',s:'Energy minerals'},
+  {t:'CCS',s:'Finance'},{t:'CFLT',s:'Technology services'},{t:'CGC',s:'Health technology'},{t:'CHPT',s:'Retail trade'},
+  {t:'CMRE',s:'Transportation'},{t:'CNI',s:'Transportation'},{t:'CP',s:'Transportation'},{t:'CRON',s:'Health technology'},
+  {t:'CSL',s:'Producer manufacturing'},{t:'CX',s:'Producer manufacturing'},{t:'DAC',s:'Transportation'},{t:'DEO',s:'Consumer non-durables'},
+  {t:'DNN',s:'Energy minerals'},{t:'DORM',s:'Producer manufacturing'},{t:'DPRO',s:'Electronic technology'},{t:'EAF',s:'Producer manufacturing'},
+  {t:'EG',s:'Finance'},{t:'EGO',s:'Non-energy minerals'},{t:'EGP',s:'Finance'},{t:'EME',s:'Producer manufacturing'},
+  {t:'ENB',s:'Energy minerals'},{t:'ENVA',s:'Finance'},{t:'EPD',s:'Energy minerals'},{t:'ERIE',s:'Finance'},
+  {t:'ERO',s:'Non-energy minerals'},{t:'ET',s:'Energy minerals'},{t:'FARM',s:'Consumer non-durables'},{t:'FIZZ',s:'Consumer non-durables'},
+  {t:'FLL',s:'Consumer durables'},{t:'FNV',s:'Non-energy minerals'},{t:'FWRD',s:'Transportation'},{t:'GDEN',s:'Consumer durables'},
+  {t:'GOOGL',s:'Technology services'},{t:'GPI',s:'Consumer durables'},{t:'GRBK',s:'Producer manufacturing'},{t:'GSL',s:'Transportation'},
+  {t:'HBM',s:'Non-energy minerals'},{t:'HF',s:'Miscellaneous'},{t:'HII',s:'Electronic technology'},{t:'HMC',s:'Consumer durables'},
+  {t:'HTLD',s:'Transportation'},{t:'IHG',s:'Consumer services'},{t:'IPGP',s:'Electronic technology'},{t:'ITUB',s:'Finance'},
+  {t:'KGC',s:'Non-energy minerals'},{t:'LAC',s:'Non-energy minerals'},{t:'LAD',s:'Consumer durables'},{t:'LANC',s:'Miscellaneous'},
+  {t:'LI',s:'Consumer durables'},{t:'LSTR',s:'Transportation'},{t:'MATX',s:'Transportation'},{t:'MCRI',s:'Consumer durables'},
+  {t:'MGA',s:'Producer manufacturing'},{t:'MHO',s:'Producer manufacturing'},{t:'MKTX',s:'Finance'},{t:'MLM',s:'Producer manufacturing'},
+  {t:'MPLX',s:'Energy minerals'},{t:'MT',s:'Non-energy minerals'},{t:'NGD',s:'Non-energy minerals'},{t:'NTR',s:'Process industries'},
+  {t:'NVR',s:'Producer manufacturing'},{t:'NXE',s:'Energy minerals'},{t:'OGI',s:'Health technology'},{t:'OPRT',s:'Finance'},
+  {t:'PAAS',s:'Non-energy minerals'},{t:'PAG',s:'Consumer durables'},{t:'PBR',s:'Energy minerals'},{t:'PHIN',s:'Producer manufacturing'},
+  {t:'RGA',s:'Finance'},{t:'RIO',s:'Non-energy minerals'},{t:'RNR',s:'Finance'},{t:'RS',s:'Non-energy minerals'},
+  {t:'SAH',s:'Consumer durables'},{t:'SAM',s:'Consumer non-durables'},{t:'SAP',s:'Technology services'},{t:'SBS',s:'Utilities'},
+  {t:'SEE',s:'Process industries'},{t:'SKYW',s:'Transportation'},{t:'SPB',s:'Consumer non-durables'},{t:'SQM',s:'Process industries'},
+  {t:'STLA',s:'Consumer durables'},{t:'STRT',s:'Producer manufacturing'},{t:'TCOM',s:'Consumer services'},{t:'TDG',s:'Electronic technology'},
+  {t:'TECK',s:'Non-energy minerals'},{t:'TM',s:'Consumer durables'},{t:'TME',s:'Technology services'},{t:'TR',s:'Consumer non-durables'},
+  {t:'TRVG',s:'Technology services'},{t:'TS',s:'Energy minerals'},{t:'TX',s:'Non-energy minerals'},{t:'UAA',s:'Consumer durables'},
+  {t:'URG',s:'Energy minerals'},{t:'UUUU',s:'Energy minerals'},{t:'VALE',s:'Non-energy minerals'},{t:'WB',s:'Technology services'},
+  {t:'WBX',s:'Electronic technology'},{t:'WES',s:'Energy minerals'},{t:'WOR',s:'Non-energy minerals'},{t:'WPM',s:'Non-energy minerals'},
+  {t:'WTS',s:'Producer manufacturing'},{t:'XPEV',s:'Consumer durables'},{t:'ZIM',s:'Transportation'},{t:'ZTO',s:'Transportation'},
+  {t:'ANSS',s:'Technology services'},{t:'AZEK',s:'Producer manufacturing'},{t:'BERY',s:'Process industries'},{t:'BGFV',s:'Retail trade'},
+  {t:'CHX',s:'Energy minerals'},{t:'CMA',s:'Finance'},{t:'CYBR',s:'Technology services'},{t:'DNB',s:'Finance'},
+  {t:'GAN',s:'Consumer services'},{t:'GES',s:'Retail trade'},{t:'HIBB',s:'Retail trade'},{t:'K',s:'Consumer non-durables'},
+  {t:'PARA',s:'Consumer services'},{t:'PLL',s:'Non-energy minerals'},{t:'PLYA',s:'Miscellaneous'},{t:'SATX',s:'Electronic technology'},
+  {t:'SIX',s:'Consumer services'},{t:'SKX',s:'Miscellaneous'},{t:'SPR',s:'Electronic technology'},{t:'X',s:'Miscellaneous'}
 ];
 
 // Static fallback (original 37) used when no API key
@@ -6750,9 +6787,70 @@ function setScanProgress(pct, label){
   var bar = eid('sc-prog-bar');
   var lbl = eid('sc-prog-label');
   var pctEl = eid('sc-prog-pct');
-  if(bar) bar.style.width = pct + '%';
+  if(bar){
+    bar.style.width = pct + '%';
+    bar.style.background = 'var(--amb)';   // reset to in-progress color in case prior run left it green
+  }
   if(lbl && label) lbl.textContent = label;
   if(pctEl) pctEl.textContent = Math.round(pct) + '%';
+  // Mirror to the always-visible header pill so the user knows scan state
+  // even while looking at INDUSTRY / SENTIMENT / etc. tabs.
+  var hdr = eid('hdr-scan-status');
+  if(hdr){
+    hdr.style.display = '';
+    hdr.style.color = 'var(--amb)';
+    hdr.style.borderColor = 'rgba(0,212,255,0.5)';
+    hdr.style.background = 'rgba(0,212,255,0.10)';
+    hdr.textContent = 'SCAN: ' + Math.round(pct) + '%';
+    hdr.title = label || ('Scanning… ' + Math.round(pct) + '%');
+  }
+}
+
+// Final state — paints the bar green, sticks around for 8 seconds, and
+// updates the header pill to a persistent "✓ DONE" with breakdown.
+// Also fires a desktop notification if the user has granted permission.
+function setScanComplete(stats){
+  // stats: {scanned, passed, scored, go, nogo}
+  var bar = eid('sc-prog-bar');
+  var lbl = eid('sc-prog-label');
+  var pctEl = eid('sc-prog-pct');
+  var wrap = eid('sc-progress-wrap');
+  var summary = '✓ COMPLETE — ' + (stats.scored||0) + ' scored · '
+              + (stats.go||0) + ' GO · ' + (stats.nogo||0) + ' NO-GO'
+              + ' (filtered ' + (stats.passed||0) + ' / ' + (stats.scanned||0) + ')';
+  if(bar){ bar.style.width = '100%'; bar.style.background = 'var(--grn)'; }
+  if(lbl){ lbl.textContent = summary; lbl.style.color = 'var(--grn)'; }
+  if(pctEl) pctEl.textContent = '100%';
+  if(wrap){
+    wrap.style.display = '';
+    // hide the in-pane bar after 8s but leave the header pill up indefinitely
+    clearTimeout(window._scanCompleteHide);
+    window._scanCompleteHide = setTimeout(function(){
+      if(wrap) wrap.style.display = 'none';
+      if(lbl) lbl.style.color = '';   // reset for next run
+    }, 8000);
+  }
+  // Header pill — green, persistent (until the next scan starts)
+  var hdr = eid('hdr-scan-status');
+  if(hdr){
+    hdr.style.display = '';
+    hdr.style.color = 'var(--grn)';
+    hdr.style.borderColor = 'rgba(0,230,118,0.5)';
+    hdr.style.background = 'rgba(0,230,118,0.10)';
+    hdr.textContent = '✓ ' + (stats.go||0) + ' GO / ' + (stats.scored||0) + ' scored';
+    hdr.title = summary + '  · click to view results';
+  }
+  // Desktop notification (only when user explicitly enabled). Falls back silently.
+  try {
+    if('Notification' in window && Notification.permission === 'granted'
+       && localStorage.getItem('rrjcar_notify_on_scan') === 'true'){
+      new Notification('Scan complete', {
+        body: summary,
+        silent: true,
+        tag: 'rrjcar-scan-complete'
+      });
+    }
+  } catch(_) {}
 }
 
 async function fetchDynamicUniverse(key, mode){
@@ -6916,6 +7014,7 @@ async function fetchDynamicUniverse(key, mode){
     });
   });
   setScanProgress(60, 'Screened to ' + passed.length + ' active tickers...');
+  G.lastPassedCount = passed.length;   // surfaced by setScanComplete in the summary
   var spyQ = quoteMap['SPY'];
   var spyChangePct = spyQ ? (parseFloat(spyQ.change_percentage) || 0) : 0;
   passed.forEach(function(u){
@@ -7061,7 +7160,17 @@ function finishScan(){
 
   G.results.sort(function(a,b){ return b.score - a.score; });
   G.filtered = excludedFilteredResults();
-  setScanProgress(100, 'Complete \u2014 ' + G.results.length + ' tickers');
+
+  // Compute the breakdown for the completion summary.
+  var goCount = G.results.filter(function(r){ return r.isGo; }).length;
+  var nogoCount = G.results.length - goCount;
+  setScanComplete({
+    scanned: (typeof UNIVERSE_FULL !== 'undefined') ? UNIVERSE_FULL.length : 0,
+    passed:  (typeof G.lastPassedCount === 'number') ? G.lastPassedCount : G.results.length,
+    scored:  G.results.length,
+    go:      goCount,
+    nogo:    nogoCount
+  });
 
   // Update stats bar
   eid('bs-scan').textContent = G.results.length;
@@ -7070,11 +7179,8 @@ function finishScan(){
 
   var btn = eid('sc-run-btn');
   if(btn){ btn.disabled = false; btn.textContent = '\u21bb SCAN'; }
-
-  setTimeout(function(){
-    var wrap = eid('sc-progress-wrap');
-    if(wrap) wrap.style.display = 'none';
-  }, 2500);
+  // Note: setScanComplete schedules its own hide-after-8s for the in-pane
+  // bar; the header pill stays green until the next scan starts.
 
   // Pre-fetch FMP data for top scored tickers in background \u2014 warms cache before user clicks.
   // Capped at 100 to stay under FMP plan rate limits. Queue respects rate-limit cooldowns instead
