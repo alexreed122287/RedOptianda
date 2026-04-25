@@ -31,6 +31,7 @@ Run monthly. Output is checked into the repo and consumed by score_themes.py and
 """
 
 import csv
+import html
 import json
 import re
 import sys
@@ -100,6 +101,142 @@ CURATED_THEMES = {
                             "UAL", "HLT", "EXPE"],
     "Retail / Consumer":   ["WMT", "COST", "TGT", "HD", "LOW", "DG", "DLTR"],
 
+    # --- Financials (granular) ---
+    "Regional Banks":      ["KEY", "RF", "CFG", "FITB", "MTB", "HBAN", "CMA", "ZION",
+                            "PNC", "TFC", "FHN", "WAL", "CFR", "PB", "BPOP"],
+    "Custody Banks":       ["BK", "STT", "NTRS"],
+    "Asset Managers":      ["BLK", "BX", "KKR", "APO", "ARES", "BAM", "OWL", "TROW",
+                            "BEN", "IVZ", "AMG", "SEIC"],
+    "P&C Insurance":       ["TRV", "CB", "ALL", "PGR", "AIG", "HIG", "WRB", "L",
+                            "CINF", "ERIE", "RLI", "AFG"],
+    "Life Insurance":      ["MET", "PRU", "AFL", "LNC", "PFG", "GL", "EQH", "VOYA"],
+    "Insurance Brokers":   ["AON", "MMC", "AJG", "WTW", "BRO", "RYAN"],
+    "Reinsurance":         ["RNR", "EG", "ACGL", "RGA"],
+    "Specialty Finance":   ["ALLY", "DFS", "SYF", "COF", "AXP", "NAVI", "OMF",
+                            "BX", "ARES"],
+    "Exchanges":           ["ICE", "CME", "NDAQ", "CBOE", "MKTX", "TW"],
+
+    # --- REITs (by sub-type) ---
+    "Tower REITs":         ["AMT", "CCI", "SBAC"],
+    "Data Center REITs":   ["DLR", "EQIX"],
+    "Industrial REITs":    ["PLD", "REXR", "EGP", "FR", "STAG", "TRNO", "EXR"],
+    "Self-Storage REITs":  ["PSA", "EXR", "CUBE", "NSA"],
+    "Residential REITs":   ["MAA", "AVB", "EQR", "ESS", "UDR", "CPT", "INVH",
+                            "AMH", "ELS", "SUI"],
+    "Retail REITs":        ["O", "SPG", "REG", "FRT", "KIM", "BRX", "MAC", "AKR",
+                            "NNN", "ADC"],
+    "Office REITs":        ["BXP", "VNO", "KRC", "CUZ", "HIW", "DEI"],
+    "Hotel REITs":         ["HST", "PK", "RHP", "APLE", "SHO", "DRH"],
+    "Mortgage REITs":      ["AGNC", "NLY", "STWD", "ABR", "BXMT", "RITM", "DX",
+                            "NYMT", "TWO"],
+
+    # --- Auto / Mobility ---
+    "Auto OEMs":           ["TSLA", "F", "GM", "RIVN", "LCID", "STLA", "TM", "HMC"],
+    "Auto Suppliers":      ["APTV", "BWA", "MGA", "LEA", "DAN", "MOD", "GTX",
+                            "ALV", "PHIN", "DORM", "STRT"],
+    "Auto Dealers":        ["AN", "KMX", "PAG", "GPI", "ABG", "LAD", "SAH"],
+    "Auto Parts Retail":   ["AZO", "ORLY", "AAP", "MNRO"],
+    "EV Charging":         ["CHPT", "BLNK", "EVGO", "WBX"],
+
+    # --- Consumer / Restaurants / Apparel ---
+    "Restaurants - QSR":   ["MCD", "CMG", "YUM", "QSR", "DPZ", "WING", "SHAK",
+                            "PZZA", "JACK", "WEN", "DNUT", "PLAY", "TXRH"],
+    "Restaurants - Casual":["DRI", "EAT", "BLMN", "BJRI", "CAKE", "CHEF", "BROS"],
+    "Coffee":              ["SBUX", "DNUT", "BROS", "FARM"],
+    "Athletic Apparel":    ["NKE", "LULU", "UA", "UAA", "ONON", "DECK", "SKX",
+                            "BIRK", "CROX", "VFC", "COLM", "GES"],
+    "Luxury / Fashion":    ["TPR", "RL", "CPRI", "TJX", "ROST", "BURL", "ANF",
+                            "AEO", "URBN", "LULU"],
+    "Sporting Goods":      ["DKS", "ASO", "HIBB", "BGFV"],
+
+    # --- Travel sub-segments ---
+    "Airlines":            ["DAL", "UAL", "AAL", "LUV", "ALK", "SAVE", "JBLU",
+                            "ALGT", "HA", "SKYW", "MESA"],
+    "Cruise Lines":        ["CCL", "RCL", "NCLH", "VIK"],
+    "Hotels & Lodging":    ["MAR", "HLT", "H", "IHG", "CHH", "HGV", "WH", "PLYA"],
+    "Online Travel":       ["BKNG", "EXPE", "ABNB", "TRIP", "TRVG"],
+    "Casinos":             ["LVS", "WYNN", "MGM", "CZR", "BYD", "RRR", "PENN",
+                            "MCRI", "FLL", "GDEN"],
+    "Online Gambling":     ["DKNG", "FLUT", "BETZ", "RSI", "GAN", "PLTK"],
+
+    # --- Transports ---
+    "Class I Rails":       ["UNP", "NSC", "CSX", "CNI", "CP"],
+    "Trucking / LTL":      ["ODFL", "JBHT", "KNX", "XPO", "WERN", "CHRW", "ARCB",
+                            "LSTR", "SNDR", "HTLD", "MRTN"],
+    "Logistics & Parcels": ["FDX", "UPS", "EXPD", "GXO", "ZTO", "FWRD"],
+    "Marine Shipping":     ["ZIM", "MATX", "KEX", "SBLK", "GOGL", "DAC", "GSL",
+                            "CMRE"],
+
+    # --- Industrial / Materials ---
+    "Building Products":   ["TT", "WSO", "LII", "JCI", "MAS", "AOS", "FBIN",
+                            "PNR", "WMS", "CSL", "AZEK", "TREX"],
+    "Homebuilders":        ["DHI", "LEN", "NVR", "PHM", "TOL", "KBH", "MTH",
+                            "TPH", "MHO", "BZH", "GRBK", "CCS"],
+    "Heavy Machinery":     ["CAT", "DE", "AGCO", "TEX", "OSK", "PCAR"],
+    "Industrial Auto":     ["ROK", "EMR", "ETN", "HUBB", "WAB", "DOV", "FLS",
+                            "GGG", "WTS"],
+    "Aerospace OEM":       ["BA", "TDG", "HEI", "TXT", "GE", "RTX", "HXL", "SPR"],
+    "Cement & Aggregates": ["VMC", "MLM", "EXP", "USCR", "SUM", "CX", "EAF"],
+    "Steel":               ["NUE", "STLD", "X", "CLF", "MT", "TX", "ATI",
+                            "RS", "CMC", "WOR"],
+    "Copper / Base Metal": ["FCX", "SCCO", "TECK", "BHP", "RIO", "VALE", "ERO",
+                            "HBM", "TRQ"],
+    "Gold Miners":         ["NEM", "AEM", "GOLD", "AU", "KGC", "AGI", "PAAS",
+                            "WPM", "FNV", "SSRM", "EGO", "NGD", "BTG"],
+    "Lithium":             ["ALB", "SQM", "LAC", "LTHM", "PLL", "SGML"],
+    "Specialty Chemicals": ["LIN", "APD", "ECL", "SHW", "PPG", "RPM", "ALB",
+                            "DD", "FUL", "CE", "ESI"],
+    "Commodity Chem":      ["DOW", "LYB", "EMN", "OLN", "WLK", "HUN", "TROX"],
+    "Packaging":           ["PKG", "IP", "AMCR", "SEE", "BERY", "WRK", "SLGN",
+                            "OI", "BALL", "SON"],
+    "Ag Inputs":           ["CTVA", "MOS", "CF", "NTR", "FMC", "SMG"],
+
+    # --- Energy adjacencies ---
+    "Pipelines / Midstream":["ENB", "ET", "EPD", "MPLX", "WMB", "OKE", "KMI",
+                             "TRGP", "PAA", "WES", "DTM", "PAGP", "ENLC"],
+    "Refiners":            ["MPC", "VLO", "PSX", "DK", "PBF", "HF", "DINO"],
+    "Oilfield Services":   ["SLB", "HAL", "BKR", "FTI", "CHX", "WFRD", "NOV",
+                            "PUMP", "RIG", "OII", "TS"],
+
+    # --- Communications / Media ---
+    "Telecom":             ["T", "VZ", "TMUS", "LUMN"],
+    "Cable":               ["CMCSA", "CHTR", "ATUS", "WBD"],
+    "Streaming / Media":   ["NFLX", "DIS", "WBD", "PARA", "ROKU", "SIRI", "FUBO",
+                            "LYV", "WMG", "SPOT"],
+    "Video Games":         ["TTWO", "EA", "RBLX", "U", "PLTK", "GLBE"],
+    "AdTech":              ["TTD", "PUBM", "MGNI", "DV", "APPS", "ZETA", "ROKU"],
+    "Tobacco":             ["MO", "PM", "BTI"],
+
+    # --- Consumer staples (granular) ---
+    "Beverages":           ["KO", "PEP", "KDP", "MNST", "CELH", "STZ", "BUD",
+                            "TAP", "DEO", "SAM", "FIZZ", "PRMW", "COCO"],
+    "Packaged Food":       ["GIS", "K", "MDLZ", "CAG", "HRL", "CPB", "SJM",
+                            "MKC", "INGR", "POST", "TR", "FLO", "LANC"],
+    "Grocery":             ["KR", "ACI", "SFM", "GO"],
+    "Personal Care":       ["PG", "CL", "CHD", "EL", "KMB", "CLX", "ENR",
+                            "REYN", "SPB"],
+
+    # --- Tech / Software (granular) ---
+    "Enterprise SaaS":     ["CRM", "NOW", "ADBE", "INTU", "WDAY", "ANSS", "TYL",
+                            "SAP", "ORCL", "HUBS", "BSY", "TEAM", "PCTY"],
+    "Cloud / CDN":         ["NET", "FSLY", "AKAM", "DNB", "CLDR"],
+    "Data / DevOps":       ["SNOW", "DDOG", "MDB", "ESTC", "GTLB", "DT", "CFLT",
+                            "S", "PATH", "AI", "BSY", "PD"],
+    "Payments":            ["V", "MA", "PYPL", "FIS", "FI", "JKHY", "GPN", "WU",
+                            "RELY", "EBC", "PAYO", "FLYW"],
+    "BNPL / Consumer Lending":["AFRM", "UPST", "PAGS", "STNE", "OPRT", "ENVA"],
+    "E-Commerce":          ["AMZN", "SHOP", "MELI", "EBAY", "ETSY", "W", "CHWY",
+                            "JD", "BABA", "PDD", "CPNG", "GLBE", "RVLV", "SE"],
+
+    # --- Other niches ---
+    "China ADRs":          ["BABA", "PDD", "JD", "BIDU", "NTES", "TCOM", "BILI",
+                            "TME", "ZTO", "VIPS", "IQ", "WB", "BEKE", "LI",
+                            "NIO", "XPEV"],
+    "LATAM":               ["MELI", "PAGS", "STNE", "NU", "BBD", "ITUB", "VALE",
+                            "PBR", "ABEV", "SBS"],
+    "Cannabis":            ["TLRY", "CGC", "SNDL", "ACB", "OGI", "CRON"],
+    "Theme Parks":         ["SIX", "FUN", "DIS"],
+
     # --- Recurring high-conviction picks ---
     "Top Recurring":       ["NVDA", "PLTR", "AMZN", "MSFT", "GOOGL", "META", "TSLA",
                             "AMD", "MRVL", "ZS", "SMCI", "MU"],
@@ -114,19 +251,32 @@ CURATED_THEMES = {
 UA = {"User-Agent": "Mozilla/5.0 (compatible; theme-builder/1.0)"}
 
 def fetch_industry_tag(ticker: str, session: requests.Session) -> str | None:
-    """Scrape stockanalysis.com for granular industry. Returns None on failure."""
+    """Scrape stockanalysis.com for granular industry. Returns None on failure.
+
+    Their HTML rev'd in 2025+: industry now lives in two stable places:
+      1. A link: <a href="...industry/<slug>/" ...>Industry Name</a>
+      2. An inline JS data tuple: Industry",v:"Industry Name",u:"stocks/industry/..."
+
+    We try the link first (most stable), fall back to the JS blob.
+    """
     url = f"https://stockanalysis.com/stocks/{ticker.lower()}/"
     try:
         r = session.get(url, headers=UA, timeout=8)
         if r.status_code != 200:
             return None
-        # Industry shows up as: <td>Industry</td><td><a ...>Foo Bar</a></td>
+        # Pattern 1: anchor whose href points into /industry/SLUG/
         m = re.search(
-            r"Industry[^<]*</td>\s*<td[^>]*>\s*<a[^>]*>([^<]+)</a>",
+            r'href="[^"]*industry/[^"/]+/"[^>]*>([^<]+)</a>',
             r.text,
-            re.IGNORECASE,
         )
-        return m.group(1).strip() if m else None
+        if m:
+            name = html.unescape(m.group(1)).strip()
+            # Skip the literal "By Industry" navigation link
+            if name and name.lower() != "by industry":
+                return name
+        # Pattern 2: JS data tuple
+        m = re.search(r'Industry"\s*,\s*v\s*:\s*"([^"]+)"', r.text)
+        return html.unescape(m.group(1)).strip() if m else None
     except Exception:
         return None
 

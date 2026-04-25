@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-04-25T17:14:37+00:00",
+  "generated_at": "2026-04-25T17:51:44+00:00",
   "universe_size": 2400,
-  "theme_count": 23,
+  "theme_count": 99,
   "themes": {
     "AI Infrastructure": [
       "NVDA",
@@ -233,6 +233,624 @@
       "DG",
       "DLTR"
     ],
+    "Regional Banks": [
+      "KEY",
+      "RF",
+      "CFG",
+      "FITB",
+      "MTB",
+      "HBAN",
+      "ZION",
+      "PNC",
+      "TFC",
+      "FHN",
+      "WAL",
+      "CFR",
+      "PB",
+      "BPOP"
+    ],
+    "Custody Banks": [
+      "BK",
+      "STT",
+      "NTRS"
+    ],
+    "Asset Managers": [
+      "BLK",
+      "BX",
+      "KKR",
+      "APO",
+      "ARES",
+      "BAM",
+      "OWL",
+      "TROW",
+      "BEN",
+      "IVZ",
+      "SEIC"
+    ],
+    "P&C Insurance": [
+      "TRV",
+      "CB",
+      "ALL",
+      "PGR",
+      "AIG",
+      "HIG",
+      "WRB",
+      "L",
+      "CINF",
+      "RLI",
+      "AFG"
+    ],
+    "Life Insurance": [
+      "MET",
+      "PRU",
+      "AFL",
+      "LNC",
+      "PFG",
+      "GL",
+      "EQH",
+      "VOYA"
+    ],
+    "Insurance Brokers": [
+      "AON",
+      "AJG",
+      "WTW",
+      "BRO",
+      "RYAN"
+    ],
+    "Reinsurance": [
+      "ACGL"
+    ],
+    "Specialty Finance": [
+      "ALLY",
+      "SYF",
+      "COF",
+      "AXP",
+      "NAVI",
+      "OMF",
+      "BX",
+      "ARES"
+    ],
+    "Exchanges": [
+      "ICE",
+      "CME",
+      "NDAQ",
+      "CBOE",
+      "TW"
+    ],
+    "Tower REITs": [
+      "AMT",
+      "CCI",
+      "SBAC"
+    ],
+    "Data Center REITs": [
+      "DLR",
+      "EQIX"
+    ],
+    "Industrial REITs": [
+      "PLD",
+      "REXR",
+      "FR",
+      "STAG",
+      "TRNO",
+      "EXR"
+    ],
+    "Self-Storage REITs": [
+      "PSA",
+      "EXR",
+      "CUBE",
+      "NSA"
+    ],
+    "Residential REITs": [
+      "MAA",
+      "AVB",
+      "EQR",
+      "ESS",
+      "UDR",
+      "CPT",
+      "INVH",
+      "AMH",
+      "ELS",
+      "SUI"
+    ],
+    "Retail REITs": [
+      "O",
+      "SPG",
+      "REG",
+      "FRT",
+      "KIM",
+      "BRX",
+      "MAC",
+      "AKR",
+      "NNN",
+      "ADC"
+    ],
+    "Office REITs": [
+      "BXP",
+      "VNO",
+      "KRC",
+      "CUZ",
+      "HIW",
+      "DEI"
+    ],
+    "Hotel REITs": [
+      "HST",
+      "PK",
+      "RHP",
+      "APLE",
+      "SHO",
+      "DRH"
+    ],
+    "Mortgage REITs": [
+      "AGNC",
+      "NLY",
+      "STWD",
+      "ABR",
+      "BXMT",
+      "RITM",
+      "DX",
+      "TWO"
+    ],
+    "Auto OEMs": [
+      "TSLA",
+      "F",
+      "GM",
+      "RIVN",
+      "LCID"
+    ],
+    "Auto Suppliers": [
+      "APTV",
+      "BWA",
+      "LEA",
+      "DAN",
+      "MOD",
+      "GTX",
+      "ALV"
+    ],
+    "Auto Dealers": [
+      "KMX"
+    ],
+    "Auto Parts Retail": [
+      "ORLY",
+      "AAP",
+      "MNRO"
+    ],
+    "EV Charging": [
+      "EVGO"
+    ],
+    "Restaurants - QSR": [
+      "MCD",
+      "CMG",
+      "YUM",
+      "QSR",
+      "DPZ",
+      "WING",
+      "SHAK",
+      "PZZA",
+      "JACK",
+      "WEN",
+      "DNUT",
+      "PLAY",
+      "TXRH"
+    ],
+    "Restaurants - Casual": [
+      "DRI",
+      "EAT",
+      "BLMN",
+      "CAKE",
+      "CHEF",
+      "BROS"
+    ],
+    "Coffee": [
+      "SBUX",
+      "DNUT",
+      "BROS"
+    ],
+    "Athletic Apparel": [
+      "NKE",
+      "LULU",
+      "UA",
+      "ONON",
+      "DECK",
+      "BIRK",
+      "CROX",
+      "VFC",
+      "COLM"
+    ],
+    "Luxury / Fashion": [
+      "TPR",
+      "RL",
+      "CPRI",
+      "TJX",
+      "ROST",
+      "BURL",
+      "ANF",
+      "AEO",
+      "URBN",
+      "LULU"
+    ],
+    "Sporting Goods": [
+      "DKS",
+      "ASO"
+    ],
+    "Airlines": [
+      "DAL",
+      "UAL",
+      "AAL",
+      "LUV",
+      "ALK",
+      "JBLU",
+      "ALGT"
+    ],
+    "Cruise Lines": [
+      "CCL",
+      "RCL",
+      "NCLH",
+      "VIK"
+    ],
+    "Hotels & Lodging": [
+      "MAR",
+      "HLT",
+      "H",
+      "CHH",
+      "HGV",
+      "WH"
+    ],
+    "Online Travel": [
+      "BKNG",
+      "EXPE",
+      "ABNB",
+      "TRIP"
+    ],
+    "Casinos": [
+      "LVS",
+      "WYNN",
+      "MGM",
+      "CZR",
+      "BYD",
+      "RRR",
+      "PENN"
+    ],
+    "Online Gambling": [
+      "DKNG",
+      "FLUT",
+      "RSI",
+      "PLTK"
+    ],
+    "Class I Rails": [
+      "UNP",
+      "NSC",
+      "CSX"
+    ],
+    "Trucking / LTL": [
+      "ODFL",
+      "JBHT",
+      "KNX",
+      "XPO",
+      "WERN",
+      "CHRW",
+      "SNDR",
+      "MRTN"
+    ],
+    "Logistics & Parcels": [
+      "FDX",
+      "UPS",
+      "EXPD",
+      "GXO"
+    ],
+    "Marine Shipping": [
+      "KEX",
+      "SBLK"
+    ],
+    "Building Products": [
+      "TT",
+      "WSO",
+      "LII",
+      "JCI",
+      "MAS",
+      "AOS",
+      "FBIN",
+      "PNR",
+      "WMS",
+      "TREX"
+    ],
+    "Homebuilders": [
+      "DHI",
+      "LEN",
+      "PHM",
+      "TOL",
+      "KBH",
+      "MTH",
+      "TPH",
+      "BZH"
+    ],
+    "Heavy Machinery": [
+      "CAT",
+      "DE",
+      "AGCO",
+      "TEX",
+      "OSK",
+      "PCAR"
+    ],
+    "Industrial Auto": [
+      "ROK",
+      "EMR",
+      "ETN",
+      "HUBB",
+      "WAB",
+      "DOV",
+      "FLS",
+      "GGG"
+    ],
+    "Aerospace OEM": [
+      "BA",
+      "HEI",
+      "TXT",
+      "GE",
+      "RTX",
+      "HXL"
+    ],
+    "Cement & Aggregates": [
+      "VMC",
+      "EXP"
+    ],
+    "Steel": [
+      "NUE",
+      "STLD",
+      "CLF",
+      "ATI",
+      "CMC"
+    ],
+    "Copper / Base Metal": [
+      "FCX",
+      "SCCO"
+    ],
+    "Gold Miners": [
+      "NEM",
+      "GOLD",
+      "AU",
+      "SSRM"
+    ],
+    "Lithium": [
+      "ALB",
+      "SGML"
+    ],
+    "Specialty Chemicals": [
+      "LIN",
+      "APD",
+      "ECL",
+      "SHW",
+      "PPG",
+      "RPM",
+      "ALB",
+      "DD",
+      "FUL",
+      "CE",
+      "ESI"
+    ],
+    "Commodity Chem": [
+      "DOW",
+      "LYB",
+      "EMN",
+      "OLN",
+      "WLK",
+      "HUN",
+      "TROX"
+    ],
+    "Packaging": [
+      "PKG",
+      "IP",
+      "AMCR",
+      "SLGN",
+      "OI",
+      "BALL",
+      "SON"
+    ],
+    "Ag Inputs": [
+      "CTVA",
+      "MOS",
+      "CF",
+      "FMC",
+      "SMG"
+    ],
+    "Pipelines / Midstream": [
+      "WMB",
+      "OKE",
+      "KMI",
+      "TRGP",
+      "PAA",
+      "DTM",
+      "PAGP"
+    ],
+    "Refiners": [
+      "MPC",
+      "VLO",
+      "PSX",
+      "DK",
+      "PBF",
+      "DINO"
+    ],
+    "Oilfield Services": [
+      "SLB",
+      "HAL",
+      "BKR",
+      "FTI",
+      "WFRD",
+      "NOV",
+      "PUMP",
+      "RIG",
+      "OII"
+    ],
+    "Telecom": [
+      "T",
+      "VZ",
+      "TMUS",
+      "LUMN"
+    ],
+    "Cable": [
+      "CMCSA",
+      "CHTR",
+      "WBD"
+    ],
+    "Streaming / Media": [
+      "NFLX",
+      "DIS",
+      "WBD",
+      "ROKU",
+      "SIRI",
+      "FUBO",
+      "LYV",
+      "WMG",
+      "SPOT"
+    ],
+    "Video Games": [
+      "TTWO",
+      "EA",
+      "RBLX",
+      "U",
+      "PLTK",
+      "GLBE"
+    ],
+    "AdTech": [
+      "TTD",
+      "PUBM",
+      "MGNI",
+      "DV",
+      "APPS",
+      "ZETA",
+      "ROKU"
+    ],
+    "Tobacco": [
+      "MO",
+      "PM"
+    ],
+    "Beverages": [
+      "KO",
+      "PEP",
+      "KDP",
+      "MNST",
+      "CELH",
+      "STZ",
+      "TAP",
+      "COCO"
+    ],
+    "Packaged Food": [
+      "GIS",
+      "MDLZ",
+      "CAG",
+      "HRL",
+      "CPB",
+      "SJM",
+      "MKC",
+      "INGR",
+      "POST",
+      "FLO"
+    ],
+    "Grocery": [
+      "KR",
+      "ACI",
+      "SFM",
+      "GO"
+    ],
+    "Personal Care": [
+      "PG",
+      "CL",
+      "CHD",
+      "EL",
+      "KMB",
+      "CLX",
+      "ENR",
+      "REYN"
+    ],
+    "Enterprise SaaS": [
+      "CRM",
+      "NOW",
+      "ADBE",
+      "INTU",
+      "WDAY",
+      "TYL",
+      "ORCL",
+      "HUBS",
+      "BSY",
+      "TEAM",
+      "PCTY"
+    ],
+    "Cloud / CDN": [
+      "NET",
+      "FSLY",
+      "AKAM"
+    ],
+    "Data / DevOps": [
+      "SNOW",
+      "DDOG",
+      "MDB",
+      "ESTC",
+      "GTLB",
+      "DT",
+      "S",
+      "PATH",
+      "AI",
+      "BSY",
+      "PD"
+    ],
+    "Payments": [
+      "V",
+      "MA",
+      "PYPL",
+      "FIS",
+      "JKHY",
+      "GPN",
+      "WU",
+      "RELY",
+      "EBC",
+      "PAYO",
+      "FLYW"
+    ],
+    "BNPL / Consumer Lending": [
+      "AFRM",
+      "UPST",
+      "PAGS",
+      "STNE"
+    ],
+    "E-Commerce": [
+      "AMZN",
+      "SHOP",
+      "MELI",
+      "EBAY",
+      "ETSY",
+      "W",
+      "CHWY",
+      "JD",
+      "BABA",
+      "PDD",
+      "CPNG",
+      "GLBE",
+      "RVLV",
+      "SE"
+    ],
+    "China ADRs": [
+      "BABA",
+      "PDD",
+      "JD",
+      "NTES",
+      "BILI",
+      "VIPS",
+      "IQ",
+      "NIO"
+    ],
+    "LATAM": [
+      "MELI",
+      "PAGS",
+      "STNE",
+      "NU"
+    ],
+    "Cannabis": [
+      "TLRY",
+      "SNDL"
+    ],
+    "Theme Parks": [
+      "FUN",
+      "DIS"
+    ],
     "Top Recurring": [
       "NVDA",
       "PLTR",
@@ -290,6 +908,7 @@
       "industry": null,
       "themes": [
         "Big Tech",
+        "E-Commerce",
         "Top Recurring"
       ]
     },
@@ -317,6 +936,7 @@
       "industry": null,
       "themes": [
         "Big Tech",
+        "Auto OEMs",
         "Top Recurring"
       ]
     },
@@ -354,7 +974,9 @@
       "name": "Visa Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "JNJ": {
       "name": "Johnson & Johnson",
@@ -376,19 +998,25 @@
       "name": "Oracle Corporation",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "MA": {
       "name": "Mastercard Incorporated",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "NFLX": {
       "name": "Netflix, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Streaming / Media"
+      ]
     },
     "COST": {
       "name": "Costco Wholesale Corporation",
@@ -435,7 +1063,8 @@
       "tv_sector": "Producer manufacturing",
       "industry": null,
       "themes": [
-        "Industrial / Picks"
+        "Industrial / Picks",
+        "Heavy Machinery"
       ]
     },
     "PLTR": {
@@ -459,7 +1088,9 @@
       "name": "Procter & Gamble Company (The)",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Personal Care"
+      ]
     },
     "LRCX": {
       "name": "Lam Research Corporation",
@@ -473,7 +1104,9 @@
       "name": "GE Aerospace",
       "tv_sector": "Electronic technology",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Aerospace OEM"
+      ]
     },
     "INTC": {
       "name": "Intel Corporation",
@@ -493,7 +1126,9 @@
       "name": "Coca-Cola Company (The)",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Beverages"
+      ]
     },
     "AMAT": {
       "name": "Applied Materials, Inc.",
@@ -527,14 +1162,18 @@
       "name": "Alibaba Group Holding Limited",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce",
+        "China ADRs"
+      ]
     },
     "RTX": {
       "name": "RTX Corporation",
       "tv_sector": "Electronic technology",
       "industry": null,
       "themes": [
-        "Defense"
+        "Defense",
+        "Aerospace OEM"
       ]
     },
     "GEV": {
@@ -566,13 +1205,17 @@
       "name": "Philip Morris International Inc",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Tobacco"
+      ]
     },
     "LIN": {
       "name": "Linde plc",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "C": {
       "name": "Citigroup, Inc.",
@@ -602,25 +1245,33 @@
       "name": "American Express Company",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Finance"
+      ]
     },
     "MCD": {
       "name": "McDonald's Corporation",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "PEP": {
       "name": "PepsiCo, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Beverages"
+      ]
     },
     "TMUS": {
       "name": "T-Mobile US, Inc.",
       "tv_sector": "Communications",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Telecom"
+      ]
     },
     "TMO": {
       "name": "Thermo Fisher Scientific Inc",
@@ -655,7 +1306,9 @@
       "name": "Verizon Communications Inc.",
       "tv_sector": "Communications",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Telecom"
+      ]
     },
     "AMGN": {
       "name": "Amgen Inc.",
@@ -667,7 +1320,10 @@
       "name": "Walt Disney Company (The)",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Streaming / Media",
+        "Theme Parks"
+      ]
     },
     "APH": {
       "name": "Amphenol Corporation",
@@ -679,13 +1335,17 @@
       "name": "AT&T Inc.",
       "tv_sector": "Communications",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Telecom"
+      ]
     },
     "TJX": {
       "name": "TJX Companies, Inc. (The)",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Luxury / Fashion"
+      ]
     },
     "ABT": {
       "name": "Abbott Laboratories",
@@ -698,7 +1358,8 @@
       "tv_sector": "Electronic technology",
       "industry": null,
       "themes": [
-        "Defense"
+        "Defense",
+        "Aerospace OEM"
       ]
     },
     "SCHW": {
@@ -723,7 +1384,9 @@
       "name": "BlackRock, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers"
+      ]
     },
     "ADI": {
       "name": "Analog Devices, Inc.",
@@ -743,19 +1406,26 @@
       "name": "Shopify Inc.",
       "tv_sector": "Commercial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce"
+      ]
     },
     "CRM": {
       "name": "Salesforce, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "BX": {
       "name": "Blackstone Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers",
+        "Specialty Finance"
+      ]
     },
     "UBER": {
       "name": "Uber Technologies, Inc.",
@@ -774,14 +1444,17 @@
       "tv_sector": "Producer manufacturing",
       "industry": null,
       "themes": [
-        "Industrial / Picks"
+        "Industrial / Picks",
+        "Heavy Machinery"
       ]
     },
     "SCCO": {
       "name": "Southern Copper Corporation",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Copper / Base Metal"
+      ]
     },
     "PFE": {
       "name": "Pfizer, Inc.",
@@ -796,7 +1469,8 @@
       "themes": [
         "AI Infrastructure",
         "AI Power",
-        "Industrial / Picks"
+        "Industrial / Picks",
+        "Industrial Auto"
       ]
     },
     "HON": {
@@ -809,7 +1483,9 @@
       "name": "Union Pacific Corporation",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Class I Rails"
+      ]
     },
     "WELL": {
       "name": "Welltower Inc.",
@@ -822,7 +1498,8 @@
       "tv_sector": "Consumer services",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Online Travel"
       ]
     },
     "COP": {
@@ -846,7 +1523,10 @@
       "name": "PDD Holdings Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce",
+        "China ADRs"
+      ]
     },
     "QCOM": {
       "name": "QUALCOMM Incorporated",
@@ -896,7 +1576,9 @@
       "name": "Prologis, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial REITs"
+      ]
     },
     "SNDK": {
       "name": "Sandisk Corporation",
@@ -922,13 +1604,17 @@
       "name": "Chubb Limited",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "COF": {
       "name": "Capital One Financial Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Finance"
+      ]
     },
     "WDC": {
       "name": "Western Digital Corporation",
@@ -942,7 +1628,9 @@
       "name": "Newmont Corporation",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Gold Miners"
+      ]
     },
     "PH": {
       "name": "Parker-Hannifin Corporation",
@@ -966,7 +1654,9 @@
       "name": "Progressive Corporation (The)",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "MRVL": {
       "name": "Marvell Technology, Inc.",
@@ -1013,7 +1703,9 @@
       "name": "Starbucks Corporation",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Coffee"
+      ]
     },
     "MDT": {
       "name": "Medtronic plc.",
@@ -1025,7 +1717,9 @@
       "name": "Spotify Technology S.A.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Streaming / Media"
+      ]
     },
     "HCA": {
       "name": "HCA Healthcare, Inc.",
@@ -1037,19 +1731,25 @@
       "name": "Intuit Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "CME": {
       "name": "CME Group Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Exchanges"
+      ]
     },
     "MO": {
       "name": "Altria Group, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Tobacco"
+      ]
     },
     "CEG": {
       "name": "Constellation Energy Corporation",
@@ -1085,13 +1785,17 @@
       "name": "Equinix, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data Center REITs"
+      ]
     },
     "TT": {
       "name": "Trane Technologies plc",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "HWM": {
       "name": "Howmet Aerospace Inc.",
@@ -1105,7 +1809,9 @@
       "name": "Comcast Corporation",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cable"
+      ]
     },
     "DUK": {
       "name": "Duke Energy Corporation (Holding Company)",
@@ -1117,26 +1823,33 @@
       "name": "Adobe Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "FCX": {
       "name": "Freeport-McMoRan, Inc.",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Copper / Base Metal"
+      ]
     },
     "NOW": {
       "name": "ServiceNow, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "MAR": {
       "name": "Marriott International",
       "tv_sector": "Consumer services",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Hotels & Lodging"
       ]
     },
     "NOC": {
@@ -1164,20 +1877,26 @@
       "tv_sector": "Retail trade",
       "industry": null,
       "themes": [
-        "Fintech"
+        "Fintech",
+        "E-Commerce",
+        "LATAM"
       ]
     },
     "ICE": {
       "name": "Intercontinental Exchange Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Exchanges"
+      ]
     },
     "KKR": {
       "name": "KKR & Co. Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers"
+      ]
     },
     "GD": {
       "name": "General Dynamics Corporation",
@@ -1191,7 +1910,9 @@
       "name": "The Bank of New York Mellon Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Custody Banks"
+      ]
     },
     "WM": {
       "name": "Waste Management, Inc.",
@@ -1203,7 +1924,9 @@
       "name": "PNC Financial Services Group, Inc. (The)",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "PWR": {
       "name": "Quanta Services, Inc.",
@@ -1218,7 +1941,9 @@
       "name": "United Parcel Service, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Logistics & Parcels"
+      ]
     },
     "USB": {
       "name": "U.S. Bancorp",
@@ -1232,13 +1957,17 @@
       "name": "FedEx Corporation",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Logistics & Parcels"
+      ]
     },
     "WMB": {
       "name": "Williams Companies, Inc. (The)",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Pipelines / Midstream"
+      ]
     },
     "MRSH": {
       "name": "Marsh",
@@ -1256,7 +1985,9 @@
       "name": "Johnson Controls International plc",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "CDNS": {
       "name": "Cadence Design Systems, Inc.",
@@ -1269,7 +2000,8 @@
       "tv_sector": "Consumer services",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Online Travel"
       ]
     },
     "CMI": {
@@ -1282,13 +2014,17 @@
       "name": "American Tower Corporation (REIT)",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Tower REITs"
+      ]
     },
     "SHW": {
       "name": "Sherwin-Williams Company (The)",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "CVNA": {
       "name": "Carvana Co.",
@@ -1300,7 +2036,9 @@
       "name": "Brookfield Asset Management Inc",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers"
+      ]
     },
     "REGN": {
       "name": "Regeneron Pharmaceuticals, Inc.",
@@ -1331,14 +2069,17 @@
       "tv_sector": "Electronic technology",
       "industry": null,
       "themes": [
-        "Industrial / Picks"
+        "Industrial / Picks",
+        "Industrial Auto"
       ]
     },
     "SLB": {
       "name": "SLB Limited",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Oilfield Services"
+      ]
     },
     "HOOD": {
       "name": "Robinhood Markets, Inc.",
@@ -1352,13 +2093,17 @@
       "name": "O'Reilly Automotive, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Parts Retail"
+      ]
     },
     "CSX": {
       "name": "CSX Corporation",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Class I Rails"
+      ]
     },
     "DASH": {
       "name": "DoorDash, Inc.",
@@ -1377,14 +2122,17 @@
       "tv_sector": "Consumer services",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Cruise Lines"
       ]
     },
     "ECL": {
       "name": "Ecolab Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "ITW": {
       "name": "Illinois Tool Works Inc.",
@@ -1397,7 +2145,8 @@
       "tv_sector": "Consumer services",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Hotels & Lodging"
       ]
     },
     "NU": {
@@ -1405,14 +2154,17 @@
       "tv_sector": "Finance",
       "industry": null,
       "themes": [
-        "Fintech"
+        "Fintech",
+        "LATAM"
       ]
     },
     "MNST": {
       "name": "Monster Beverage Corporation",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Beverages"
+      ]
     },
     "AEP": {
       "name": "American Electric Power Company, Inc.",
@@ -1430,19 +2182,25 @@
       "name": "Norfolk Southern Corporation",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Class I Rails"
+      ]
     },
     "MDLZ": {
       "name": "Mondelez International, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "ROST": {
       "name": "Ross Stores, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Luxury / Fashion"
+      ]
     },
     "EOG": {
       "name": "EOG Resources, Inc.",
@@ -1468,31 +2226,41 @@
       "name": "Kinder Morgan, Inc.",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Pipelines / Midstream"
+      ]
     },
     "GM": {
       "name": "General Motors Company",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto OEMs"
+      ]
     },
     "AON": {
       "name": "Aon plc",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Insurance Brokers"
+      ]
     },
     "VLO": {
       "name": "Valero Energy Corporation",
       "tv_sector": "Energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Refiners"
+      ]
     },
     "APO": {
       "name": "Apollo Global Management, Inc. (New)",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers"
+      ]
     },
     "TEL": {
       "name": "TE Connectivity plc",
@@ -1504,7 +2272,9 @@
       "name": "NetEase, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "China ADRs"
+      ]
     },
     "ELV": {
       "name": "Elevance Health, Inc.",
@@ -1516,19 +2286,26 @@
       "name": "Warner Bros. Discovery, Inc. - Series A",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cable",
+        "Streaming / Media"
+      ]
     },
     "NKE": {
       "name": "Nike, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Athletic Apparel"
+      ]
     },
     "DLR": {
       "name": "Digital Realty Trust, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data Center REITs"
+      ]
     },
     "CIEN": {
       "name": "Ciena Corporation",
@@ -1543,14 +2320,17 @@
       "name": "Colgate-Palmolive Company",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Personal Care"
+      ]
     },
     "NET": {
       "name": "Cloudflare, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
       "themes": [
-        "Cybersecurity"
+        "Cybersecurity",
+        "Cloud / CDN"
       ]
     },
     "LHX": {
@@ -1573,19 +2353,25 @@
       "name": "Simon Property Group, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "APD": {
       "name": "Air Products and Chemicals, Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "MPC": {
       "name": "Marathon Petroleum Corporation",
       "tv_sector": "Energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Refiners"
+      ]
     },
     "RSG": {
       "name": "Republic Services, Inc.",
@@ -1597,19 +2383,25 @@
       "name": "PACCAR Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Heavy Machinery"
+      ]
     },
     "TRV": {
       "name": "The Travelers Companies, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "PSX": {
       "name": "Phillips 66",
       "tv_sector": "Energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Refiners"
+      ]
     },
     "MDLN": {
       "name": "Medline Inc.",
@@ -1633,7 +2425,9 @@
       "name": "Truist Financial Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "COR": {
       "name": "Cencora, Inc.",
@@ -1662,13 +2456,17 @@
       "name": "Realty Income Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "BKR": {
       "name": "Baker Hughes Company",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Oilfield Services"
+      ]
     },
     "FTNT": {
       "name": "Fortinet, Inc.",
@@ -1691,13 +2489,17 @@
       "name": "AFLAC Incorporated",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Life Insurance"
+      ]
     },
     "AJG": {
       "name": "Arthur J. Gallagher & Co.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Insurance Brokers"
+      ]
     },
     "TER": {
       "name": "Teradyne, Inc.",
@@ -1711,7 +2513,9 @@
       "name": "Allstate Corporation (The)",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "KEYS": {
       "name": "Keysight Technologies Inc.",
@@ -1731,7 +2535,9 @@
       "name": "AngloGold Ashanti PLC",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Gold Miners"
+      ]
     },
     "VST": {
       "name": "Vistra Corp.",
@@ -1760,7 +2566,9 @@
       "name": "Corteva, Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Ag Inputs"
+      ]
     },
     "LNG": {
       "name": "Cheniere Energy, Inc.",
@@ -1772,13 +2580,17 @@
       "name": "Public Storage",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Self-Storage REITs"
+      ]
     },
     "OKE": {
       "name": "ONEOK, Inc.",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Pipelines / Midstream"
+      ]
     },
     "NXPI": {
       "name": "NXP Semiconductors N.V.",
@@ -1821,7 +2633,9 @@
       "name": "Targa Resources, Inc.",
       "tv_sector": "Utilities",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Pipelines / Midstream"
+      ]
     },
     "GRMN": {
       "name": "Garmin Ltd.",
@@ -1845,25 +2659,33 @@
       "name": "Electronic Arts Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Video Games"
+      ]
     },
     "F": {
       "name": "Ford Motor Company",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto OEMs"
+      ]
     },
     "SE": {
       "name": "Sea Limited",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce"
+      ]
     },
     "MET": {
       "name": "MetLife, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Life Insurance"
+      ]
     },
     "ADSK": {
       "name": "Autodesk, Inc.",
@@ -1875,7 +2697,9 @@
       "name": "Nasdaq, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Exchanges"
+      ]
     },
     "FERG": {
       "name": "Ferguson Enterprises Inc.",
@@ -1887,7 +2711,9 @@
       "name": "Snowflake Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data / DevOps"
+      ]
     },
     "CAH": {
       "name": "Cardinal Health, Inc.",
@@ -1934,7 +2760,8 @@
       "tv_sector": "Transportation",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Airlines"
       ]
     },
     "IDXX": {
@@ -1947,14 +2774,17 @@
       "name": "Chipotle Mexican Grill, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "PYPL": {
       "name": "PayPal Holdings, Inc.",
       "tv_sector": "Commercial services",
       "industry": null,
       "themes": [
-        "Fintech"
+        "Fintech",
+        "Payments"
       ]
     },
     "EW": {
@@ -1967,26 +2797,33 @@
       "name": "Fifth Third Bancorp",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "EBAY": {
       "name": "eBay Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce"
+      ]
     },
     "YUM": {
       "name": "Yum! Brands, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "ROK": {
       "name": "Rockwell Automation, Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
       "themes": [
-        "Industrial / Picks"
+        "Industrial / Picks",
+        "Industrial Auto"
       ]
     },
     "BDX": {
@@ -2005,7 +2842,9 @@
       "name": "Westinghouse Air Brake Technologies Corporation",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial Auto"
+      ]
     },
     "RKT": {
       "name": "Rocket Companies, Inc.",
@@ -2023,7 +2862,9 @@
       "name": "Nucor Corporation",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Steel"
+      ]
     },
     "CCEP": {
       "name": "Coca-Cola Europacific Partners plc",
@@ -2035,13 +2876,17 @@
       "name": "Old Dominion Freight Line, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Trucking / LTL"
+      ]
     },
     "DDOG": {
       "name": "Datadog, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data / DevOps"
+      ]
     },
     "AMP": {
       "name": "Ameriprise Financial, Inc.",
@@ -2053,7 +2898,9 @@
       "name": "Roblox Corporation",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Video Games"
+      ]
     },
     "NBIS": {
       "name": "Nebius Group N.V.",
@@ -2073,7 +2920,9 @@
       "name": "D.R. Horton, Inc.",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Homebuilders"
+      ]
     },
     "VTR": {
       "name": "Ventas, Inc.",
@@ -2085,7 +2934,9 @@
       "name": "American International Group, Inc. New",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "MSCI": {
       "name": "MSCI Inc.",
@@ -2097,7 +2948,9 @@
       "name": "Kroger Company (The)",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Grocery"
+      ]
     },
     "XYZ": {
       "name": "Block, Inc.",
@@ -2124,7 +2977,8 @@
       "tv_sector": "Consumer services",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Cruise Lines"
       ]
     },
     "ED": {
@@ -2137,19 +2991,25 @@
       "name": "State Street Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Custody Banks"
+      ]
     },
     "TTWO": {
       "name": "Take-Two Interactive Software, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Video Games"
+      ]
     },
     "CPNG": {
       "name": "Coupang, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce"
+      ]
     },
     "HSY": {
       "name": "The Hershey Company",
@@ -2161,7 +3021,9 @@
       "name": "The Hartford Insurance Group, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "PCG": {
       "name": "Pacific Gas & Electric Co.",
@@ -2173,13 +3035,18 @@
       "name": "JD.com, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce",
+        "China ADRs"
+      ]
     },
     "VMC": {
       "name": "Vulcan Materials Company (Holding Company)",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cement & Aggregates"
+      ]
     },
     "SATS": {
       "name": "EchoStar Corporation",
@@ -2191,13 +3058,17 @@
       "name": "Las Vegas Sands Corp.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Casinos"
+      ]
     },
     "CCI": {
       "name": "Crown Castle Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Tower REITs"
+      ]
     },
     "TKO": {
       "name": "TKO Group Holdings, Inc.",
@@ -2221,13 +3092,17 @@
       "name": "Live Nation Entertainment, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Streaming / Media"
+      ]
     },
     "VIK": {
       "name": "Viking Holdings Ltd",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cruise Lines"
+      ]
     },
     "NRG": {
       "name": "NRG Energy, Inc.",
@@ -2241,7 +3116,9 @@
       "name": "Restaurant Brands International Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "EQT": {
       "name": "EQT Corporation",
@@ -2265,25 +3142,33 @@
       "name": "Keurig Dr Pepper Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Beverages"
+      ]
     },
     "ACGL": {
       "name": "Arch Capital Group Ltd.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Reinsurance"
+      ]
     },
     "HEI": {
       "name": "Heico Corporation",
       "tv_sector": "Electronic technology",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Aerospace OEM"
+      ]
     },
     "PRU": {
       "name": "Prudential Financial, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Life Insurance"
+      ]
     },
     "IRM": {
       "name": "Iron Mountain Incorporated (Delaware)",
@@ -2301,7 +3186,9 @@
       "name": "Huntington Bancshares Incorporated",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "GEHC": {
       "name": "GE HealthCare Technologies Inc.",
@@ -2357,7 +3244,9 @@
       "name": "M&T Bank Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "PAYX": {
       "name": "Paychex, Inc.",
@@ -2393,7 +3282,9 @@
       "name": "Kimberly-Clark Corporation",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Personal Care"
+      ]
     },
     "WAT": {
       "name": "Waters Corporation",
@@ -2405,13 +3296,17 @@
       "name": "Cboe Global Markets, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Exchanges"
+      ]
     },
     "WDAY": {
       "name": "Workday, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "INSM": {
       "name": "Insmed Incorporated",
@@ -2424,7 +3319,8 @@
       "tv_sector": "Consumer services",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Online Travel"
       ]
     },
     "OTIS": {
@@ -2437,13 +3333,17 @@
       "name": "Halliburton Company",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Oilfield Services"
+      ]
     },
     "CHTR": {
       "name": "Charter Communications, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cable"
+      ]
     },
     "CRDO": {
       "name": "Credo Technology Group Holding Ltd",
@@ -2467,7 +3367,9 @@
       "name": "Tapestry, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Luxury / Fashion"
+      ]
     },
     "AEE": {
       "name": "Ameren Corporation",
@@ -2486,7 +3388,8 @@
       "tv_sector": "Transportation",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Airlines"
       ]
     },
     "XYL": {
@@ -2523,7 +3426,10 @@
       "name": "Extra Space Storage Inc",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial REITs",
+        "Self-Storage REITs"
+      ]
     },
     "PPL": {
       "name": "PPL Corporation",
@@ -2553,13 +3459,17 @@
       "name": "Dover Corporation",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial Auto"
+      ]
     },
     "NTRS": {
       "name": "Northern Trust Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Custody Banks"
+      ]
     },
     "CTSH": {
       "name": "Cognizant Technology Solutions Corporation",
@@ -2577,7 +3487,9 @@
       "name": "TechnipFMC plc",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Oilfield Services"
+      ]
     },
     "MTZ": {
       "name": "MasTec, Inc.",
@@ -2603,19 +3515,25 @@
       "name": "Tradeweb Markets Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Exchanges"
+      ]
     },
     "STZ": {
       "name": "Constellation Brands, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Beverages"
+      ]
     },
     "STLD": {
       "name": "Steel Dynamics, Inc.",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Steel"
+      ]
     },
     "DVN": {
       "name": "Devon Energy Corporation",
@@ -2635,13 +3553,17 @@
       "name": "Dow Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Commodity Chem"
+      ]
     },
     "HUBB": {
       "name": "Hubbell Inc",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial Auto"
+      ]
     },
     "CNP": {
       "name": "CenterPoint Energy, Inc (Holding Co)",
@@ -2653,13 +3575,17 @@
       "name": "Estee Lauder Companies, Inc. (The)",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Personal Care"
+      ]
     },
     "CFG": {
       "name": "Citizens Financial Group, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "FTAI": {
       "name": "FTAI Aviation Ltd.",
@@ -2677,7 +3603,9 @@
       "name": "Willis Towers Watson Public Limited Company",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Insurance Brokers"
+      ]
     },
     "EIX": {
       "name": "Edison International",
@@ -2727,13 +3655,18 @@
       "name": "Synchrony Financial",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Finance"
+      ]
     },
     "ARES": {
       "name": "Ares Management Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers",
+        "Specialty Finance"
+      ]
     },
     "ZM": {
       "name": "Zoom Communications, Inc.",
@@ -2781,7 +3714,9 @@
       "name": "Cincinnati Financial Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "UTHR": {
       "name": "United Therapeutics Corporation",
@@ -2799,13 +3734,17 @@
       "name": "Fidelity National Information Services, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "WRB": {
       "name": "W.R. Berkley Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "BNTX": {
       "name": "BioNTech SE",
@@ -2817,7 +3756,9 @@
       "name": "XPO, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Trucking / LTL"
+      ]
     },
     "AER": {
       "name": "AerCap Holdings N.V.",
@@ -2843,7 +3784,9 @@
       "name": "PPG Industries, Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "TSEM": {
       "name": "Tower Semiconductor Ltd.",
@@ -2869,7 +3812,9 @@
       "name": "AvalonBay Communities, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "CMS": {
       "name": "CMS Energy Corporation",
@@ -2887,7 +3832,9 @@
       "name": "Regions Financial Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "DXCM": {
       "name": "DexCom, Inc.",
@@ -2905,7 +3852,9 @@
       "name": "LyondellBasell Industries NV",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Commodity Chem"
+      ]
     },
     "TSCO": {
       "name": "Tractor Supply Company",
@@ -2929,19 +3878,25 @@
       "name": "Equity Residential",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "PHM": {
       "name": "PulteGroup, Inc.",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Homebuilders"
+      ]
     },
     "KEY": {
       "name": "KeyCorp",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "EXE": {
       "name": "Expand Energy Corporation",
@@ -2953,7 +3908,9 @@
       "name": "SBA Communications Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Tower REITs"
+      ]
     },
     "WSM": {
       "name": "Williams-Sonoma, Inc.",
@@ -2971,19 +3928,25 @@
       "name": "Brown & Brown, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Insurance Brokers"
+      ]
     },
     "DRI": {
       "name": "Darden Restaurants, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - Casual"
+      ]
     },
     "L": {
       "name": "Loews Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "NI": {
       "name": "NiSource Inc",
@@ -3013,13 +3976,17 @@
       "name": "Church & Dwight Company, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Personal Care"
+      ]
     },
     "RL": {
       "name": "Ralph Lauren Corporation",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Luxury / Fashion"
+      ]
     },
     "OMC": {
       "name": "Omnicom Group Inc.",
@@ -3049,7 +4016,10 @@
       "name": "Albemarle Corporation",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Lithium",
+        "Specialty Chemicals"
+      ]
     },
     "BWXT": {
       "name": "BWX Technologies, Inc.",
@@ -3069,7 +4039,9 @@
       "name": "Lennar Corporation",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Homebuilders"
+      ]
     },
     "SW": {
       "name": "Smurfit WestRock plc",
@@ -3093,7 +4065,9 @@
       "name": "ATI Inc.",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Steel"
+      ]
     },
     "CRS": {
       "name": "Carpenter Technology Corporation",
@@ -3105,7 +4079,9 @@
       "name": "Burlington Stores, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Luxury / Fashion"
+      ]
     },
     "NVT": {
       "name": "nVent Electric plc",
@@ -3117,7 +4093,9 @@
       "name": "J.B. Hunt Transport Services, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Trucking / LTL"
+      ]
     },
     "ZS": {
       "name": "Zscaler, Inc.",
@@ -3158,7 +4136,9 @@
       "name": "T. Rowe Price Group, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers"
+      ]
     },
     "ENTG": {
       "name": "Entegris, Inc.",
@@ -3172,19 +4152,25 @@
       "name": "Principal Financial Group Inc",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Life Insurance"
+      ]
     },
     "LUV": {
       "name": "Southwest Airlines Company",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Airlines"
+      ]
     },
     "RIVN": {
       "name": "Rivian Automotive, Inc.",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto OEMs"
+      ]
     },
     "CDE": {
       "name": "Coeur Mining, Inc.",
@@ -3222,7 +4208,9 @@
       "name": "C.H. Robinson Worldwide, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Trucking / LTL"
+      ]
     },
     "USFD": {
       "name": "US Foods Holding Corp.",
@@ -3235,7 +4223,8 @@
       "tv_sector": "Finance",
       "industry": null,
       "themes": [
-        "Fintech"
+        "Fintech",
+        "BNPL / Consumer Lending"
       ]
     },
     "NTAP": {
@@ -3250,19 +4239,26 @@
       "name": "lululemon athletica inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Athletic Apparel",
+        "Luxury / Fashion"
+      ]
     },
     "MDB": {
       "name": "MongoDB, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data / DevOps"
+      ]
     },
     "FLUT": {
       "name": "Flutter Entertainment plc",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Online Gambling"
+      ]
     },
     "MTSI": {
       "name": "MACOM Technology Solutions Holdings, Inc.",
@@ -3282,7 +4278,9 @@
       "name": "International Paper Company",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaging"
+      ]
     },
     "INCY": {
       "name": "Incyte Corporation",
@@ -3294,13 +4292,17 @@
       "name": "Dick's Sporting Goods Inc",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Sporting Goods"
+      ]
     },
     "GPN": {
       "name": "Global Payments Inc.",
       "tv_sector": "Commercial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "WST": {
       "name": "West Pharmaceutical Services, Inc.",
@@ -3312,7 +4314,9 @@
       "name": "Expeditors International of Washington, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Logistics & Parcels"
+      ]
     },
     "JBS": {
       "name": "JBS N.V.",
@@ -3324,7 +4328,9 @@
       "name": "DuPont de Nemours, Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "CG": {
       "name": "The Carlyle Group Inc.",
@@ -3348,7 +4354,9 @@
       "name": "Amcor plc",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaging"
+      ]
     },
     "LNT": {
       "name": "Alliant Energy Corporation",
@@ -3372,7 +4380,9 @@
       "name": "CF Industries Holdings, Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Ag Inputs"
+      ]
     },
     "CNC": {
       "name": "Centene Corporation",
@@ -3384,7 +4394,9 @@
       "name": "Packaging Corporation of America",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaging"
+      ]
     },
     "ZBH": {
       "name": "Zimmer Biomet Holdings, Inc.",
@@ -3396,7 +4408,9 @@
       "name": "General Mills, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "FTV": {
       "name": "Fortive Corporation",
@@ -3440,7 +4454,9 @@
       "name": "Atlassian Corporation",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "PR": {
       "name": "Permian Resources Corporation",
@@ -3472,7 +4488,9 @@
       "name": "Watsco, Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "FFIV": {
       "name": "F5, Inc.",
@@ -3490,7 +4508,9 @@
       "name": "Lennox International, Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "THC": {
       "name": "Tenet Healthcare Corporation",
@@ -3508,7 +4528,9 @@
       "name": "Ball Corporation",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaging"
+      ]
     },
     "VNOM": {
       "name": "Viper Energy, Inc.",
@@ -3588,7 +4610,9 @@
       "name": "Essex Property Trust, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "IREN": {
       "name": "IREN Limited",
@@ -3608,19 +4632,26 @@
       "name": "Invitation Homes Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "ROKU": {
       "name": "Roku, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Streaming / Media",
+        "AdTech"
+      ]
     },
     "NLY": {
       "name": "Annaly Capital Management Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Mortgage REITs"
+      ]
     },
     "GRAB": {
       "name": "Grab Holdings Limited",
@@ -3638,7 +4669,9 @@
       "name": "Sun Communities, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "VTRS": {
       "name": "Viatris Inc.",
@@ -3650,7 +4683,9 @@
       "name": "Kimco Realty Corporation (HC)",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "IONQ": {
       "name": "IonQ, Inc.",
@@ -3664,7 +4699,9 @@
       "name": "Textron Inc.",
       "tv_sector": "Electronic technology",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Aerospace OEM"
+      ]
     },
     "WPC": {
       "name": "W. P. Carey Inc. REIT",
@@ -3694,25 +4731,33 @@
       "name": "Deckers Outdoor Corporation",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Athletic Apparel"
+      ]
     },
     "H": {
       "name": "Hyatt Hotels Corporation",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotels & Lodging"
+      ]
     },
     "NIO": {
       "name": "NIO Inc.",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "China ADRs"
+      ]
     },
     "OWL": {
       "name": "Blue Owl Capital Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers"
+      ]
     },
     "GPC": {
       "name": "Genuine Parts Company",
@@ -3730,13 +4775,17 @@
       "name": "Plains All American Pipeline, L.P.",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Pipelines / Midstream"
+      ]
     },
     "WMG": {
       "name": "Warner Music Group Corp.",
       "tv_sector": "Commercial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Streaming / Media"
+      ]
     },
     "BBIO": {
       "name": "BridgeBio Pharma, Inc.",
@@ -3784,7 +4833,9 @@
       "name": "Mid-America Apartment Communities, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "NWS": {
       "name": "News Corporation",
@@ -3796,13 +4847,17 @@
       "name": "Westlake Corporation",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Commodity Chem"
+      ]
     },
     "REG": {
       "name": "Regency Centers Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "TRU": {
       "name": "TransUnion",
@@ -3814,25 +4869,33 @@
       "name": "Host Hotels & Resorts, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotel REITs"
+      ]
     },
     "TYL": {
       "name": "Tyler Technologies, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "MKC": {
       "name": "McCormick & Company, Incorporated",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "PNR": {
       "name": "Pentair plc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "PODD": {
       "name": "Insulet Corporation",
@@ -3856,7 +4919,9 @@
       "name": "Camden Property Trust",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "EVR": {
       "name": "Evercore Inc.",
@@ -3868,7 +4933,9 @@
       "name": "Graco Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial Auto"
+      ]
     },
     "CHKP": {
       "name": "Check Point Software Technologies Ltd.",
@@ -3915,7 +4982,9 @@
       "name": "Franklin Resources, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers"
+      ]
     },
     "COO": {
       "name": "The Cooper Companies, Inc.",
@@ -3933,7 +5002,9 @@
       "name": "RPM International Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "OHI": {
       "name": "Omega Healthcare Investors, Inc.",
@@ -3945,7 +5016,9 @@
       "name": "DT Midstream, Inc.",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Pipelines / Midstream"
+      ]
     },
     "ALGN": {
       "name": "Align Technology, Inc.",
@@ -3963,13 +5036,17 @@
       "name": "Akamai Technologies, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cloud / CDN"
+      ]
     },
     "TOL": {
       "name": "Toll Brothers, Inc.",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Homebuilders"
+      ]
     },
     "BBY": {
       "name": "Best Buy Co., Inc.",
@@ -4029,7 +5106,9 @@
       "name": "Ally Financial Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Finance"
+      ]
     },
     "PINS": {
       "name": "Pinterest, Inc.",
@@ -4079,7 +5158,9 @@
       "name": "Masco Corporation",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "HL": {
       "name": "Hecla Mining Company",
@@ -4121,13 +5202,17 @@
       "name": "Modine Manufacturing Company",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Suppliers"
+      ]
     },
     "ELS": {
       "name": "Equity Lifestyle Properties, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "COKE": {
       "name": "Coca-Cola Consolidated, Inc.",
@@ -4139,13 +5224,17 @@
       "name": "Aptiv PLC",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Suppliers"
+      ]
     },
     "CLX": {
       "name": "Clorox Company (The)",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Personal Care"
+      ]
     },
     "PNW": {
       "name": "Pinnacle West Capital Corporation",
@@ -4157,7 +5246,9 @@
       "name": "Domino's Pizza Inc",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "FIVE": {
       "name": "Five Below, Inc.",
@@ -4226,7 +5317,9 @@
       "name": "AGNC Investment Corp.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Mortgage REITs"
+      ]
     },
     "GEN": {
       "name": "Gen Digital Inc.",
@@ -4260,7 +5353,9 @@
       "name": "Equitable Holdings, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Life Insurance"
+      ]
     },
     "CCK": {
       "name": "Crown Holdings, Inc.",
@@ -4278,19 +5373,25 @@
       "name": "On Holding AG",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Athletic Apparel"
+      ]
     },
     "DKNG": {
       "name": "DraftKings Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Online Gambling"
+      ]
     },
     "GL": {
       "name": "Globe Life Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Life Insurance"
+      ]
     },
     "WBS": {
       "name": "Webster Financial Corporation",
@@ -4320,19 +5421,25 @@
       "name": "First Horizon Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "UDR": {
       "name": "UDR, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "HUBS": {
       "name": "HubSpot, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "ARMK": {
       "name": "Aramark",
@@ -4344,7 +5451,9 @@
       "name": "Advanced Drainage Systems, Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "EXEL": {
       "name": "Exelixis, Inc.",
@@ -4356,13 +5465,17 @@
       "name": "Hormel Foods Corporation",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "CHWY": {
       "name": "Chewy, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce"
+      ]
     },
     "ZBRA": {
       "name": "Zebra Technologies Corporation",
@@ -4398,7 +5511,9 @@
       "name": "Wynn Resorts, Limited",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Casinos"
+      ]
     },
     "GH": {
       "name": "Guardant Health, Inc.",
@@ -4416,7 +5531,9 @@
       "name": "Jack Henry & Associates, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "SFD": {
       "name": "Smithfield Foods, Inc.",
@@ -4428,7 +5545,9 @@
       "name": "Unity Software Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Video Games"
+      ]
     },
     "UHS": {
       "name": "Universal Health Services, Inc.",
@@ -4460,7 +5579,9 @@
       "name": "Invesco Ltd",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers"
+      ]
     },
     "SPXC": {
       "name": "SPX Technologies, Inc.",
@@ -4478,7 +5599,9 @@
       "name": "American Homes 4 Rent",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Residential REITs"
+      ]
     },
     "WTRG": {
       "name": "Essential Utilities, Inc.",
@@ -4496,19 +5619,25 @@
       "name": "American Financial Group, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "BWA": {
       "name": "BorgWarner Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Suppliers"
+      ]
     },
     "TXRH": {
       "name": "Texas Roadhouse, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "IT": {
       "name": "Gartner, Inc.",
@@ -4529,7 +5658,9 @@
       "name": "The Trade Desk, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "AdTech"
+      ]
     },
     "BMRN": {
       "name": "BioMarin Pharmaceutical Inc.",
@@ -4559,13 +5690,17 @@
       "name": "Dynatrace, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data / DevOps"
+      ]
     },
     "DINO": {
       "name": "HF Sinclair Corporation",
       "tv_sector": "Energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Refiners"
+      ]
     },
     "EHC": {
       "name": "Encompass Health Corporation",
@@ -4627,7 +5762,10 @@
       "name": "Bentley Systems, Incorporated",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS",
+        "Data / DevOps"
+      ]
     },
     "AES": {
       "name": "The AES Corporation",
@@ -4677,7 +5815,9 @@
       "name": "Bilibili Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "China ADRs"
+      ]
     },
     "TEM": {
       "name": "Tempus AI, Inc.",
@@ -4689,7 +5829,9 @@
       "name": "Wayfair Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce"
+      ]
     },
     "AM": {
       "name": "Antero Midstream Corporation",
@@ -4707,7 +5849,9 @@
       "name": "Flowserve Corporation",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial Auto"
+      ]
     },
     "OGE": {
       "name": "OGE Energy Corp",
@@ -4719,7 +5863,9 @@
       "name": "Knight-Swift Transportation Holdings Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Trucking / LTL"
+      ]
     },
     "VFS": {
       "name": "VinFast Auto Ltd.",
@@ -4731,7 +5877,9 @@
       "name": "The J.M. Smucker Company",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "GTLS": {
       "name": "Chart Industries, Inc.",
@@ -4770,13 +5918,17 @@
       "name": "MGM Resorts International",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Casinos"
+      ]
     },
     "SEIC": {
       "name": "SEI Investments Company",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Asset Managers"
+      ]
     },
     "RRC": {
       "name": "Range Resources Corporation",
@@ -4795,7 +5947,8 @@
       "tv_sector": "Consumer services",
       "industry": null,
       "themes": [
-        "Travel & Leisure"
+        "Travel & Leisure",
+        "Cruise Lines"
       ]
     },
     "SSB": {
@@ -4808,7 +5961,9 @@
       "name": "Ryan Specialty Holdings, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Insurance Brokers"
+      ]
     },
     "JEF": {
       "name": "Jefferies Financial Group Inc.",
@@ -4820,7 +5975,9 @@
       "name": "Federal Realty Investment Trust",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "GAP": {
       "name": "Gap, Inc. (The)",
@@ -4838,7 +5995,9 @@
       "name": "Popular, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "BLDR": {
       "name": "Builders FirstSource, Inc.",
@@ -4876,7 +6035,9 @@
       "name": "Agree Realty Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "AHR": {
       "name": "American Healthcare REIT, Inc.",
@@ -4894,7 +6055,9 @@
       "name": "Brixmor Property Group Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "TECH": {
       "name": "Bio-Techne Corp",
@@ -4906,13 +6069,17 @@
       "name": "Zions Bancorporation N.A.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "ESI": {
       "name": "Element Solutions Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "UMBF": {
       "name": "UMB Financial Corporation",
@@ -4954,7 +6121,9 @@
       "name": "Celsius Holdings, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Beverages"
+      ]
     },
     "SARO": {
       "name": "StandardAero, Inc.",
@@ -4966,7 +6135,9 @@
       "name": "CubeSmart",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Self-Storage REITs"
+      ]
     },
     "TTC": {
       "name": "Toro Company (The)",
@@ -4984,7 +6155,9 @@
       "name": "Cullen/Frost Bankers, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "JOBY": {
       "name": "Joby Aviation, Inc.",
@@ -5022,7 +6195,9 @@
       "name": "Lumen Technologies, Inc.",
       "tv_sector": "Communications",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Telecom"
+      ]
     },
     "PRIM": {
       "name": "Primoris Services Corporation",
@@ -5040,7 +6215,9 @@
       "name": "Molson Coors Beverage Company",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Beverages"
+      ]
     },
     "APLD": {
       "name": "Applied Digital Corporation",
@@ -5064,19 +6241,25 @@
       "name": "Oshkosh Corporation (Holding Company)",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Heavy Machinery"
+      ]
     },
     "AOS": {
       "name": "A.O. Smith Corporation",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "BXP": {
       "name": "BXP, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Office REITs"
+      ]
     },
     "SWKS": {
       "name": "Skyworks Solutions, Inc.",
@@ -5112,7 +6295,9 @@
       "name": "Western Alliance Bancorporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "COLB": {
       "name": "Columbia Banking System, Inc.",
@@ -5124,13 +6309,18 @@
       "name": "Albertsons Companies, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Grocery"
+      ]
     },
     "BROS": {
       "name": "Dutch Bros Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - Casual",
+        "Coffee"
+      ]
     },
     "NFG": {
       "name": "National Fuel Gas Company",
@@ -5160,7 +6350,9 @@
       "name": "NNN REIT, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "POWL": {
       "name": "Powell Industries, Inc.",
@@ -5172,13 +6364,17 @@
       "name": "First Industrial Realty Trust, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial REITs"
+      ]
     },
     "AGCO": {
       "name": "AGCO Corporation",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Heavy Machinery"
+      ]
     },
     "WULF": {
       "name": "TeraWulf Inc.",
@@ -5192,7 +6388,9 @@
       "name": "Eastman Chemical Company",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Commodity Chem"
+      ]
     },
     "POOL": {
       "name": "Pool Corporation",
@@ -5228,13 +6426,17 @@
       "name": "Rexford Industrial Realty, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial REITs"
+      ]
     },
     "ALV": {
       "name": "Autoliv, Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Suppliers"
+      ]
     },
     "LINE": {
       "name": "Lineage, Inc.",
@@ -5254,7 +6456,9 @@
       "name": "SiriusXM Holdings Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Streaming / Media"
+      ]
     },
     "HALO": {
       "name": "Halozyme Therapeutics, Inc.",
@@ -5290,7 +6494,9 @@
       "name": "American Airlines Group, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Airlines"
+      ]
     },
     "MTCH": {
       "name": "Match Group, Inc.",
@@ -5390,7 +6596,9 @@
       "name": "V.F. Corporation",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Athletic Apparel"
+      ]
     },
     "FIGR": {
       "name": "Figure Technology Solutions, Inc.",
@@ -5408,7 +6616,9 @@
       "name": "Kirby Corporation",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Marine Shipping"
+      ]
     },
     "KNTK": {
       "name": "Kinetik Holdings Inc.",
@@ -5438,7 +6648,9 @@
       "name": "Mosaic Company (The)",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Ag Inputs"
+      ]
     },
     "QRVO": {
       "name": "Qorvo, Inc.",
@@ -5474,7 +6686,9 @@
       "name": "Stag Industrial, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial REITs"
+      ]
     },
     "CHRD": {
       "name": "Chord Energy Corporation",
@@ -5486,7 +6700,9 @@
       "name": "Vipshop Holdings Limited",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "China ADRs"
+      ]
     },
     "CDP": {
       "name": "COPT Defense Properties",
@@ -5526,7 +6742,9 @@
       "name": "Celanese Corporation",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "TKR": {
       "name": "Timken Company (The)",
@@ -5544,7 +6762,9 @@
       "name": "Commercial Metals Company",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Steel"
+      ]
     },
     "PRMB": {
       "name": "Primo Brands Corporation",
@@ -5556,7 +6776,9 @@
       "name": "Weatherford International plc",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Oilfield Services"
+      ]
     },
     "CWAN": {
       "name": "Clearwater Analytics Holdings, Inc.",
@@ -5574,7 +6796,9 @@
       "name": "Ingredion Incorporated",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "MTDR": {
       "name": "Matador Resources Company",
@@ -5586,7 +6810,9 @@
       "name": "Sprouts Farmers Market, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Grocery"
+      ]
     },
     "HQY": {
       "name": "HealthEquity, Inc.",
@@ -5616,13 +6842,17 @@
       "name": "Prosperity Bancshares, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Regional Banks"
+      ]
     },
     "TRNO": {
       "name": "Terreno Realty Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Industrial REITs"
+      ]
     },
     "FLR": {
       "name": "Fluor Corporation",
@@ -5634,7 +6864,9 @@
       "name": "Birkenstock Holding plc",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Athletic Apparel"
+      ]
     },
     "ORA": {
       "name": "Ormat Technologies, Inc.",
@@ -5658,19 +6890,25 @@
       "name": "NOV Inc.",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Oilfield Services"
+      ]
     },
     "EAT": {
       "name": "Brinker International, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - Casual"
+      ]
     },
     "LNC": {
       "name": "Lincoln National Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Life Insurance"
+      ]
     },
     "YOU": {
       "name": "Clear Secure, Inc.",
@@ -5682,13 +6920,17 @@
       "name": "Voya Financial, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Life Insurance"
+      ]
     },
     "RIG": {
       "name": "Transocean Ltd (Switzerland)",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Oilfield Services"
+      ]
     },
     "EPRT": {
       "name": "Essential Properties Realty Trust, Inc.",
@@ -5712,13 +6954,17 @@
       "name": "OneMain Holdings, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Finance"
+      ]
     },
     "CAG": {
       "name": "ConAgra Brands, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "PTGX": {
       "name": "Protagonist Therapeutics, Inc.",
@@ -5748,13 +6994,17 @@
       "name": "Starwood Property Trust Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Mortgage REITs"
+      ]
     },
     "TEX": {
       "name": "Terex Corporation",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Heavy Machinery"
+      ]
     },
     "SAIL": {
       "name": "SailPoint, Inc.",
@@ -5786,7 +7036,9 @@
       "name": "Wyndham Hotels & Resorts, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotels & Lodging"
+      ]
     },
     "ECG": {
       "name": "Everus Construction Group, Inc.",
@@ -5828,7 +7080,9 @@
       "name": "Boyd Gaming Corporation",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Casinos"
+      ]
     },
     "RYN": {
       "name": "Rayonier Inc. REIT",
@@ -5852,7 +7106,9 @@
       "name": "Ryman Hospitality Properties, Inc. (REIT)",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotel REITs"
+      ]
     },
     "CHDN": {
       "name": "Churchill Downs, Incorporated",
@@ -5864,7 +7120,9 @@
       "name": "GXO Logistics, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Logistics & Parcels"
+      ]
     },
     "MHK": {
       "name": "Mohawk Industries, Inc.",
@@ -5876,7 +7134,9 @@
       "name": "SSR Mining Inc.",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Gold Miners"
+      ]
     },
     "AROC": {
       "name": "Archrock, Inc.",
@@ -5926,7 +7186,9 @@
       "name": "Hexcel Corporation",
       "tv_sector": "Electronic technology",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Aerospace OEM"
+      ]
     },
     "PIPR": {
       "name": "Piper Sandler Companies",
@@ -5974,7 +7236,9 @@
       "name": "Eagle Materials Inc",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cement & Aggregates"
+      ]
     },
     "ESAB": {
       "name": "ESAB Corporation",
@@ -6010,7 +7274,9 @@
       "name": "The Campbell's Company",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "UWMC": {
       "name": "UWM Holdings Corporation",
@@ -6052,7 +7318,9 @@
       "name": "Lear Corporation",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Suppliers"
+      ]
     },
     "CORZ": {
       "name": "Core Scientific, Inc.",
@@ -6130,7 +7398,9 @@
       "name": "Red Rock Resorts, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Casinos"
+      ]
     },
     "CAI": {
       "name": "Caris Life Sciences, Inc.",
@@ -6184,7 +7454,9 @@
       "name": "Urban Outfitters, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Luxury / Fashion"
+      ]
     },
     "LYFT": {
       "name": "Lyft, Inc.",
@@ -6232,7 +7504,9 @@
       "name": "CarMax Inc",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Dealers"
+      ]
     },
     "PLNT": {
       "name": "Planet Fitness, Inc.",
@@ -6262,7 +7536,9 @@
       "name": "National Storage Affiliates Trust",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Self-Storage REITs"
+      ]
     },
     "SRRK": {
       "name": "Scholar Rock Holding Corporation",
@@ -6298,7 +7574,10 @@
       "name": "Global-E Online Ltd.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Video Games",
+        "E-Commerce"
+      ]
     },
     "NJR": {
       "name": "NewJersey Resources Corporation",
@@ -6316,7 +7595,9 @@
       "name": "Rithm Capital Corp.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Mortgage REITs"
+      ]
     },
     "XENE": {
       "name": "Xenon Pharmaceuticals Inc.",
@@ -6370,7 +7651,9 @@
       "name": "Etsy, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce"
+      ]
     },
     "TMHC": {
       "name": "Taylor Morrison Home Corporation",
@@ -6388,13 +7671,17 @@
       "name": "UiPath, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data / DevOps"
+      ]
     },
     "CZR": {
       "name": "Caesars Entertainment, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Casinos"
+      ]
     },
     "HIMS": {
       "name": "Hims & Hers Health, Inc.",
@@ -6424,13 +7711,17 @@
       "name": "Cleveland-Cliffs Inc.",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Steel"
+      ]
     },
     "MAC": {
       "name": "Macerich Company (The)",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "MUR": {
       "name": "Murphy Oil Corporation",
@@ -6478,7 +7769,9 @@
       "name": "Sonoco Products Company",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaging"
+      ]
     },
     "CRSP": {
       "name": "CRISPR Therapeutics AG",
@@ -6514,7 +7807,9 @@
       "name": "Paylocity Holding Corporation",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Enterprise SaaS"
+      ]
     },
     "MGY": {
       "name": "Magnolia Oil & Gas Corporation",
@@ -6538,13 +7833,17 @@
       "name": "RLI Corp.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "P&C Insurance"
+      ]
     },
     "CHH": {
       "name": "Choice Hotels International, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotels & Lodging"
+      ]
     },
     "ADT": {
       "name": "ADT Inc.",
@@ -6562,7 +7861,9 @@
       "name": "Vornado Realty Trust",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Office REITs"
+      ]
     },
     "EQPT": {
       "name": "EquipmentShare.com Inc",
@@ -6586,7 +7887,9 @@
       "name": "Rush Street Interactive, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Online Gambling"
+      ]
     },
     "MSM": {
       "name": "MSC Industrial Direct Company, Inc.",
@@ -6598,7 +7901,9 @@
       "name": "Wingstop Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "APLS": {
       "name": "Apellis Pharmaceuticals, Inc.",
@@ -6658,7 +7963,9 @@
       "name": "Crocs, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Athletic Apparel"
+      ]
     },
     "MRCY": {
       "name": "Mercury Systems Inc",
@@ -6760,7 +8067,9 @@
       "name": "Elastic N.V.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data / DevOps"
+      ]
     },
     "FOUR": {
       "name": "Shift4 Payments, Inc.",
@@ -6784,7 +8093,9 @@
       "name": "Alaska Air Group, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Airlines"
+      ]
     },
     "ZGN": {
       "name": "Ermenegildo Zegna N.V.",
@@ -6802,7 +8113,9 @@
       "name": "Eastern Bankshares, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "KNF": {
       "name": "Knife Riv Holding Co.",
@@ -6820,7 +8133,9 @@
       "name": "Schneider National, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Trucking / LTL"
+      ]
     },
     "PFSI": {
       "name": "PennyMac Financial Services, Inc.",
@@ -6844,13 +8159,17 @@
       "name": "Post Holdings, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "PBF": {
       "name": "PBF Energy Inc.",
       "tv_sector": "Energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Refiners"
+      ]
     },
     "MRP": {
       "name": "Millrose Properties, Inc.",
@@ -6942,7 +8261,9 @@
       "name": "Fortune Brands Innovations, Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "BFAM": {
       "name": "Bright Horizons Family Solutions Inc.",
@@ -6966,7 +8287,9 @@
       "name": "Plains GP Holdings, L.P.",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Pipelines / Midstream"
+      ]
     },
     "ASB": {
       "name": "Associated Banc-Corp",
@@ -6990,7 +8313,9 @@
       "name": "Reynolds Consumer Products Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Personal Care"
+      ]
     },
     "SHC": {
       "name": "Sotera Health Company",
@@ -7033,7 +8358,8 @@
       "tv_sector": "Technology services",
       "industry": null,
       "themes": [
-        "Cybersecurity"
+        "Cybersecurity",
+        "Data / DevOps"
       ]
     },
     "ACHR": {
@@ -7138,7 +8464,9 @@
       "name": "Meritage Homes Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Homebuilders"
+      ]
     },
     "ITRI": {
       "name": "Itron, Inc.",
@@ -7156,7 +8484,9 @@
       "name": "Shake Shack, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "EPR": {
       "name": "EPR Properties",
@@ -7174,7 +8504,9 @@
       "name": "Silgan Holdings Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaging"
+      ]
     },
     "WHD": {
       "name": "Cactus, Inc. Class A Common Stock",
@@ -7198,7 +8530,9 @@
       "name": "Trex Company, Inc.",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Building Products"
+      ]
     },
     "SLM": {
       "name": "SLM Corporation",
@@ -7210,7 +8544,9 @@
       "name": "Zeta Global Holdings Corp.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "AdTech"
+      ]
     },
     "ENPH": {
       "name": "Enphase Energy, Inc.",
@@ -7314,7 +8650,9 @@
       "name": "Abercrombie & Fitch Company",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Luxury / Fashion"
+      ]
     },
     "TFSL": {
       "name": "TFS Financial Corporation",
@@ -7370,7 +8708,10 @@
       "name": "StoneCo Ltd.",
       "tv_sector": "Commercial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "BNPL / Consumer Lending",
+        "LATAM"
+      ]
     },
     "THO": {
       "name": "Thor Industries, Inc.",
@@ -7452,7 +8793,9 @@
       "name": "Tri Pointe Homes, Inc.",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Homebuilders"
+      ]
     },
     "KTB": {
       "name": "Kontoor Brands, Inc.",
@@ -7464,7 +8807,9 @@
       "name": "Remitly Global, Inc.",
       "tv_sector": "Commercial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "INDV": {
       "name": "Indivior Pharmaceuticals, Inc.",
@@ -7518,7 +8863,9 @@
       "name": "Dana Incorporated",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Suppliers"
+      ]
     },
     "WIX": {
       "name": "Wix.com Ltd.",
@@ -7530,13 +8877,17 @@
       "name": "Cousins Properties Incorporated",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Office REITs"
+      ]
     },
     "HGV": {
       "name": "Hilton Grand Vacations Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotels & Lodging"
+      ]
     },
     "BNL": {
       "name": "Broadstone Net Lease, Inc.",
@@ -7554,7 +8905,9 @@
       "name": "Academy Sports and Outdoors, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Sporting Goods"
+      ]
     },
     "MRX": {
       "name": "Marex Group plc",
@@ -7628,7 +8981,9 @@
       "name": "GitLab Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data / DevOps"
+      ]
     },
     "INTR": {
       "name": "Inter & Co. Inc.",
@@ -7658,7 +9013,9 @@
       "name": "Scotts Miracle-Gro Company (The)",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Ag Inputs"
+      ]
     },
     "ACLS": {
       "name": "Axcelis Technologies, Inc.",
@@ -7684,7 +9041,9 @@
       "name": "Garrett Motion Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Suppliers"
+      ]
     },
     "EWTX": {
       "name": "Edgewise Therapeutics, Inc.",
@@ -7726,7 +9085,9 @@
       "name": "Oceaneering International, Inc.",
       "tv_sector": "Producer manufacturing",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Oilfield Services"
+      ]
     },
     "FBP": {
       "name": "First BanCorp. New",
@@ -7750,7 +9111,9 @@
       "name": "Fastly, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cloud / CDN"
+      ]
     },
     "GBDC": {
       "name": "Golub Capital BDC, Inc.",
@@ -7792,7 +9155,9 @@
       "name": "Kilroy Realty Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Office REITs"
+      ]
     },
     "BKU": {
       "name": "BankUnited, Inc.",
@@ -7878,7 +9243,9 @@
       "name": "Advance Auto Parts Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Parts Retail"
+      ]
     },
     "LIF": {
       "name": "Life360, Inc.",
@@ -7914,7 +9281,9 @@
       "name": "Blackstone Mortgage Trust, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Mortgage REITs"
+      ]
     },
     "EXPO": {
       "name": "Exponent, Inc.",
@@ -7950,7 +9319,9 @@
       "name": "H. B. Fuller Company",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Chemicals"
+      ]
     },
     "KFY": {
       "name": "Korn Ferry",
@@ -7974,7 +9345,10 @@
       "name": "PagSeguro Digital Ltd.",
       "tv_sector": "Commercial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "BNPL / Consumer Lending",
+        "LATAM"
+      ]
     },
     "PATK": {
       "name": "Patrick Industries, Inc.",
@@ -8016,7 +9390,9 @@
       "name": "Upstart Holdings, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "BNPL / Consumer Lending"
+      ]
     },
     "HNGE": {
       "name": "Hinge Health, Inc.",
@@ -8064,13 +9440,17 @@
       "name": "American Eagle Outfitters, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Luxury / Fashion"
+      ]
     },
     "KBH": {
       "name": "KB Home",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Homebuilders"
+      ]
     },
     "VSH": {
       "name": "Vishay Intertechnology, Inc.",
@@ -8118,7 +9498,9 @@
       "name": "Olin Corporation",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Commodity Chem"
+      ]
     },
     "SBCF": {
       "name": "Seacoast Banking Corporation of Florida",
@@ -8208,7 +9590,9 @@
       "name": "The Cheesecake Factory Incorporated",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - Casual"
+      ]
     },
     "GBTG": {
       "name": "Global Business Travel Group, Inc.",
@@ -8256,7 +9640,9 @@
       "name": "Columbia Sportswear Company",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Athletic Apparel"
+      ]
     },
     "SYNA": {
       "name": "Synaptics Incorporated",
@@ -8274,7 +9660,9 @@
       "name": "Apple Hospitality REIT, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotel REITs"
+      ]
     },
     "DBD": {
       "name": "Diebold Nixdorf Incorporated",
@@ -8408,7 +9796,9 @@
       "name": "Western Union Company (The)",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "BKV": {
       "name": "BKV Corporation",
@@ -8444,7 +9834,9 @@
       "name": "The Vita Coco Company, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Beverages"
+      ]
     },
     "RUN": {
       "name": "Sunrun Inc.",
@@ -8470,7 +9862,9 @@
       "name": "Star Bulk Carriers Corp.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Marine Shipping"
+      ]
     },
     "SHOO": {
       "name": "Steven Madden, Ltd.",
@@ -8512,13 +9906,17 @@
       "name": "Acadia Realty Trust",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Retail REITs"
+      ]
     },
     "DX": {
       "name": "Dynex Capital, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Mortgage REITs"
+      ]
     },
     "KYIV": {
       "name": "Kyivstar Group Ltd.",
@@ -8596,7 +9994,9 @@
       "name": "Lucid Group, Inc.",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto OEMs"
+      ]
     },
     "IRON": {
       "name": "Disc Medicine, Inc.",
@@ -8632,7 +10032,9 @@
       "name": "Under Armour, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Athletic Apparel"
+      ]
     },
     "BBT": {
       "name": "Beacon Financial Corporation",
@@ -8662,7 +10064,9 @@
       "name": "The Chefs' Warehouse, Inc.",
       "tv_sector": "Distribution services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - Casual"
+      ]
     },
     "ELVN": {
       "name": "Enliven Therapeutics, Inc.",
@@ -8758,7 +10162,9 @@
       "name": "Highwoods Properties, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Office REITs"
+      ]
     },
     "AMPX": {
       "name": "Amprius Technologies, Inc.",
@@ -8842,7 +10248,9 @@
       "name": "Delek US Holdings, Inc.",
       "tv_sector": "Energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Refiners"
+      ]
     },
     "RH": {
       "name": "RH",
@@ -8974,13 +10382,17 @@
       "name": "Huntsman Corporation",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Commodity Chem"
+      ]
     },
     "CPRI": {
       "name": "Capri Holdings Limited",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Luxury / Fashion"
+      ]
     },
     "GRDN": {
       "name": "Guardian Pharmacy Services, Inc.",
@@ -9034,7 +10446,9 @@
       "name": "Park Hotels & Resorts Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotel REITs"
+      ]
     },
     "AEHR": {
       "name": "Aehr Test Systems",
@@ -9180,7 +10594,9 @@
       "name": "FMC Corporation",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Ag Inputs"
+      ]
     },
     "TENB": {
       "name": "Tenable Holdings, Inc.",
@@ -9206,7 +10622,9 @@
       "name": "PENN Entertainment, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Casinos"
+      ]
     },
     "AUPH": {
       "name": "Aurinia Pharmaceuticals Inc",
@@ -9218,7 +10636,9 @@
       "name": "Diamondrock Hospitality Company",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotel REITs"
+      ]
     },
     "CECO": {
       "name": "CECO Environmental Corp.",
@@ -9262,7 +10682,9 @@
       "name": "JetBlue Airways Corporation",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Airlines"
+      ]
     },
     "FLOC": {
       "name": "Flowco Holdings Inc.",
@@ -9358,7 +10780,9 @@
       "name": "Sigma Lithium Corporation",
       "tv_sector": "Non-energy minerals",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Lithium"
+      ]
     },
     "SION": {
       "name": "Sionna Therapeutics, Inc.",
@@ -9406,7 +10830,9 @@
       "name": "Six Flags Entertainment Corporation",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Theme Parks"
+      ]
     },
     "XIFR": {
       "name": "XPLR Infrastructure, LP",
@@ -9502,7 +10928,9 @@
       "name": "Magnite, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "AdTech"
+      ]
     },
     "FCF": {
       "name": "First",
@@ -9589,7 +11017,9 @@
       "name": "Werner Enterprises, Inc.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Trucking / LTL"
+      ]
     },
     "MD": {
       "name": "Pediatrix Medical Group, Inc.",
@@ -9601,7 +11031,9 @@
       "name": "Sunstone Hotel Investors, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Hotel REITs"
+      ]
     },
     "XPRO": {
       "name": "Expro Group Holdings N.V.",
@@ -9673,7 +11105,9 @@
       "name": "Flowers Foods, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaged Food"
+      ]
     },
     "VCEL": {
       "name": "Vericel Corporation",
@@ -9703,7 +11137,9 @@
       "name": "Revolve Group, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "E-Commerce"
+      ]
     },
     "ALKT": {
       "name": "Alkami Technology, Inc.",
@@ -9739,13 +11175,17 @@
       "name": "Payoneer Global Inc.",
       "tv_sector": "Commercial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "PUMP": {
       "name": "ProPetro Holding Corp.",
       "tv_sector": "Industrial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Oilfield Services"
+      ]
     },
     "VOYG": {
       "name": "Voyager Technologies, Inc.",
@@ -9841,7 +11281,9 @@
       "name": "DoubleVerify Holdings, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "AdTech"
+      ]
     },
     "GCT": {
       "name": "GigaCloud Technology Inc",
@@ -9943,7 +11385,9 @@
       "name": "Douglas Emmett, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Office REITs"
+      ]
     },
     "AESI": {
       "name": "Atlas Energy Solutions Inc.",
@@ -9973,7 +11417,9 @@
       "name": "Allegiant Travel Company",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Airlines"
+      ]
     },
     "CTOS": {
       "name": "Custom Truck One Source, Inc.",
@@ -9991,7 +11437,9 @@
       "name": "O-I Glass, Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Packaging"
+      ]
     },
     "ASGN": {
       "name": "ASGN Incorporated",
@@ -10095,7 +11543,9 @@
       "name": "Flywire Corporation - Voting",
       "tv_sector": "Commercial services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Payments"
+      ]
     },
     "PRGO": {
       "name": "Perrigo Company plc",
@@ -10215,7 +11665,9 @@
       "name": "Arbor Realty Trust",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Mortgage REITs"
+      ]
     },
     "XHR": {
       "name": "Xenia Hotels & Resorts, Inc.",
@@ -10245,7 +11697,9 @@
       "name": "Tronox Holdings plc",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Commodity Chem"
+      ]
     },
     "UPWK": {
       "name": "Upwork Inc.",
@@ -10353,7 +11807,9 @@
       "name": "FuboTV Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Streaming / Media"
+      ]
     },
     "DOLE": {
       "name": "Dole plc",
@@ -10449,7 +11905,9 @@
       "name": "iQIYI, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "China ADRs"
+      ]
     },
     "AMRC": {
       "name": "Ameresco, Inc.",
@@ -10467,7 +11925,9 @@
       "name": "C3.ai, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data / DevOps"
+      ]
     },
     "CXM": {
       "name": "Sprinklr, Inc.",
@@ -10497,7 +11957,9 @@
       "name": "Energizer Holdings, Inc.",
       "tv_sector": "Consumer non-durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Personal Care"
+      ]
     },
     "CRI": {
       "name": "Carter's, Inc.",
@@ -10509,7 +11971,9 @@
       "name": "TripAdvisor, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Online Travel"
+      ]
     },
     "LADR": {
       "name": "Ladder Capital Corp",
@@ -10521,13 +11985,18 @@
       "name": "Wendy's Company (The)",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "PLTK": {
       "name": "Playtika Holding Corp.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Online Gambling",
+        "Video Games"
+      ]
     },
     "UMH": {
       "name": "UMH Properties, Inc.",
@@ -10695,7 +12164,9 @@
       "name": "Papa John's International, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "SHLS": {
       "name": "Shoals Technologies Group, Inc.",
@@ -10771,7 +12242,9 @@
       "name": "Two Harbors Investment Corp",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Mortgage REITs"
+      ]
     },
     "ABTC": {
       "name": "American Bitcoin Corp.",
@@ -10825,7 +12298,9 @@
       "name": "Gold.com, Inc.",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Gold Miners"
+      ]
     },
     "CIM": {
       "name": "Chimera Investment Corporation",
@@ -10855,7 +12330,9 @@
       "name": "Marten Transport, Ltd.",
       "tv_sector": "Transportation",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Trucking / LTL"
+      ]
     },
     "DEC": {
       "name": "Diversified Energy Company",
@@ -11477,7 +12954,9 @@
       "name": "Tilray Brands, Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cannabis"
+      ]
     },
     "LPTH": {
       "name": "LightPath Technologies, Inc.",
@@ -11495,7 +12974,9 @@
       "name": "Navient Corporation",
       "tv_sector": "Finance",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Specialty Finance"
+      ]
     },
     "KURA": {
       "name": "Kura Oncology, Inc.",
@@ -11747,7 +13228,9 @@
       "name": "Grocery Outlet Holding Corp.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Grocery"
+      ]
     },
     "QNST": {
       "name": "QuinStreet, Inc.",
@@ -11933,7 +13416,9 @@
       "name": "EVgo Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "EV Charging"
+      ]
     },
     "LAES": {
       "name": "SEALSQ Corp",
@@ -11945,7 +13430,9 @@
       "name": "Beazer Homes USA, Inc.",
       "tv_sector": "Consumer durables",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Homebuilders"
+      ]
     },
     "TRTX": {
       "name": "TPG RE Finance Trust, Inc.",
@@ -12085,7 +13572,10 @@
       "name": "Krispy Kreme, Inc.",
       "tv_sector": "Distribution services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR",
+        "Coffee"
+      ]
     },
     "EGY": {
       "name": "VAALCO Energy, Inc.",
@@ -12181,7 +13671,9 @@
       "name": "Bloomin' Brands, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - Casual"
+      ]
     },
     "EVER": {
       "name": "EverQuote, Inc.",
@@ -12277,7 +13769,9 @@
       "name": "PagerDuty, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Data / DevOps"
+      ]
     },
     "KOPN": {
       "name": "Kopin Corporation",
@@ -12415,7 +13909,9 @@
       "name": "Monro, Inc.",
       "tv_sector": "Retail trade",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Auto Parts Retail"
+      ]
     },
     "SFIX": {
       "name": "Stitch Fix, Inc.",
@@ -12493,7 +13989,9 @@
       "name": "Dave & Buster's Entertainment, Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "IPSC": {
       "name": "Century Therapeutics, Inc.",
@@ -12511,7 +14009,9 @@
       "name": "PubMatic, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "AdTech"
+      ]
     },
     "EBS": {
       "name": "Emergent BioSolutions Inc.",
@@ -12691,7 +14191,9 @@
       "name": "Digital Turbine, Inc.",
       "tv_sector": "Technology services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "AdTech"
+      ]
     },
     "IRD": {
       "name": "Opus Genetics, Inc.",
@@ -12727,7 +14229,9 @@
       "name": "SNDL Inc.",
       "tv_sector": "Process industries",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Cannabis"
+      ]
     },
     "BLND": {
       "name": "Blend Labs, Inc.",
@@ -13489,7 +14993,9 @@
       "name": "Jack In The Box Inc.",
       "tv_sector": "Consumer services",
       "industry": null,
-      "themes": []
+      "themes": [
+        "Restaurants - QSR"
+      ]
     },
     "ALXO": {
       "name": "ALX Oncology Holdings Inc.",

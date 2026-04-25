@@ -1,6 +1,6 @@
 {
-  "generated_at": "2026-04-25T17:15:29+00:00",
-  "unassigned_count": 1770,
+  "generated_at": "2026-04-25T17:51:44+00:00",
+  "unassigned_count": 1348,
   "healthcare_skipped": 470,
   "universe_size": 2400,
   "by_suggestion": {
@@ -288,12 +288,6 @@
         "industry": ""
       },
       {
-        "ticker": "TRGP",
-        "name": "Targa Resources, Inc.",
-        "tv_sector": "Utilities",
-        "industry": ""
-      },
-      {
         "ticker": "TXNM",
         "name": "TXNM Energy, Inc.",
         "tv_sector": "Utilities",
@@ -350,12 +344,6 @@
         "industry": ""
       },
       {
-        "ticker": "ADBE",
-        "name": "Adobe Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "ADEA",
         "name": "Adeia Inc.",
         "tv_sector": "Technology services",
@@ -374,12 +362,6 @@
         "industry": ""
       },
       {
-        "ticker": "AI",
-        "name": "C3.ai, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "AIOT",
         "name": "PowerFleet, Inc.",
         "tv_sector": "Technology services",
@@ -394,12 +376,6 @@
       {
         "ticker": "AIXI",
         "name": "XIAO-I Corporation",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "AKAM",
-        "name": "Akamai Technologies, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -442,12 +418,6 @@
       {
         "ticker": "APPN",
         "name": "Appian Corporation",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "APPS",
-        "name": "Digital Turbine, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -496,12 +466,6 @@
       {
         "ticker": "BBAI",
         "name": "BigBear.ai, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "BILI",
-        "name": "Bilibili Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -568,12 +532,6 @@
       {
         "ticker": "BRZE",
         "name": "Braze, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "BSY",
-        "name": "Bentley Systems, Incorporated",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -698,12 +656,6 @@
         "industry": ""
       },
       {
-        "ticker": "CRM",
-        "name": "Salesforce, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "CRNC",
         "name": "Cerence Inc.",
         "tv_sector": "Technology services",
@@ -776,12 +728,6 @@
         "industry": ""
       },
       {
-        "ticker": "DDOG",
-        "name": "Datadog, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "DLB",
         "name": "Dolby Laboratories",
         "tv_sector": "Technology services",
@@ -824,12 +770,6 @@
         "industry": ""
       },
       {
-        "ticker": "DT",
-        "name": "Dynatrace, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "DUOL",
         "name": "Duolingo, Inc.",
         "tv_sector": "Technology services",
@@ -842,20 +782,8 @@
         "industry": ""
       },
       {
-        "ticker": "DV",
-        "name": "DoubleVerify Holdings, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "DXC",
         "name": "DXC Technology Company",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "EA",
-        "name": "Electronic Arts Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -880,12 +808,6 @@
       {
         "ticker": "EQPT",
         "name": "EquipmentShare.com Inc",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "ESTC",
-        "name": "Elastic N.V.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -926,12 +848,6 @@
         "industry": ""
       },
       {
-        "ticker": "FIS",
-        "name": "Fidelity National Information Services, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "FIVN",
         "name": "Five9, Inc.",
         "tv_sector": "Technology services",
@@ -946,18 +862,6 @@
       {
         "ticker": "FRSH",
         "name": "Freshworks Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "FSLY",
-        "name": "Fastly, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "FUBO",
-        "name": "FuboTV Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1016,12 +920,6 @@
         "industry": ""
       },
       {
-        "ticker": "GTLB",
-        "name": "GitLab Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "GTM",
         "name": "ZoomInfo Technologies Inc.",
         "tv_sector": "Technology services",
@@ -1076,12 +974,6 @@
         "industry": ""
       },
       {
-        "ticker": "HUBS",
-        "name": "HubSpot, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "IAC",
         "name": "IAC Inc.",
         "tv_sector": "Technology services",
@@ -1112,12 +1004,6 @@
         "industry": ""
       },
       {
-        "ticker": "INTU",
-        "name": "Intuit Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "IOT",
         "name": "Samsara Inc.",
         "tv_sector": "Technology services",
@@ -1126,12 +1012,6 @@
       {
         "ticker": "IOTR",
         "name": "iOThree Limited",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "IQ",
-        "name": "iQIYI, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1150,12 +1030,6 @@
       {
         "ticker": "J",
         "name": "Jacobs Solutions Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "JKHY",
-        "name": "Jack Henry & Associates, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1232,12 +1106,6 @@
         "industry": ""
       },
       {
-        "ticker": "LUMN",
-        "name": "Lumen Technologies, Inc.",
-        "tv_sector": "Communications",
-        "industry": ""
-      },
-      {
         "ticker": "LZ",
         "name": "LegalZoom.com, Inc.",
         "tv_sector": "Technology services",
@@ -1264,18 +1132,6 @@
       {
         "ticker": "MBLY",
         "name": "Mobileye Global Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "MDB",
-        "name": "MongoDB, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "MGNI",
-        "name": "Magnite, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1364,12 +1220,6 @@
         "industry": ""
       },
       {
-        "ticker": "NFLX",
-        "name": "Netflix, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "NIQ",
         "name": "NIQ Global Intelligence plc",
         "tv_sector": "Technology services",
@@ -1382,12 +1232,6 @@
         "industry": ""
       },
       {
-        "ticker": "NOW",
-        "name": "ServiceNow, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "NRDS",
         "name": "NerdWallet, Inc.",
         "tv_sector": "Technology services",
@@ -1396,12 +1240,6 @@
       {
         "ticker": "NTCT",
         "name": "NetScout Systems, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "NTES",
-        "name": "NetEase, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1472,20 +1310,8 @@
         "industry": ""
       },
       {
-        "ticker": "ORCL",
-        "name": "Oracle Corporation",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "OSPN",
         "name": "OneSpan Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "PATH",
-        "name": "UiPath, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1514,18 +1340,6 @@
         "industry": ""
       },
       {
-        "ticker": "PCTY",
-        "name": "Paylocity Holding Corporation",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "PD",
-        "name": "PagerDuty, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "PEGA",
         "name": "Pegasystems Inc.",
         "tv_sector": "Technology services",
@@ -1550,12 +1364,6 @@
         "industry": ""
       },
       {
-        "ticker": "PLTK",
-        "name": "Playtika Holding Corp.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "PRGS",
         "name": "Progress Software Corporation",
         "tv_sector": "Technology services",
@@ -1570,12 +1378,6 @@
       {
         "ticker": "PTC",
         "name": "PTC Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "PUBM",
-        "name": "PubMatic, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1610,12 +1412,6 @@
         "industry": ""
       },
       {
-        "ticker": "RBLX",
-        "name": "Roblox Corporation",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "RBRK",
         "name": "Rubrik, Inc.",
         "tv_sector": "Technology services",
@@ -1636,12 +1432,6 @@
       {
         "ticker": "RNG",
         "name": "RingCentral, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "ROKU",
-        "name": "Roku, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1760,12 +1550,6 @@
         "industry": ""
       },
       {
-        "ticker": "SNOW",
-        "name": "Snowflake Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "SNPS",
         "name": "Synopsys, Inc.",
         "tv_sector": "Technology services",
@@ -1780,12 +1564,6 @@
       {
         "ticker": "SPIR",
         "name": "Spire Global, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "SPOT",
-        "name": "Spotify Technology S.A.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1832,12 +1610,6 @@
         "industry": ""
       },
       {
-        "ticker": "T",
-        "name": "AT&T Inc.",
-        "tv_sector": "Communications",
-        "industry": ""
-      },
-      {
         "ticker": "TBLA",
         "name": "Taboola.com Ltd.",
         "tv_sector": "Technology services",
@@ -1853,12 +1625,6 @@
         "ticker": "TDS",
         "name": "Telephone and Data Systems, Inc.",
         "tv_sector": "Communications",
-        "industry": ""
-      },
-      {
-        "ticker": "TEAM",
-        "name": "Atlassian Corporation",
-        "tv_sector": "Technology services",
         "industry": ""
       },
       {
@@ -1886,12 +1652,6 @@
         "industry": ""
       },
       {
-        "ticker": "TMUS",
-        "name": "T-Mobile US, Inc.",
-        "tv_sector": "Communications",
-        "industry": ""
-      },
-      {
         "ticker": "TRMB",
         "name": "Trimble Inc.",
         "tv_sector": "Technology services",
@@ -1910,20 +1670,8 @@
         "industry": ""
       },
       {
-        "ticker": "TTD",
-        "name": "The Trade Desk, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "TTEC",
         "name": "TTEC Holdings, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "TTWO",
-        "name": "Take-Two Interactive Software, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -1942,18 +1690,6 @@
       {
         "ticker": "TWLO",
         "name": "Twilio Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "TYL",
-        "name": "Tyler Technologies, Inc.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "U",
-        "name": "Unity Software Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -2042,20 +1778,8 @@
         "industry": ""
       },
       {
-        "ticker": "VZ",
-        "name": "Verizon Communications Inc.",
-        "tv_sector": "Communications",
-        "industry": ""
-      },
-      {
         "ticker": "WAY",
         "name": "Waystar Holding Corp.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
-        "ticker": "WDAY",
-        "name": "Workday, Inc.",
         "tv_sector": "Technology services",
         "industry": ""
       },
@@ -2144,12 +1868,6 @@
         "industry": ""
       },
       {
-        "ticker": "ZETA",
-        "name": "Zeta Global Holdings Corp.",
-        "tv_sector": "Technology services",
-        "industry": ""
-      },
-      {
         "ticker": "ZIP",
         "name": "ZipRecruiter, Inc.",
         "tv_sector": "Technology services",
@@ -2224,21 +1942,9 @@
         "industry": ""
       },
       {
-        "ticker": "AGCO",
-        "name": "AGCO Corporation",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "AHMA",
         "name": "Ambitions Enterprise Management Co. L.L.C",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "ALB",
-        "name": "Albemarle Corporation",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -2266,12 +1972,6 @@
         "industry": ""
       },
       {
-        "ticker": "ALV",
-        "name": "Autoliv, Inc.",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "AM",
         "name": "Antero Midstream Corporation",
         "tv_sector": "Industrial services",
@@ -2280,12 +1980,6 @@
       {
         "ticker": "AMBP",
         "name": "Ardagh Metal Packaging S.A.",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
-        "ticker": "AMCR",
-        "name": "Amcor plc",
         "tv_sector": "Process industries",
         "industry": ""
       },
@@ -2332,27 +2026,9 @@
         "industry": ""
       },
       {
-        "ticker": "AOS",
-        "name": "A.O. Smith Corporation",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "APD",
-        "name": "Air Products and Chemicals, Inc.",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "APG",
         "name": "APi Group Corporation",
         "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "APTV",
-        "name": "Aptiv PLC",
-        "tv_sector": "Producer manufacturing",
         "industry": ""
       },
       {
@@ -2440,12 +2116,6 @@
         "industry": ""
       },
       {
-        "ticker": "BALL",
-        "name": "Ball Corporation",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "BC",
         "name": "Brunswick Corporation",
         "tv_sector": "Producer manufacturing",
@@ -2476,12 +2146,6 @@
         "industry": ""
       },
       {
-        "ticker": "BKR",
-        "name": "Baker Hughes Company",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
         "ticker": "BLD",
         "name": "TopBuild Corp.",
         "tv_sector": "Industrial services",
@@ -2509,12 +2173,6 @@
         "ticker": "BV",
         "name": "BrightView Holdings, Inc.",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "BWA",
-        "name": "BorgWarner Inc.",
-        "tv_sector": "Producer manufacturing",
         "industry": ""
       },
       {
@@ -2566,21 +2224,9 @@
         "industry": ""
       },
       {
-        "ticker": "CE",
-        "name": "Celanese Corporation",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "CECO",
         "name": "CECO Environmental Corp.",
         "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "CF",
-        "name": "CF Industries Holdings, Inc.",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -2656,12 +2302,6 @@
         "industry": ""
       },
       {
-        "ticker": "CTVA",
-        "name": "Corteva, Inc.",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "CVGI",
         "name": "Commercial Vehicle Group, Inc.",
         "tv_sector": "Producer manufacturing",
@@ -2686,12 +2326,6 @@
         "industry": ""
       },
       {
-        "ticker": "DAN",
-        "name": "Dana Incorporated",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "DCH",
         "name": "Dauch Corporation",
         "tv_sector": "Producer manufacturing",
@@ -2704,39 +2338,15 @@
         "industry": ""
       },
       {
-        "ticker": "DD",
-        "name": "DuPont de Nemours, Inc.",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "DJT",
         "name": "Trump Media & Technology Group Corp.",
         "tv_sector": "Commercial services",
         "industry": ""
       },
       {
-        "ticker": "DOV",
-        "name": "Dover Corporation",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "DOW",
-        "name": "Dow Inc.",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "DQ",
         "name": "DAQO New Energy Corp.",
         "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
-        "ticker": "DTM",
-        "name": "DT Midstream, Inc.",
-        "tv_sector": "Industrial services",
         "industry": ""
       },
       {
@@ -2749,12 +2359,6 @@
         "ticker": "ECG",
         "name": "Everus Construction Group, Inc.",
         "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "ECL",
-        "name": "Ecolab Inc.",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -2782,12 +2386,6 @@
         "industry": ""
       },
       {
-        "ticker": "EMN",
-        "name": "Eastman Chemical Company",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "ENVX",
         "name": "Enovix Corporation",
         "tv_sector": "Producer manufacturing",
@@ -2812,12 +2410,6 @@
         "industry": ""
       },
       {
-        "ticker": "ESI",
-        "name": "Element Solutions Inc.",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "EVH",
         "name": "Evolent Health, Inc",
         "tv_sector": "Commercial services",
@@ -2827,12 +2419,6 @@
         "ticker": "EXPO",
         "name": "Exponent, Inc.",
         "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "FBIN",
-        "name": "Fortune Brands Innovations, Inc.",
-        "tv_sector": "Producer manufacturing",
         "industry": ""
       },
       {
@@ -2896,24 +2482,6 @@
         "industry": ""
       },
       {
-        "ticker": "FLS",
-        "name": "Flowserve Corporation",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "FLYW",
-        "name": "Flywire Corporation - Voting",
-        "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "FMC",
-        "name": "FMC Corporation",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "FOUR",
         "name": "Shift4 Payments, Inc.",
         "tv_sector": "Commercial services",
@@ -2926,21 +2494,9 @@
         "industry": ""
       },
       {
-        "ticker": "FTI",
-        "name": "TechnipFMC plc",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
         "ticker": "FTRE",
         "name": "Fortrea Holdings Inc.",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "FUL",
-        "name": "H. B. Fuller Company",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -2974,12 +2530,6 @@
         "industry": ""
       },
       {
-        "ticker": "GGG",
-        "name": "Graco Inc.",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "GLNG",
         "name": "Golar LNG Limited",
         "tv_sector": "Industrial services",
@@ -3004,12 +2554,6 @@
         "industry": ""
       },
       {
-        "ticker": "GPN",
-        "name": "Global Payments Inc.",
-        "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
         "ticker": "GPRE",
         "name": "Green Plains, Inc.",
         "tv_sector": "Process industries",
@@ -3028,20 +2572,8 @@
         "industry": ""
       },
       {
-        "ticker": "GTX",
-        "name": "Garrett Motion Inc.",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "GVA",
         "name": "Granite Construction Incorporated",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "HAL",
-        "name": "Halliburton Company",
         "tv_sector": "Industrial services",
         "industry": ""
       },
@@ -3094,18 +2626,6 @@
         "industry": ""
       },
       {
-        "ticker": "HUBB",
-        "name": "Hubbell Inc",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "HUN",
-        "name": "Huntsman Corporation",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "HUYA",
         "name": "HUYA Inc.",
         "tv_sector": "Commercial services",
@@ -3148,12 +2668,6 @@
         "industry": ""
       },
       {
-        "ticker": "IP",
-        "name": "International Paper Company",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "IR",
         "name": "Ingersoll Rand Inc.",
         "tv_sector": "Producer manufacturing",
@@ -3180,12 +2694,6 @@
       {
         "ticker": "JBL",
         "name": "Jabil Inc.",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "JCI",
-        "name": "Johnson Controls International plc",
         "tv_sector": "Producer manufacturing",
         "industry": ""
       },
@@ -3223,12 +2731,6 @@
         "ticker": "KLIC",
         "name": "Kulicke and Soffa Industries, Inc.",
         "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "KMI",
-        "name": "Kinder Morgan, Inc.",
-        "tv_sector": "Industrial services",
         "industry": ""
       },
       {
@@ -3280,12 +2782,6 @@
         "industry": ""
       },
       {
-        "ticker": "LEA",
-        "name": "Lear Corporation",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "LECO",
         "name": "Lincoln Electric Holdings, Inc.",
         "tv_sector": "Producer manufacturing",
@@ -3295,18 +2791,6 @@
         "ticker": "LGN",
         "name": "Legence Corp.",
         "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "LII",
-        "name": "Lennox International, Inc.",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "LIN",
-        "name": "Linde plc",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -3340,21 +2824,9 @@
         "industry": ""
       },
       {
-        "ticker": "LYB",
-        "name": "LyondellBasell Industries NV",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "MAN",
         "name": "ManpowerGroup",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "MAS",
-        "name": "Masco Corporation",
-        "tv_sector": "Producer manufacturing",
         "industry": ""
       },
       {
@@ -3418,21 +2890,9 @@
         "industry": ""
       },
       {
-        "ticker": "MOD",
-        "name": "Modine Manufacturing Company",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "MORN",
         "name": "Morningstar, Inc.",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "MOS",
-        "name": "Mosaic Company (The)",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -3520,12 +2980,6 @@
         "industry": ""
       },
       {
-        "ticker": "NOV",
-        "name": "NOV Inc.",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
         "ticker": "NPKI",
         "name": "NPK International Inc.",
         "tv_sector": "Producer manufacturing",
@@ -3580,33 +3034,9 @@
         "industry": ""
       },
       {
-        "ticker": "OI",
-        "name": "O-I Glass, Inc.",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
-        "ticker": "OII",
-        "name": "Oceaneering International, Inc.",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "OIS",
         "name": "Oil States International, Inc.",
         "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "OKE",
-        "name": "ONEOK, Inc.",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "OLN",
-        "name": "Olin Corporation",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -3634,30 +3064,6 @@
         "industry": ""
       },
       {
-        "ticker": "PAA",
-        "name": "Plains All American Pipeline, L.P.",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "PAGP",
-        "name": "Plains GP Holdings, L.P.",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "PAGS",
-        "name": "PagSeguro Digital Ltd.",
-        "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "PAYO",
-        "name": "Payoneer Global Inc.",
-        "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
         "ticker": "PAYP",
         "name": "PayPay Corporation - American Depository Shares",
         "tv_sector": "Commercial services",
@@ -3667,12 +3073,6 @@
         "ticker": "PAYS",
         "name": "Paysign, Inc.",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "PCAR",
-        "name": "PACCAR Inc.",
-        "tv_sector": "Producer manufacturing",
         "industry": ""
       },
       {
@@ -3706,18 +3106,6 @@
         "industry": ""
       },
       {
-        "ticker": "PKG",
-        "name": "Packaging Corporation of America",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
-        "ticker": "PNR",
-        "name": "Pentair plc.",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "POWL",
         "name": "Powell Industries, Inc.",
         "tv_sector": "Producer manufacturing",
@@ -3726,12 +3114,6 @@
       {
         "ticker": "PPC",
         "name": "Pilgrim's Pride Corporation",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
-        "ticker": "PPG",
-        "name": "PPG Industries, Inc.",
         "tv_sector": "Process industries",
         "industry": ""
       },
@@ -3772,12 +3154,6 @@
         "industry": ""
       },
       {
-        "ticker": "PUMP",
-        "name": "ProPetro Holding Corp.",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
         "ticker": "QNST",
         "name": "QuinStreet, Inc.",
         "tv_sector": "Commercial services",
@@ -3792,12 +3168,6 @@
       {
         "ticker": "REAX",
         "name": "The Real Brokerage, Inc.",
-        "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "RELY",
-        "name": "Remitly Global, Inc.",
         "tv_sector": "Commercial services",
         "industry": ""
       },
@@ -3817,12 +3187,6 @@
         "ticker": "RHI",
         "name": "Robert Half Inc.",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "RIG",
-        "name": "Transocean Ltd (Switzerland)",
-        "tv_sector": "Industrial services",
         "industry": ""
       },
       {
@@ -3847,12 +3211,6 @@
         "ticker": "RPAY",
         "name": "Repay Holdings Corporation",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "RPM",
-        "name": "RPM International Inc.",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -3898,18 +3256,6 @@
         "industry": ""
       },
       {
-        "ticker": "SHOP",
-        "name": "Shopify Inc.",
-        "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "SHW",
-        "name": "Sherwin-Williams Company (The)",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "SKYT",
         "name": "SkyWater Technology, Inc.",
         "tv_sector": "Producer manufacturing",
@@ -3922,21 +3268,9 @@
         "industry": ""
       },
       {
-        "ticker": "SLB",
-        "name": "SLB Limited",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
         "ticker": "SLDP",
         "name": "Solid Power, Inc.",
         "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "SLGN",
-        "name": "Silgan Holdings Inc.",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -3946,26 +3280,8 @@
         "industry": ""
       },
       {
-        "ticker": "SMG",
-        "name": "Scotts Miracle-Gro Company (The)",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
-        "ticker": "SNDL",
-        "name": "SNDL Inc.",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "SOLS",
         "name": "Solstice Advanced Materials Inc.",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
-        "ticker": "SON",
-        "name": "Sonoco Products Company",
         "tv_sector": "Process industries",
         "industry": ""
       },
@@ -3990,12 +3306,6 @@
       {
         "ticker": "STGW",
         "name": "Stagwell Inc.",
-        "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "STNE",
-        "name": "StoneCo Ltd.",
         "tv_sector": "Commercial services",
         "industry": ""
       },
@@ -4048,12 +3358,6 @@
         "industry": ""
       },
       {
-        "ticker": "TEX",
-        "name": "Terex Corporation",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "TIC",
         "name": "TIC Solutions, Inc.",
         "tv_sector": "Commercial services",
@@ -4069,12 +3373,6 @@
         "ticker": "TKR",
         "name": "Timken Company (The)",
         "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "TLRY",
-        "name": "Tilray Brands, Inc.",
-        "tv_sector": "Process industries",
         "industry": ""
       },
       {
@@ -4096,12 +3394,6 @@
         "industry": ""
       },
       {
-        "ticker": "TROX",
-        "name": "Tronox Holdings plc",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "TRS",
         "name": "TriMas Corporation",
         "tv_sector": "Process industries",
@@ -4111,12 +3403,6 @@
         "ticker": "TRU",
         "name": "TransUnion",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "TT",
-        "name": "Trane Technologies plc",
-        "tv_sector": "Producer manufacturing",
         "industry": ""
       },
       {
@@ -4222,21 +3508,9 @@
         "industry": ""
       },
       {
-        "ticker": "WAB",
-        "name": "Westinghouse Air Brake Technologies Corporation",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "WEX",
         "name": "WEX Inc.",
         "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "WFRD",
-        "name": "Weatherford International plc",
-        "tv_sector": "Industrial services",
         "industry": ""
       },
       {
@@ -4252,44 +3526,14 @@
         "industry": ""
       },
       {
-        "ticker": "WLK",
-        "name": "Westlake Corporation",
-        "tv_sector": "Process industries",
-        "industry": ""
-      },
-      {
         "ticker": "WM",
         "name": "Waste Management, Inc.",
         "tv_sector": "Industrial services",
         "industry": ""
       },
       {
-        "ticker": "WMB",
-        "name": "Williams Companies, Inc. (The)",
-        "tv_sector": "Industrial services",
-        "industry": ""
-      },
-      {
-        "ticker": "WMG",
-        "name": "Warner Music Group Corp.",
-        "tv_sector": "Commercial services",
-        "industry": ""
-      },
-      {
-        "ticker": "WMS",
-        "name": "Advanced Drainage Systems, Inc.",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
         "ticker": "WNC",
         "name": "Wabash National Corporation",
-        "tv_sector": "Producer manufacturing",
-        "industry": ""
-      },
-      {
-        "ticker": "WSO",
-        "name": "Watsco, Inc.",
         "tv_sector": "Producer manufacturing",
         "industry": ""
       },
@@ -4344,20 +3588,8 @@
         "industry": ""
       },
       {
-        "ticker": "ABR",
-        "name": "Arbor Realty Trust",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "ABX",
         "name": "Abacus Global Management, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "ACGL",
-        "name": "Arch Capital Group Ltd.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4368,32 +3600,8 @@
         "industry": ""
       },
       {
-        "ticker": "ADC",
-        "name": "Agree Realty Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "AER",
         "name": "AerCap Holdings N.V.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "AFG",
-        "name": "American Financial Group, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "AFL",
-        "name": "AFLAC Incorporated",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "AGNC",
-        "name": "AGNC Investment Corp.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4410,62 +3618,14 @@
         "industry": ""
       },
       {
-        "ticker": "AIG",
-        "name": "American International Group, Inc. New",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "AIV",
         "name": "Apartment Investment and Management Company",
         "tv_sector": "Finance",
         "industry": ""
       },
       {
-        "ticker": "AJG",
-        "name": "Arthur J. Gallagher & Co.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "AKR",
-        "name": "Acadia Realty Trust",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "ALL",
-        "name": "Allstate Corporation (The)",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "ALLY",
-        "name": "Ally Financial Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "AMH",
-        "name": "American Homes 4 Rent",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "AMP",
         "name": "Ameriprise Financial, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "AMT",
-        "name": "American Tower Corporation (REIT)",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "AON",
-        "name": "Aon plc",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4482,26 +3642,8 @@
         "industry": ""
       },
       {
-        "ticker": "APLE",
-        "name": "Apple Hospitality REIT, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "APO",
-        "name": "Apollo Global Management, Inc. (New)",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "ARE",
         "name": "Alexandria Real Estate Equities, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "ARES",
-        "name": "Ares Management Corporation",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4536,12 +3678,6 @@
         "industry": ""
       },
       {
-        "ticker": "AVB",
-        "name": "AvalonBay Communities, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "AX",
         "name": "Axos Financial, Inc.",
         "tv_sector": "Finance",
@@ -4554,12 +3690,6 @@
         "industry": ""
       },
       {
-        "ticker": "AXP",
-        "name": "American Express Company",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "AXS",
         "name": "Axis Capital Holdings Limited",
         "tv_sector": "Finance",
@@ -4568,12 +3698,6 @@
       {
         "ticker": "AZ",
         "name": "A2Z Cust2Mate Solutions Corp.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "BAM",
-        "name": "Brookfield Asset Management Inc",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4598,12 +3722,6 @@
       {
         "ticker": "BDN",
         "name": "Brandywine Realty Trust",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "BEN",
-        "name": "Franklin Resources, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4638,20 +3756,8 @@
         "industry": ""
       },
       {
-        "ticker": "BK",
-        "name": "The Bank of New York Mellon Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "BKU",
         "name": "BankUnited, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "BLK",
-        "name": "BlackRock, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4668,32 +3774,14 @@
         "industry": ""
       },
       {
-        "ticker": "BPOP",
-        "name": "Popular, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "BRBS",
         "name": "Blue Ridge Bankshares, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
       {
-        "ticker": "BRO",
-        "name": "Brown & Brown, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "BRSP",
         "name": "BrightSpire Capital, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "BRX",
-        "name": "Brixmor Property Group Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4722,44 +3810,14 @@
         "industry": ""
       },
       {
-        "ticker": "BX",
-        "name": "Blackstone Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "BXMT",
-        "name": "Blackstone Mortgage Trust, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "BXP",
-        "name": "BXP, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "CAR",
         "name": "Avis Budget Group, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
       {
-        "ticker": "CB",
-        "name": "Chubb Limited",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "CBC",
         "name": "Central Bancompany, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "CBOE",
-        "name": "Cboe Global Markets, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4772,12 +3830,6 @@
       {
         "ticker": "CBSH",
         "name": "Commerce Bancshares, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "CCI",
-        "name": "Crown Castle Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4806,18 +3858,6 @@
         "industry": ""
       },
       {
-        "ticker": "CFG",
-        "name": "Citizens Financial Group, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "CFR",
-        "name": "Cullen/Frost Bankers, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "CG",
         "name": "The Carlyle Group Inc.",
         "tv_sector": "Finance",
@@ -4836,20 +3876,8 @@
         "industry": ""
       },
       {
-        "ticker": "CINF",
-        "name": "Cincinnati Financial Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "CLOV",
         "name": "Clover Health Investments, Corp.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "CME",
-        "name": "CME Group Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4872,12 +3900,6 @@
         "industry": ""
       },
       {
-        "ticker": "COF",
-        "name": "Capital One Financial Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "COLB",
         "name": "Columbia Banking System, Inc.",
         "tv_sector": "Finance",
@@ -4892,12 +3914,6 @@
       {
         "ticker": "COMP",
         "name": "Compass, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "CPT",
-        "name": "Camden Property Trust",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4920,20 +3936,8 @@
         "industry": ""
       },
       {
-        "ticker": "CUBE",
-        "name": "CubeSmart",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "CURB",
         "name": "Curbline Properties Corp.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "CUZ",
-        "name": "Cousins Properties Incorporated",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4962,12 +3966,6 @@
         "industry": ""
       },
       {
-        "ticker": "DEI",
-        "name": "Douglas Emmett, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "DFDV",
         "name": "DeFi Development Corp.",
         "tv_sector": "Finance",
@@ -4976,12 +3974,6 @@
       {
         "ticker": "DHC",
         "name": "Diversified Healthcare Trust",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "DLR",
-        "name": "Digital Realty Trust, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -4998,26 +3990,8 @@
         "industry": ""
       },
       {
-        "ticker": "DRH",
-        "name": "Diamondrock Hospitality Company",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "DTI",
         "name": "Drilling Tools International Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "DX",
-        "name": "Dynex Capital, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "EBC",
-        "name": "Eastern Bankshares, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5046,12 +4020,6 @@
         "industry": ""
       },
       {
-        "ticker": "ELS",
-        "name": "Equity Lifestyle Properties, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "EPR",
         "name": "EPR Properties",
         "tv_sector": "Finance",
@@ -5064,24 +4032,6 @@
         "industry": ""
       },
       {
-        "ticker": "EQH",
-        "name": "Equitable Holdings, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "EQIX",
-        "name": "Equinix, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "EQR",
-        "name": "Equity Residential",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "ESNT",
         "name": "Essent Group Ltd.",
         "tv_sector": "Finance",
@@ -5090,12 +4040,6 @@
       {
         "ticker": "ESRT",
         "name": "Empire State Realty Trust, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "ESS",
-        "name": "Essex Property Trust, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5120,12 +4064,6 @@
       {
         "ticker": "EXPI",
         "name": "eXp World Holdings, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "EXR",
-        "name": "Extra Space Storage Inc",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5196,12 +4134,6 @@
         "industry": ""
       },
       {
-        "ticker": "FHN",
-        "name": "First Horizon Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "FIBK",
         "name": "First Interstate BancSystem, Inc.",
         "tv_sector": "Finance",
@@ -5226,12 +4158,6 @@
         "industry": ""
       },
       {
-        "ticker": "FITB",
-        "name": "Fifth Third Bancorp",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "FLG",
         "name": "Flagstar Bank, N.A.",
         "tv_sector": "Finance",
@@ -5250,20 +4176,8 @@
         "industry": ""
       },
       {
-        "ticker": "FR",
-        "name": "First Industrial Realty Trust, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "FRMI",
         "name": "Fermi Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "FRT",
-        "name": "Federal Realty Investment Trust",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5310,12 +4224,6 @@
         "industry": ""
       },
       {
-        "ticker": "GL",
-        "name": "Globe Life Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "GLND",
         "name": "Greenland Energy Company",
         "tv_sector": "Finance",
@@ -5340,12 +4248,6 @@
         "industry": ""
       },
       {
-        "ticker": "GOLD",
-        "name": "Gold.com, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "GTY",
         "name": "Getty Realty Corporation",
         "tv_sector": "Finance",
@@ -5354,30 +4256,6 @@
       {
         "ticker": "HASI",
         "name": "HA Sustainable Infrastructure Capital, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "HBAN",
-        "name": "Huntington Bancshares Incorporated",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "HGV",
-        "name": "Hilton Grand Vacations Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "HIG",
-        "name": "The Hartford Insurance Group, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "HIW",
-        "name": "Highwoods Properties, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5430,12 +4308,6 @@
         "industry": ""
       },
       {
-        "ticker": "HST",
-        "name": "Host Hotels & Resorts, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "HTBK",
         "name": "Heritage Commerce Corp",
         "tv_sector": "Finance",
@@ -5472,12 +4344,6 @@
         "industry": ""
       },
       {
-        "ticker": "ICE",
-        "name": "Intercontinental Exchange Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "INN",
         "name": "Summit Hotel Properties, Inc.",
         "tv_sector": "Finance",
@@ -5486,12 +4352,6 @@
       {
         "ticker": "INTR",
         "name": "Inter & Co. Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "INVH",
-        "name": "Invitation Homes Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5510,12 +4370,6 @@
       {
         "ticker": "IVR",
         "name": "INVESCO MORTGAGE CAPITAL INC",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "IVZ",
-        "name": "Invesco Ltd",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5544,32 +4398,8 @@
         "industry": ""
       },
       {
-        "ticker": "KEY",
-        "name": "KeyCorp",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "KIM",
-        "name": "Kimco Realty Corporation (HC)",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "KKR",
-        "name": "KKR & Co. Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "KMPR",
         "name": "Kemper Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "KRC",
-        "name": "Kilroy Realty Corporation",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5594,12 +4424,6 @@
       {
         "ticker": "KYIV",
         "name": "Kyivstar Group Ltd.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "L",
-        "name": "Loews Corporation",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5652,12 +4476,6 @@
         "industry": ""
       },
       {
-        "ticker": "LNC",
-        "name": "Lincoln National Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "LPLA",
         "name": "LPL Financial Holdings Inc.",
         "tv_sector": "Finance",
@@ -5682,24 +4500,6 @@
         "industry": ""
       },
       {
-        "ticker": "MA",
-        "name": "Mastercard Incorporated",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "MAA",
-        "name": "Mid-America Apartment Communities, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "MAC",
-        "name": "Macerich Company (The)",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "MAIN",
         "name": "Main Street Capital Corporation",
         "tv_sector": "Finance",
@@ -5714,12 +4514,6 @@
       {
         "ticker": "MCHB",
         "name": "Mechanics Bancorp",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "MET",
-        "name": "MetLife, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5754,38 +4548,8 @@
         "industry": ""
       },
       {
-        "ticker": "MTB",
-        "name": "M&T Bank Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "MTG",
         "name": "MGIC Investment Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "MTH",
-        "name": "Meritage Homes Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "NAVI",
-        "name": "Navient Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "NDAQ",
-        "name": "Nasdaq, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "NLY",
-        "name": "Annaly Capital Management Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5798,24 +4562,6 @@
       {
         "ticker": "NMRK",
         "name": "Newmark Group, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "NNN",
-        "name": "NNN REIT, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "NSA",
-        "name": "National Storage Affiliates Trust",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "NTRS",
-        "name": "Northern Trust Corporation",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5844,12 +4590,6 @@
         "industry": ""
       },
       {
-        "ticker": "O",
-        "name": "Realty Income Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "OCFC",
         "name": "OceanFirst Financial Corp.",
         "tv_sector": "Finance",
@@ -5858,12 +4598,6 @@
       {
         "ticker": "OHI",
         "name": "Omega Healthcare Investors, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "OMF",
-        "name": "OneMain Holdings, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5916,12 +4650,6 @@
         "industry": ""
       },
       {
-        "ticker": "OWL",
-        "name": "Blue Owl Capital Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "OZK",
         "name": "Bank OZK",
         "tv_sector": "Finance",
@@ -5930,12 +4658,6 @@
       {
         "ticker": "PAX",
         "name": "Patria Investments Limited",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "PB",
-        "name": "Prosperity Bancshares, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -5958,12 +4680,6 @@
         "industry": ""
       },
       {
-        "ticker": "PFG",
-        "name": "Principal Financial Group Inc",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "PFS",
         "name": "Provident Financial Services, Inc",
         "tv_sector": "Finance",
@@ -5976,38 +4692,14 @@
         "industry": ""
       },
       {
-        "ticker": "PGR",
-        "name": "Progressive Corporation (The)",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "PIPR",
         "name": "Piper Sandler Companies",
         "tv_sector": "Finance",
         "industry": ""
       },
       {
-        "ticker": "PK",
-        "name": "Park Hotels & Resorts Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "PLD",
-        "name": "Prologis, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "PMT",
         "name": "PennyMac Mortgage Investment Trust",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "PNC",
-        "name": "PNC Financial Services Group, Inc. (The)",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6030,20 +4722,8 @@
         "industry": ""
       },
       {
-        "ticker": "PRU",
-        "name": "Prudential Financial, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "PRVA",
         "name": "Privia Health Group, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "PSA",
-        "name": "Public Storage",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6078,44 +4758,14 @@
         "industry": ""
       },
       {
-        "ticker": "REG",
-        "name": "Regency Centers Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "RENX",
         "name": "RenX Enterprises Corp.",
         "tv_sector": "Finance",
         "industry": ""
       },
       {
-        "ticker": "REXR",
-        "name": "Rexford Industrial Realty, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "RF",
-        "name": "Regions Financial Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "RHP",
-        "name": "Ryman Hospitality Properties, Inc. (REIT)",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "RILY",
         "name": "BRC Group Holdings, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "RITM",
-        "name": "Rithm Capital Corp.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6128,12 +4778,6 @@
       {
         "ticker": "RKT",
         "name": "Rocket Companies, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "RLI",
-        "name": "RLI Corp.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6168,20 +4812,8 @@
         "industry": ""
       },
       {
-        "ticker": "RYAN",
-        "name": "Ryan Specialty Holdings, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "RYN",
         "name": "Rayonier Inc. REIT",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "SBAC",
-        "name": "SBA Communications Corporation",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6204,12 +4836,6 @@
         "industry": ""
       },
       {
-        "ticker": "SEIC",
-        "name": "SEI Investments Company",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "SF",
         "name": "Stifel Financial Corporation",
         "tv_sector": "Finance",
@@ -6218,12 +4844,6 @@
       {
         "ticker": "SFNC",
         "name": "Simmons First National Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "SHO",
-        "name": "Sunstone Hotel Investors, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6276,12 +4896,6 @@
         "industry": ""
       },
       {
-        "ticker": "SPG",
-        "name": "Simon Property Group, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "SPNT",
         "name": "SiriusPoint Ltd.",
         "tv_sector": "Finance",
@@ -6300,12 +4914,6 @@
         "industry": ""
       },
       {
-        "ticker": "STAG",
-        "name": "Stag Industrial, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "STEP",
         "name": "StepStone Group Inc.",
         "tv_sector": "Finance",
@@ -6318,38 +4926,8 @@
         "industry": ""
       },
       {
-        "ticker": "STT",
-        "name": "State Street Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "STWD",
-        "name": "Starwood Property Trust Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "SUI",
-        "name": "Sun Communities, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "SVC",
         "name": "Service Properties Trust - Shares of Beneficial Interest",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "SYF",
-        "name": "Synchrony Financial",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "TFC",
-        "name": "Truist Financial Corporation",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6372,38 +4950,8 @@
         "industry": ""
       },
       {
-        "ticker": "TRNO",
-        "name": "Terreno Realty Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "TROW",
-        "name": "T. Rowe Price Group, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "TRTX",
         "name": "TPG RE Finance Trust, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "TRV",
-        "name": "The Travelers Companies, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "TW",
-        "name": "Tradeweb Markets Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "TWO",
-        "name": "Two Harbors Investment Corp",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6416,12 +4964,6 @@
       {
         "ticker": "UCB",
         "name": "United Community Banks, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "UDR",
-        "name": "UDR, Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6462,20 +5004,8 @@
         "industry": ""
       },
       {
-        "ticker": "UPST",
-        "name": "Upstart Holdings, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "UWMC",
         "name": "UWM Holdings Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "V",
-        "name": "Visa Inc.",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6504,18 +5034,6 @@
         "industry": ""
       },
       {
-        "ticker": "VNO",
-        "name": "Vornado Realty Trust",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "VOYA",
-        "name": "Voya Financial, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "VRE",
         "name": "Veris Residential, Inc.",
         "tv_sector": "Finance",
@@ -6530,12 +5048,6 @@
       {
         "ticker": "WAFD",
         "name": "WaFd, Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "WAL",
-        "name": "Western Alliance Bancorporation",
         "tv_sector": "Finance",
         "industry": ""
       },
@@ -6558,12 +5070,6 @@
         "industry": ""
       },
       {
-        "ticker": "WRB",
-        "name": "W.R. Berkley Corporation",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "WSBC",
         "name": "WesBanco, Inc.",
         "tv_sector": "Finance",
@@ -6582,18 +5088,6 @@
         "industry": ""
       },
       {
-        "ticker": "WTW",
-        "name": "Willis Towers Watson Public Limited Company",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "WU",
-        "name": "Western Union Company (The)",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
         "ticker": "WY",
         "name": "Weyerhaeuser Company",
         "tv_sector": "Finance",
@@ -6608,12 +5102,6 @@
       {
         "ticker": "XP",
         "name": "XP Inc.",
-        "tv_sector": "Finance",
-        "industry": ""
-      },
-      {
-        "ticker": "ZION",
-        "name": "Zions Bancorporation N.A.",
         "tv_sector": "Finance",
         "industry": ""
       }
@@ -6668,18 +5156,6 @@
         "industry": ""
       },
       {
-        "ticker": "ATI",
-        "name": "ATI Inc.",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "AU",
-        "name": "AngloGold Ashanti PLC",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "AUGO",
         "name": "Aura Minerals Inc.",
         "tv_sector": "Non-energy minerals",
@@ -6716,21 +5192,9 @@
         "industry": ""
       },
       {
-        "ticker": "CLF",
-        "name": "Cleveland-Cliffs Inc.",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "CLMT",
         "name": "Calumet, Inc",
         "tv_sector": "Energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "CMC",
-        "name": "Commercial Metals Company",
-        "tv_sector": "Non-energy minerals",
         "industry": ""
       },
       {
@@ -6818,18 +5282,6 @@
         "industry": ""
       },
       {
-        "ticker": "DINO",
-        "name": "HF Sinclair Corporation",
-        "tv_sector": "Energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "DK",
-        "name": "Delek US Holdings, Inc.",
-        "tv_sector": "Energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "EGY",
         "name": "VAALCO Energy, Inc.",
         "tv_sector": "Energy minerals",
@@ -6845,18 +5297,6 @@
         "ticker": "EXE",
         "name": "Expand Energy Corporation",
         "tv_sector": "Energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "EXP",
-        "name": "Eagle Materials Inc",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "FCX",
-        "name": "Freeport-McMoRan, Inc.",
-        "tv_sector": "Non-energy minerals",
         "industry": ""
       },
       {
@@ -6968,12 +5408,6 @@
         "industry": ""
       },
       {
-        "ticker": "MPC",
-        "name": "Marathon Petroleum Corporation",
-        "tv_sector": "Energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "MTDR",
         "name": "Matador Resources Company",
         "tv_sector": "Energy minerals",
@@ -7004,12 +5438,6 @@
         "industry": ""
       },
       {
-        "ticker": "NEM",
-        "name": "Newmont Corporation",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "NEXT",
         "name": "NextDecade Corporation",
         "tv_sector": "Energy minerals",
@@ -7034,12 +5462,6 @@
         "industry": ""
       },
       {
-        "ticker": "NUE",
-        "name": "Nucor Corporation",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "OVV",
         "name": "Ovintiv Inc. (DE)",
         "tv_sector": "Energy minerals",
@@ -7052,20 +5474,8 @@
         "industry": ""
       },
       {
-        "ticker": "PBF",
-        "name": "PBF Energy Inc.",
-        "tv_sector": "Energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "PROP",
         "name": "Prairie Operating Co.",
-        "tv_sector": "Energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "PSX",
-        "name": "Phillips 66",
         "tv_sector": "Energy minerals",
         "industry": ""
       },
@@ -7094,21 +5504,9 @@
         "industry": ""
       },
       {
-        "ticker": "SCCO",
-        "name": "Southern Copper Corporation",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "SD",
         "name": "SandRidge Energy, Inc.",
         "tv_sector": "Energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "SGML",
-        "name": "Sigma Lithium Corporation",
-        "tv_sector": "Non-energy minerals",
         "industry": ""
       },
       {
@@ -7130,18 +5528,6 @@
         "industry": ""
       },
       {
-        "ticker": "SSRM",
-        "name": "SSR Mining Inc.",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "STLD",
-        "name": "Steel Dynamics, Inc.",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "SXC",
         "name": "SunCoke Energy, Inc.",
         "tv_sector": "Non-energy minerals",
@@ -7160,26 +5546,8 @@
         "industry": ""
       },
       {
-        "ticker": "TREX",
-        "name": "Trex Company, Inc.",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
         "ticker": "UAMY",
         "name": "United States Antimony Corporation",
-        "tv_sector": "Non-energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "VLO",
-        "name": "Valero Energy Corporation",
-        "tv_sector": "Energy minerals",
-        "industry": ""
-      },
-      {
-        "ticker": "VMC",
-        "name": "Vulcan Materials Company (Holding Company)",
         "tv_sector": "Non-energy minerals",
         "industry": ""
       },
@@ -7210,39 +5578,15 @@
     ],
     "Retail / Consumer": [
       {
-        "ticker": "AAP",
-        "name": "Advance Auto Parts Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "ACI",
-        "name": "Albertsons Companies, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
         "ticker": "AEBI",
         "name": "Aebi Schmidt Holding AG",
         "tv_sector": "Consumer durables",
         "industry": ""
       },
       {
-        "ticker": "AEO",
-        "name": "American Eagle Outfitters, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
         "ticker": "ALLE",
         "name": "Allegion plc",
         "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "ANF",
-        "name": "Abercrombie & Fitch Company",
-        "tv_sector": "Retail trade",
         "industry": ""
       },
       {
@@ -7276,21 +5620,9 @@
         "industry": ""
       },
       {
-        "ticker": "ASO",
-        "name": "Academy Sports and Outdoors, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
         "ticker": "AVT",
         "name": "Avnet, Inc.",
         "tv_sector": "Distribution services",
-        "industry": ""
-      },
-      {
-        "ticker": "BABA",
-        "name": "Alibaba Group Holding Limited",
-        "tv_sector": "Retail trade",
         "industry": ""
       },
       {
@@ -7324,12 +5656,6 @@
         "industry": ""
       },
       {
-        "ticker": "BIRK",
-        "name": "Birkenstock Holding plc",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "BJ",
         "name": "BJ's Wholesale Club Holdings, Inc.",
         "tv_sector": "Retail trade",
@@ -7354,27 +5680,9 @@
         "industry": ""
       },
       {
-        "ticker": "BURL",
-        "name": "Burlington Stores, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "BZH",
-        "name": "Beazer Homes USA, Inc.",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
         "ticker": "BZUN",
         "name": "Baozun Inc.",
         "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "CAG",
-        "name": "ConAgra Brands, Inc.",
-        "tv_sector": "Consumer non-durables",
         "industry": ""
       },
       {
@@ -7408,44 +5716,8 @@
         "industry": ""
       },
       {
-        "ticker": "CELH",
-        "name": "Celsius Holdings, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "CHA",
         "name": "Chagee Holdings Limited",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "CHD",
-        "name": "Church & Dwight Company, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "CHEF",
-        "name": "The Chefs' Warehouse, Inc.",
-        "tv_sector": "Distribution services",
-        "industry": ""
-      },
-      {
-        "ticker": "CHWY",
-        "name": "Chewy, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "CL",
-        "name": "Colgate-Palmolive Company",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "CLX",
-        "name": "Clorox Company (The)",
         "tv_sector": "Consumer non-durables",
         "industry": ""
       },
@@ -7456,20 +5728,8 @@
         "industry": ""
       },
       {
-        "ticker": "COCO",
-        "name": "The Vita Coco Company, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "COKE",
         "name": "Coca-Cola Consolidated, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "COLM",
-        "name": "Columbia Sportswear Company",
         "tv_sector": "Consumer non-durables",
         "industry": ""
       },
@@ -7483,24 +5743,6 @@
         "ticker": "COTY",
         "name": "Coty Inc.",
         "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "CPB",
-        "name": "The Campbell's Company",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "CPNG",
-        "name": "Coupang, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "CPRI",
-        "name": "Capri Holdings Limited",
-        "tv_sector": "Retail trade",
         "industry": ""
       },
       {
@@ -7519,12 +5761,6 @@
         "ticker": "CRI",
         "name": "Carter's, Inc.",
         "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "CROX",
-        "name": "Crocs, Inc.",
-        "tv_sector": "Consumer non-durables",
         "industry": ""
       },
       {
@@ -7570,27 +5806,9 @@
         "industry": ""
       },
       {
-        "ticker": "DECK",
-        "name": "Deckers Outdoor Corporation",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "DFH",
         "name": "Dream Finders Homes, Inc.",
         "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "DHI",
-        "name": "D.R. Horton, Inc.",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "DKS",
-        "name": "Dick's Sporting Goods Inc",
-        "tv_sector": "Retail trade",
         "industry": ""
       },
       {
@@ -7600,27 +5818,9 @@
         "industry": ""
       },
       {
-        "ticker": "DNUT",
-        "name": "Krispy Kreme, Inc.",
-        "tv_sector": "Distribution services",
-        "industry": ""
-      },
-      {
         "ticker": "DOLE",
         "name": "Dole plc",
         "tv_sector": "Distribution services",
-        "industry": ""
-      },
-      {
-        "ticker": "EBAY",
-        "name": "eBay Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "EL",
-        "name": "Estee Lauder Companies, Inc. (The)",
-        "tv_sector": "Consumer non-durables",
         "industry": ""
       },
       {
@@ -7636,12 +5836,6 @@
         "industry": ""
       },
       {
-        "ticker": "ENR",
-        "name": "Energizer Holdings, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "EPC",
         "name": "Edgewell Personal Care Company",
         "tv_sector": "Consumer non-durables",
@@ -7654,27 +5848,9 @@
         "industry": ""
       },
       {
-        "ticker": "ETSY",
-        "name": "Etsy, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "EVGO",
-        "name": "EVgo Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
         "ticker": "EYE",
         "name": "National Vision Holdings, Inc.",
         "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "F",
-        "name": "Ford Motor Company",
-        "tv_sector": "Consumer durables",
         "industry": ""
       },
       {
@@ -7699,12 +5875,6 @@
         "ticker": "FIVE",
         "name": "Five Below, Inc.",
         "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "FLO",
-        "name": "Flowers Foods, Inc.",
-        "tv_sector": "Consumer non-durables",
         "industry": ""
       },
       {
@@ -7768,32 +5938,8 @@
         "industry": ""
       },
       {
-        "ticker": "GIS",
-        "name": "General Mills, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "GLBE",
-        "name": "Global-E Online Ltd.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "GM",
-        "name": "General Motors Company",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
         "ticker": "GME",
         "name": "GameStop Corporation",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "GO",
-        "name": "Grocery Outlet Holding Corp.",
         "tv_sector": "Retail trade",
         "industry": ""
       },
@@ -7870,12 +6016,6 @@
         "industry": ""
       },
       {
-        "ticker": "HRL",
-        "name": "Hormel Foods Corporation",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "HSIC",
         "name": "Henry Schein, Inc.",
         "tv_sector": "Distribution services",
@@ -7900,12 +6040,6 @@
         "industry": ""
       },
       {
-        "ticker": "INGR",
-        "name": "Ingredion Incorporated",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "IPW",
         "name": "iPower Inc.",
         "tv_sector": "Retail trade",
@@ -7918,57 +6052,15 @@
         "industry": ""
       },
       {
-        "ticker": "JD",
-        "name": "JD.com, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
         "ticker": "JEM",
         "name": "707 Cayman Holdings Limited",
         "tv_sector": "Distribution services",
         "industry": ""
       },
       {
-        "ticker": "KBH",
-        "name": "KB Home",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "KDP",
-        "name": "Keurig Dr Pepper Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "KHC",
         "name": "The Kraft Heinz Company",
         "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "KMB",
-        "name": "Kimberly-Clark Corporation",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "KMX",
-        "name": "CarMax Inc",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "KO",
-        "name": "Coca-Cola Company (The)",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "KR",
-        "name": "Kroger Company (The)",
-        "tv_sector": "Retail trade",
         "industry": ""
       },
       {
@@ -7990,12 +6082,6 @@
         "industry": ""
       },
       {
-        "ticker": "LCID",
-        "name": "Lucid Group, Inc.",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
         "ticker": "LE",
         "name": "Lands' End, Inc.",
         "tv_sector": "Retail trade",
@@ -8008,21 +6094,9 @@
         "industry": ""
       },
       {
-        "ticker": "LEN",
-        "name": "Lennar Corporation",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
         "ticker": "LKQ",
         "name": "LKQ Corporation",
         "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "LULU",
-        "name": "lululemon athletica inc.",
-        "tv_sector": "Consumer non-durables",
         "industry": ""
       },
       {
@@ -8062,51 +6136,9 @@
         "industry": ""
       },
       {
-        "ticker": "MDLZ",
-        "name": "Mondelez International, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "MKC",
-        "name": "McCormick & Company, Incorporated",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "MNRO",
-        "name": "Monro, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "MNST",
-        "name": "Monster Beverage Corporation",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "MO",
-        "name": "Altria Group, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "MSM",
         "name": "MSC Industrial Direct Company, Inc.",
         "tv_sector": "Distribution services",
-        "industry": ""
-      },
-      {
-        "ticker": "NIO",
-        "name": "NIO Inc.",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "NKE",
-        "name": "Nike, Inc.",
-        "tv_sector": "Consumer non-durables",
         "industry": ""
       },
       {
@@ -8122,50 +6154,8 @@
         "industry": ""
       },
       {
-        "ticker": "ONON",
-        "name": "On Holding AG",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "ORLY",
-        "name": "O'Reilly Automotive, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "OSK",
-        "name": "Oshkosh Corporation (Holding Company)",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
         "ticker": "PATK",
         "name": "Patrick Industries, Inc.",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "PDD",
-        "name": "PDD Holdings Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "PEP",
-        "name": "PepsiCo, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "PG",
-        "name": "Procter & Gamble Company (The)",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "PHM",
-        "name": "PulteGroup, Inc.",
         "tv_sector": "Consumer durables",
         "industry": ""
       },
@@ -8188,21 +6178,9 @@
         "industry": ""
       },
       {
-        "ticker": "PM",
-        "name": "Philip Morris International Inc",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "POOL",
         "name": "Pool Corporation",
         "tv_sector": "Distribution services",
-        "industry": ""
-      },
-      {
-        "ticker": "POST",
-        "name": "Post Holdings, Inc.",
-        "tv_sector": "Consumer non-durables",
         "industry": ""
       },
       {
@@ -8248,12 +6226,6 @@
         "industry": ""
       },
       {
-        "ticker": "REYN",
-        "name": "Reynolds Consumer Products Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "REZI",
         "name": "Resideo Technologies, Inc.",
         "tv_sector": "Distribution services",
@@ -8266,33 +6238,9 @@
         "industry": ""
       },
       {
-        "ticker": "RIVN",
-        "name": "Rivian Automotive, Inc.",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "RL",
-        "name": "Ralph Lauren Corporation",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "ROST",
-        "name": "Ross Stores, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
         "ticker": "RR",
         "name": "Richtech Robotics Inc.",
         "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "RVLV",
-        "name": "Revolve Group, Inc.",
-        "tv_sector": "Retail trade",
         "industry": ""
       },
       {
@@ -8308,12 +6256,6 @@
         "industry": ""
       },
       {
-        "ticker": "SE",
-        "name": "Sea Limited",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
         "ticker": "SFD",
         "name": "Smithfield Foods, Inc.",
         "tv_sector": "Consumer non-durables",
@@ -8322,12 +6264,6 @@
       {
         "ticker": "SFIX",
         "name": "Stitch Fix, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
-        "ticker": "SFM",
-        "name": "Sprouts Farmers Market, Inc.",
         "tv_sector": "Retail trade",
         "industry": ""
       },
@@ -8353,12 +6289,6 @@
         "ticker": "SITE",
         "name": "SiteOne Landscape Supply, Inc.",
         "tv_sector": "Distribution services",
-        "industry": ""
-      },
-      {
-        "ticker": "SJM",
-        "name": "The J.M. Smucker Company",
-        "tv_sector": "Consumer non-durables",
         "industry": ""
       },
       {
@@ -8404,12 +6334,6 @@
         "industry": ""
       },
       {
-        "ticker": "STZ",
-        "name": "Constellation Brands, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "SVV",
         "name": "Savers Value Village, Inc.",
         "tv_sector": "Retail trade",
@@ -8425,12 +6349,6 @@
         "ticker": "SYY",
         "name": "Sysco Corporation",
         "tv_sector": "Distribution services",
-        "industry": ""
-      },
-      {
-        "ticker": "TAP",
-        "name": "Molson Coors Beverage Company",
-        "tv_sector": "Consumer non-durables",
         "industry": ""
       },
       {
@@ -8452,20 +6370,8 @@
         "industry": ""
       },
       {
-        "ticker": "TJX",
-        "name": "TJX Companies, Inc. (The)",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
         "ticker": "TMHC",
         "name": "Taylor Morrison Home Corporation",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "TOL",
-        "name": "Toll Brothers, Inc.",
         "tv_sector": "Consumer durables",
         "industry": ""
       },
@@ -8473,18 +6379,6 @@
         "ticker": "TPB",
         "name": "Turning Point Brands, Inc.",
         "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "TPH",
-        "name": "Tri Pointe Homes, Inc.",
-        "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "TPR",
-        "name": "Tapestry, Inc.",
-        "tv_sector": "Retail trade",
         "industry": ""
       },
       {
@@ -8502,12 +6396,6 @@
       {
         "ticker": "TSN",
         "name": "Tyson Foods, Inc.",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "UA",
-        "name": "Under Armour, Inc.",
         "tv_sector": "Consumer non-durables",
         "industry": ""
       },
@@ -8542,12 +6430,6 @@
         "industry": ""
       },
       {
-        "ticker": "URBN",
-        "name": "Urban Outfitters, Inc.",
-        "tv_sector": "Retail trade",
-        "industry": ""
-      },
-      {
         "ticker": "USFD",
         "name": "US Foods Holding Corp.",
         "tv_sector": "Distribution services",
@@ -8560,21 +6442,9 @@
         "industry": ""
       },
       {
-        "ticker": "VFC",
-        "name": "V.F. Corporation",
-        "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
         "ticker": "VFS",
         "name": "VinFast Auto Ltd.",
         "tv_sector": "Consumer durables",
-        "industry": ""
-      },
-      {
-        "ticker": "VIPS",
-        "name": "Vipshop Holdings Limited",
-        "tv_sector": "Retail trade",
         "industry": ""
       },
       {
@@ -8587,12 +6457,6 @@
         "ticker": "VSTS",
         "name": "Vestis Corporation",
         "tv_sector": "Consumer non-durables",
-        "industry": ""
-      },
-      {
-        "ticker": "W",
-        "name": "Wayfair Inc.",
-        "tv_sector": "Retail trade",
         "industry": ""
       },
       {
@@ -8946,12 +6810,6 @@
         "industry": ""
       },
       {
-        "ticker": "GE",
-        "name": "GE Aerospace",
-        "tv_sector": "Electronic technology",
-        "industry": ""
-      },
-      {
         "ticker": "GFS",
         "name": "GlobalFoundries Inc.",
         "tv_sector": "Electronic technology",
@@ -8972,12 +6830,6 @@
       {
         "ticker": "GSIT",
         "name": "GSI Technology, Inc.",
-        "tv_sector": "Electronic technology",
-        "industry": ""
-      },
-      {
-        "ticker": "HEI",
-        "name": "Heico Corporation",
         "tv_sector": "Electronic technology",
         "industry": ""
       },
@@ -9014,12 +6866,6 @@
       {
         "ticker": "HPE",
         "name": "Hewlett Packard Enterprise Company",
-        "tv_sector": "Electronic technology",
-        "industry": ""
-      },
-      {
-        "ticker": "HXL",
-        "name": "Hexcel Corporation",
         "tv_sector": "Electronic technology",
         "industry": ""
       },
@@ -9378,12 +7224,6 @@
         "industry": ""
       },
       {
-        "ticker": "TXT",
-        "name": "Textron Inc.",
-        "tv_sector": "Electronic technology",
-        "industry": ""
-      },
-      {
         "ticker": "VECO",
         "name": "Veeco Instruments Inc.",
         "tv_sector": "Electronic technology",
@@ -9446,27 +7286,9 @@
     ],
     "Travel & Leisure": [
       {
-        "ticker": "AAL",
-        "name": "American Airlines Group, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
         "ticker": "AGH",
         "name": "Aureus Greenway Holdings Inc.",
         "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "ALGT",
-        "name": "Allegiant Travel Company",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "ALK",
-        "name": "Alaska Air Group, Inc.",
-        "tv_sector": "Transportation",
         "industry": ""
       },
       {
@@ -9512,18 +7334,6 @@
         "industry": ""
       },
       {
-        "ticker": "BLMN",
-        "name": "Bloomin' Brands, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "BROS",
-        "name": "Dutch Bros Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "BRSL",
         "name": "Brightstar Lottery PLC Trading under the Legal Name to begin at the market open on July 21, 2025.",
         "tv_sector": "Consumer services",
@@ -9532,18 +7342,6 @@
       {
         "ticker": "BTBD",
         "name": "BT Brands, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "BYD",
-        "name": "Boyd Gaming Corporation",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "CAKE",
-        "name": "The Cheesecake Factory Incorporated",
         "tv_sector": "Consumer services",
         "industry": ""
       },
@@ -9572,39 +7370,9 @@
         "industry": ""
       },
       {
-        "ticker": "CHH",
-        "name": "Choice Hotels International, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "CHRW",
-        "name": "C.H. Robinson Worldwide, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "CHTR",
-        "name": "Charter Communications, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "CIIT",
         "name": "Tianci International, Inc.",
         "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "CMCSA",
-        "name": "Comcast Corporation",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "CMG",
-        "name": "Chipotle Mexican Grill, Inc.",
-        "tv_sector": "Consumer services",
         "industry": ""
       },
       {
@@ -9626,21 +7394,9 @@
         "industry": ""
       },
       {
-        "ticker": "CSX",
-        "name": "CSX Corporation",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
         "ticker": "CYRX",
         "name": "CryoPort, Inc.",
         "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "CZR",
-        "name": "Caesars Entertainment, Inc.",
-        "tv_sector": "Consumer services",
         "industry": ""
       },
       {
@@ -9656,38 +7412,8 @@
         "industry": ""
       },
       {
-        "ticker": "DIS",
-        "name": "Walt Disney Company (The)",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "DKNG",
-        "name": "DraftKings Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "DPZ",
-        "name": "Domino's Pizza Inc",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "DRI",
-        "name": "Darden Restaurants, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "DRVN",
         "name": "Driven Brands Holdings Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "EAT",
-        "name": "Brinker International, Inc.",
         "tv_sector": "Consumer services",
         "industry": ""
       },
@@ -9704,18 +7430,6 @@
         "industry": ""
       },
       {
-        "ticker": "EXPD",
-        "name": "Expeditors International of Washington, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "FDX",
-        "name": "FedEx Corporation",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
         "ticker": "FIP",
         "name": "FTAI Infrastructure Inc.",
         "tv_sector": "Consumer services",
@@ -9728,20 +7442,8 @@
         "industry": ""
       },
       {
-        "ticker": "FLUT",
-        "name": "Flutter Entertainment plc",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "FOX",
         "name": "Fox Corporation",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "FUN",
-        "name": "Six Flags Entertainment Corporation",
         "tv_sector": "Consumer services",
         "industry": ""
       },
@@ -9773,18 +7475,6 @@
         "ticker": "GVH",
         "name": "Globavend Holdings Limited - Ord Shares",
         "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "GXO",
-        "name": "GXO Logistics, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "H",
-        "name": "Hyatt Hotels Corporation",
-        "tv_sector": "Consumer services",
         "industry": ""
       },
       {
@@ -9824,32 +7514,8 @@
         "industry": ""
       },
       {
-        "ticker": "JACK",
-        "name": "Jack In The Box Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "JBHT",
-        "name": "J.B. Hunt Transport Services, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "JBLU",
-        "name": "JetBlue Airways Corporation",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
         "ticker": "JTAI",
         "name": "Jet.AI Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "KEX",
-        "name": "Kirby Corporation",
         "tv_sector": "Transportation",
         "industry": ""
       },
@@ -9857,12 +7523,6 @@
         "ticker": "KLC",
         "name": "KinderCare Learning Companies, Inc.",
         "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "KNX",
-        "name": "Knight-Swift Transportation Holdings Inc.",
-        "tv_sector": "Transportation",
         "industry": ""
       },
       {
@@ -9902,33 +7562,9 @@
         "industry": ""
       },
       {
-        "ticker": "LUV",
-        "name": "Southwest Airlines Company",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "LVS",
-        "name": "Las Vegas Sands Corp.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "LYFT",
         "name": "Lyft, Inc.",
         "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "LYV",
-        "name": "Live Nation Entertainment, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "MCD",
-        "name": "McDonald's Corporation",
-        "tv_sector": "Consumer services",
         "industry": ""
       },
       {
@@ -9938,21 +7574,9 @@
         "industry": ""
       },
       {
-        "ticker": "MGM",
-        "name": "MGM Resorts International",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "MLCO",
         "name": "Melco Resorts & Entertainment Limited",
         "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "MRTN",
-        "name": "Marten Transport, Ltd.",
-        "tv_sector": "Transportation",
         "industry": ""
       },
       {
@@ -9980,12 +7604,6 @@
         "industry": ""
       },
       {
-        "ticker": "NSC",
-        "name": "Norfolk Southern Corporation",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
         "ticker": "NWS",
         "name": "News Corporation",
         "tv_sector": "Consumer services",
@@ -10004,20 +7622,8 @@
         "industry": ""
       },
       {
-        "ticker": "ODFL",
-        "name": "Old Dominion Freight Line, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
         "ticker": "OSW",
         "name": "OneSpaWorld Holdings Limited",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "PENN",
-        "name": "PENN Entertainment, Inc.",
         "tv_sector": "Consumer services",
         "industry": ""
       },
@@ -10025,12 +7631,6 @@
         "ticker": "PFGC",
         "name": "Performance Food Group Company",
         "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "PLAY",
-        "name": "Dave & Buster's Entertainment, Inc.",
-        "tv_sector": "Consumer services",
         "industry": ""
       },
       {
@@ -10070,18 +7670,6 @@
         "industry": ""
       },
       {
-        "ticker": "PZZA",
-        "name": "Papa John's International, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "QSR",
-        "name": "Restaurant Brands International Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "RBNE",
         "name": "Robin Energy Ltd.",
         "tv_sector": "Transportation",
@@ -10090,18 +7678,6 @@
       {
         "ticker": "RIME",
         "name": "Algorhythm Holdings, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "RRR",
-        "name": "Red Rock Resorts, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "RSI",
-        "name": "Rush Street Interactive, Inc.",
         "tv_sector": "Consumer services",
         "industry": ""
       },
@@ -10126,18 +7702,6 @@
       {
         "ticker": "SBGI",
         "name": "Sinclair, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "SBLK",
-        "name": "Star Bulk Carriers Corp.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "SBUX",
-        "name": "Starbucks Corporation",
         "tv_sector": "Consumer services",
         "industry": ""
       },
@@ -10172,26 +7736,8 @@
         "industry": ""
       },
       {
-        "ticker": "SHAK",
-        "name": "Shake Shack, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "SIRI",
-        "name": "SiriusXM Holdings Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "SNCY",
         "name": "Sun Country Airlines Holdings, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "SNDR",
-        "name": "Schneider National, Inc.",
         "tv_sector": "Transportation",
         "industry": ""
       },
@@ -10256,18 +7802,6 @@
         "industry": ""
       },
       {
-        "ticker": "TRIP",
-        "name": "TripAdvisor, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "TXRH",
-        "name": "Texas Roadhouse, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "UBER",
         "name": "Uber Technologies, Inc.",
         "tv_sector": "Transportation",
@@ -10280,26 +7814,8 @@
         "industry": ""
       },
       {
-        "ticker": "UNP",
-        "name": "Union Pacific Corporation",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "UPS",
-        "name": "United Parcel Service, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
         "ticker": "VAC",
         "name": "Marriott Vacations Worldwide Corporation",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "VIK",
-        "name": "Viking Holdings Ltd",
         "tv_sector": "Consumer services",
         "industry": ""
       },
@@ -10328,36 +7844,6 @@
         "industry": ""
       },
       {
-        "ticker": "WBD",
-        "name": "Warner Bros. Discovery, Inc. - Series A",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "WEN",
-        "name": "Wendy's Company (The)",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "WERN",
-        "name": "Werner Enterprises, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
-        "ticker": "WH",
-        "name": "Wyndham Hotels & Resorts, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "WING",
-        "name": "Wingstop Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
         "ticker": "WLY",
         "name": "John Wiley & Sons, Inc.",
         "tv_sector": "Consumer services",
@@ -10370,26 +7856,8 @@
         "industry": ""
       },
       {
-        "ticker": "WYNN",
-        "name": "Wynn Resorts, Limited",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "XPO",
-        "name": "XPO, Inc.",
-        "tv_sector": "Transportation",
-        "industry": ""
-      },
-      {
         "ticker": "XPOF",
         "name": "Xponential Fitness, Inc.",
-        "tv_sector": "Consumer services",
-        "industry": ""
-      },
-      {
-        "ticker": "YUM",
-        "name": "Yum! Brands, Inc.",
         "tv_sector": "Consumer services",
         "industry": ""
       },
