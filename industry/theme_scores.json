@@ -1,0 +1,937 @@
+{
+  "generated_at": "2026-04-25T15:58:44+00:00",
+  "as_of": "2026-04-24",
+  "benchmark": "SPY",
+  "windows": {
+    "1W": 5,
+    "1M": 21,
+    "3M": 63,
+    "6M": 126
+  },
+  "themes": {
+    "AI Infrastructure": {
+      "members": [
+        "NVDA",
+        "AVGO",
+        "AMD",
+        "MRVL",
+        "SMCI",
+        "DELL",
+        "ANET",
+        "VRT",
+        "ETN",
+        "PWR",
+        "GEV",
+        "EME",
+        "GNRC",
+        "CEG"
+      ],
+      "member_count": 14,
+      "rs_excess_pct": {
+        "1W": 4.69,
+        "1M": 6.97,
+        "3M": 26.05,
+        "6M": 42.58
+      },
+      "rs_rank": {
+        "1W": 77.8,
+        "1M": 85.2,
+        "3M": 88.9,
+        "6M": 88.9
+      },
+      "breadth_50": 85.7,
+      "breadth_200": 100.0,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 83.0,
+        "weekly": 84.3,
+        "monthly": 90.0
+      }
+    },
+    "Photonics": {
+      "members": [
+        "LITE",
+        "COHR",
+        "AAOI",
+        "GLW",
+        "IPGP",
+        "LASR",
+        "FN",
+        "MTSI",
+        "POET",
+        "ANET",
+        "CIEN"
+      ],
+      "member_count": 11,
+      "rs_excess_pct": {
+        "1W": 6.46,
+        "1M": 4.66,
+        "3M": 20.94,
+        "6M": 26.14
+      },
+      "rs_rank": {
+        "1W": 100.0,
+        "1M": 59.3,
+        "3M": 74.1,
+        "6M": 66.7
+      },
+      "breadth_50": 72.7,
+      "breadth_200": 81.8,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 85.7,
+        "weekly": 71.6,
+        "monthly": 70.8
+      }
+    },
+    "Fiber Optics": {
+      "members": [
+        "LITE",
+        "COHR",
+        "AAOI",
+        "GLW",
+        "CIEN",
+        "INFN"
+      ],
+      "member_count": 6,
+      "rs_excess_pct": {
+        "1W": 3.98,
+        "1M": 2.52,
+        "3M": 7.14,
+        "6M": 10.0
+      },
+      "rs_rank": {
+        "1W": 59.3,
+        "1M": 48.1,
+        "3M": 37.0,
+        "6M": 44.4
+      },
+      "breadth_50": 50.0,
+      "breadth_200": 83.3,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 59.2,
+        "weekly": 49.0,
+        "monthly": 47.9
+      }
+    },
+    "Memory & Storage": {
+      "members": [
+        "MU",
+        "WDC",
+        "STX",
+        "SNDK",
+        "NTAP"
+      ],
+      "member_count": 5,
+      "rs_excess_pct": {
+        "1W": 2.85,
+        "1M": -0.16,
+        "3M": 3.07,
+        "6M": 14.22
+      },
+      "rs_rank": {
+        "1W": 37.0,
+        "1M": 25.9,
+        "3M": 18.5,
+        "6M": 51.9
+      },
+      "breadth_50": 60.0,
+      "breadth_200": 80.0,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 44.0,
+        "weekly": 32.1,
+        "monthly": 38.9
+      }
+    },
+    "Semi Equipment": {
+      "members": [
+        "AMAT",
+        "LRCX",
+        "TER",
+        "KLAC",
+        "ASML",
+        "ENTG",
+        "MKSI",
+        "ACLS",
+        "ONTO",
+        "FORM",
+        "UCTT"
+      ],
+      "member_count": 11,
+      "rs_excess_pct": {
+        "1W": 5.16,
+        "1M": -1.32,
+        "3M": 4.0,
+        "6M": 3.64
+      },
+      "rs_rank": {
+        "1W": 85.2,
+        "1M": 7.4,
+        "3M": 25.9,
+        "6M": 22.2
+      },
+      "breadth_50": 54.5,
+      "breadth_200": 54.5,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 62.6,
+        "weekly": 32.8,
+        "monthly": 26.3
+      }
+    },
+    "Semiconductors": {
+      "members": [
+        "NVDA",
+        "AMD",
+        "AVGO",
+        "MRVL",
+        "QCOM",
+        "TXN",
+        "INTC",
+        "MU",
+        "ON",
+        "MCHP",
+        "ADI",
+        "NXPI",
+        "MPWR",
+        "SMCI"
+      ],
+      "member_count": 14,
+      "rs_excess_pct": {
+        "1W": 1.89,
+        "1M": 2.63,
+        "3M": 13.92,
+        "6M": 17.27
+      },
+      "rs_rank": {
+        "1W": 22.2,
+        "1M": 51.9,
+        "3M": 63.0,
+        "6M": 59.3
+      },
+      "breadth_50": 57.1,
+      "breadth_200": 71.4,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 42.6,
+        "weekly": 48.4,
+        "monthly": 61.5
+      }
+    },
+    "Big Tech": {
+      "members": [
+        "AAPL",
+        "MSFT",
+        "GOOGL",
+        "GOOG",
+        "AMZN",
+        "META",
+        "NVDA",
+        "TSLA"
+      ],
+      "member_count": 8,
+      "rs_excess_pct": {
+        "1W": 4.46,
+        "1M": 6.21,
+        "3M": 12.55,
+        "6M": 15.21
+      },
+      "rs_rank": {
+        "1W": 70.4,
+        "1M": 81.5,
+        "3M": 55.6,
+        "6M": 55.6
+      },
+      "breadth_50": 62.5,
+      "breadth_200": 62.5,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 74.9,
+        "weekly": 72.5,
+        "monthly": 60.5
+      }
+    },
+    "Defense": {
+      "members": [
+        "KTOS",
+        "AVAV",
+        "PLTR",
+        "HII",
+        "LHX",
+        "HWM",
+        "NOC",
+        "RTX",
+        "LMT",
+        "GD",
+        "TDG",
+        "BA"
+      ],
+      "member_count": 12,
+      "rs_excess_pct": {
+        "1W": 4.93,
+        "1M": 5.78,
+        "3M": 30.96,
+        "6M": 60.26
+      },
+      "rs_rank": {
+        "1W": 81.5,
+        "1M": 77.8,
+        "3M": 96.3,
+        "6M": 100.0
+      },
+      "breadth_50": 66.7,
+      "breadth_200": 91.7,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 80.2,
+        "weekly": 79.6,
+        "monthly": 93.9
+      }
+    },
+    "Drones": {
+      "members": [
+        "UMAC",
+        "ONDS",
+        "RDW",
+        "RCAT",
+        "AVAV",
+        "KTOS",
+        "AERT",
+        "DPRO",
+        "EH",
+        "ACHR",
+        "JOBY"
+      ],
+      "member_count": 11,
+      "rs_excess_pct": {
+        "1W": 4.0,
+        "1M": 7.05,
+        "3M": 21.87,
+        "6M": 40.63
+      },
+      "rs_rank": {
+        "1W": 63.0,
+        "1M": 92.6,
+        "3M": 77.8,
+        "6M": 85.2
+      },
+      "breadth_50": 72.7,
+      "breadth_200": 90.9,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 75.5,
+        "weekly": 81.5,
+        "monthly": 84.2
+      }
+    },
+    "Space": {
+      "members": [
+        "RKLB",
+        "ASTS",
+        "RDW",
+        "MNTS",
+        "PL",
+        "IRDM",
+        "VSAT",
+        "GSAT",
+        "SATX"
+      ],
+      "member_count": 9,
+      "rs_excess_pct": {
+        "1W": 4.05,
+        "1M": -1.03,
+        "3M": 11.35,
+        "6M": 7.94
+      },
+      "rs_rank": {
+        "1W": 66.7,
+        "1M": 14.8,
+        "3M": 51.9,
+        "6M": 29.6
+      },
+      "breadth_50": 77.8,
+      "breadth_200": 77.8,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 58.7,
+        "weekly": 40.2,
+        "monthly": 43.5
+      }
+    },
+    "Uranium": {
+      "members": [
+        "UUUU",
+        "CCJ",
+        "DNN",
+        "UEC",
+        "NXE",
+        "URG",
+        "LEU",
+        "BWXT",
+        "OKLO",
+        "SMR"
+      ],
+      "member_count": 10,
+      "rs_excess_pct": {
+        "1W": 5.2,
+        "1M": 8.77,
+        "3M": 27.85,
+        "6M": 44.75
+      },
+      "rs_rank": {
+        "1W": 88.9,
+        "1M": 96.3,
+        "3M": 92.6,
+        "6M": 92.6
+      },
+      "breadth_50": 100.0,
+      "breadth_200": 100.0,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 93.5,
+        "weekly": 94.8,
+        "monthly": 94.3
+      }
+    },
+    "Nuclear / SMR": {
+      "members": [
+        "OKLO",
+        "SMR",
+        "BWXT",
+        "LEU",
+        "CEG",
+        "VST"
+      ],
+      "member_count": 6,
+      "rs_excess_pct": {
+        "1W": 4.51,
+        "1M": 11.28,
+        "3M": 33.95,
+        "6M": 51.17
+      },
+      "rs_rank": {
+        "1W": 74.1,
+        "1M": 100.0,
+        "3M": 100.0,
+        "6M": 96.3
+      },
+      "breadth_50": 100.0,
+      "breadth_200": 100.0,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 87.0,
+        "weekly": 94.8,
+        "monthly": 98.9
+      }
+    },
+    "AI Power": {
+      "members": [
+        "VRT",
+        "ETN",
+        "PWR",
+        "GEV",
+        "EME",
+        "GNRC",
+        "CEG",
+        "VST",
+        "NRG",
+        "BE",
+        "PLUG"
+      ],
+      "member_count": 11,
+      "rs_excess_pct": {
+        "1W": 3.28,
+        "1M": 5.76,
+        "3M": 22.73,
+        "6M": 35.23
+      },
+      "rs_rank": {
+        "1W": 51.9,
+        "1M": 74.1,
+        "3M": 81.5,
+        "6M": 77.8
+      },
+      "breadth_50": 72.7,
+      "breadth_200": 100.0,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 65.4,
+        "weekly": 70.5,
+        "monthly": 82.0
+      }
+    },
+    "Solar": {
+      "members": [
+        "FSLR",
+        "ENPH",
+        "SEDG",
+        "RUN",
+        "NXT",
+        "ARRY",
+        "SHLS"
+      ],
+      "member_count": 7,
+      "rs_excess_pct": {
+        "1W": -0.75,
+        "1M": 1.39,
+        "3M": 10.29,
+        "6M": 9.29
+      },
+      "rs_rank": {
+        "1W": 3.7,
+        "1M": 37.0,
+        "3M": 48.1,
+        "6M": 40.7
+      },
+      "breadth_50": 42.9,
+      "breadth_200": 57.1,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 27.5,
+        "weekly": 32.9,
+        "monthly": 45.6
+      }
+    },
+    "Oil & Gas E&P": {
+      "members": [
+        "XOM",
+        "CVX",
+        "COP",
+        "EOG",
+        "PXD",
+        "OXY",
+        "FANG",
+        "DVN",
+        "MRO",
+        "PR"
+      ],
+      "member_count": 10,
+      "rs_excess_pct": {
+        "1W": 2.55,
+        "1M": 1.35,
+        "3M": -3.63,
+        "6M": -7.25
+      },
+      "rs_rank": {
+        "1W": 29.6,
+        "1M": 33.3,
+        "3M": 11.1,
+        "6M": 11.1
+      },
+      "breadth_50": 70.0,
+      "breadth_200": 20.0,
+      "trend_above_50ema": false,
+      "scores": {
+        "daily": 33.6,
+        "weekly": 34.8,
+        "monthly": 15.8
+      }
+    },
+    "Crypto / Miners": {
+      "members": [
+        "MARA",
+        "RIOT",
+        "CLSK",
+        "HUT",
+        "BITF",
+        "CIFR",
+        "WULF",
+        "IREN",
+        "COIN",
+        "MSTR",
+        "GLXY"
+      ],
+      "member_count": 11,
+      "rs_excess_pct": {
+        "1W": 0.9,
+        "1M": 1.12,
+        "3M": 9.89,
+        "6M": 17.9
+      },
+      "rs_rank": {
+        "1W": 7.4,
+        "1M": 29.6,
+        "3M": 44.4,
+        "6M": 63.0
+      },
+      "breadth_50": 45.5,
+      "breadth_200": 90.9,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 27.9,
+        "weekly": 29.8,
+        "monthly": 54.7
+      }
+    },
+    "Fintech": {
+      "members": [
+        "SQ",
+        "PYPL",
+        "SOFI",
+        "AFRM",
+        "HOOD",
+        "COIN",
+        "NU",
+        "BILL",
+        "TOST",
+        "MELI"
+      ],
+      "member_count": 10,
+      "rs_excess_pct": {
+        "1W": 3.95,
+        "1M": 4.98,
+        "3M": 15.69,
+        "6M": 8.39
+      },
+      "rs_rank": {
+        "1W": 55.6,
+        "1M": 66.7,
+        "3M": 66.7,
+        "6M": 33.3
+      },
+      "breadth_50": 70.0,
+      "breadth_200": 80.0,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 64.9,
+        "weekly": 64.9,
+        "monthly": 58.7
+      }
+    },
+    "Mega Banks": {
+      "members": [
+        "JPM",
+        "BAC",
+        "WFC",
+        "C",
+        "GS",
+        "MS",
+        "USB"
+      ],
+      "member_count": 7,
+      "rs_excess_pct": {
+        "1W": 1.68,
+        "1M": -5.47,
+        "3M": -8.37,
+        "6M": -20.07
+      },
+      "rs_rank": {
+        "1W": 14.8,
+        "1M": 3.7,
+        "3M": 3.7,
+        "6M": 3.7
+      },
+      "breadth_50": 28.6,
+      "breadth_200": 14.3,
+      "trend_above_50ema": false,
+      "scores": {
+        "daily": 12.6,
+        "weekly": 9.7,
+        "monthly": 5.3
+      }
+    },
+    "GLP-1 / Obesity": {
+      "members": [
+        "LLY",
+        "NVO",
+        "AMGN",
+        "VKTX",
+        "STRT",
+        "ALT",
+        "ZBH"
+      ],
+      "member_count": 7,
+      "rs_excess_pct": {
+        "1W": 3.06,
+        "1M": 4.01,
+        "3M": 4.47,
+        "6M": -5.45
+      },
+      "rs_rank": {
+        "1W": 44.4,
+        "1M": 55.6,
+        "3M": 29.6,
+        "6M": 14.8
+      },
+      "breadth_50": 57.1,
+      "breadth_200": 42.9,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 54.7,
+        "weekly": 49.7,
+        "monthly": 31.1
+      }
+    },
+    "Biotech (large)": {
+      "members": [
+        "LLY",
+        "NVO",
+        "AMGN",
+        "GILD",
+        "VRTX",
+        "REGN",
+        "BIIB",
+        "MRNA",
+        "BNTX"
+      ],
+      "member_count": 9,
+      "rs_excess_pct": {
+        "1W": 1.63,
+        "1M": 1.63,
+        "3M": 5.06,
+        "6M": 10.48
+      },
+      "rs_rank": {
+        "1W": 11.1,
+        "1M": 40.7,
+        "3M": 33.3,
+        "6M": 48.1
+      },
+      "breadth_50": 55.6,
+      "breadth_200": 55.6,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 34.1,
+        "weekly": 35.9,
+        "monthly": 42.2
+      }
+    },
+    "Cybersecurity": {
+      "members": [
+        "ZS",
+        "CRWD",
+        "PANW",
+        "FTNT",
+        "S",
+        "CYBR",
+        "NET",
+        "CHKP",
+        "OKTA",
+        "TENB"
+      ],
+      "member_count": 10,
+      "rs_excess_pct": {
+        "1W": 2.96,
+        "1M": 2.28,
+        "3M": 3.07,
+        "6M": 5.42
+      },
+      "rs_rank": {
+        "1W": 40.7,
+        "1M": 44.4,
+        "3M": 22.2,
+        "6M": 25.9
+      },
+      "breadth_50": 40.0,
+      "breadth_200": 70.0,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 47.5,
+        "weekly": 39.7,
+        "monthly": 33.8
+      }
+    },
+    "Quantum": {
+      "members": [
+        "IONQ",
+        "RGTI",
+        "QBTS",
+        "QUBT",
+        "ARQQ",
+        "IBM"
+      ],
+      "member_count": 6,
+      "rs_excess_pct": {
+        "1W": 2.09,
+        "1M": -1.17,
+        "3M": 8.66,
+        "6M": 8.85
+      },
+      "rs_rank": {
+        "1W": 25.9,
+        "1M": 11.1,
+        "3M": 40.7,
+        "6M": 37.0
+      },
+      "breadth_50": 50.0,
+      "breadth_200": 50.0,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 33.2,
+        "weekly": 24.4,
+        "monthly": 36.6
+      }
+    },
+    "Industrial / Picks": {
+      "members": [
+        "CAT",
+        "DE",
+        "URI",
+        "ETN",
+        "EMR",
+        "ROK"
+      ],
+      "member_count": 6,
+      "rs_excess_pct": {
+        "1W": 1.7,
+        "1M": 5.54,
+        "3M": 25.82,
+        "6M": 39.02
+      },
+      "rs_rank": {
+        "1W": 18.5,
+        "1M": 70.4,
+        "3M": 85.2,
+        "6M": 81.5
+      },
+      "breadth_50": 83.3,
+      "breadth_200": 100.0,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 49.4,
+        "weekly": 64.2,
+        "monthly": 84.1
+      }
+    },
+    "Travel & Leisure": {
+      "members": [
+        "BKNG",
+        "MAR",
+        "ABNB",
+        "RCL",
+        "CCL",
+        "NCLH",
+        "DAL",
+        "UAL",
+        "HLT",
+        "EXPE"
+      ],
+      "member_count": 10,
+      "rs_excess_pct": {
+        "1W": 3.25,
+        "1M": -0.61,
+        "3M": -0.53,
+        "6M": 2.37
+      },
+      "rs_rank": {
+        "1W": 48.1,
+        "1M": 22.2,
+        "3M": 14.8,
+        "6M": 18.5
+      },
+      "breadth_50": 40.0,
+      "breadth_200": 50.0,
+      "trend_above_50ema": false,
+      "scores": {
+        "daily": 35.6,
+        "weekly": 29.0,
+        "monthly": 22.3
+      }
+    },
+    "Retail / Consumer": {
+      "members": [
+        "WMT",
+        "COST",
+        "TGT",
+        "HD",
+        "LOW",
+        "DG",
+        "DLTR"
+      ],
+      "member_count": 7,
+      "rs_excess_pct": {
+        "1W": 2.55,
+        "1M": -1.01,
+        "3M": -3.81,
+        "6M": -12.82
+      },
+      "rs_rank": {
+        "1W": 33.3,
+        "1M": 18.5,
+        "3M": 7.4,
+        "6M": 7.4
+      },
+      "breadth_50": 28.6,
+      "breadth_200": 28.6,
+      "trend_above_50ema": false,
+      "scores": {
+        "daily": 25.6,
+        "weekly": 21.3,
+        "monthly": 12.2
+      }
+    },
+    "Hogue 2026": {
+      "members": [
+        "AMZN",
+        "PLTR",
+        "MRVL",
+        "MSFT",
+        "TSLA",
+        "GOOGL",
+        "NVDA",
+        "ZS"
+      ],
+      "member_count": 8,
+      "rs_excess_pct": {
+        "1W": 5.71,
+        "1M": 7.0,
+        "3M": 18.79,
+        "6M": 32.51
+      },
+      "rs_rank": {
+        "1W": 92.6,
+        "1M": 88.9,
+        "3M": 70.4,
+        "6M": 74.1
+      },
+      "breadth_50": 87.5,
+      "breadth_200": 87.5,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 91.6,
+        "weekly": 86.6,
+        "monthly": 76.8
+      }
+    },
+    "Top Recurring": {
+      "members": [
+        "NVDA",
+        "PLTR",
+        "AMZN",
+        "MSFT",
+        "GOOGL",
+        "META",
+        "TSLA",
+        "AMD",
+        "MRVL",
+        "ZS",
+        "SMCI",
+        "MU"
+      ],
+      "member_count": 12,
+      "rs_excess_pct": {
+        "1W": 6.19,
+        "1M": 4.95,
+        "3M": 13.28,
+        "6M": 30.85
+      },
+      "rs_rank": {
+        "1W": 96.3,
+        "1M": 63.0,
+        "3M": 59.3,
+        "6M": 70.4
+      },
+      "breadth_50": 75.0,
+      "breadth_200": 83.3,
+      "trend_above_50ema": true,
+      "scores": {
+        "daily": 85.1,
+        "weekly": 70.9,
+        "monthly": 66.8
+      }
+    }
+  },
+  "_demo_data": true
+}

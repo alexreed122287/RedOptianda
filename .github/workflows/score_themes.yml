@@ -1,0 +1,41 @@
+name: Score Industry Themes
+
+on:
+  schedule:
+    # 22:00 UTC = 5 PM EST / 6 PM EDT — runs ~30 min after market close
+    - cron: '0 22 * * 1-5'
+  workflow_dispatch:  # allow manual trigger from Actions tab
+
+permissions:
+  contents: write
+
+jobs:
+  score:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install deps
+        run: pip install yfinance pandas numpy requests
+
+      - name: Run scoring engine
+        env:
+          TRADIER_TOKEN: ${{ secrets.TRADIER_TOKEN }}
+        run: python industry/score_themes.py
+
+      - name: Commit refreshed scores
+        run: |
+          git config user.name "theme-scorer-bot"
+          git config user.email "theme-scorer@users.noreply.github.com"
+          git add industry/theme_scores.json industry/theme_scores_history.json
+          if git diff --staged --quiet; then
+            echo "No changes to commit"
+          else
+            git commit -m "auto: refresh theme scores $(date -u +%Y-%m-%d)"
+            git push
+          fi

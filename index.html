@@ -679,6 +679,71 @@ tr.sel-row td{background:var(--blu3);}
 .chain-tab{padding:6px 14px;font-family:var(--ff-mono);font-size:11px;color:var(--gry);cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.5px;}
 .chain-tab.active{color:var(--ambb);border-bottom-color:var(--ambb);}
 .chain-tab:hover{color:var(--wht);}
+
+/* INDUSTRY tab */
+#tab-ind{padding:0;}
+#tab-ind .ind-scroll{flex:1;overflow-y:auto;padding:10px 12px;display:flex;flex-direction:column;gap:10px;}
+#tab-ind .ind-desc{color:var(--gry);font-size:11px;font-family:var(--ff-mono);padding:6px 10px;background:var(--amb3);border-left:2px solid var(--amb);line-height:1.5;}
+#tab-ind .ind-layout{display:grid;grid-template-columns:1fr 360px;gap:12px;}
+@media (max-width:1100px){#tab-ind .ind-layout{grid-template-columns:1fr;}}
+#tab-ind .ind-panel{background:var(--bg1);border:var(--bdr);border-radius:var(--rad);overflow:hidden;}
+#tab-ind .ind-phead{padding:8px 12px;border-bottom:var(--bdr);font-family:var(--ff-brand);font-weight:700;font-size:11px;letter-spacing:2px;color:var(--amb);text-transform:uppercase;display:flex;align-items:center;gap:8px;}
+#tab-ind .ind-phead::before{content:"";width:6px;height:6px;background:var(--amb);border-radius:50%;box-shadow:0 0 10px rgba(0,212,255,.6);}
+#tab-ind .ind-phead .ind-pill{margin-left:auto;font-size:10px;color:var(--gry);padding:2px 8px;background:var(--bg2);border-radius:10px;letter-spacing:.05em;text-transform:none;font-family:var(--ff-mono);font-weight:400;}
+#tab-ind .ind-tbl{width:100%;border-collapse:collapse;font-size:13px;}
+#tab-ind .ind-tbl thead th{text-align:left;padding:7px 10px;color:var(--gry);font-weight:600;font-family:var(--ff-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:var(--bdr);background:var(--bg2);position:sticky;top:0;z-index:1;cursor:default;text-shadow:none;}
+#tab-ind .ind-tbl thead th.r{text-align:right;}
+#tab-ind .ind-tbl tbody tr{border-bottom:var(--bdr);cursor:pointer;transition:background .15s;}
+#tab-ind .ind-tbl tbody tr:hover{background:var(--amb3);}
+#tab-ind .ind-tbl tbody tr.expanded{background:var(--amb3);}
+#tab-ind .ind-tbl td{padding:7px 10px;color:var(--wht);}
+#tab-ind .ind-tbl td.r{text-align:right;font-family:var(--ff-mono);font-size:12px;}
+#tab-ind .ind-tbl td.tname{font-weight:600;}
+#tab-ind .ind-tbl td.tname .ind-tv{color:var(--gry2);font-size:10px;font-family:var(--ff-mono);margin-right:6px;letter-spacing:.05em;}
+#tab-ind .ind-rank{display:inline-block;width:24px;text-align:center;color:var(--gry2);font-family:var(--ff-mono);font-size:11px;}
+#tab-ind .ind-sb{display:inline-block;position:relative;height:18px;min-width:64px;font-family:var(--ff-mono);font-size:11px;font-weight:600;padding:0 8px;line-height:18px;border-radius:3px;text-align:right;background:var(--bg2);}
+#tab-ind .ind-sb .ind-fill{position:absolute;left:0;top:0;bottom:0;border-radius:3px;z-index:0;}
+#tab-ind .ind-sb .ind-v{position:relative;z-index:1;}
+#tab-ind .s-hi .ind-fill{background:linear-gradient(90deg,rgba(0,230,118,.4),rgba(0,230,118,.7));}
+#tab-ind .s-md .ind-fill{background:linear-gradient(90deg,rgba(255,215,64,.3),rgba(255,215,64,.55));}
+#tab-ind .s-lo .ind-fill{background:linear-gradient(90deg,rgba(255,0,230,.3),rgba(255,0,230,.55));}
+#tab-ind .ind-rs{display:inline-block;padding:2px 7px;border-radius:3px;font-family:var(--ff-mono);font-size:11px;font-weight:600;min-width:38px;text-align:center;}
+#tab-ind .rs-90{background:rgba(0,230,118,.18);color:var(--grn);}
+#tab-ind .rs-70{background:rgba(0,212,255,.15);color:var(--ambb);}
+#tab-ind .rs-50{background:rgba(255,215,64,.12);color:var(--wrn);}
+#tab-ind .rs-30{background:rgba(255,0,230,.12);color:var(--ngo);}
+#tab-ind .rs-10{background:rgba(255,0,230,.22);color:var(--ngo);}
+#tab-ind .rs-na{color:var(--gry2);}
+#tab-ind .ind-trend-up{color:var(--grn);}
+#tab-ind .ind-trend-dn{color:var(--ngo);}
+#tab-ind .ind-expand{background:var(--bg0)!important;cursor:default;}
+#tab-ind .ind-expand:hover{background:var(--bg0)!important;}
+#tab-ind .ind-expand td{padding:12px 18px;border-bottom:2px solid var(--bdr);}
+#tab-ind .ind-mhead{margin-bottom:8px;color:var(--gry);font-family:var(--ff-mono);font-size:11px;}
+#tab-ind .ind-mgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(110px,1fr));gap:5px;}
+#tab-ind .ind-mtag{font-family:var(--ff-mono);font-size:11px;padding:4px 8px;border-radius:3px;background:var(--bg2);border:var(--bdr);color:var(--wht);text-align:center;letter-spacing:.03em;}
+#tab-ind .ind-copy{margin-top:10px;font-family:var(--ff-mono);font-size:10px;color:var(--gry2);}
+#tab-ind .ind-copy span{color:var(--ambb);user-select:all;word-break:break-all;}
+#tab-ind .ind-heatmap{padding:10px;display:grid;grid-template-columns:repeat(auto-fill,minmax(108px,1fr));gap:4px;}
+#tab-ind .ind-heat{padding:8px;border-radius:3px;font-family:var(--ff-mono);font-size:10px;display:flex;flex-direction:column;gap:2px;cursor:pointer;transition:transform .15s;border:1px solid transparent;}
+#tab-ind .ind-heat:hover{transform:scale(1.04);border-color:var(--amb);z-index:5;}
+#tab-ind .ind-heat .nm{font-size:10px;font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+#tab-ind .ind-heat .sc{font-size:13px;font-weight:700;}
+#tab-ind .ind-summary{padding:12px;}
+#tab-ind .ind-srow{display:flex;justify-content:space-between;padding:6px 0;border-bottom:1px dashed var(--bdr);font-size:12px;}
+#tab-ind .ind-srow:last-child{border:0;}
+#tab-ind .ind-srow .lbl{color:var(--gry);font-family:var(--ff-mono);font-size:11px;letter-spacing:.05em;text-transform:uppercase;}
+#tab-ind .ind-srow .val{color:var(--ambb);font-family:var(--ff-mono);font-weight:600;}
+#tab-ind .ind-aligned{padding:10px 12px;}
+#tab-ind .ind-ai{padding:7px 0;border-bottom:var(--bdr);display:flex;justify-content:space-between;align-items:center;gap:8px;}
+#tab-ind .ind-ai:last-child{border:0;}
+#tab-ind .ind-ai .nm{font-weight:600;font-size:13px;color:var(--wht);}
+#tab-ind .ind-ai .scs{display:flex;gap:5px;}
+#tab-ind .ind-mini{font-family:var(--ff-mono);font-size:10px;padding:2px 6px;border-radius:3px;background:var(--bg2);color:var(--ambb);min-width:30px;text-align:center;}
+#tab-ind .ind-chart{padding:10px;}
+#tab-ind .ind-chart canvas{width:100%;height:240px;display:block;}
+#tab-ind .ind-empty{padding:40px 20px;text-align:center;color:var(--gry);font-family:var(--ff-mono);font-size:12px;}
+#tab-ind .ind-tbl-scroll{max-height:65vh;overflow-y:auto;}
 .chain-bar{display:flex;align-items:center;gap:8px;padding:6px 10px;background:var(--bg1);border-bottom:var(--bdr);flex-shrink:0;flex-wrap:wrap;}
 .chain-bar select{background:var(--bg2);border:var(--bdr);color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:3px 6px;border-radius:3px;}
 .chain-wrap{overflow-y:auto;flex:1;}
@@ -759,6 +824,7 @@ tr.sel-row td{background:var(--blu3);}
   <button class="ntab" onclick="switchTab('sent')">&#9678; SENTIMENT</button>
   <button class="ntab" onclick="switchTab('api')">&#9881; API</button>
   <button class="ntab" onclick="switchTab('pf')">PORTFOLIO</button>
+  <button class="ntab" onclick="switchTab('ind')">&#9889; INDUSTRY</button>
   <button class="ntab" onclick="switchTab('cw')">&#9734; OPTIONS WATCHLIST</button>
 </div>
 <div id="app">
@@ -1748,6 +1814,72 @@ tr.sel-row td{background:var(--blu3);}
   </div>
 
 </div>
+
+<div class="tab-pane" id="tab-ind">
+  <div class="stats-bar">
+    <div class="stat-box"><div class="stat-label">AS OF</div><div class="stat-val amb" id="ind-asof">--</div></div>
+    <div class="stat-box"><div class="stat-label">THEMES</div><div class="stat-val amb" id="ind-count">--</div></div>
+    <div class="stat-box"><div class="stat-label">TOP-DECILE</div><div class="stat-val amb" id="ind-topdec">--</div></div>
+    <div class="stat-box"><div class="stat-label">ABOVE 50EMA</div><div class="stat-val amb" id="ind-trend">--</div></div>
+    <div class="stat-box"><div class="stat-label">AVG B50</div><div class="stat-val amb" id="ind-b50">--</div></div>
+    <div class="stat-box" style="flex:0 0 auto;display:flex;align-items:center;padding:6px 10px;border-left:1px solid var(--bg3);">
+      <button class="btn blu" style="font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="renderIndustryTab(true)" title="Reload theme_scores.json from disk">&#8635; REFRESH</button>
+    </div>
+  </div>
+  <div class="chain-tabs">
+    <div class="chain-tab active" id="ind-tf-daily" onclick="indSetTF('daily')">DAILY</div>
+    <div class="chain-tab" id="ind-tf-weekly" onclick="indSetTF('weekly')">WEEKLY</div>
+    <div class="chain-tab" id="ind-tf-monthly" onclick="indSetTF('monthly')">MONTHLY</div>
+    <div style="flex:1;"></div>
+    <div style="padding:6px 12px;font-family:var(--ff-mono);font-size:10px;color:var(--gry2);align-self:center;">benchmark <b style="color:var(--ambb);" id="ind-bench">SPY</b></div>
+  </div>
+  <div class="ind-scroll" id="ind-scroll">
+    <div class="ind-desc" id="ind-desc">Loading…</div>
+    <div class="ind-layout">
+      <div class="ind-panel">
+        <div class="ind-phead">Theme Rankings <span class="ind-pill" id="ind-rank-count">--</span></div>
+        <div class="ind-tbl-scroll">
+          <table class="ind-tbl" id="ind-tbl">
+            <thead>
+              <tr>
+                <th></th>
+                <th>Theme</th>
+                <th class="r">Score</th>
+                <th class="r">RS 1W</th>
+                <th class="r">RS 1M</th>
+                <th class="r">RS 3M</th>
+                <th class="r">RS 6M</th>
+                <th class="r">B50</th>
+                <th class="r">Trend</th>
+                <th class="r">N</th>
+              </tr>
+            </thead>
+            <tbody id="ind-body"><tr><td colspan="10" class="ind-empty">Loading theme scores…</td></tr></tbody>
+          </table>
+        </div>
+      </div>
+      <div style="display:flex;flex-direction:column;gap:12px;">
+        <div class="ind-panel">
+          <div class="ind-phead">Triple-Timeframe Aligned <span class="ind-pill">top decile all 3</span></div>
+          <div class="ind-aligned" id="ind-aligned"></div>
+        </div>
+        <div class="ind-panel">
+          <div class="ind-phead">Heatmap <span class="ind-pill">top 24</span></div>
+          <div class="ind-heatmap" id="ind-heatmap"></div>
+        </div>
+        <div class="ind-panel">
+          <div class="ind-phead">Top 5 History (30d)</div>
+          <div class="ind-chart"><canvas id="ind-hist"></canvas></div>
+        </div>
+        <div class="ind-panel">
+          <div class="ind-phead">Diagnostics</div>
+          <div class="ind-summary" id="ind-diag"></div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
 </div><!-- /#app -->
 <div id="roll-modal" style="display:none;position:fixed;inset:0;z-index:9000;background:rgba(0,0,0,.82);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto;">
   <div style="background:var(--bg1);border:1px solid var(--amb);border-radius:8px;max-width:660px;width:95%;margin:0 auto 40px;padding:0;">
@@ -3394,12 +3526,11 @@ function switchTab(id){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.ntab').forEach(function(b){b.classList.remove('active');});
   var pane=eid('tab-'+id);if(pane)pane.classList.add('active');
-  var ids=['bs','sc','wl','pos','order','al','sent','closed','api','pf','cw'];
-  var idx=ids.indexOf(id);
-  var btns=document.querySelectorAll('.ntab');
-  if(btns[idx])btns[idx].classList.add('active');
+  var btn=document.querySelector('.ntab[onclick="switchTab(\''+id+'\')"]');
+  if(btn)btn.classList.add('active');
   if(id==='al')renderAlerts();
   if(id==='sent'){ if(typeof renderSentimentTab==='function') renderSentimentTab(); }
+  if(id==='ind')renderIndustryTab();
   if(id==='closed'){
     // Load from cache first, show stale banner
     var cachedClosed = cacheGet('op_cache_closed');
@@ -14199,6 +14330,243 @@ function init(){
     if(isMarketHours && G.acctId) fetchBalances();
   }, 120000);
 }
+// ════════════════════════════════════════════════════════════════════
+//  INDUSTRY STRENGTH TAB
+// ════════════════════════════════════════════════════════════════════
+var IND = {
+  data:null, hist:null, tf:'daily', expanded:{}, loaded:false, loading:false
+};
+var IND_TF_DESC = {
+  daily:   'DAILY VIEW — weights short-term momentum heavily (50% RS 1W + 25% RS 1M + 15% breadth + 10% trend). Use to spot fresh rotation. Higher noise; cross-check with weekly.',
+  weekly:  'WEEKLY VIEW — balanced short/intermediate (20% RS 1W + 50% RS 1M + 15% RS 3M + 15% breadth). Best signal for new positions in your typical 14-21 DTE call window.',
+  monthly: 'MONTHLY VIEW — durable leadership (15% RS 1M + 40% RS 3M + 30% RS 6M + 15% breadth 200). Slower-moving, lower noise, identifies sustained sector leadership for LEAPs/longer holds.'
+};
+
+function indEsc(s){ return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
+function indFmt(v,p){ if(p==null)p=1; return v==null||isNaN(v)?'—':Number(v).toFixed(p); }
+function indRsClass(v){
+  if(v==null||isNaN(v))return 'rs-na';
+  if(v>=90)return 'rs-90';
+  if(v>=70)return 'rs-70';
+  if(v>=30)return 'rs-50';
+  if(v>=10)return 'rs-30';
+  return 'rs-10';
+}
+function indScoreClass(v){ if(v>=70)return 's-hi'; if(v>=40)return 's-md'; return 's-lo'; }
+
+function renderIndustryTab(forceReload){
+  if(forceReload){ IND.loaded=false; IND.data=null; IND.hist=null; IND.expanded={}; }
+  if(IND.loading) return;
+  if(IND.loaded){ indDraw(); return; }
+  IND.loading = true;
+  var body = document.getElementById('ind-body');
+  if(body) body.innerHTML = '<tr><td colspan="10" class="ind-empty">Loading theme scores…</td></tr>';
+  var cb = '?cb=' + Date.now();
+  Promise.all([
+    fetch('./industry/theme_scores.json' + cb).then(function(r){ if(!r.ok) throw new Error('scores '+r.status); return r.json(); }),
+    fetch('./industry/theme_scores_history.json' + cb).then(function(r){ return r.ok ? r.json() : null; }).catch(function(){ return null; })
+  ]).then(function(arr){
+    IND.data = arr[0]; IND.hist = arr[1]; IND.loaded = true; IND.loading = false;
+    indDraw();
+  }).catch(function(e){
+    IND.loading = false;
+    if(body) body.innerHTML = '<tr><td colspan="10" class="ind-empty">No data yet — run <code>python industry/score_themes.py</code> to generate <code>theme_scores.json</code><br><span style="color:var(--ngo);">'+indEsc(e.message||String(e))+'</span></td></tr>';
+  });
+}
+
+function indSetTF(tf){
+  if(tf===IND.tf) return;
+  IND.tf = tf;
+  IND.expanded = {};
+  ['daily','weekly','monthly'].forEach(function(k){
+    var el = document.getElementById('ind-tf-'+k);
+    if(el) el.classList.toggle('active', k===tf);
+  });
+  if(IND.loaded) indDraw();
+}
+
+function indDraw(){
+  if(!IND.data) return;
+  var d = IND.data, themes = d.themes || {};
+  document.getElementById('ind-asof').textContent = d.as_of || '--';
+  document.getElementById('ind-bench').textContent = d.benchmark || 'SPY';
+  var keys = Object.keys(themes);
+  document.getElementById('ind-count').textContent = keys.length;
+
+  var ranked = keys.map(function(n){
+    var t = themes[n]; var sc = (t.scores||{})[IND.tf];
+    return { name:n, t:t, score:(sc==null?0:sc) };
+  }).sort(function(a,b){ return b.score - a.score; });
+
+  var topDecCount = Math.max(3, Math.floor(ranked.length * 0.1));
+  document.getElementById('ind-topdec').textContent = topDecCount;
+  var trendUp = ranked.filter(function(r){ return r.t.trend_above_50ema; }).length;
+  document.getElementById('ind-trend').textContent = trendUp + '/' + ranked.length;
+  var bSum = 0, bN = 0;
+  ranked.forEach(function(r){ if(r.t.breadth_50!=null){ bSum += r.t.breadth_50; bN++; } });
+  document.getElementById('ind-b50').textContent = bN ? indFmt(bSum/bN,0)+'%' : '--';
+
+  document.getElementById('ind-desc').textContent = IND_TF_DESC[IND.tf];
+  document.getElementById('ind-rank-count').textContent = ranked.length + ' ranked';
+
+  // Main table
+  var rows = ranked.map(function(r,i){
+    var t = r.t;
+    var isTV = r.name.indexOf('[TV] ') === 0;
+    var disp = isTV ? r.name.slice(5) : r.name;
+    var tagHTML = isTV ? '<span class="ind-tv">[TV]</span>' : '';
+    var expanded = !!IND.expanded[r.name];
+    var rk = t.rs_rank || {};
+    var html = '<tr data-theme="'+indEsc(r.name)+'" class="'+(expanded?'expanded':'')+'">'
+      + '<td><span class="ind-rank">'+(i+1)+'</span></td>'
+      + '<td class="tname">'+tagHTML+indEsc(disp)+'</td>'
+      + '<td class="r"><span class="ind-sb '+indScoreClass(r.score)+'"><span class="ind-fill" style="width:'+Math.max(2,Math.min(100,r.score))+'%"></span><span class="ind-v">'+indFmt(r.score)+'</span></span></td>'
+      + '<td class="r"><span class="ind-rs '+indRsClass(rk['1W'])+'">'+indFmt(rk['1W'],0)+'</span></td>'
+      + '<td class="r"><span class="ind-rs '+indRsClass(rk['1M'])+'">'+indFmt(rk['1M'],0)+'</span></td>'
+      + '<td class="r"><span class="ind-rs '+indRsClass(rk['3M'])+'">'+indFmt(rk['3M'],0)+'</span></td>'
+      + '<td class="r"><span class="ind-rs '+indRsClass(rk['6M'])+'">'+indFmt(rk['6M'],0)+'</span></td>'
+      + '<td class="r">'+indFmt(t.breadth_50,0)+'%</td>'
+      + '<td class="r '+(t.trend_above_50ema?'ind-trend-up':'ind-trend-dn')+'">'+(t.trend_above_50ema?'▲':'▼')+'</td>'
+      + '<td class="r" style="color:var(--gry2);">'+(t.member_count||(t.members||[]).length)+'</td>'
+      + '</tr>';
+    if(expanded){
+      var rx = t.rs_excess_pct || {};
+      html += '<tr class="ind-expand"><td colspan="10">'
+        + '<div class="ind-mhead">MEMBERS ('+(t.members||[]).length+') · RS_excess vs '+indEsc(d.benchmark||'SPY')+': '
+        + '1W '+indFmt(rx['1W'])+'pp · 1M '+indFmt(rx['1M'])+'pp · 3M '+indFmt(rx['3M'])+'pp · 6M '+indFmt(rx['6M'])+'pp · breadth_200 '+indFmt(t.breadth_200,0)+'%</div>'
+        + '<div class="ind-mgrid">'+(t.members||[]).map(function(m){return '<div class="ind-mtag">'+indEsc(m)+'</div>';}).join('')+'</div>'
+        + '<div class="ind-copy">COPY-READY: <span>'+indEsc((t.members||[]).join(','))+'</span></div>'
+        + '</td></tr>';
+    }
+    return html;
+  }).join('');
+  var body = document.getElementById('ind-body');
+  body.innerHTML = rows || '<tr><td colspan="10" class="ind-empty">No themes scored.</td></tr>';
+  body.querySelectorAll('tr[data-theme]').forEach(function(tr){
+    tr.addEventListener('click', function(){
+      var nm = tr.getAttribute('data-theme');
+      if(IND.expanded[nm]) delete IND.expanded[nm]; else IND.expanded[nm] = true;
+      indDraw();
+    });
+  });
+
+  // Triple-aligned panel
+  function topNames(tfk){
+    return Object.keys(themes).map(function(n){ return [n, ((themes[n].scores||{})[tfk]||0)]; })
+      .sort(function(a,b){ return b[1]-a[1]; })
+      .slice(0, topDecCount).map(function(x){ return x[0]; });
+  }
+  var dT = {}; topNames('daily').forEach(function(n){ dT[n]=1; });
+  var wT = {}; topNames('weekly').forEach(function(n){ wT[n]=1; });
+  var mT = {}; topNames('monthly').forEach(function(n){ mT[n]=1; });
+  var aligned = Object.keys(dT).filter(function(n){ return wT[n] && mT[n]; });
+  var alBox = document.getElementById('ind-aligned');
+  if(!aligned.length){
+    alBox.innerHTML = '<div style="color:var(--gry2);font-size:12px;padding:8px 0;">No themes in top decile across all 3 timeframes yet.</div>';
+  } else {
+    alBox.innerHTML = aligned.map(function(n){
+      var th = themes[n], sc = th.scores || {};
+      var disp = n.indexOf('[TV] ')===0 ? n.slice(5) : n;
+      return '<div class="ind-ai"><span class="nm">'+indEsc(disp)+'</span><div class="scs">'
+        + '<span class="ind-mini" title="daily">'+indFmt(sc.daily,0)+'</span>'
+        + '<span class="ind-mini" title="weekly">'+indFmt(sc.weekly,0)+'</span>'
+        + '<span class="ind-mini" title="monthly">'+indFmt(sc.monthly,0)+'</span>'
+        + '</div></div>';
+    }).join('');
+  }
+
+  // Heatmap
+  var heat = document.getElementById('ind-heatmap');
+  heat.innerHTML = ranked.slice(0,24).map(function(r){
+    var disp = r.name.indexOf('[TV] ')===0 ? r.name.slice(5) : r.name;
+    var v = Math.max(0, Math.min(100, r.score));
+    var bg, color;
+    if(v>=70){ bg = 'rgba(0,230,118,'+(0.15+v/250).toFixed(3)+')'; color = '#5fffaa'; }
+    else if(v>=40){ bg = 'rgba(255,215,64,'+(0.10+v/400).toFixed(3)+')'; color = '#ffe580'; }
+    else { bg = 'rgba(255,0,230,'+(0.10+(100-v)/400).toFixed(3)+')'; color = '#ff7ad9'; }
+    return '<div class="ind-heat" style="background:'+bg+';color:'+color+';" title="'+indEsc(disp)+': '+indFmt(r.score)+'">'
+      + '<span class="nm">'+indEsc(disp)+'</span><span class="sc">'+indFmt(r.score,0)+'</span></div>';
+  }).join('');
+
+  // Diagnostics
+  var above70 = ranked.filter(function(r){ return r.score>=70; }).length;
+  var curated = ranked.filter(function(r){ return r.name.indexOf('[TV] ')!==0; }).length;
+  document.getElementById('ind-diag').innerHTML =
+      '<div class="ind-srow"><span class="lbl">themes scored</span><span class="val">'+ranked.length+'</span></div>'
+    + '<div class="ind-srow"><span class="lbl">score &ge; 70</span><span class="val">'+above70+'</span></div>'
+    + '<div class="ind-srow"><span class="lbl">above 50-EMA trend</span><span class="val">'+trendUp+' / '+ranked.length+'</span></div>'
+    + '<div class="ind-srow"><span class="lbl">avg breadth (50d)</span><span class="val">'+(bN?indFmt(bSum/bN):'-')+'%</span></div>'
+    + '<div class="ind-srow"><span class="lbl">curated themes</span><span class="val">'+curated+'</span></div>';
+
+  indDrawHist(ranked.slice(0,5).map(function(r){ return r.name; }));
+}
+
+function indDrawHist(topNames){
+  var cv = document.getElementById('ind-hist');
+  if(!cv) return;
+  var dpr = window.devicePixelRatio || 1;
+  var W = cv.width = Math.max(1, cv.offsetWidth) * dpr;
+  var H = cv.height = 240 * dpr;
+  var ctx = cv.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  if(!IND.hist || !IND.hist.dates || IND.hist.dates.length < 2){
+    ctx.fillStyle = '#7090c8'; ctx.font = (12*dpr)+'px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('(history accumulates over daily runs)', W/2, H/2);
+    return;
+  }
+  var dates = IND.hist.dates.slice(-30);
+  var series = IND.hist[IND.tf] || {};
+  var lines = topNames.map(function(n){ return { name:n, vals:(series[n]||[]).slice(-30) }; })
+                      .filter(function(l){ return l.vals.some(function(v){ return v!=null; }); });
+  if(!lines.length){
+    ctx.fillStyle = '#7090c8'; ctx.font = (12*dpr)+'px JetBrains Mono';
+    ctx.textAlign = 'center';
+    ctx.fillText('(history accumulates over daily runs)', W/2, H/2);
+    return;
+  }
+  var padL = 30*dpr, padR = 8*dpr, padT = 10*dpr, padB = 18*dpr;
+  var cw = W - padL - padR, ch = H - padT - padB;
+  var yMin = 0, yMax = 100;
+  var xStep = cw / Math.max(1, dates.length - 1);
+  ctx.strokeStyle = '#0e1826'; ctx.lineWidth = 1*dpr;
+  ctx.font = (9*dpr)+'px JetBrains Mono'; ctx.fillStyle = '#7090c8';
+  for(var v=0; v<=100; v+=25){
+    var y = padT + ch - ((v - yMin) / (yMax - yMin)) * ch;
+    ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
+    ctx.textAlign = 'right'; ctx.fillText(v, padL - 4*dpr, y + 3*dpr);
+  }
+  var palette = ['#00d4ff','#ff00e6','#00e676','#ffd740','#ff7ad9'];
+  lines.forEach(function(line, idx){
+    ctx.strokeStyle = palette[idx % palette.length];
+    ctx.lineWidth = 1.5*dpr;
+    ctx.beginPath();
+    var started = false;
+    line.vals.forEach(function(val, i){
+      if(val == null) return;
+      var x = padL + i * xStep;
+      var y = padT + ch - ((val - yMin) / (yMax - yMin)) * ch;
+      if(!started){ ctx.moveTo(x,y); started = true; } else { ctx.lineTo(x,y); }
+    });
+    ctx.stroke();
+  });
+  ctx.font = (9*dpr)+'px JetBrains Mono';
+  var lx = padL;
+  lines.forEach(function(line, idx){
+    var disp = line.name.indexOf('[TV] ')===0 ? line.name.slice(5) : line.name;
+    var lbl = disp.length > 14 ? disp.slice(0,13) + '…' : disp;
+    ctx.fillStyle = palette[idx % palette.length];
+    ctx.textAlign = 'left';
+    ctx.fillText('● ' + lbl, lx, H - 4*dpr);
+    lx += ctx.measureText('● ' + lbl).width + 12*dpr;
+  });
+}
+
+window.addEventListener('resize', function(){
+  if(IND.loaded && document.getElementById('tab-ind').classList.contains('active')) indDraw();
+});
+
 window.addEventListener('DOMContentLoaded',init);</script>
 </body>
 
