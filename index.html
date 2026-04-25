@@ -675,6 +675,14 @@ tr.sel-row td{background:var(--blu3);}
   .step-cfg-field{width:auto !important;}
 }
 
+/* SENTIMENT tab: iframe needs explicit viewport-fill height because the
+   parent chain (html → body → #app → tab-pane) doesn't propagate a defined
+   height — other tabs are sized by their inner content (tables/lists),
+   but an iframe falls back to its default 150px. The 80px buffer covers
+   the header (32px) + nav (~45px) above #app on wide viewports; narrow
+   viewports where the header wraps will scroll a bit, which is fine. */
+#tab-sent{height:calc(100vh - 80px);min-height:500px;}
+#tab-sent #sent-iframe{height:100%;min-height:500px;}
 .chain-tabs{display:flex;gap:0;border-bottom:var(--bdr);background:var(--bg1);flex-shrink:0;}
 .chain-tab{padding:6px 14px;font-family:var(--ff-mono);font-size:11px;color:var(--gry);cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.5px;}
 .chain-tab.active{color:var(--ambb);border-bottom-color:var(--ambb);}
