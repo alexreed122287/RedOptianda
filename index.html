@@ -12394,9 +12394,15 @@ function updateHeaderQuotes(){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
 var APP_VERSION = '1.0';
-var TRADIER_KEY_DEFAULT  = 'v3IedXxG27RPOg3QqBgOSN2EacHR';
-var TRADIER_ACCT_DEFAULT = 'VA21850433';
-var FMP_KEY_DEFAULT = 'IPvsKpxwgJfimD4BIjF5ntLiNGuAPrqQ'; // shared team key \u2014 individual keys override via API tab
+// Page-source fallback constants removed. Each visitor now provides their own
+// API credentials via the API tab (or, for Tradier, sets up the worker proxy
+// at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
+// The 60+ call sites that read these vars use `typeof X !== 'undefined' && X`
+// guards, so an empty string here cleanly disables the fallback path without
+// touching any caller.
+var TRADIER_KEY_DEFAULT  = '';
+var TRADIER_ACCT_DEFAULT = '';
+var FMP_KEY_DEFAULT      = '';
 
 function saveAppSettings(){
   try{
