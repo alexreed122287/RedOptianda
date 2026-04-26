@@ -2,4 +2,5 @@
 # tracked; everything else (installed deps, generated extracts) is not.
 node_modules/
 extracted-scripts.js
+sections/
 package-lock.json
