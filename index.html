@@ -3088,6 +3088,20 @@ function _fmpProcessQueue(){
   if(window._fmpActive >= window._FMP_MAX_CONCURRENT) return;
   if(!window._fmpQueue.length) return;
 
+  // P-3: also gate on the circuit-breaker (403/402 trip) here. fmpFetch's
+  // entry-gate at line 3165 only rejects NEW callers, but requests already
+  // sitting in the queue at trip time would still fire through this loop,
+  // each returning 403 and re-tripping the breaker (advancing the cooldown
+  // and re-logging the warning). Drain the queue with rejection on a
+  // tripped breaker so in-flight 403 spam stops at the first one.
+  if(typeof window._isFmpCircuitOpen === 'function' && window._isFmpCircuitOpen()){
+    while(window._fmpQueue.length){
+      var qd = window._fmpQueue.shift();
+      qd.reject(new Error('FMP circuit breaker open'));
+    }
+    return;
+  }
+
   // Respect rate-limit cooldown
   if(window._fmpRateLimited > 0){
     if(Date.now() - window._fmpRateLimited < window._FMP_COOLDOWN_MS){
@@ -3139,15 +3153,27 @@ function _fmpProcessQueue(){
         q.reject(new Error('FMP rate limit cooldown'));
       }
     } else if(r.status === 402 || r.status === 403){
-      window._fmpDead = Date.now();
-      console.warn('[FMP] Circuit breaker tripped on', r.status, '\u2014 silencing FMP for ' +
-                   Math.round(window._FMP_CIRCUIT_RESET_MS/60000) + ' min');
-      // One-shot toast so the user sees this \u2014 was silently disabling FMP
-      // with no UI feedback, leaving the auto-trader to evaluate against
-      // half-enriched results until manual page refresh.
-      if (!window._fmpDeadToastShown && typeof toast === 'function') {
+      // P-3: only set _fmpDead AND log on the first 403 of a trip cycle.
+      // Previously every in-flight 403 ran this block, which advanced the
+      // _fmpDead timestamp (extending the cooldown each time) AND re-logged
+      // the same WARN line \u2014 production logs showed 3 identical "Circuit
+      // breaker tripped" warnings for CXAI / HIVE / VLN that were just
+      // parallel in-flight requests after the breaker was already open.
+      // Use the same _fmpDeadToastShown flag as the trip-once-per-cycle gate
+      // (it's reset by _isFmpCircuitOpen on auto-reset).
+      if (!window._fmpDeadToastShown) {
+        window._fmpDead = Date.now();
         window._fmpDeadToastShown = true;
-        toast('\u26a0 FMP returned ' + r.status + ' \u2014 paused 30min. Auto-trader will skip FMP-dependent rules until then.');
+        console.warn('[FMP] Circuit breaker tripped on', r.status, '\u2014 silencing FMP for ' +
+                     Math.round(window._FMP_CIRCUIT_RESET_MS/60000) + ' min');
+        if (typeof toast === 'function') {
+          toast('\u26a0 FMP returned ' + r.status + ' \u2014 paused 30min. Auto-trader will skip FMP-dependent rules until then.');
+        }
+        // Drain the queue so subsequent in-flight requests don't even fire.
+        while(window._fmpQueue.length){
+          var qx = window._fmpQueue.shift();
+          qx.reject(new Error('FMP circuit breaker open'));
+        }
       }
     }
     return r;
@@ -15864,7 +15890,14 @@ function cacheGet(key){
 var T_CACHE = {};                     // url → {data, ts}
 var T_CACHE_MAX_ENTRIES = 500;        // hard ceiling — evict oldest when exceeded
 var T_RATE = { recent: [], pending: [], drainScheduled: false, throttledUntil: 0 };
-var T_RATE_CAP_PER_MIN = 110;         // 10% closer to Tradier's 120/min ceiling for faster enrichment;
+// P-2: was 110, but the deployed worker proxy enforces 100/min/IP
+// (worker/tradier-proxy/src/index.js:58 RATE_PER_IP_PER_MIN). The browser
+// thought it was safely under Tradier's 120/min upstream cap and burst
+// up to 110, but the proxy is the actual chokepoint and cut off at 100,
+// returning a steady stream of 429s in production logs. Lowering to 95
+// gives 5% headroom below the proxy gate. To raise this, bump the
+// proxy's RATE_PER_IP_PER_MIN in lockstep and redeploy.
+var T_RATE_CAP_PER_MIN = 95;
                                        // still leaves headroom for the proxy's own rate-limit overhead
 var T_CACHE_GC_LAST = 0;
 
