@@ -1,7 +1,7 @@
 {
-  "generated_at": "2026-04-25T21:19:47+00:00",
+  "generated_at": "2026-04-25T23:10:21+00:00",
   "universe_size": 2548,
-  "theme_count": 102,
+  "theme_count": 103,
   "themes": {
     "AI Infrastructure": [
       "NVDA",
@@ -18,6 +18,22 @@
       "EME",
       "GNRC",
       "CEG"
+    ],
+    "Data Center": [
+      "APLD",
+      "NBIS",
+      "CRWV",
+      "IREN",
+      "EQIX",
+      "DLR",
+      "COR",
+      "WULF",
+      "CIFR",
+      "VRT",
+      "ETN",
+      "NTAP",
+      "SMCI",
+      "DELL"
     ],
     "Photonics": [
       "LITE",

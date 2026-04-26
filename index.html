@@ -892,8 +892,12 @@ tr.sel-row td{background:var(--blu3);}
   </div>
 </div>
 <div id="nav">
-  <button class="ntab active" onclick="switchTab('bs')">BUY SIGNALS</button>
-  <button class="ntab" onclick="switchTab('sc')">FULL SCANNER</button>
+  <!-- BUY SIGNALS button hidden — FULL SCANNER has the same data with more
+       columns. Underlying tab pane (id="tab-bs") + bs-detail/bs-empty DOM
+       still exist so the high-conviction code paths + auto-trader detail
+       rendering keep working. -->
+  <button class="ntab" style="display:none;" onclick="switchTab('bs')">BUY SIGNALS</button>
+  <button class="ntab active" onclick="switchTab('sc')">FULL SCANNER</button>
   <button class="ntab" onclick="switchTab('wl')">WATCHLIST</button>
   <button class="ntab" onclick="switchTab('pos')">POSITIONS</button>
   <button class="ntab" onclick="switchTab('order')">ORDER TICKET</button>
@@ -904,10 +908,14 @@ tr.sel-row td{background:var(--blu3);}
   <button class="ntab" onclick="switchTab('ind')">INDUSTRY</button>
   <button class="ntab" onclick="switchTab('perf')" title="Per-rule win rate, IV/HV bucket P&amp;L, and Kelly position sizing — drives data-backed strategy iteration">&#9650; PERFORMANCE</button>
   <button class="ntab" onclick="switchTab('gex')" title="Gamma exposure / 30DTE options-flow (call vs put OI) for the top 200 enriched tickers. Drives the GEX Call Heavy rule.">GEX / FLOW</button>
-  <button class="ntab" onclick="switchTab('cw')">&#9734; OPTIONS WATCHLIST</button>
+  <!-- OPTIONS WATCHLIST button hidden per user request — underlying tab pane
+       (id="tab-cw") + cwRenderTable code path retained in case of re-enable. -->
+  <button class="ntab" style="display:none;" onclick="switchTab('cw')">&#9734; OPTIONS WATCHLIST</button>
 </div>
 <div id="app">
-<div class="tab-pane active" id="tab-bs">
+<!-- BUY SIGNALS pane no longer "active" by default — user removed the tab.
+     FULL SCANNER pane (#tab-sc below) gets the active class instead. -->
+<div class="tab-pane" id="tab-bs">
   <div class="stats-bar">
     <div class="stat-box"><div class="stat-label">GO SIGNALS</div><div class="stat-val go" id="bs-go">--</div></div>
     <div class="stat-box"><div class="stat-label">NO-GO</div><div class="stat-val nogo" id="bs-nogo">--</div></div>
@@ -945,7 +953,7 @@ tr.sel-row td{background:var(--blu3);}
     </div>
   </div>
 </div>
-<div class="tab-pane" id="tab-sc">
+<div class="tab-pane active" id="tab-sc">
   <!-- Mobile-only: condensed action bar with SCAN + Filters toggle -->
   <button type="button" class="mobile-filter-toggle show" onclick="toggleMobileFilters()" id="sc-mobile-filter-btn">
     <span>☰</span><span>FILTERS</span><span class="mft-arr">▾</span>
@@ -999,7 +1007,7 @@ tr.sel-row td{background:var(--blu3);}
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-tf" onchange="applyFilters()"> <span>TF Aligned 2/3</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-ema200" onchange="applyFilters()"> <span>Above EMA200</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-vol" onchange="applyFilters()"> <span>Vol &gt; Avg</span></label>
-    <label class="ind-filter-lbl" title="Hide tickers with earnings within N days. Earnings = binary event; even good signals turn into 50/50 coin flips."><input type="checkbox" class="ind-filter" id="filt-no-earn" onchange="applyFilters()"> <span>No Earnings &lt;<input type="number" id="filt-earn-days" value="7" min="1" max="30" style="width:32px;font-size:10px;padding:1px 3px;background:var(--bg2);border:1px solid var(--bg3);color:var(--amb);" onchange="applyFilters()" onclick="event.stopPropagation()">d</span></label>
+    <label class="ind-filter-lbl" title="Hide tickers with earnings within N days. Earnings = binary event; even good signals turn into 50/50 coin flips. Default 1 day — bump higher to be more conservative."><input type="checkbox" class="ind-filter" id="filt-no-earn" onchange="applyFilters()"> <span>No Earnings &lt;<input type="number" id="filt-earn-days" value="1" min="1" max="30" style="width:32px;font-size:10px;padding:1px 3px;background:var(--bg2);border:1px solid var(--bg3);color:var(--amb);" onchange="applyFilters()" onclick="event.stopPropagation()">d</span></label>
     <label class="ind-filter-lbl" title="Sector rotation overlay — only show tickers in themes with daily composite score >= 75 (top quartile, prevailing institutional flow)"><input type="checkbox" class="ind-filter" id="filt-strong-sector" onchange="applyFilters()"> <span>Strong Sector</span></label>
     <input type="text" id="sc-search" placeholder="Search ticker..." oninput="onScSearch()" style="margin-left:auto;font-family:var(--ff-mono);font-size:11px;padding:3px 8px;background:var(--bg1);border:1px solid var(--bg3);border-radius:3px;color:var(--amb);width:160px;">
     <span id="sc-filter-count" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);"></span>
@@ -1013,6 +1021,8 @@ tr.sel-row td{background:var(--blu3);}
       <label style="font-size:11px;color:var(--gry);">Min AvgVol <input type="number" id="sc-minavgvol" value="500000" min="100000" step="100000" style="width:80px;font-size:11px;" title="Min average daily volume"></label>
       <label style="font-size:11px;color:var(--gry);">Today Vol % <input type="number" id="sc-volratio" placeholder="any" min="0" max="200" style="width:46px;font-size:11px;" title="Today volume must be at least X% of avg volume. Leave blank to skip this filter.">%</label>
       <label style="font-size:11px;color:var(--gry);" title="Filter OUT tickers where the option contract costs more than this amount. Uses last scanned option price.">Max Opt $ <input type="number" id="sc-maxoptprice" placeholder="any" min="0" step="0.50" style="width:58px;font-size:11px;"></label>
+      <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--grn);color:var(--grn);" onclick="saveScanSettings()" title="Save current screener + filter settings to localStorage. Restored on every page load.">&#128190; SAVE SETTINGS</button>
+      <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--gry2);color:var(--gry);" onclick="resetScanSettings()" title="Reset screener + filters to factory defaults. Does NOT clear saved API keys or tokens.">&#8634; RESET DEFAULTS</button>
     </div>
     <span id="sc-universe-label" style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);margin-left:4px;"></span>
   </div>
@@ -9803,6 +9813,77 @@ function applyFilters(){
   renderScan();
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  SAVE / RESET / LOAD SCAN SETTINGS — persistence for screener + filter state
+// ═══════════════════════════════════════════════════════════════════════════
+// Saves every input on the SCAN tab toolbar (price/vol/ratio screener inputs,
+// signal dropdown, min-score, indicator filter checkboxes, earnings days,
+// max-opt-price). Restored on page load via loadScanSettings() hooked into
+// init(). RESET DEFAULTS button reverts to the factory values defined in HTML.
+
+var SCAN_SETTINGS_KEY = 'rrjcar_scan_settings_v1';
+
+// Field-id → factory default (for Reset). Inputs map to their HTML defaults;
+// checkboxes default to false unless noted.
+var SCAN_SETTING_DEFAULTS = {
+  'sc-minprice':     '1',
+  'sc-maxprice':     '',
+  'sc-minavgvol':    '500000',
+  'sc-volratio':     '',
+  'sc-maxoptprice':  '',
+  'sc-minscore':     '89',
+  'sc-sig':          'GO',
+  'filt-earn-days':  '1'
+};
+var SCAN_FILTER_CHECKBOXES = [
+  'filt-analyst','filt-gex','filt-proven','filt-52hi','filt-rs',
+  'filt-macd','filt-tf','filt-ema200','filt-vol','filt-no-earn','filt-strong-sector'
+];
+
+function saveScanSettings(){
+  try {
+    var snap = { ts: Date.now(), inputs: {}, checkboxes: {} };
+    Object.keys(SCAN_SETTING_DEFAULTS).forEach(function(id){
+      var el = eid(id);
+      if (el) snap.inputs[id] = el.value;
+    });
+    SCAN_FILTER_CHECKBOXES.forEach(function(id){
+      var el = eid(id);
+      if (el) snap.checkboxes[id] = !!el.checked;
+    });
+    localStorage.setItem(SCAN_SETTINGS_KEY, JSON.stringify(snap));
+    if (typeof toast === 'function') toast('Scan settings saved');
+  } catch(e) { if (typeof toast === 'function') toast('Save failed: '+e.message); }
+}
+
+function loadScanSettings(){
+  try {
+    var raw = localStorage.getItem(SCAN_SETTINGS_KEY);
+    if (!raw) return;
+    var snap = JSON.parse(raw);
+    if (snap.inputs) Object.keys(snap.inputs).forEach(function(id){
+      var el = eid(id); if (el) el.value = snap.inputs[id];
+    });
+    if (snap.checkboxes) SCAN_FILTER_CHECKBOXES.forEach(function(id){
+      var el = eid(id); if (el && id in snap.checkboxes) el.checked = !!snap.checkboxes[id];
+    });
+  } catch(e){ /* corrupt — ignore, leave HTML defaults */ }
+}
+
+function resetScanSettings(){
+  if (!confirm('Reset all screener + filter settings to factory defaults?\n\nThis does NOT clear your saved API keys, proxy URL, or trade tokens.')) return;
+  Object.keys(SCAN_SETTING_DEFAULTS).forEach(function(id){
+    var el = eid(id); if (el) el.value = SCAN_SETTING_DEFAULTS[id];
+  });
+  SCAN_FILTER_CHECKBOXES.forEach(function(id){
+    var el = eid(id); if (el) el.checked = false;
+  });
+  try { localStorage.removeItem(SCAN_SETTINGS_KEY); } catch(e){}
+  if (typeof applyFilters === 'function') applyFilters();
+  if (typeof reclassifyGoThreshold === 'function') reclassifyGoThreshold();
+  if (typeof toast === 'function') toast('Scan settings reset to defaults');
+}
+
 function clearFilters(){
   // Reset dropdowns
   if(eid('sc-sect'))        eid('sc-sect').value = '';
@@ -13975,22 +14056,28 @@ function checkHighConvictionSignals(results){
     fireBrowserNotif(r.ticker, r.score, r.sector, price, rulesSummary);
     fireEmailAlert(r.ticker, r.score, r.sector, price, rulesSummary);
     fired.push(r.ticker);
-    if(doAutoFill || doAutoSubmit){
-      (function(signal){
-        var tradierKey = _getTradierKey();
-        if(tradierKey){
-          fetchOptionContract(signal.ticker, signal.price, function(optData){
-            if(doAutoSubmit){
-              if(G_HC_CURRENT){ G_HC_MODAL_QUEUE.push({r:signal, optData:optData||null}); addAlert(signal.ticker, '\u2605 Queued \u2014 another signal is processing', 'warn'); }
-              else { autoFillHighConviction(signal, optData||null); showAutoSubmitModal(signal, optData||null); }
-            } else if(doAutoFill){ autoFillHighConviction(signal, optData||null); }
-          });
-        } else {
-          autoFillHighConviction(signal, null);
-          if(doAutoSubmit) showAutoSubmitModal(signal, null);
-        }
-      })(r);
-    }
+    // AUTO-FILL DISABLED \u2014 user explicitly opted out of being routed to a
+    // pre-filled order ticket on every high-conviction signal. Notifications
+    // (toast + browser notif + email) still fire, but the user keeps full
+    // control over when to actually open an order ticket. To re-enable,
+    // uncomment the block below.
+    //
+    // if(doAutoFill || doAutoSubmit){
+    //   (function(signal){
+    //     var tradierKey = _getTradierKey();
+    //     if(tradierKey){
+    //       fetchOptionContract(signal.ticker, signal.price, function(optData){
+    //         if(doAutoSubmit){
+    //           if(G_HC_CURRENT){ G_HC_MODAL_QUEUE.push({r:signal, optData:optData||null}); addAlert(signal.ticker, '\u2605 Queued \u2014 another signal is processing', 'warn'); }
+    //           else { autoFillHighConviction(signal, optData||null); showAutoSubmitModal(signal, optData||null); }
+    //         } else if(doAutoFill){ autoFillHighConviction(signal, optData||null); }
+    //       });
+    //     } else {
+    //       autoFillHighConviction(signal, null);
+    //       if(doAutoSubmit) showAutoSubmitModal(signal, null);
+    //     }
+    //   })(r);
+    // }
   });
   if(fired.length > 0){
     toast('\u2605 High-conviction signals: ' + fired.join(', '));
@@ -17494,6 +17581,8 @@ function init(){
   applySmartExitsToUi();     // reflect into checkboxes + start poller if enabled
   // Long-calls-only UX: restore "Hide NO-GO" preference
   if (typeof loadBsHideNoGo === 'function') loadBsHideNoGo();
+  // Restore screener + filter settings (Save Settings button writes the snapshot)
+  if (typeof loadScanSettings === 'function') loadScanSettings();
   // GEX cache + auto-schedule
   if (typeof loadGexCache === 'function') loadGexCache();
   if (typeof loadGexSchedule === 'function') {

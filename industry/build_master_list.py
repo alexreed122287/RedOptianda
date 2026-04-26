@@ -62,6 +62,8 @@ CURATED_THEMES = {
     # --- AI / Compute stack ---
     "AI Infrastructure":   ["NVDA", "AVGO", "AMD", "MRVL", "SMCI", "DELL", "ANET",
                             "VRT", "ETN", "PWR", "GEV", "EME", "GNRC", "CEG"],
+    "Data Center":         ["APLD", "NBIS", "CRWV", "IREN", "EQIX", "DLR", "COR",
+                            "WULF", "CIFR", "VRT", "ETN", "NTAP", "SMCI", "DELL"],
     "Photonics":           ["LITE", "COHR", "AAOI", "GLW", "IPGP", "LASR", "FN",
                             "MTSI", "POET", "ANET", "CIEN"],
     "Fiber Optics":        ["LITE", "COHR", "AAOI", "GLW", "CIEN", "INFN"],
