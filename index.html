@@ -896,6 +896,7 @@ tr.sel-row td{background:var(--blu3);}
   <button class="ntab" onclick="switchTab('pf')">PORTFOLIO</button>
   <button class="ntab" onclick="switchTab('ind')">INDUSTRY</button>
   <button class="ntab" onclick="switchTab('perf')" title="Per-rule win rate, IV/HV bucket P&amp;L, and Kelly position sizing — drives data-backed strategy iteration">&#9650; PERFORMANCE</button>
+  <button class="ntab" onclick="switchTab('gex')" title="Gamma exposure / 30DTE options-flow (call vs put OI) for the top 200 enriched tickers. Drives the GEX Call Heavy rule.">GEX / FLOW</button>
   <button class="ntab" onclick="switchTab('cw')">&#9734; OPTIONS WATCHLIST</button>
 </div>
 <div id="app">
@@ -1901,6 +1902,39 @@ tr.sel-row td{background:var(--blu3);}
 
   </div>
 </div>
+<!-- ═══════════════════════════════════════════════════════
+     GEX / FLOW — gamma exposure + 30DTE call vs put OI flow.
+     The GEX Call Heavy rule reads from this tab's data.
+     ═══════════════════════════════════════════════════════ -->
+<div class="tab-pane" id="tab-gex">
+  <div class="flt-bar" style="justify-content:space-between;align-items:center;">
+    <div style="display:flex;align-items:center;gap:10px;">
+      <span style="font-family:var(--ff-brand);font-size:12px;color:var(--amb);letter-spacing:2px;">&#9650; GEX / FLOW</span>
+      <span style="color:var(--gry);font-size:10px;">30DTE options-flow (call vs put OI) for top 200 ranked tickers</span>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center;">
+      <span id="gex-ts" style="color:var(--gry);font-size:10px;">Click RUN to fetch flow data</span>
+      <button class="btn blu" style="font-size:11px;padding:5px 14px;" onclick="runGex()" title="Fetch 30DTE options chain for the top 200 ranked tickers (~4 min, paced by Tradier rate limit). Auto-fires 20s after every scan.">&#8635; RUN GEX</button>
+    </div>
+  </div>
+  <div class="split" style="display:flex;flex:1;overflow:hidden;">
+    <div class="tbl-wrap" id="gx-tbl-wrap" style="flex:1;overflow:auto;">
+      <div class="empty-det" style="min-height:200px;">
+        <div class="ei">&#9650;</div>
+        <p>Click RUN GEX to fetch 30DTE options-flow data for the top 200 ranked scan results.<br>
+           <span style="color:var(--gry);font-size:11px;">~400 Tradier calls, ~4 min, paced by rate limit.<br>
+           Auto-fires 20s after every scan.</span></p>
+      </div>
+    </div>
+    <div id="gx-detail" style="flex:1;border-left:var(--bdr);overflow:auto;display:none;">
+    </div>
+    <div id="gx-det-empty" style="flex:1;border-left:var(--bdr);overflow:auto;">
+      <div class="empty-det" style="min-height:200px;"><div class="ei">&#9632;</div>
+        <p>Click a ticker row to see its detail panel.</p></div>
+    </div>
+  </div>
+</div>
+
 <!-- moved #app close to after tab-pf -->
 <div class="tab-pane" id="tab-cw">
   <div class="flt-bar" style="justify-content:space-between;align-items:center;">
@@ -4084,6 +4118,14 @@ function switchTab(id){
   if(id==='cw'){cwRenderTable();}
   if(id==='pf'){ if(typeof renderPortfolio==='function') renderPortfolio(); }
   if(id==='perf'){ if(typeof renderPerformanceTab==='function') renderPerformanceTab(); }
+  if(id==='gex'){
+    // If GEX data already exists (auto-trigger fired or user previously ran),
+    // re-render the table. Otherwise show the empty-state — the user can
+    // click RUN GEX manually or wait for the next scan's auto-trigger.
+    if(G.gexData && G.gexData.length > 0){
+      try { if(typeof renderGex==='function') renderGex(); } catch(e){}
+    }
+  }
   if(id==='order'){
     var sym=eid('ord-sym').value.trim();
     if(sym)fetchLiveQuote();
@@ -10017,8 +10059,10 @@ function renderScan(){
 
 <script>
 function runGex(){
-  var wrap=eid('gx-tbl-wrap');
-  if(!wrap) return;
+  // Wrap element + status are OPTIONAL — renderGex() handles missing wrap
+  // gracefully (returns early). runGex still computes G.gexData even when
+  // there's no UI to render it, so the rule scorecard's GEX rule has data
+  // to evaluate. Was bailing here before, leaving G.gexData empty forever.
   var tsEl=eid('gex-ts'); if(tsEl) tsEl.textContent='Updated: '+new Date().toLocaleTimeString();
 
   // GEX coverage cap. Was 35 (top 35 GO + top 15 NOGO, then sliced) \u2014 meaning
