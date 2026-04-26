@@ -438,6 +438,7 @@ def composite_scores(raw: dict[str, dict]) -> dict[str, dict]:
 def append_history(theme_scores: dict[str, dict], asof: str) -> None:
     """Maintain a rolling history of just the composite scores for trend charts."""
     history: dict = {}
+    bak = HISTORY_JSON.with_suffix(HISTORY_JSON.suffix + ".bak")
     if HISTORY_JSON.exists():
         try:
             history = json.loads(HISTORY_JSON.read_text())
@@ -445,7 +446,6 @@ def append_history(theme_scores: dict[str, dict], asof: str) -> None:
             # Primary file is corrupt — try the .bak written by atomic_write_json.
             # Without this fallback, a single mid-write kill silently reset
             # history to {}, wiping 180 days of trend data on the next run.
-            bak = HISTORY_JSON.with_suffix(HISTORY_JSON.suffix + ".bak")
             if bak.exists():
                 try:
                     history = json.loads(bak.read_text())
@@ -456,6 +456,22 @@ def append_history(theme_scores: dict[str, dict], asof: str) -> None:
             else:
                 history = {}
                 print(f"      ⚠ {HISTORY_JSON.name} corrupt and no .bak — starting fresh history")
+    elif bak.exists():
+        # HC-E: file-missing recovery. atomic_write_json sequence is:
+        #   1. write tmp
+        #   2. rename target -> bak
+        #   3. rename tmp -> target
+        # If a kill lands between steps 2 and 3, the next run sees no
+        # primary file but a perfectly good .bak. Without this branch, the
+        # JSONDecodeError handler above never fires (because the primary
+        # doesn't exist) and history starts fresh as {}, silently wiping
+        # 180 days of trend data on the very next successful write.
+        try:
+            history = json.loads(bak.read_text())
+            print(f"      ⚠ {HISTORY_JSON.name} missing — recovered from .bak ({len(history.get('dates', []))} days). Likely killed mid-rename last run.")
+        except json.JSONDecodeError:
+            history = {}
+            print(f"      ⚠ {HISTORY_JSON.name} missing AND .bak corrupt — starting fresh history")
     history.setdefault("dates", [])
     history.setdefault("daily", {})
     history.setdefault("weekly", {})

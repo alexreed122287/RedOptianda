@@ -2603,6 +2603,11 @@ function _updateTradeTokenBadge(){
     el.style.borderColor = 'rgba(255,0,230,0.30)';
     el.title = 'Trade authorization required to place / cancel orders. Click to enter session token.';
   }
+  // HC-A: refresh smart-exit status text so the "TRADE LOCKED" warning
+  // clears the moment user arms the token (or appears when they clear it).
+  if (typeof _renderSmartExitStatus === 'function') {
+    try { _renderSmartExitStatus(); } catch(e){}
+  }
 }
 
 function promptTradeToken(){
@@ -6107,6 +6112,24 @@ async function closePositionMarket(p, reason){
       headers: { Authorization: 'Bearer '+creds.key, Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
       body: body
     });
+    // HC-A: detect 403 trade-token rejection. Fire one persistent toast +
+    // alert so the user sees that smart-exits are silently failing \u2014 and
+    // KNOWS to arm the trade token. Without this the smart-exit poller
+    // would 403 every 60s with no visible signal beyond a console warning.
+    if (r.status === 403) {
+      var rawTxt = '';
+      try { rawTxt = await r.clone().text(); } catch(_){}
+      console.error('[smart-exit] worker 403:', rawTxt.slice(0,200));
+      if (!window._smartExit403ToastShown) {
+        window._smartExit403ToastShown = true;
+        try { toast('\u26a0 SMART EXIT 403 \u2014 arm the TRADE badge in the header. Auto-close is currently failing on every position.'); } catch(e){}
+        try { addAlert(p.symbol, 'SMART EXIT BLOCKED: TRADE token not armed. Click TRADE badge in header.', 'nogo'); } catch(e){}
+        // Re-arm the smart-exit status so the warning shows even if user
+        // re-arms then clears the token mid-session
+        if (typeof _renderSmartExitStatus === 'function') _renderSmartExitStatus();
+      }
+      return false;
+    }
     var d = await r.json();
     if (d && d.order && d.order.id) {
       console.log('[smart-exit] order placed:', d.order.id);
@@ -6114,6 +6137,8 @@ async function closePositionMarket(p, reason){
       pod.smartExitTriggered = Date.now();
       try { localStorage.setItem('rrjcar_pos_open', JSON.stringify(G.posOpenData)); } catch(e){}
       try { toast('SMART EXIT: ' + p.symbol + ' (' + reason.split(':')[0] + ')'); } catch(e){}
+      // Reset the 403 toast latch on success so a future drift gets re-toasted
+      window._smartExit403ToastShown = false;
       return true;
     }
     var errMsg = (d && (d.errors || d.error)) ? JSON.stringify(d.errors || d.error).slice(0,200) : 'no order.id';
@@ -6128,7 +6153,27 @@ async function closePositionMarket(p, reason){
 }
 
 // Single eval pass \u2014 checks every open position against enabled rules.
+//
+// REENTRANCY GUARD (HC-B): the 60s setInterval doesn't await prior iterations.
+// If a closePositionMarket POST takes >60s (slow Tradier, retry, network),
+// the next tick fires while the first is still in flight \u2014 and BOTH can hit
+// closePositionMarket for the same symbol because pod.smartExitTriggered is
+// only set AFTER the order returns. Result: duplicate market-close orders
+// for the same position. Single-flight guarantee solves it.
 async function checkSmartExits(){
+  if (G._smartExitRunning) {
+    console.warn('[smart-exit] previous evaluation still in flight \u2014 skipping this tick');
+    return;
+  }
+  G._smartExitRunning = true;
+  try {
+    await _checkSmartExitsImpl();
+  } finally {
+    G._smartExitRunning = false;
+  }
+}
+
+async function _checkSmartExitsImpl(){
   var s = G.smartExits;
   if (!s.enabled) return;
   if (!G.positions || G.positions.length === 0) return;
@@ -6210,14 +6255,23 @@ async function checkSmartExits(){
 
 // Polling timer \u2014 runs every 60s when enabled
 G._smartExitTimer = null;
+G._smartExitInitialKick = null;   // tracked so stopSmartExitsPoller can cancel
 function startSmartExitsPoller(){
   if (G._smartExitTimer) clearInterval(G._smartExitTimer);
+  if (G._smartExitInitialKick) clearTimeout(G._smartExitInitialKick);
   G._smartExitTimer = setInterval(checkSmartExits, 60000);
-  setTimeout(checkSmartExits, 2000);   // first run after 2s so positions can hydrate
+  // First run after 2s so positions can hydrate. Tracked so rapid toggle
+  // ON\u2192OFF\u2192ON\u2192OFF doesn't queue multiple delayed calls that fire after
+  // the user has already disabled the feature (HC-L).
+  G._smartExitInitialKick = setTimeout(function(){
+    G._smartExitInitialKick = null;
+    checkSmartExits();
+  }, 2000);
   console.log('[smart-exit] poller started (60s interval)');
 }
 function stopSmartExitsPoller(){
   if (G._smartExitTimer) { clearInterval(G._smartExitTimer); G._smartExitTimer = null; }
+  if (G._smartExitInitialKick) { clearTimeout(G._smartExitInitialKick); G._smartExitInitialKick = null; }
   console.log('[smart-exit] poller stopped');
 }
 
@@ -6244,8 +6298,20 @@ function _renderSmartExitStatus(){
   if (G.smartExits.intradayEnabled)    rules.push('INTRADAY -' + G.smartExits.intradayAtrMult + 'ATR');
   if (G.smartExits.eodAtrEnabled)      rules.push('EOD -' + G.smartExits.eodAtrMult + 'ATR');
   if (G.smartExits.eodEmaCrossEnabled) rules.push('EOD EMA' + G.smartExits.emaFast + '/' + G.smartExits.emaSlow);
-  st.textContent = 'ON  \u00b7  ' + (rules.length ? rules.join('  \u00b7  ') : 'no rules selected');
-  st.style.color = rules.length ? 'var(--grn)' : 'var(--wrn)';
+  // HC-A: surface trade-token state. If smart-exits is armed but the user
+  // hasn't entered the in-memory trade token AND a proxy is configured,
+  // every close attempt will 403. Make this visible BEFORE a position bleeds.
+  var hasProxy = false;
+  try { hasProxy = !!localStorage.getItem('rrjcar_tradier_proxy'); } catch(_){}
+  var needsToken = rules.length > 0 && hasProxy && !window._tradeToken;
+  var label = 'ON  \u00b7  ' + (rules.length ? rules.join('  \u00b7  ') : 'no rules selected');
+  if (needsToken) {
+    label += '  \u00b7  \u26a0 TRADE LOCKED \u2014 exits will fail until you arm the TRADE badge';
+    st.style.color = 'var(--ngo)';
+  } else {
+    st.style.color = rules.length ? 'var(--grn)' : 'var(--wrn)';
+  }
+  st.textContent = label;
 }
 
 function syncSmartExitsFromUi(){
@@ -13183,6 +13249,11 @@ async function startAutoTrader(){
     atLog('Disarmed by daily loss limit. Increase limit or reset to re-enable.','err');
     return;
   }
+  // HC-F: race guard \u2014 set _starting to true so a concurrent stopAutoTrader
+  // doesn't see G_AT.timer=null and miss the cleanup. Cleared at the end
+  // (success path) or on the abort below.
+  if (G_AT._starting) return;        // double-click protection
+  G_AT._starting = true;
   // Trade-token gate: when proxy is set + worker has WRITE_AUTH_TOKEN secret,
   // order placement requires the in-memory token. Prompt now so the user gets
   // one upfront modal instead of every order POST silently 403'ing later.
@@ -13202,6 +13273,16 @@ async function startAutoTrader(){
       }
     }
   } catch(e){ console.warn('[auto-trader] trade-token prompt errored:', e.message); }
+  // HC-F: re-check enabled state after the await \u2014 user may have clicked
+  // DISABLE while the modal was open. Without this, stopAutoTrader cleared
+  // a null timer (no-op), then we'd create an ORPHANED setInterval that
+  // can't be cancelled until page reload while the badge shows OFF.
+  if (G_AT.disabledMidStart) {
+    G_AT.disabledMidStart = false;
+    G_AT._starting = false;
+    atLog('Auto-trader start aborted \u2014 user disabled mid-prompt','warn');
+    return;
+  }
   G_AT.enabled = true;
   var btn=eid('at-master-btn'), badge=eid('at-status-badge');
   if(btn){  btn.textContent='\u25a0 DISABLE'; btn.style.borderColor='var(--red)'; btn.style.color='var(--red)'; }
@@ -13213,9 +13294,14 @@ async function startAutoTrader(){
   runAutoScanCycle();
   G_AT.timer = setInterval(runAutoScanCycle, 60000);
   saveAutoTraderState();
+  G_AT._starting = false;
 }
 
 function stopAutoTrader(){
+  // HC-F: signal to a concurrent in-progress startAutoTrader (waiting on
+  // promptTradeToken modal) that the user wants to abort. The post-await
+  // check in startAutoTrader bails before creating the timer.
+  if (G_AT._starting) G_AT.disabledMidStart = true;
   G_AT.enabled = false;
   if(G_AT.timer){ clearInterval(G_AT.timer); G_AT.timer=null; }
   var btn=eid('at-master-btn'), badge=eid('at-status-badge');

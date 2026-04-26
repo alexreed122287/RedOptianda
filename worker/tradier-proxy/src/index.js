@@ -165,7 +165,10 @@ export default {
     //
     // Backward-compatible: if WRITE_AUTH_TOKEN secret is unset, gate skipped.
     const isOrderWrite = (request.method === "POST" || request.method === "PUT" || request.method === "DELETE")
-      && /\/v1\/accounts\/[^/]+\/orders/.test(url.pathname);
+      // (?:\/|$) anchor — was matching subpaths like /ordersFOO before;
+      // Tradier doesn't expose such endpoints today but this is defense
+      // against a future addition silently demanding a trade token.
+      && /\/v1\/accounts\/[^/]+\/orders(?:\/|$)/.test(url.pathname);
     if (isLive && isOrderWrite && env.WRITE_AUTH_TOKEN) {
       // Same paste-newline trim as X-Live-Token above
       const tradeProvided = (request.headers.get("X-Trade-Token") || "").trim();
@@ -174,14 +177,53 @@ export default {
         return jsonError(403, "Order placement requires X-Trade-Token header (click 'ENABLE TRADING' in scanner header to enter session token)", corsOrigin);
       }
     }
+    // HC-D — partial-config foot-gun protection.
+    // If the operator set LIVE_MODE_TOKEN (live read gate) but FORGOT to set
+    // WRITE_AUTH_TOKEN (write gate), order placement silently downgrades to
+    // "needs only X-Live-Token" — defeating the whole HC5 design. Treat
+    // partial-config as a hard misconfiguration, not graceful degradation.
+    // Operator can opt out by leaving BOTH unset (full bypass) or setting BOTH.
+    if (isLive && isOrderWrite && env.LIVE_MODE_TOKEN && !env.WRITE_AUTH_TOKEN) {
+      return jsonError(500, "Worker misconfigured: LIVE_MODE_TOKEN is set but WRITE_AUTH_TOKEN is not. Either set both (recommended) or unset both. See worker README.", corsOrigin);
+    }
 
-    // Body-size cap — Tradier order POSTs are ~150 bytes; cap at 8KB to
-    // avoid the worker buffering a 100MB POST body (CPU/memory abuse vector).
+    // HC-C — stream-based body-size cap. The previous parseInt(content-length)
+    // check trusted an attacker-controlled header: a POST with
+    // "Content-Length: 100" and a 100MB body would sail through, then
+    // request.text() would buffer the full 100MB. Cloudflare normalizes
+    // most cases but doesn't contractually guarantee. Stream + count instead.
     if (request.method === "POST" || request.method === "PUT") {
-      const lenHeader = parseInt(request.headers.get("content-length") || "0", 10);
-      if (lenHeader > 8192) {
-        return jsonError(413, "Request body too large (max 8KB)", corsOrigin);
+      const MAX_BODY_BYTES = 8192;
+      const contentType = request.headers.get("Content-Type") || "application/x-www-form-urlencoded";
+      let bodyText;
+      try {
+        if (!request.body) {
+          bodyText = "";
+        } else {
+          const reader = request.body.getReader();
+          const chunks = [];
+          let received = 0;
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            received += value.byteLength;
+            if (received > MAX_BODY_BYTES) {
+              try { await reader.cancel(); } catch (_) {}
+              return jsonError(413, `Request body too large (max ${MAX_BODY_BYTES} bytes)`, corsOrigin);
+            }
+            chunks.push(value);
+          }
+          // Concatenate + decode as UTF-8
+          const merged = new Uint8Array(received);
+          let offset = 0;
+          for (const c of chunks) { merged.set(c, offset); offset += c.byteLength; }
+          bodyText = new TextDecoder().decode(merged);
+        }
+      } catch (err) {
+        return jsonError(400, `Could not read request body: ${err.message}`, corsOrigin);
       }
+      // Stash for the forward step below
+      var __bodyTextForUpstream = bodyText;
     }
 
     // Strip ?mode= before forwarding so we don't pollute Tradier's params
@@ -203,8 +245,10 @@ export default {
       headers: upstreamHeaders,
     };
     if (request.method === "POST" || request.method === "PUT") {
-      // Pass body through as text — Tradier order POSTs use form-urlencoded
-      fetchInit.body = await request.text();
+      // Pass body through as text — Tradier order POSTs use form-urlencoded.
+      // Body was already streamed + size-capped above (HC-C); reuse it
+      // instead of re-reading request body (which is now empty/locked).
+      fetchInit.body = __bodyTextForUpstream || "";
     }
 
     try {
