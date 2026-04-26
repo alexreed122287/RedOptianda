@@ -8252,14 +8252,47 @@ function renderBuySig(){
     var card=document.createElement('div');
     card.className='sig-card'+(r.isGo?'':' nogo-card');card.dataset.ticker=r.ticker;
     var tk=r.ticker;
+    // Tiebreaker subtitle — exposes the values that decide rank when scores tie.
+    // Order matches _resultRankCompare: techScore → relStr5d → theme → volume.
+    // Wrapped in a tooltip explaining the ranking hierarchy so the user can
+    // read why one card is above another at a glance.
+    var _tech = r.techScore || 0;
+    var _fund = r.fundScore || 0;
+    var _rs = (r.ind && typeof r.ind.relStr5d === 'number') ? r.ind.relStr5d : null;
+    var _th = (typeof getThemeStrength === 'function') ? getThemeStrength(tk) : null;
+    var _thScore = _th ? Math.round(_th.dailyScore || 0) : null;
+    var _vol = r.volume || 0;
+    var _rsTxt = _rs == null ? '—' : (_rs >= 0 ? '+' : '') + _rs.toFixed(1) + '%';
+    var _rsCol = _rs == null ? 'var(--gry2)' : (_rs > 0 ? 'var(--grn)' : 'var(--ngo)');
+    var _thTxt = _thScore == null ? '—' : _thScore;
+    var _thCol = _thScore == null ? 'var(--gry2)'
+               : _thScore >= 75 ? 'var(--grn)'
+               : _thScore >= 50 ? 'var(--amb)'
+               : _thScore >= 25 ? 'var(--gry)'
+               :                  'var(--ngo)';
+    var _tipParts = [
+      'Rank tiebreakers (in order):',
+      '1. Score: ' + Math.round(r.score) + '/150',
+      '2. Tech: ' + _tech + '/85',
+      '3. RS 5D: ' + _rsTxt + ' (vs SPY)',
+      '4. Theme: ' + _thTxt + ' (top sector score)',
+      '5. Volume: ' + fmtK(_vol)
+    ];
+    var _tip = _tipParts.join('\n');
     card.innerHTML='<div class="sc-l"><div class="tk">'+starHTML(tk,14)+tk
       +'<button class="bs-buy-btn" data-ticker="'+tk+'" title="View all call contracts" style="font-size:9px;padding:2px 7px;margin-left:8px;border:1px solid var(--amb);color:var(--amb);background:var(--amb3);border-radius:3px;cursor:pointer;vertical-align:middle;font-family:var(--ff);">▲ BUY</button>'
       +'<button class="bs-sh-btn" data-ticker="'+tk+'" title="Quick market BUY for shares (Tradier)" style="font-size:9px;padding:2px 7px;margin-left:4px;border:1px solid var(--grn);color:var(--grn);background:var(--grn3);border-radius:3px;cursor:pointer;vertical-align:middle;font-family:var(--ff);">▲ SHARES</button>'
       +'</div>'
-      +'<div class="sc '+(r.isGo?'go':'nogo')+'">'+r.score+'</div>'
+      +'<div class="sc '+(r.isGo?'go':'nogo')+'" title="'+_tip.replace(/"/g,'&quot;')+'">'+r.score+'</div>'
       +'<div class="sect">'+r.sector+'</div></div>'
       +'<div class="sc-r"><div class="pr">$'+fmt2(r.price)+'</div>'
-      +'<div class="ind">RSI '+((r.ind&&r.ind.rsi)||'—')+' | ADX '+((r.ind&&r.ind.adx)||'—')+'</div></div>';
+      +'<div class="ind">RSI '+((r.ind&&r.ind.rsi)||'—')+' | ADX '+((r.ind&&r.ind.adx)||'—')+'</div>'
+      +'<div class="ind" style="font-size:9px;margin-top:2px;color:var(--gry);" title="'+_tip.replace(/"/g,'&quot;')+'">'
+      +  '<span style="color:var(--ambb);">T'+_tech+'</span>'
+      +  ' <span style="color:'+(_fund>0?'var(--amb)':'var(--gry2)')+';">F'+_fund+'</span>'
+      +  ' <span style="color:'+_rsCol+';">'+_rsTxt+'</span>'
+      +  ' <span style="color:'+_thCol+';">θ'+_thTxt+'</span>'
+      +'</div></div>';
     card.onclick=function(e){
       if(e.target && e.target.classList && e.target.classList.contains('bs-buy-btn')){
         e.stopPropagation();
@@ -9785,8 +9818,14 @@ function renderScan(){
   }
   var hasGex = Object.keys(gexMap).length > 0;
 
+  // Rank column added so position is explicit when scores tie. RS 5D added
+  // since it's the 3rd-tier tiebreaker (after score → techScore → relStr5d
+  // → theme score → volume) and was the only one not visible — making it
+  // impossible to see WHY one ticker outranked another when score+tech+fund
+  // were all equal.
   var cols=[
     {k:'_star',l:''},
+    {k:'_rank',l:'#'},
     {k:'ticker',l:'SYMBOL'},
     {k:'score',l:'SCORE'},
     {k:'isGo',l:'SIGNAL'},
@@ -9795,7 +9834,8 @@ function renderScan(){
     {k:'changePct',l:'CHG%'},
     {k:'volume',l:'VOLUME'},
     {k:'techScore',l:'TECH'},
-    {k:'fundScore',l:'FUND'}
+    {k:'fundScore',l:'FUND'},
+    {k:'_relStr5d',l:'RS 5D'}
   ];
   if(hasGex){
     cols.push({k:'gexFlow',l:'FLOW'});
@@ -9808,6 +9848,14 @@ function renderScan(){
       th+='<th style="cursor:default;width:24px;"></th>';
       return;
     }
+    if(c.k === '_rank'){
+      th+='<th style="cursor:default;width:36px;color:var(--gry);font-size:10px;letter-spacing:1px;" title="Rank by tiebreaker: score \u2192 techScore \u2192 RS 5D \u2192 theme dailyScore \u2192 volume">#</th>';
+      return;
+    }
+    if(c.k === '_relStr5d'){
+      th+='<th style="cursor:default;color:var(--amb);font-size:10px;letter-spacing:1px;" title="5-day relative strength vs SPY. Tiebreaker after score+tech+fund \u2014 when those are equal, higher RS ranks above.">RS 5D</th>';
+      return;
+    }
     var arr=G.sortCol===c.k?(G.sortDir>0?' \u25b2':' \u25bc'):'';
     th+='<th data-col="'+c.k+'" onclick="sortTable(this.dataset.col)">'+c.l+arr+'</th>';
     var lbl=(c.l||'').toUpperCase();
@@ -9818,12 +9866,16 @@ function renderScan(){
   });
 
   var rows='';
-  rowSrc.forEach(function(r){
+  rowSrc.forEach(function(r, idx){
     var sigBadge=r.isGo?'<span class="badge go">GO</span>':'<span class="badge nogo">NO-GO</span>';
     var chgCls=r.changePct>=0?'pnl-pos':'pnl-neg';
     var tk=r.ticker;
     var tech=r.techScore||0;
     var fund=r.fundScore||0;
+    var rs5d = (r.ind && typeof r.ind.relStr5d === 'number') ? r.ind.relStr5d : null;
+    var rsCellCls = rs5d == null ? '' : (rs5d > 0 ? 'pnl-pos' : 'pnl-neg');
+    var rsCellTxt = rs5d == null ? '<span style="color:var(--gry2);">—</span>'
+                                 : (rs5d >= 0 ? '+' : '') + rs5d.toFixed(2) + '%';
 
     // Score bar \u2014 visual fill showing score out of 122
     var scorePct=Math.round((r.score/150)*100);
@@ -9864,6 +9916,7 @@ function renderScan(){
 
     rows+='<tr data-ticker="'+tk+'" onclick="viewDetail(this.dataset.ticker,\'sc-detail\',\'sc-det-empty\')">'
       +'<td style="text-align:center;padding:0;">'+starHTML(tk,14)+'</td>'
+      +'<td style="text-align:center;font-size:10px;color:var(--gry2);font-family:var(--ff-mono);">'+(idx+1)+'</td>'
       +'<td><b>'+tk+'</b></td>'
       +'<td>'+scoreBar+'</td>'
       +'<td>'+sigBadge+'</td>'
@@ -9874,7 +9927,8 @@ function renderScan(){
       +'<td class="'+chgCls+'">'+(r.changePct>=0?'+':'')+fmtP(r.changePct)+'</td>'
       +'<td>'+fmtK(r.volume)+'</td>'
       +'<td class="'+techCls+'" style="font-size:11px;">'+tech+'</td>'
-      +'<td class="'+fundCls+'" style="font-size:11px;color:'+(fund>0?'var(--amb)':'var(--gry)')+';">'+fund+'</td>';
+      +'<td class="'+fundCls+'" style="font-size:11px;color:'+(fund>0?'var(--amb)':'var(--gry)')+';">'+fund+'</td>'
+      +'<td class="'+rsCellCls+'" style="font-size:11px;">'+rsCellTxt+'</td>';
 
     if(hasGex){
       var gx = gexMap[tk];
