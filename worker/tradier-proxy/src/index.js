@@ -45,12 +45,22 @@ const UPSTREAM_SANDBOX = "https://sandbox.tradier.com";
 // anyone with the worker URL could call arbitrary endpoints under
 // api.tradier.com using your secret. The Tradier API surface is fairly small;
 // these cover everything the scanner uses (quotes/history/options/orders/positions).
+//
+// Every prefix MUST end in `/` to prevent prefix-smuggling: a fuzz probe
+// against the prior `/v1/watchlists` (no trailing slash) showed
+// `/v1/watchlistsBOMB` flowed through to Tradier because .startsWith()
+// matched. With a trailing slash, only `/v1/watchlists/...` matches; the
+// bare `/v1/watchlists` endpoint is added separately as an exact match.
 const ALLOWED_PATH_PREFIXES = [
   "/v1/markets/",            // quotes, history, options chains, expirations, timesales
   "/v1/accounts/",           // positions, balances, orders, history
   "/v1/user/",               // user profile
-  "/v1/watchlists",          // (optional) Tradier-side watchlists
+  "/v1/watchlists/",         // Tradier-side watchlist sub-resources
 ];
+// Exact paths (no prefix expansion) — the bare watchlists collection endpoint.
+const ALLOWED_EXACT_PATHS = new Set([
+  "/v1/watchlists",
+]);
 
 // Per-IP rate limit (in-memory, lives for the Worker isolate's lifetime ~10s).
 // Set just below Tradier's documented 120/min cap so the limiter is the
@@ -108,7 +118,9 @@ export default {
       return jsonError(403, "Origin not allowed", corsOrigin);
     }
 
-    if (!ALLOWED_PATH_PREFIXES.some((p) => url.pathname.startsWith(p))) {
+    const pathOk = ALLOWED_EXACT_PATHS.has(url.pathname)
+      || ALLOWED_PATH_PREFIXES.some((p) => url.pathname.startsWith(p));
+    if (!pathOk) {
       return jsonError(403, "Path not allowed", corsOrigin);
     }
 
@@ -147,9 +159,11 @@ export default {
     if (isLive && env.LIVE_MODE_TOKEN) {
       // Trim both sides — paste-newline foot-gun where "tokenABC\n" silently
       // !== "tokenABC" and the user gets a confusing 403 from a "correct" token.
+      // Constant-time comparison defends against the (low-likelihood) timing
+      // attack vector at the edge.
       const provided = (request.headers.get("X-Live-Token") || "").trim();
       const expected = (env.LIVE_MODE_TOKEN || "").trim();
-      if (provided !== expected) {
+      if (!safeEqual(provided, expected)) {
         return jsonError(403, "Live mode requires X-Live-Token header (set rrjcar_tradier_proxy_live_token in scanner)", corsOrigin);
       }
     }
@@ -170,10 +184,10 @@ export default {
       // against a future addition silently demanding a trade token.
       && /\/v1\/accounts\/[^/]+\/orders(?:\/|$)/.test(url.pathname);
     if (isLive && isOrderWrite && env.WRITE_AUTH_TOKEN) {
-      // Same paste-newline trim as X-Live-Token above
+      // Same paste-newline trim + constant-time compare as X-Live-Token above
       const tradeProvided = (request.headers.get("X-Trade-Token") || "").trim();
       const tradeExpected = (env.WRITE_AUTH_TOKEN || "").trim();
-      if (tradeProvided !== tradeExpected) {
+      if (!safeEqual(tradeProvided, tradeExpected)) {
         return jsonError(403, "Order placement requires X-Trade-Token header (click 'ENABLE TRADING' in scanner header to enter session token)", corsOrigin);
       }
     }
@@ -274,6 +288,28 @@ export default {
     }
   },
 };
+
+// Constant-time string equality. Variable-time `===` / `!==` leaks information
+// about which prefix matched, so a network attacker who can measure response
+// timing can recover the secret byte-by-byte. The risk is low here (Cloudflare
+// edge, TLS noise, single-user proxy), but the cost of fixing it is one short
+// helper. NB: returns false if lengths differ, but does NOT short-circuit on
+// the byte comparison — it always walks the longer string so length itself
+// doesn't leak via timing either.
+function safeEqual(a, b) {
+  const sa = String(a == null ? "" : a);
+  const sb = String(b == null ? "" : b);
+  // Walk the longer of the two; XOR each char code. A length mismatch is
+  // recorded by xoring length differences into `mismatch`.
+  const len = Math.max(sa.length, sb.length);
+  let mismatch = sa.length ^ sb.length;
+  for (let i = 0; i < len; i++) {
+    const ca = i < sa.length ? sa.charCodeAt(i) : 0;
+    const cb = i < sb.length ? sb.charCodeAt(i) : 0;
+    mismatch |= ca ^ cb;
+  }
+  return mismatch === 0;
+}
 
 function corsHeaders(origin) {
   return {
