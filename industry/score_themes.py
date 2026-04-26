@@ -230,7 +230,14 @@ def fetch_prices_yfinance(tickers: list[str], days: int = LOOKBACK_DAYS,
         spy_got = _do_chunk(["SPY"])
         closes.update(spy_got)
         if "SPY" not in closes:
-            print("  SPY still missing after retry — script will abort downstream.", flush=True)
+            # A-3: previously this just printed "abort downstream" and kept
+            # running, which then crashed on `prices[BENCHMARK]` further down —
+            # but only AFTER the run had potentially scribbled partial state to
+            # disk (theme_scores.json gets written at line ~674 before history
+            # append). Hard-exit here so the GH Actions job fails cleanly with
+            # nothing half-written.
+            print("  SPY still missing after retry — aborting (FATAL).", flush=True)
+            sys.exit(1)
 
     out = pd.DataFrame(closes)
     print(f"  yfinance got {out.shape[1]}/{len(tickers)} tickers, "

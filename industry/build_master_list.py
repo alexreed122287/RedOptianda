@@ -468,19 +468,33 @@ def main(industry_scrape_limit: int | None = 0) -> None:
     if audit_unassigned is not None:
         added_total = 0
         added_per_theme: dict[str, int] = {}
+        # A-4: per-ticker try/except. Previously a single malformed `meta` dict
+        # raising inside is_healthcare() or suggest_theme() would kill the
+        # entire build mid-loop, leaving `tickers` mutated in-place but never
+        # written. Now each ticker is independent — one bad meta is logged and
+        # skipped instead of failing the whole run.
+        suggest_errors = 0
         for sym, meta in tickers.items():
-            if meta.get("themes"):       # already curated → leave alone
-                continue
-            if audit_unassigned.is_healthcare(meta):
-                continue
-            suggestion = audit_unassigned.suggest_theme(meta)
-            if not suggestion:
-                continue
-            themes.setdefault(suggestion, []).append(sym)
-            meta["themes"].append(suggestion)
-            meta["auto_theme"] = True   # mark as heuristic so the frontend can flag it
-            added_total += 1
-            added_per_theme[suggestion] = added_per_theme.get(suggestion, 0) + 1
+            try:
+                if meta.get("themes"):       # already curated → leave alone
+                    continue
+                if audit_unassigned.is_healthcare(meta):
+                    continue
+                suggestion = audit_unassigned.suggest_theme(meta)
+                if not suggestion:
+                    continue
+                themes.setdefault(suggestion, []).append(sym)
+                meta["themes"].append(suggestion)
+                meta["auto_theme"] = True   # mark as heuristic so the frontend can flag it
+                added_total += 1
+                added_per_theme[suggestion] = added_per_theme.get(suggestion, 0) + 1
+            except Exception as e:
+                suggest_errors += 1
+                if suggest_errors <= 5:    # avoid log spam if many tickers are malformed
+                    print(f"      WARN: auto-assign failed for {sym}: {type(e).__name__}: {e}")
+        if suggest_errors:
+            print(f"      auto-assign skipped {suggest_errors} ticker(s) due to errors "
+                  f"(see WARN lines above)")
         tagged = sum(1 for t in tickers.values() if t.get("themes"))
         print(f"      auto-assigned {added_total} additional tickers to existing themes "
               f"(via INDUSTRY_HINTS / SECTOR_HINTS heuristic)")
