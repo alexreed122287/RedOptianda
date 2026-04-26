@@ -77,9 +77,13 @@ body{
   background-attachment:fixed;
 }
 a{color:var(--blu);text-decoration:none;}
-#hdr{display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border-bottom:2px solid var(--amb);padding:0 12px;height:32px;flex-wrap:wrap;gap:4px;}
+/* Header height was 32px but the panda-icon is 52px tall — the icon
+   overflowed DOWN into the nav row and obscured the leftmost tab text
+   (e.g., "BUY SIGNALS" rendered as "UY SIGNALS"). Bump min-height to
+   accommodate the icon naturally. */
+#hdr{display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border-bottom:2px solid var(--amb);padding:0 12px;min-height:56px;flex-wrap:wrap;gap:4px;}
 #hdr-logo{color:var(--amb);font-weight:700;font-size:16px;letter-spacing:3px;white-space:nowrap;font-family:var(--ff-brand);text-shadow:0 0 12px rgba(0,212,255,.7);display:flex;align-items:center;gap:14px;position:relative;z-index:10;}
-#hdr-logo .panda-icon{height:52px;width:auto;object-fit:contain;filter:drop-shadow(0 0 6px rgba(0,212,255,.4)) drop-shadow(0 0 2px rgba(0,212,255,.25));flex-shrink:0;}
+#hdr-logo .panda-icon{height:48px;width:auto;object-fit:contain;filter:drop-shadow(0 0 6px rgba(0,212,255,.4)) drop-shadow(0 0 2px rgba(0,212,255,.25));flex-shrink:0;}
 #hdr{border-bottom:none !important;box-shadow:none !important;}
 #hdr-tickers{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;flex:1;}
 .htick{font-size:12px;white-space:nowrap;}
@@ -92,11 +96,14 @@ a{color:var(--blu);text-decoration:none;}
 #clk{color:var(--amb);}
 #mkt-status{color:var(--gry);}
 #mode-badge{background:var(--amb3);color:var(--ambb);border:1px solid var(--amb);padding:1px 6px;border-radius:2px;font-size:10px;font-weight:700;}
-#nav{display:flex;background:var(--bg1);border-bottom:var(--bdr);overflow-x:auto;padding:0 8px;}
+/* z-index higher than logo so any overflow from header can't cover the
+   tab text (defense against the header-obstruction class of bug). */
+#nav{display:flex;background:var(--bg1);border-bottom:var(--bdr);overflow-x:auto;padding:0 8px;position:relative;z-index:20;}
 .ntab{background:none;border:none;border-bottom:2px solid transparent;color:var(--gry);cursor:pointer;font-family:var(--ff);font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:10px 16px;white-space:nowrap;transition:all .2s;}
 .ntab:hover{color:var(--wht);}
 .ntab.active{color:var(--amb);border-bottom-color:var(--amb);text-shadow:0 0 15px rgba(0,212,255,.4);}
-#app{height:calc(100vh - 68px);overflow:hidden;position:relative;}
+/* App container — height accounts for new 56px header + 42px nav */
+#app{height:calc(100vh - 100px);overflow:hidden;position:relative;}
 .tab-pane{display:none;height:100%;overflow:hidden;}
 /* Hide the mobile filter toggle on desktop \u2014 the CSS that reveals it only applies in @media(max-width:768px) */
 .mobile-filter-toggle{display:none !important;}
@@ -1907,14 +1914,22 @@ tr.sel-row td{background:var(--blu3);}
      The GEX Call Heavy rule reads from this tab's data.
      ═══════════════════════════════════════════════════════ -->
 <div class="tab-pane" id="tab-gex">
-  <div class="flt-bar" style="justify-content:space-between;align-items:center;">
-    <div style="display:flex;align-items:center;gap:10px;">
+  <div class="flt-bar" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
+    <div style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;">
       <span style="font-family:var(--ff-brand);font-size:12px;color:var(--amb);letter-spacing:2px;">&#9650; GEX / FLOW</span>
       <span style="color:var(--gry);font-size:10px;">30DTE options-flow (call vs put OI) for top 200 ranked tickers</span>
     </div>
-    <div style="display:flex;gap:8px;align-items:center;">
+    <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
+      <label style="font-size:10px;color:var(--gry);display:flex;align-items:center;gap:4px;" title="Auto-refresh GEX data on a schedule. ET times. Each fire = ~400 Tradier calls.">
+        <span>AUTO:</span>
+        <select id="gex-sched-sel" onchange="setGexSchedule(this.value)" style="background:var(--bg2);border:var(--bdr);color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 6px;border-radius:3px;">
+          <option value="off">Off (manual + post-scan)</option>
+          <option value="open">1x at open (9:35 ET)</option>
+          <option value="3x">3x daily (9:35, 12:00, 15:00 ET)</option>
+        </select>
+      </label>
       <span id="gex-ts" style="color:var(--gry);font-size:10px;">Click RUN to fetch flow data</span>
-      <button class="btn blu" style="font-size:11px;padding:5px 14px;" onclick="runGex()" title="Fetch 30DTE options chain for the top 200 ranked tickers (~4 min, paced by Tradier rate limit). Auto-fires 20s after every scan.">&#8635; RUN GEX</button>
+      <button class="btn blu" style="font-size:11px;padding:5px 14px;" onclick="runGex()" title="Fetch 30DTE options chain for the top 200 ranked tickers (~4 min, paced by Tradier rate limit). Auto-fires 20s after every scan + on the schedule selected to the left.">&#8635; RUN GEX</button>
     </div>
   </div>
   <div class="split" style="display:flex;flex:1;overflow:hidden;">
@@ -4119,6 +4134,9 @@ function switchTab(id){
   if(id==='pf'){ if(typeof renderPortfolio==='function') renderPortfolio(); }
   if(id==='perf'){ if(typeof renderPerformanceTab==='function') renderPerformanceTab(); }
   if(id==='gex'){
+    // Reflect saved schedule into the dropdown
+    var sel = eid('gex-sched-sel');
+    if (sel) sel.value = G.gexAutoSchedule || 'off';
     // If GEX data already exists (auto-trigger fired or user previously ran),
     // re-render the table. Otherwise show the empty-state — the user can
     // click RUN GEX manually or wait for the next scan's auto-trigger.
@@ -10058,6 +10076,115 @@ function renderScan(){
 </script>
 
 <script>
+// ===========================================================================
+//  GEX CACHE — persist to localStorage so reload doesn't lose flow data
+// ===========================================================================
+// Without this, every page reload starts with empty G.gexData and the GEX
+// rule shows "Run GEX/Flow tab first" until the next runGex completes
+// (~4 min). 2h TTL — flow data older than that isn't trustworthy enough to
+// drive new entries, but recent enough to bridge a quick reload.
+var GEX_CACHE_KEY = 'rrjcar_gex_data_v1';
+var GEX_CACHE_TTL_MS = 2 * 60 * 60 * 1000;     // 2 hours
+
+function saveGexCache(){
+  if (!G.gexData || !G.gexData.length) return;
+  try {
+    localStorage.setItem(GEX_CACHE_KEY, JSON.stringify({
+      ts: Date.now(),
+      data: G.gexData
+    }));
+  } catch(e) { /* quota — fine, in-memory survives session */ }
+}
+function loadGexCache(){
+  try {
+    var raw = localStorage.getItem(GEX_CACHE_KEY);
+    if (!raw) return false;
+    var obj = JSON.parse(raw);
+    if (!obj || !obj.ts || (Date.now() - obj.ts) > GEX_CACHE_TTL_MS) return false;
+    G.gexData = obj.data || [];
+    var ageMin = Math.round((Date.now() - obj.ts) / 60000);
+    console.log('[gex] hydrated from cache: ' + G.gexData.length + ' tickers (' + ageMin + 'm old)');
+    return true;
+  } catch(e) { return false; }
+}
+
+// ===========================================================================
+//  GEX AUTO-SCHEDULE — fire runGex at fixed ET times throughout the trading day
+// ===========================================================================
+// Options OI changes meaningfully on daily boundaries — intraday OI shifts
+// are usually 1-3% which doesn't flip the call-vs-put ratio enough to change
+// the rule outcome. Three sensible cadences offered:
+//
+//   off  — user manually clicks RUN GEX or relies on post-scan auto-trigger
+//   open — once at market open (~9:35 ET); good enough for 95% of swing
+//          decisions, ~400 Tradier calls/day
+//   3x   — 9:35 / 12:00 / 15:00 ET; catches morning + lunch + close-positioning
+//          shifts, ~1200 Tradier calls/day. Recommended.
+
+var GEX_SCHED_KEY = 'rrjcar_gex_schedule_v1';
+G.gexAutoSchedule = 'off';
+G._gexLastFireMin = -1;        // minute-of-day debounce so we don't double-fire
+
+function loadGexSchedule(){
+  try { G.gexAutoSchedule = localStorage.getItem(GEX_SCHED_KEY) || 'off'; } catch(e){}
+}
+function saveGexSchedule(){
+  try { localStorage.setItem(GEX_SCHED_KEY, G.gexAutoSchedule); } catch(e){}
+}
+
+// Returns minute-of-day in ET (0-1439), or -1 if outside market days
+function _etMinuteOfDay(){
+  var now = new Date();
+  // toLocaleString is slow but reliable for ET conversion (handles DST)
+  var et = new Date(now.toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  var day = et.getDay();
+  if (day === 0 || day === 6) return -1;       // weekend
+  return et.getHours() * 60 + et.getMinutes();
+}
+
+// Schedule firing times in ET minutes. Order matters for the dropdown labels.
+var GEX_SCHED_TIMES = {
+  open: [9*60 + 35],                                          // 9:35 ET
+  '3x': [9*60 + 35, 12*60, 15*60]                             // 9:35, 12:00, 15:00 ET
+};
+
+function _gexScheduleTick(){
+  if (G.gexAutoSchedule === 'off') return;
+  var times = GEX_SCHED_TIMES[G.gexAutoSchedule] || [];
+  var nowMin = _etMinuteOfDay();
+  if (nowMin < 0) return;                                     // weekend
+  if (nowMin === G._gexLastFireMin) return;                   // same minute, debounce
+  // Match within a 1-minute window so a tick that lands at 9:36 catches the 9:35 schedule
+  for (var i = 0; i < times.length; i++) {
+    if (Math.abs(nowMin - times[i]) <= 1) {
+      G._gexLastFireMin = nowMin;
+      console.log('[gex] auto-schedule fire ('+G.gexAutoSchedule+', ET minute '+nowMin+')');
+      try { addAlert('GEX', 'Auto-refresh GEX (scheduled)', 'warn'); } catch(e){}
+      try { runGex(); } catch(e) { console.warn('[gex] scheduled fire errored:', e.message); }
+      return;
+    }
+  }
+}
+
+function startGexAutoSchedule(){
+  if (G._gexSchedTimer) clearInterval(G._gexSchedTimer);
+  if (G.gexAutoSchedule === 'off') return;
+  G._gexSchedTimer = setInterval(_gexScheduleTick, 60000);   // check every minute
+  console.log('[gex] auto-schedule started: '+G.gexAutoSchedule);
+}
+function stopGexAutoSchedule(){
+  if (G._gexSchedTimer) { clearInterval(G._gexSchedTimer); G._gexSchedTimer = null; }
+}
+function setGexSchedule(value){
+  G.gexAutoSchedule = value;
+  saveGexSchedule();
+  if (value === 'off') stopGexAutoSchedule();
+  else startGexAutoSchedule();
+  // Update the UI label
+  var sel = eid('gex-sched-sel'); if (sel) sel.value = value;
+  try { toast('GEX auto-schedule: '+(value==='off'?'OFF':value==='open'?'1x at market open':'3x daily (9:35, 12:00, 15:00 ET)')); } catch(e){}
+}
+
 function runGex(){
   // Wrap element + status are OPTIONAL — renderGex() handles missing wrap
   // gracefully (returns early). runGex still computes G.gexData even when
@@ -10244,6 +10371,8 @@ function runGex(){
       });
 
       renderGex();
+      // Persist so reload doesn't lose data within the 2h TTL window
+      saveGexCache();
       addAlert('GEX','GEX/Flow refreshed \u2014 real 30DTE net flow for '+G.gexData.length+' tickers','warn');
       // Re-score all results now that GEX data is available
       G.results.forEach(function(r){
@@ -17045,6 +17174,12 @@ function init(){
   loadAutoTraderState();
   loadSmartExitsConfig();    // hydrate G.smartExits from localStorage
   applySmartExitsToUi();     // reflect into checkboxes + start poller if enabled
+  // GEX cache + auto-schedule
+  if (typeof loadGexCache === 'function') loadGexCache();
+  if (typeof loadGexSchedule === 'function') {
+    loadGexSchedule();
+    if (G.gexAutoSchedule !== 'off') startGexAutoSchedule();
+  }
   // Theme overlay — non-blocking. If fetch fails, scoreIt pass-throughs.
   loadThemeOverlay().catch(function(e){ console.warn('[init] theme overlay failed:', e && e.message); });
   loadPortfolio();
