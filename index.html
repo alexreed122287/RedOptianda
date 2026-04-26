@@ -5034,7 +5034,9 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
             addAlert(sym,'Step Fill fallback: MARKET order #'+mktRes.order.id,'go');
             toast('\u2713 Market fallback submitted: '+sym);
             var res4=eid('ord-result');
-            res4.innerHTML='<span style="color:var(--ambb)">\u26a1 MARKET FALLBACK: Order #'+mktRes.order.id+' submitted after '+maxAttempts+' step attempts</span>';
+            // S-2: escape Tradier-returned order id; Tradier-side compromise/MITM
+            // could otherwise inject script via this surface.
+            res4.innerHTML='<span style="color:var(--ambb)">\u26a1 MARKET FALLBACK: Order #'+_esc(mktRes.order.id)+' submitted after '+maxAttempts+' step attempts</span>';
             res4.className='ord-result show';
             res4.style.borderColor='var(--amb)';
           } else {
@@ -5430,7 +5432,8 @@ function submitOrder(){
     try{
       var data=JSON.parse(resp.t);
       if(data.order&&data.order.id){
-        res.innerHTML='<span style="color:var(--blub)">Order submitted! ID: '+data.order.id+' Status: '+data.order.status+'</span>';
+        // S-2: escape Tradier-returned id/status before innerHTML
+        res.innerHTML='<span style="color:var(--blub)">Order submitted! ID: '+_esc(data.order.id)+' Status: '+_esc(data.order.status)+'</span>';
         res.style.borderColor='var(--blu)';
         addAlert(sym,'Order: '+side+' x'+qty+' '+_orderLabel+' ('+otype+', '+duration+')','go');
         toast('Order submitted: '+data.order.id);
@@ -8036,11 +8039,15 @@ function buildDetail(r,detId,emptyId){
     rulesHtml+='<div class="rule-item '+cls+'"><div class="ri-name">'+ru.n+fmpBadge+gexBadge+'</div><div class="ri-val '+cls+'">'+icon+' '+ru.val+'</div></div>';
   });
   G.detailOpt={ticker:r.ticker,strike:opt.strike,exp:opt.exp};
+  // S-2: r.ticker can come from imported watchlists / pasted CSV (not just
+  // hardcoded universe), and r.sector is sourced from FMP/Tradier API. Escape
+  // both before innerHTML. sigCls and sigLbl are derived from internal
+  // classification (bounded enum: 'go'/'nogo'/'GO'/'NO-GO') and don't need it.
   det.innerHTML=
-    '<div class="det-hdr"><span class="det-tk">'+r.ticker+'</span>'
+    '<div class="det-hdr"><span class="det-tk">'+_esc(r.ticker)+'</span>'
     +'<span class="det-pr">$'+fmt2(r.price)+'</span>'
     +'<span class="det-sig '+sigCls+'">'+sigLbl+'</span>'
-    +'<span class="det-meta">'+r.sector+' | Score: <b>'+Math.round(r.score)+'</b>/150 | Tech: '+techScore+' Fund: '+fundScore+' | Passes: '+r.passes+'/14'
+    +'<span class="det-meta">'+_esc(r.sector)+' | Score: <b>'+Math.round(r.score)+'</b>/150 | Tech: '+techScore+' Fund: '+fundScore+' | Passes: '+r.passes+'/14'
       + (function(){
           var dte = (typeof getDaysToEarnings === 'function') ? getDaysToEarnings(r.ticker) : null;
           if (dte === null) return '';
@@ -8687,12 +8694,17 @@ function renderBuySig(){
     var _rankPrefix = '<span style="color:var(--gry2);font-size:9px;font-family:var(--ff-mono);margin-right:4px;" title="Rank within '+(r.isGo?'GO':'NO-GO')+' list. '+(_why?'Beat by previous row on '+_why.replace(/^[↓=]\s*/,''):'Top of list')+'">#'+_rank
       +(_why ? ' <span style="color:'+_whyCol+';">'+_why+'</span>' : '')
       +'</span>';
-    card.innerHTML='<div class="sc-l"><div class="tk">'+_rankPrefix+starHTML(tk,14)+tk
-      +'<button class="bs-buy-btn" data-ticker="'+tk+'" title="View all call contracts" style="font-size:9px;padding:2px 7px;margin-left:8px;border:1px solid var(--amb);color:var(--amb);background:var(--amb3);border-radius:3px;cursor:pointer;vertical-align:middle;font-family:var(--ff);">▲ BUY</button>'
-      +'<button class="bs-sh-btn" data-ticker="'+tk+'" title="Quick market BUY for shares (Tradier)" style="font-size:9px;padding:2px 7px;margin-left:4px;border:1px solid var(--grn);color:var(--grn);background:var(--grn3);border-radius:3px;cursor:pointer;vertical-align:middle;font-family:var(--ff);">▲ SHARES</button>'
+    // S-2: tk (ticker) and r.sector originate from API/import paths. Escape
+    // every interpolation. _tip is built internally from rule names + scores
+    // but pass it through _esc anyway since the existing .replace only handles
+    // double-quotes — angle brackets would still break out of the title attr.
+    var tkEsc = _esc(tk);
+    card.innerHTML='<div class="sc-l"><div class="tk">'+_rankPrefix+starHTML(tk,14)+tkEsc
+      +'<button class="bs-buy-btn" data-ticker="'+tkEsc+'" title="View all call contracts" style="font-size:9px;padding:2px 7px;margin-left:8px;border:1px solid var(--amb);color:var(--amb);background:var(--amb3);border-radius:3px;cursor:pointer;vertical-align:middle;font-family:var(--ff);">▲ BUY</button>'
+      +'<button class="bs-sh-btn" data-ticker="'+tkEsc+'" title="Quick market BUY for shares (Tradier)" style="font-size:9px;padding:2px 7px;margin-left:4px;border:1px solid var(--grn);color:var(--grn);background:var(--grn3);border-radius:3px;cursor:pointer;vertical-align:middle;font-family:var(--ff);">▲ SHARES</button>'
       +'</div>'
-      +'<div class="sc '+(r.isGo?'go':'nogo')+'" title="'+_tip.replace(/"/g,'&quot;')+'">'+r.score+'</div>'
-      +'<div class="sect">'+r.sector+'</div></div>'
+      +'<div class="sc '+(r.isGo?'go':'nogo')+'" title="'+_esc(_tip)+'">'+r.score+'</div>'
+      +'<div class="sect">'+_esc(r.sector)+'</div></div>'
       +'<div class="sc-r"><div class="pr">$'+fmt2(r.price)+'</div>'
       +'<div class="ind">RSI '+((r.ind&&r.ind.rsi)||'—')+' | ADX '+((r.ind&&r.ind.adx)||'—')+'</div>'
       +'<div class="ind" style="font-size:9px;margin-top:2px;color:var(--gry);" title="'+_tip.replace(/"/g,'&quot;')+'">'
@@ -10216,7 +10228,9 @@ function updateRegimeBadge(){
   var r = SENT.regime;
   var c = regimeColor(r.score);
   var spark = fgSparklineSVG(r.history || [], 48, 12);
-  el.innerHTML = '<span style="vertical-align:middle;">F&amp;G: ' + Math.round(r.score) + ' ' + (r.rating || '').toUpperCase() + '</span>' + spark;
+  // S-2: escape Adanos-returned rating string (sentiment API). Score is
+  // Math.round() so always numeric; rating is free-form text.
+  el.innerHTML = '<span style="vertical-align:middle;">F&amp;G: ' + Math.round(r.score) + ' ' + _esc((r.rating || '').toUpperCase()) + '</span>' + spark;
   el.style.color = c;
   el.style.borderColor = c;
   var age = Math.round((Date.now() - new Date(r.timestamp || SENT.loadedAt).getTime()) / 60000);
@@ -17272,12 +17286,16 @@ function pfBuilderClear(){
 function pfRenderStaged(){
   var out = '<div style="color:var(--amb);margin-bottom:6px;">'+PF_PASTE_STAGED.length+' position'+(PF_PASTE_STAGED.length===1?'':'s')+' staged</div>';
   PF_PASTE_STAGED.forEach(function(p, i){
+    // S-2: PF_PASTE_STAGED is populated from raw user-pasted content — every
+    // interpolation here is attacker-controlled if a user pastes hostile text.
+    // p.qty, p.avgPrice are coerced to numbers elsewhere but we escape
+    // defensively in case parsing left them as strings.
     var line;
     if(p.kind === 'shares'){
-      var avgStr = (p.avgPrice != null) ? ' @ $'+p.avgPrice : '';
-      line = '&#10003; '+p.ticker+' SHARES '+p.qty+'sh'+avgStr;
+      var avgStr = (p.avgPrice != null) ? ' @ $'+_esc(p.avgPrice) : '';
+      line = '&#10003; '+_esc(p.ticker)+' SHARES '+_esc(p.qty)+'sh'+avgStr;
     } else {
-      line = '&#10003; '+p.ticker+' $'+p.strike+' '+(p.type||'CALL')+' '+p.exp+' &times; '+p.qty;
+      line = '&#10003; '+_esc(p.ticker)+' $'+_esc(p.strike)+' '+_esc(p.type||'CALL')+' '+_esc(p.exp)+' &times; '+_esc(p.qty);
     }
     out += '<div style="color:var(--grn);">'+line
         +' <span onclick="PF_PASTE_STAGED.splice('+i+',1);pfRenderStaged();" style="cursor:pointer;color:var(--wrn);margin-left:8px;" title="Remove">&#10005;</span></div>';

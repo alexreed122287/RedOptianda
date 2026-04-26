@@ -1,0 +1,5 @@
+# Local-only audit tooling artifacts. The package.json and config files are
+# tracked; everything else (installed deps, generated extracts) is not.
+node_modules/
+extracted-scripts.js
+package-lock.json

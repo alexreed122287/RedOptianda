@@ -1,0 +1,17 @@
+{
+  "name": "scanner-audit",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Local-only static analysis tooling for the scanner. Not deployed.",
+  "type": "commonjs",
+  "scripts": {
+    "extract": "node extract-scripts.js",
+    "lint": "npm run extract && eslint --config eslint.config.mjs extracted-scripts.js"
+  },
+  "devDependencies": {
+    "eslint": "^9.39.4",
+    "eslint-plugin-no-unsanitized": "^4.1.5",
+    "eslint-plugin-security": "^4.0.0",
+    "globals": "^17.5.0"
+  }
+}

@@ -1,0 +1,91 @@
+name: Static Analysis
+
+# Runs ESLint (security plugins) and Semgrep (OWASP + JavaScript packs) on every
+# push to main and every PR targeting main. Either tool reporting a new
+# ERROR-severity finding fails the build. Designed to catch XSS / injection
+# regressions before they ship.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'worker/**'
+      - 'industry/**.py'
+      - 'tools/audit/**'
+      - '.github/workflows/static-analysis.yml'
+  pull_request:
+    branches: [main]
+    paths:
+      - 'index.html'
+      - 'worker/**'
+      - 'industry/**.py'
+      - 'tools/audit/**'
+      - '.github/workflows/static-analysis.yml'
+  workflow_dispatch:
+
+jobs:
+  eslint:
+    name: ESLint (security)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Install audit tooling
+        working-directory: tools/audit
+        run: npm install --no-fund --no-audit
+
+      - name: Extract <script> blocks
+        working-directory: tools/audit
+        run: node extract-scripts.js
+
+      - name: Run ESLint (errors fail build, warnings logged)
+        working-directory: tools/audit
+        run: npx eslint --config eslint.config.mjs extracted-scripts.js
+        # Without --max-warnings, ESLint exits non-zero only on ERRORs.
+        # Warnings (no-unsanitized/property innerHTML, unsafe-regex) are
+        # printed but don't block. Severity for each rule is set in
+        # eslint.config.mjs — promote a rule to ERROR there to make it block.
+
+      - name: ESLint warning summary
+        if: always()
+        working-directory: tools/audit
+        run: |
+          npx eslint --config eslint.config.mjs -f json extracted-scripts.js \
+            > /tmp/eslint.json || true
+          echo "::group::ESLint findings summary (errors + warnings)"
+          node -e "
+            const r = JSON.parse(require('fs').readFileSync('/tmp/eslint.json','utf8'));
+            const msgs = r[0] ? r[0].messages : [];
+            const byRule = {};
+            msgs.forEach(m => { byRule[m.ruleId] = (byRule[m.ruleId]||0) + 1; });
+            console.log('Total findings:', msgs.length);
+            Object.entries(byRule).sort((a,b)=>b[1]-a[1]).forEach(([k,v])=>console.log(' ',k,':',v));
+          "
+          echo "::endgroup::"
+
+  semgrep:
+    name: Semgrep (OWASP + JS)
+    runs-on: ubuntu-latest
+    container:
+      image: returntocorp/semgrep:latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Run Semgrep
+        run: |
+          semgrep --config=p/javascript \
+                  --config=p/owasp-top-ten \
+                  --config=p/xss \
+                  --config=p/security-audit \
+                  --severity ERROR \
+                  --error \
+                  --metrics=off \
+                  index.html worker/ industry/
+        # `--error` makes Semgrep exit non-zero if any ERROR-severity finding
+        # is reported. Warnings are allowed; promote a rule by raising its
+        # severity if it should block.
