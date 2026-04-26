@@ -151,6 +151,25 @@ export default {
       }
     }
 
+    // WRITE-ACTION GATE — order placement and cancellation require a SECOND
+    // shared secret (X-Trade-Token) on top of X-Live-Token. The trade token
+    // is intentionally never persisted to localStorage (lives in
+    // window._tradeToken in the scanner, dies on tab close), so a leaked or
+    // exfiltrated localStorage doesn't expose trading authority — only an
+    // active session can place orders. Reads (positions, balances, profile,
+    // quotes) only need X-Live-Token, so the auto-trader can scan and alert
+    // unattended; only the actual order placement step requires this token.
+    //
+    // Backward-compatible: if WRITE_AUTH_TOKEN secret is unset, gate skipped.
+    const isOrderWrite = (request.method === "POST" || request.method === "PUT" || request.method === "DELETE")
+      && /\/v1\/accounts\/[^/]+\/orders/.test(url.pathname);
+    if (isLive && isOrderWrite && env.WRITE_AUTH_TOKEN) {
+      const tradeProvided = request.headers.get("X-Trade-Token") || "";
+      if (tradeProvided !== env.WRITE_AUTH_TOKEN) {
+        return jsonError(403, "Order placement requires X-Trade-Token header (click 'ENABLE TRADING' in scanner header to enter session token)", corsOrigin);
+      }
+    }
+
     // Strip ?mode= before forwarding so we don't pollute Tradier's params
     const forwardParams = new URLSearchParams(url.searchParams);
     forwardParams.delete("mode");
@@ -198,7 +217,7 @@ function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin":  origin,
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Accept, X-Live-Token",
+    "Access-Control-Allow-Headers": "Content-Type, Accept, X-Live-Token, X-Trade-Token",
     "Access-Control-Expose-Headers":"Retry-After",
     "Access-Control-Max-Age":       "86400",
     "Vary":                         "Origin",
