@@ -3636,7 +3636,7 @@ function reclassifyGoThreshold(){
     if(r.rules){
       // Re-evaluate the avoid condition from the rule scorecard — a rule with
       // negative points that passed means a red flag was detected.
-      r.rules.forEach(function(rl){ if(rl.pass && rl.pts && rl.pts < 0) avoidBad = true; });
+      if(Array.isArray(r.rules)) r.rules.forEach(function(rl){ if(rl.pass && rl.pts && rl.pts < 0) avoidBad = true; });
     }
     r.isGo = (r.score >= thresh) && !avoidBad;
   });
@@ -6241,10 +6241,17 @@ function buildDetail(r,detId,emptyId){
     // If chain view is active for this ticker, skip signals rebuild
     if(G.chainActiveTicker === r.ticker) return;
   }
-  var sigCls=r.isGo?'go':'nogo';var sigLbl=r.isGo?'GO':'NO-GO';var ind=r.ind,opt=r.opt;
+  var sigCls=r.isGo?'go':'nogo';var sigLbl=r.isGo?'GO':'NO-GO';
+  // Defensive defaults — slim cache restored on reload may not have ind/opt
+  // (the heavy greeks blob is intentionally omitted from cache; opt re-fetches
+  // when the user actually opens a contract panel). Without these guards,
+  // viewDetail crashes on `opt.strike` / `ind.rsi` for cached results.
+  var ind = r.ind || {}, opt = r.opt || { strike: 0, exp: '—' };
   var techScore=r.techScore||0, fundScore=r.fundScore||0;
   var rulesHtml='';
-  r.rules.forEach(function(ru){
+  // Defensive — cached scan results may have an empty rules array; render-time
+  // guard prevents NPE on the next reload after a slim cache from before the fix.
+  (Array.isArray(r.rules) ? r.rules : []).forEach(function(ru){
     var cls=ru.pass?'pass':'fail';
     var icon=ru.pass?'\u2713':'\u2717';
     var fmpBadge=ru.isFmp?'<span style="font-size:9px;color:var(--blub);margin-left:4px;">FMP</span>':'';
@@ -6782,7 +6789,7 @@ function renderBuySig(){
       +'<div class="sc '+(r.isGo?'go':'nogo')+'">'+r.score+'</div>'
       +'<div class="sect">'+r.sector+'</div></div>'
       +'<div class="sc-r"><div class="pr">$'+fmt2(r.price)+'</div>'
-      +'<div class="ind">RSI '+r.ind.rsi+' | ADX '+r.ind.adx+'</div></div>';
+      +'<div class="ind">RSI '+((r.ind&&r.ind.rsi)||'—')+' | ADX '+((r.ind&&r.ind.adx)||'—')+'</div></div>';
     card.onclick=function(e){
       if(e.target && e.target.classList && e.target.classList.contains('bs-buy-btn')){
         e.stopPropagation();
@@ -7435,16 +7442,26 @@ function finishScan(){
     G.results.sort(function(a,b){ return b.score-a.score; });
     G.filtered = excludedFilteredResults();
     renderBuySig(); renderScan();
-    // Cache FULLY-ENRICHED results (was caching the preliminary scores before
-    // enrichment finished). Strip the verbose ind/opt/rules/passes blobs to
-    // stay well under the localStorage quota \u2014 those re-fetch on demand.
+    // Cache FULLY-ENRICHED results. Persists what renderBuySig + buildDetail
+    // need on the next page load (rules table + minimal indicator snapshot)
+    // while stripping the heavyweight `opt` greeks blob (re-fetched on detail
+    // click). Earlier slim-cache crashed renderBuySig with `r.ind.rsi`
+    // undefined \u2014 now we keep r.ind (small) and r.rules (~14 short objects
+    // per ticker, well under quota for ~750 tickers).
     try {
       var slim = G.results.map(function(r){
         return { ticker:r.ticker, sector:r.sector, score:r.score, isGo:r.isGo,
                  techScore:r.techScore, fundScore:r.fundScore,
                  price:r.price, change:r.change, changePct:r.changePct,
                  volume:r.volume, avgVol:r.avgVol,
-                 fmpEnriched:!!r.fmpEnriched, indEnriched:!!r.indEnriched };
+                 fmpEnriched:!!r.fmpEnriched, indEnriched:!!r.indEnriched,
+                 // Keep ind (tiny \u2014 rsi/adx/ema flags) + rules (small) so
+                 // renderBuySig / buildDetail don't NPE on cache restore.
+                 ind: r.ind || {},
+                 rules: Array.isArray(r.rules) ? r.rules : [],
+                 passes: Array.isArray(r.passes) ? r.passes : []
+                 // (opt is the heavy greeks blob \u2014 re-fetched on detail click)
+        };
       });
       cacheSet(CACHE_KEYS.scanResults, slim);
       cacheSet(CACHE_KEYS.scanTs, Date.now());
