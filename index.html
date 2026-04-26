@@ -7413,11 +7413,24 @@ function finishScan(){
   var SC_ENRICH_LIMIT = 200;
   var enrichTotal = Math.min(SC_ENRICH_LIMIT, G.results.length);
   var fmpDone = 0, indDone = 0;
+  // Watchdog — after 6 minutes, finalize the scan no matter what's still in
+  // flight. Belt-and-suspenders on the per-fetch timeout: even if 100% of
+  // requests somehow went silent, the scan still completes and the user gets
+  // a usable results table + green pill instead of a permanently-stuck UI.
+  var _watchdogId = setTimeout(function(){
+    if(G._scanFinished) return;
+    console.warn('[scan] watchdog fired @ 6min — fmpDone=' + fmpDone + '/' + enrichTotal +
+                 ' indDone=' + indDone + '/' + enrichTotal + ' — finalizing anyway');
+    fmpDone = enrichTotal; indDone = enrichTotal;
+    _maybeFinishScan();
+  }, 6 * 60 * 1000);
+
   function _maybeFinishScan(){
     if(fmpDone < enrichTotal || indDone < enrichTotal) return;
     if(G._scanFinished) return;
     G._scanFinished = true;
     G.scanRunning = false;     // gate cleared HERE, not after the bulk pass
+    clearTimeout(_watchdogId);
     // Final render so the last batch under the throttle threshold lands
     G.results.sort(function(a,b){ return b.score-a.score; });
     G.filtered = excludedFilteredResults();
@@ -13081,6 +13094,8 @@ function _tradierGcCache(){
   }
 }
 
+var T_FETCH_TIMEOUT_MS = 30 * 1000;   // hard timeout per request
+
 function _drainTradierQueue(){
   T_RATE.drainScheduled = false;
   var now = Date.now();
@@ -13094,17 +13109,35 @@ function _drainTradierQueue(){
   while(T_RATE.pending.length && T_RATE.recent.length < T_RATE_CAP_PER_MIN){
     var item = T_RATE.pending.shift();
     T_RATE.recent.push(Date.now());
-    fetch(item.url, item.opts).then(function(r){
-      // Detect Tradier 429 → pause queue for Retry-After (or 60s default).
-      // Re-queue the failing request so the caller's promise resolves with success.
-      if(r && r.status === 429){
-        var retryAfter = parseInt(r.headers && r.headers.get && r.headers.get('Retry-After')) || 60;
-        T_RATE.throttledUntil = Date.now() + retryAfter * 1000;
-        if(typeof toast === 'function') toast('Tradier rate-limited — pausing ' + retryAfter + 's');
-        return item.resolve(r);  // give caller the 429 response so they can fall back
-      }
-      item.resolve(r);
-    }, item.reject);
+    // Per-request hard timeout via AbortController. Without this, a single
+    // hung request (e.g. the response that was in-flight when Tradier 429'd)
+    // can stall the entire enrichment queue forever — no resolve, no reject,
+    // _maybeFinishScan never fires, scan stuck at "Enriching 200/200".
+    var ctrl = (typeof AbortController === 'function') ? new AbortController() : null;
+    var optsWithSignal = item.opts || {};
+    if(ctrl){
+      optsWithSignal = Object.assign({}, optsWithSignal, { signal: ctrl.signal });
+    }
+    var timeoutId = setTimeout(function(){
+      if(ctrl){ try { ctrl.abort(); } catch(_) {} }
+    }, T_FETCH_TIMEOUT_MS);
+    (function(it, tId){
+      fetch(it.url, optsWithSignal).then(function(r){
+        clearTimeout(tId);
+        if(r && r.status === 429){
+          var retryAfter = parseInt(r.headers && r.headers.get && r.headers.get('Retry-After')) || 60;
+          T_RATE.throttledUntil = Date.now() + retryAfter * 1000;
+          if(typeof toast === 'function') toast('Tradier rate-limited — pausing ' + retryAfter + 's');
+          return it.resolve(r);
+        }
+        it.resolve(r);
+      }).catch(function(err){
+        clearTimeout(tId);
+        // AbortError or network error → reject so caller's catch fires and
+        // ticks the enrichment counter, instead of hanging indefinitely.
+        it.reject(err);
+      });
+    })(item, timeoutId);
   }
   if(T_RATE.pending.length && !T_RATE.drainScheduled){
     var waitMs = Math.max(50, 60000 - (now - T_RATE.recent[0]) + 50);
