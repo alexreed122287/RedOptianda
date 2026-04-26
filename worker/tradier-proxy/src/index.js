@@ -121,6 +121,27 @@ export default {
       return jsonError(500, `${isLive ? "TRADIER_LIVE_TOKEN" : "TRADIER_SANDBOX_TOKEN"} secret not configured`, corsOrigin);
     }
 
+    // LIVE-MODE GATE — defense in depth.
+    // Without this gate, anyone who learns the workers.dev URL could call
+    //   curl -H "Origin: https://alexreed122287.github.io" \
+    //        "https://tradier-proxy.../v1/user/profile?mode=live"
+    // and get the user's live account number, then place orders against it
+    // (path allowlist permits /v1/accounts/<id>/orders).
+    //
+    // Set the secret with: wrangler secret put LIVE_MODE_TOKEN
+    // The scanner's fetch monkey-patch sends the matching X-Live-Token header
+    // on every proxy request when mode=live. Sandbox stays open (synthetic
+    // data, no orders, no real account exposure — abuse cost is just quota).
+    //
+    // Backward-compatible: if LIVE_MODE_TOKEN is not set, the gate is bypassed
+    // (existing setups keep working until the user opts in).
+    if (isLive && env.LIVE_MODE_TOKEN) {
+      const provided = request.headers.get("X-Live-Token") || "";
+      if (provided !== env.LIVE_MODE_TOKEN) {
+        return jsonError(403, "Live mode requires X-Live-Token header (set rrjcar_tradier_proxy_live_token in scanner)", corsOrigin);
+      }
+    }
+
     // Strip ?mode= before forwarding so we don't pollute Tradier's params
     const forwardParams = new URLSearchParams(url.searchParams);
     forwardParams.delete("mode");
@@ -168,7 +189,7 @@ function corsHeaders(origin) {
   return {
     "Access-Control-Allow-Origin":  origin,
     "Access-Control-Allow-Methods": "GET, POST, PUT, DELETE, OPTIONS",
-    "Access-Control-Allow-Headers": "Content-Type, Accept",
+    "Access-Control-Allow-Headers": "Content-Type, Accept, X-Live-Token",
     "Access-Control-Expose-Headers":"Retry-After",
     "Access-Control-Max-Age":       "86400",
     "Vary":                         "Origin",

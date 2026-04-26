@@ -1706,6 +1706,14 @@ tr.sel-row td{background:var(--blu3);}
         <input id="api-tr-proxy" placeholder="e.g. https://tradier-proxy.you.workers.dev (leave blank for direct mode)">
         <div class="api-status" id="tr-proxy-status"></div>
       </div>
+      <div class="api-row">
+        <label title="Shared secret between scanner and worker. When set, the worker REQUIRES this token in an X-Live-Token header for any mode=live request — defense in depth so a leaked workers.dev URL can't be used to drain your live account. Sandbox stays open. Set the matching value as a Cloudflare secret: wrangler secret put LIVE_MODE_TOKEN.">TRADIER PROXY LIVE-MODE TOKEN <span style="color:var(--gry);font-weight:400;font-size:10px;">(optional — only enforced if you set the worker's LIVE_MODE_TOKEN secret)</span></label>
+        <div style="display:flex;gap:6px;">
+          <input id="api-tr-proxy-live-token" type="password" placeholder="Random string, 32+ chars" style="flex:1;">
+          <button class="btn" type="button" style="border-color:var(--gry2);color:var(--gry);font-size:10px;padding:4px 8px;" onclick="generateLiveModeToken()" title="Generate a fresh 32-char random token. Paste it into 'wrangler secret put LIVE_MODE_TOKEN' to activate the gate.">GENERATE</button>
+        </div>
+        <div class="api-status" id="tr-proxy-live-token-status"></div>
+      </div>
       <div class="ord-row" style="margin-top:4px;">
         <button class="btn blu" onclick="saveKeys()">SAVE KEYS</button>
         <button class="btn wrn" onclick="clearKeys()">CLEAR KEYS</button>
@@ -2276,15 +2284,26 @@ tr.sel-row td{background:var(--blu3);}
             // Strip Authorization — worker injects its own; passing the local
             // (likely stale) key is wasted bytes + minor info leak.
             init = init ? Object.assign({}, init) : {};
+            // LIVE-MODE GATE — when worker has LIVE_MODE_TOKEN secret set,
+            // every mode=live request must include the matching X-Live-Token
+            // header. Without it, a leaked workers.dev URL can't be used to
+            // exfiltrate the user's live account or place orders. Sandbox
+            // requests skip the header so the gate is mode-scoped.
+            var liveToken = '';
+            try { liveToken = localStorage.getItem('rrjcar_tradier_proxy_live_token') || ''; } catch(_) {}
             if (init.headers) {
               if (init.headers instanceof Headers) {
                 init.headers = new Headers(init.headers);
                 init.headers.delete('Authorization');
+                if (isLive && liveToken) init.headers.set('X-Live-Token', liveToken);
               } else if (typeof init.headers === 'object') {
                 init.headers = Object.assign({}, init.headers);
                 delete init.headers.Authorization;
                 delete init.headers.authorization;
+                if (isLive && liveToken) init.headers['X-Live-Token'] = liveToken;
               }
+            } else if (isLive && liveToken) {
+              init.headers = { 'X-Live-Token': liveToken };
             }
           }
         }
@@ -12136,6 +12155,23 @@ function saveKeys(){
       : 'Direct mode — using local Tradier key.';
     eid('tr-proxy-status').className = 'api-status ' + (trProxy ? (mode === 'sandbox' ? 'miss' : 'ok') : 'miss');
   }
+  // Live-mode token — saved alongside proxy URL. Empty string = gate disabled
+  // (worker side only enforces if its LIVE_MODE_TOKEN secret is also set).
+  var liveTok = _cleanKey(eid('api-tr-proxy-live-token') ? eid('api-tr-proxy-live-token').value : '');
+  if (liveTok) localStorage.setItem('rrjcar_tradier_proxy_live_token', liveTok);
+  else         localStorage.removeItem('rrjcar_tradier_proxy_live_token');
+  if (eid('tr-proxy-live-token-status')) {
+    if (!trProxy) {
+      eid('tr-proxy-live-token-status').textContent = 'Inactive — only used when a proxy URL is set.';
+      eid('tr-proxy-live-token-status').className = 'api-status miss';
+    } else if (liveTok) {
+      eid('tr-proxy-live-token-status').textContent = 'Token saved (sent as X-Live-Token header on every mode=live request).';
+      eid('tr-proxy-live-token-status').className = 'api-status ok';
+    } else {
+      eid('tr-proxy-live-token-status').textContent = 'No token — live mode is open. Set wrangler secret + paste the same value here to gate it.';
+      eid('tr-proxy-live-token-status').className = 'api-status miss';
+    }
+  }
   if(fmp)localStorage.setItem('rrjcar_fmp',fmp);
   // Mode-specific Tradier key + account (live/sandbox use different tokens)
   var trKey = mode==='live' ? 'rrjcar_tradier_live' : 'rrjcar_tradier_sandbox';
@@ -12433,7 +12469,50 @@ function loadKeys(){
       : 'Direct mode — using local Tradier key. (Optional: deploy worker/tradier-proxy for server-side key.)';
     eid('tr-proxy-status').className = 'api-status ' + (trProxy ? (mode === 'sandbox' ? 'miss' : 'ok') : 'miss');
   }
+  // Live-mode token — show "saved (hidden)" if present, similar to API keys
+  var liveTok = '';
+  try { liveTok = localStorage.getItem('rrjcar_tradier_proxy_live_token') || ''; } catch(_){}
+  if (eid('api-tr-proxy-live-token')) eid('api-tr-proxy-live-token').value = '';
+  if (eid('tr-proxy-live-token-status')) {
+    if (!trProxy) {
+      eid('tr-proxy-live-token-status').textContent = 'Inactive — only used when a proxy URL is set.';
+      eid('tr-proxy-live-token-status').className = 'api-status miss';
+    } else if (liveTok) {
+      eid('tr-proxy-live-token-status').textContent = 'Token saved (hidden) — sent as X-Live-Token header on every mode=live request.';
+      eid('tr-proxy-live-token-status').className = 'api-status ok';
+    } else {
+      eid('tr-proxy-live-token-status').textContent = 'No token — live mode is open. Click GENERATE then mirror the value to wrangler.';
+      eid('tr-proxy-live-token-status').className = 'api-status miss';
+    }
+  }
 }
+
+// Generate a 32-char hex token. User pastes it into the field, hits SAVE, then
+// copies it to `wrangler secret put LIVE_MODE_TOKEN`. Both sides need the same
+// value for the gate to work.
+function generateLiveModeToken(){
+  var tok = '';
+  if (window.crypto && window.crypto.getRandomValues) {
+    var arr = new Uint8Array(16);
+    window.crypto.getRandomValues(arr);
+    tok = Array.from(arr).map(function(b){ return b.toString(16).padStart(2,'0'); }).join('');
+  } else {
+    // Fallback (shouldn't happen on any modern browser)
+    tok = (Date.now().toString(16) + Math.random().toString(16).slice(2)).padEnd(32,'0').slice(0,32);
+  }
+  var input = eid('api-tr-proxy-live-token');
+  if (input) {
+    input.type = 'text'; // unmask so the user can copy
+    input.value = tok;
+    setTimeout(function(){ try { input.type = 'password'; } catch(_){} }, 60000);
+  }
+  // Copy to clipboard for one-shot paste into wrangler
+  try { navigator.clipboard && navigator.clipboard.writeText(tok); } catch(_){}
+  if (typeof toast === 'function') {
+    toast('Token generated + copied. Paste into: wrangler secret put LIVE_MODE_TOKEN — then SAVE KEYS here.');
+  }
+}
+
 function updateClock(){
   var now=new Date();var h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
   var ampm=h>=12?'PM':'AM';h=h%12||12;

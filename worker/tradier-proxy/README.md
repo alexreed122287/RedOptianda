@@ -43,6 +43,25 @@ npx wrangler secret put TRADIER_SANDBOX_TOKEN
 
 If you don't set a sandbox token, the worker falls back to the live token for sandbox-mode requests.
 
+### 3b. (Recommended for live trading) Set the LIVE_MODE_TOKEN gate
+
+Without this gate, anyone who learns your `workers.dev` URL can pass `?mode=live` and use your live API key (the path allowlist permits `/v1/accounts/{ANY_ID}/orders`, so they could place trades against any account they discover via `/v1/user/profile`). The origin allowlist is browser-only — `curl` ignores CORS.
+
+The gate adds a shared secret that the scanner sends as an `X-Live-Token` header on every `mode=live` request. Sandbox mode stays open (synthetic data, no real account exposure).
+
+1. In the scanner's API tab, scroll to **TRADIER PROXY LIVE-MODE TOKEN** and click **GENERATE**. The field unmasks for 60s and the value is copied to your clipboard.
+2. In your terminal:
+   ```bash
+   npx wrangler secret put LIVE_MODE_TOKEN
+   # paste the same value when prompted
+   ```
+3. Click **SAVE KEYS** in the scanner so the token is persisted to `localStorage`.
+4. Re-deploy the worker: `npx wrangler deploy`
+
+From now on, any `mode=live` request without the matching header gets `403 Live mode requires X-Live-Token header`. Sandbox is unaffected.
+
+If you skip this step, the gate is bypassed (no `LIVE_MODE_TOKEN` secret = backward compat) and the worker behaves exactly as before. Recommended once you're trading real money through the proxy.
+
 ### 4. (Optional) Update the origin allowlist
 
 Edit `wrangler.toml`'s `ALLOWED_ORIGINS` if your scanner runs at a different URL than `https://alexreed122287.github.io`. Comma-separated.
