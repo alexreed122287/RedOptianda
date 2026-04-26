@@ -2328,6 +2328,28 @@ tr.sel-row td{background:var(--blu3);}
 
 })();
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  TRADIER AUTH HELPER — proxy-aware key lookup
+// ═══════════════════════════════════════════════════════════════════════════
+// Centralized read for the Tradier key. When the user has configured a Tradier
+// proxy URL (rrjcar_tradier_proxy), the local key is intentionally cleared
+// per the proxy README — the worker injects its own key server-side from a
+// Cloudflare secret. But a dozen account-fetch sites had `if(!key) bail`
+// guards that fired before the request could reach the proxy, breaking
+// positions / balances / orders / GEX in proxy mode.
+//
+// This helper returns the local key when present, or the literal string
+// 'proxy' when proxy mode is active (so caller `if(!key)` checks pass). The
+// fetch monkey-patch above strips the Authorization header for proxy URLs,
+// so 'proxy' never reaches Tradier or leaks anywhere.
+function _getTradierKey(){
+  var k = '';
+  try { k = localStorage.getItem('rrjcar_tradier') || ''; } catch(e) {}
+  if (k) return k;
+  try { if (localStorage.getItem('rrjcar_tradier_proxy')) return 'proxy'; } catch(e) {}
+  return '';
+}
+
 window.showApiBreakdown = function(){
   var log = (function(){try{var r=localStorage.getItem('op_api_log');return r?JSON.parse(r):{date:'',calls:[],counts:{}};}catch(e){return {date:'',calls:[],counts:{}};}})();
   var modal = document.getElementById('api-breakdown-modal');
@@ -3757,7 +3779,7 @@ function switchTab(id){
 //  REAL-TIME QUOTE FUNCTIONS
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-// Returns {key, mode, host} or null if no key
+// Returns {key, mode, host} or null if no key (and no proxy)
 function getTradierCreds(){
   var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
   var key='';
@@ -3765,6 +3787,10 @@ function getTradierCreds(){
     var modeKey = mode==='live' ? 'rrjcar_tradier_live' : 'rrjcar_tradier_sandbox';
     key = localStorage.getItem(modeKey) || localStorage.getItem('rrjcar_tradier') || '';
   }catch(e){}
+  // Proxy fallback: when a proxy URL is set the local key is intentionally
+  // empty (worker injects its own). Return 'proxy' so callers don't bail —
+  // the fetch monkey-patch strips Authorization for proxy URLs anyway.
+  if(!key){ try{ if(localStorage.getItem('rrjcar_tradier_proxy')) key='proxy'; }catch(e){} }
   if(!key)return null;
   var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
   return{key:key,mode:mode,host:host};
@@ -4690,7 +4716,7 @@ function submitOrder(){
   if(G.stepFillActive){toast('Step fill already running');return;}
   var sym=eid('ord-sym').value.trim().toUpperCase();
   if(!sym){toast('Enter a symbol first');return;}
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  var key=_getTradierKey();
   if(!key){
     var res=eid('ord-result');
     res.innerHTML='<span style="color:var(--wrn)">No Tradier API key configured.</span>';
@@ -5105,7 +5131,7 @@ function computeTrailInitialStop(currentPrice, offsetVal, offsetUnit){
 //  - Persists state to localStorage so it survives page refreshes
 // ═══════════════════════════════════════════════════════════════════════════
 function getTradierCredsQuick(){
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  var key=_getTradierKey();
   var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
   var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
   var acct=G.acctId||localStorage.getItem('rrjcar_acct')||'';
@@ -5347,7 +5373,7 @@ function simOpt(price){
 }
 function fetchOptionContract(ticker,simPrice,callback,monthFilter){
  // monthFilter: optional 'YYYY-MM' string to restrict expiries to that month only
- var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+ var key=_getTradierKey();
  if(!key){callback(null);return;}
  var mode=localStorage.getItem('rrjcar_mode')||'sandbox';
  var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
@@ -5526,7 +5552,7 @@ async function fetchIndicatorHistory(ticker){
   if(G_HIST_CACHE[ticker]) return G_HIST_CACHE[ticker]; // session cache hit — no fetch needed
   var cached = loadHistCache(ticker);
   if(cached){ G_HIST_CACHE[ticker] = cached; return cached; } // localStorage hit
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  var key=_getTradierKey();
   if(!key) return null;
   var mode=localStorage.getItem('rrjcar_mode')||'sandbox';
   var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
@@ -5583,7 +5609,7 @@ async function fetchOBHistory(ticker){
   if(G_OB_CACHE[ticker]) return G_OB_CACHE[ticker];
   var cached = loadOBCache(ticker);
   if(cached){ G_OB_CACHE[ticker] = cached; return cached; }
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  var key=_getTradierKey();
   if(!key) return null;
   var mode=localStorage.getItem('rrjcar_mode')||'sandbox';
   var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
@@ -6584,7 +6610,7 @@ function viewDetail(ticker,detId,emptyId){
  document.querySelectorAll('tr[data-ticker="'+ticker+'"]').forEach(function(row){row.classList.add('sel-row');});
  buildDetail(r,detId,emptyId);
 
- var tradierKey='';try{tradierKey=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+ var tradierKey=_getTradierKey();
  var fmpKey='';try{fmpKey=localStorage.getItem('rrjcar_fmp')||'';}catch(e){}
 
  if(tradierKey){
@@ -6676,7 +6702,7 @@ setTimeout(_pushPermBtnUpdate, 100);
 // Quick Buy Shares \u2014 places a market equity order via Tradier. Prompts for qty + confirm.
 function quickBuyShares(ticker){
   if(!ticker) return;
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  var key=_getTradierKey();
   if(!key){ toast('No Tradier API key \u2014 set it in the API tab'); return; }
   var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
   var acct='';try{acct=localStorage.getItem('rrjcar_acct')||G.acctId||'';}catch(e){}
@@ -7265,7 +7291,7 @@ async function runScan(){
   if(G.scanRunning) return;
   G.scanRunning = true;
 
-  var key = ''; try{ key = localStorage.getItem('rrjcar_tradier') || ''; }catch(e){}
+  var key = _getTradierKey();
   var mode = localStorage.getItem('rrjcar_mode') || 'sandbox';
 
   var btn = eid('sc-run-btn');
@@ -7549,7 +7575,7 @@ function finishScan(){
     var t = enrichQueue[enrichIdx++];
     var r = G.results.filter(function(x){ return x.ticker===t; })[0];
     if(!r){ enrichNext(); return; }
-    var tradierKey='';try{tradierKey=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+    var tradierKey=_getTradierKey();
     var fmpKey='';try{fmpKey=localStorage.getItem('rrjcar_fmp')||'';}catch(e){}
     setScanProgress(62 + Math.round((enrichIdx/enrichQueue.length)*35), 'Enriching '+enrichIdx+'/'+enrichQueue.length+': '+t+'...');
     // Mirror enrichment progress to the persistent header pill so the user can
@@ -7614,8 +7640,7 @@ function finishScan(){
 
   // Auto-refresh GEX after scan so GEX bonus scores are applied
   // Run in background \u2014 doesn't block UI
-  var tradierKey = '';
-  try{ tradierKey = localStorage.getItem('rrjcar_tradier') || ''; }catch(e){}
+  var tradierKey = _getTradierKey();
   if(tradierKey){
     setTimeout(function(){
       addAlert('GEX', 'Auto-refreshing GEX after scan...', 'warn');
@@ -8266,7 +8291,7 @@ function runGex(){
     sourceTickers = UNIVERSE.slice(0,30).map(function(u){ return u.t; });
   }
 
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  var key=_getTradierKey();
   var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
   var host=mode==='live'?'https://api.tradier.com':'https://sandbox.tradier.com';
 
@@ -8780,7 +8805,7 @@ function parseOccSymbol(sym){
   return{underlying:underlying,type:typ,strike:strike,exp:yr+'-'+mo+'-'+dy};
 }
 function fetchPositions(){
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  var key=_getTradierKey();
   var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
   var savedAcct='';try{savedAcct=localStorage.getItem('rrjcar_acct')||'';}catch(e){}
   if(savedAcct&&!G.acctId){G.acctId=savedAcct;eid('ord-acct').value=savedAcct;}
@@ -10118,7 +10143,7 @@ function closePosition(symbol,type,strike,exp,qty){
 }
 
 function fetchBalances(){
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  var key=_getTradierKey();
   var bpEl = eid('hdr-opt-bp');
   if(!key||!G.acctId){
     if(eid('pos-acctval')) eid('pos-acctval').textContent='--';
@@ -10225,6 +10250,10 @@ function rollGetCreds(){
     ?(localStorage.getItem('rrjcar_tradier_live')||localStorage.getItem('rrjcar_tradier')||'')
     :(localStorage.getItem('rrjcar_tradier_sandbox')||localStorage.getItem('rrjcar_tradier')||'');
   if(!rawKey&&typeof TRADIER_KEY_DEFAULT!=='undefined') rawKey=TRADIER_KEY_DEFAULT;
+  // Proxy fallback: when proxy is set, the worker injects its own key. Return
+  // 'proxy' as a placeholder so the rest of the roll engine doesn't bail; the
+  // fetch monkey-patch strips Authorization for proxy URLs.
+  if(!rawKey){ try{ if(localStorage.getItem('rrjcar_tradier_proxy')) rawKey='proxy'; }catch(e){} }
   // Sanitize: strip whitespace + any char outside printable ASCII (smart quotes,
   // zero-width spaces, BOM, trailing newlines). Safari's fetch throws
   // "The string did not match the expected pattern" if the Authorization header
@@ -11610,8 +11639,7 @@ function checkHighConvictionSignals(results){
     fired.push(r.ticker);
     if(doAutoFill || doAutoSubmit){
       (function(signal){
-        var tradierKey = '';
-        try{ tradierKey = localStorage.getItem('rrjcar_tradier') || ''; }catch(e){}
+        var tradierKey = _getTradierKey();
         if(tradierKey){
           fetchOptionContract(signal.ticker, signal.price, function(optData){
             if(doAutoSubmit){
@@ -12342,6 +12370,16 @@ function loadKeys(){
     if (_proxyForMig && !_migrated && (mode === 'sandbox' || !mode)) {
       mode = 'live';
       localStorage.setItem('rrjcar_mode', 'live');
+      // The saved rrjcar_acct is likely the SANDBOX account number (saved
+      // while in sandbox mode). Calling /v1/accounts/<sandbox-id>/positions
+      // against the live Tradier API will 404. Prefer the live-specific
+      // account if it exists, else clear so fetchPositions re-discovers via
+      // /v1/user/profile (which returns whatever account the live key owns).
+      try {
+        var liveAcct = localStorage.getItem('rrjcar_acct_live') || '';
+        if (liveAcct) localStorage.setItem('rrjcar_acct', liveAcct);
+        else localStorage.removeItem('rrjcar_acct');
+      } catch(_){}
       localStorage.setItem('rrjcar_proxy_mode_migrated_v1', '1');
       // Defer toast until after DOM is up — loadKeys runs before toast() may exist
       setTimeout(function(){
@@ -12400,7 +12438,7 @@ function updateClock(){
   eid('mkt-status').style.color=mktOpen?'var(--blu)':'var(--gry)';
 }
 function updateHeaderQuotes(){
-  var key='';try{key=localStorage.getItem('rrjcar_tradier')||'';}catch(e){}
+  var key=_getTradierKey();
   var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
 
   if(!key){
