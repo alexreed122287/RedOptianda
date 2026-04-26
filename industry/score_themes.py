@@ -510,7 +510,10 @@ def append_history(theme_scores: dict[str, dict], asof: str) -> None:
     # after PRUNE_THRESHOLD runs in a row — 7 runs ≈ 1 week of cron at
     # weekday + weekend cadence, enough to distinguish "deleted/renamed"
     # from "transient data hiccup".
-    PRUNE_THRESHOLD = 7
+    # PRUNE_THRESHOLD is env-configurable so you can dial it during incidents
+    # (yfinance outage, mass theme rename) without a code change + redeploy.
+    # Default 7 ≈ 1.5 calendar weeks at weekday-only cron.
+    PRUNE_THRESHOLD = int(os.environ.get("PRUNE_THRESHOLD", "7"))
     history.setdefault("_absences", {})
     current = set(theme_scores.keys())
     # Themes that exist anywhere in history (across all timeframes)

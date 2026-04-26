@@ -2397,8 +2397,15 @@ tr.sel-row td{background:var(--blu3);}
             // header. Without it, a leaked workers.dev URL can't be used to
             // exfiltrate the user's live account or place orders. Sandbox
             // requests skip the header so the gate is mode-scoped.
-            var liveToken = '';
-            try { liveToken = localStorage.getItem('rrjcar_tradier_proxy_live_token') || ''; } catch(_) {}
+            //
+            // Memoized: was being read from localStorage on EVERY tradier
+            // fetch (200+ reads per scan). Cache here; saveKeys()/clearKeys()
+            // bust _liveTokenCache when the value changes.
+            if (typeof window._liveTokenCache === 'undefined') {
+              try { window._liveTokenCache = (localStorage.getItem('rrjcar_tradier_proxy_live_token') || '').trim(); }
+              catch(_) { window._liveTokenCache = ''; }
+            }
+            var liveToken = window._liveTokenCache;
             // WRITE-ACTION GATE — orders endpoint needs an additional
             // X-Trade-Token (memory-only, re-prompted per session). Detect
             // method + path here so monkey-patch handles all order POST/
@@ -9493,7 +9500,15 @@ function fetchPositions(){
     var acct='';
     try{var prof=data.profile;if(prof&&prof.account){if(Array.isArray(prof.account))acct=prof.account[0].account_number;else acct=prof.account.account_number;}}catch(e){}
     if(!acct){showPosError('Could not read account number from Tradier response.');return;}
-    G.acctId=acct;eid('ord-acct').value=acct;fetchPositionsDirect(key,mode,host,acct);
+    G.acctId=acct;eid('ord-acct').value=acct;
+    // Persist discovered account ID to localStorage so we don't refetch
+    // /v1/user/profile on every page reload. Mode-specific keys so live and
+    // sandbox accounts don't clobber each other.
+    try {
+      localStorage.setItem('rrjcar_acct', acct);
+      localStorage.setItem(mode==='live' ? 'rrjcar_acct_live' : 'rrjcar_acct_sandbox', acct);
+    } catch(e){}
+    fetchPositionsDirect(key,mode,host,acct);
   }).catch(function(e){showPosError('Tradier API error: '+e.message);});
 }
 
@@ -12857,9 +12872,13 @@ function saveKeys(){
   }
   // Live-mode token — saved alongside proxy URL. Empty string = gate disabled
   // (worker side only enforces if its LIVE_MODE_TOKEN secret is also set).
+  // _cleanKey strips trailing whitespace + non-printable; trim handles paste-newline
+  // foot-gun where the worker would silently 403 on "tokenABC\n" !== "tokenABC".
   var liveTok = _cleanKey(eid('api-tr-proxy-live-token') ? eid('api-tr-proxy-live-token').value : '');
   if (liveTok) localStorage.setItem('rrjcar_tradier_proxy_live_token', liveTok);
   else         localStorage.removeItem('rrjcar_tradier_proxy_live_token');
+  // Bust the in-memory cache so the next fetch picks up the new value
+  window._liveTokenCache = liveTok;
   if (eid('tr-proxy-live-token-status')) {
     if (!trProxy) {
       eid('tr-proxy-live-token-status').textContent = 'Inactive — only used when a proxy URL is set.';

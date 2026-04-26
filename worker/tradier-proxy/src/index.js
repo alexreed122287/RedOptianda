@@ -145,8 +145,11 @@ export default {
     // Backward-compatible: if LIVE_MODE_TOKEN is not set, the gate is bypassed
     // (existing setups keep working until the user opts in).
     if (isLive && env.LIVE_MODE_TOKEN) {
-      const provided = request.headers.get("X-Live-Token") || "";
-      if (provided !== env.LIVE_MODE_TOKEN) {
+      // Trim both sides — paste-newline foot-gun where "tokenABC\n" silently
+      // !== "tokenABC" and the user gets a confusing 403 from a "correct" token.
+      const provided = (request.headers.get("X-Live-Token") || "").trim();
+      const expected = (env.LIVE_MODE_TOKEN || "").trim();
+      if (provided !== expected) {
         return jsonError(403, "Live mode requires X-Live-Token header (set rrjcar_tradier_proxy_live_token in scanner)", corsOrigin);
       }
     }
@@ -164,9 +167,20 @@ export default {
     const isOrderWrite = (request.method === "POST" || request.method === "PUT" || request.method === "DELETE")
       && /\/v1\/accounts\/[^/]+\/orders/.test(url.pathname);
     if (isLive && isOrderWrite && env.WRITE_AUTH_TOKEN) {
-      const tradeProvided = request.headers.get("X-Trade-Token") || "";
-      if (tradeProvided !== env.WRITE_AUTH_TOKEN) {
+      // Same paste-newline trim as X-Live-Token above
+      const tradeProvided = (request.headers.get("X-Trade-Token") || "").trim();
+      const tradeExpected = (env.WRITE_AUTH_TOKEN || "").trim();
+      if (tradeProvided !== tradeExpected) {
         return jsonError(403, "Order placement requires X-Trade-Token header (click 'ENABLE TRADING' in scanner header to enter session token)", corsOrigin);
+      }
+    }
+
+    // Body-size cap — Tradier order POSTs are ~150 bytes; cap at 8KB to
+    // avoid the worker buffering a 100MB POST body (CPU/memory abuse vector).
+    if (request.method === "POST" || request.method === "PUT") {
+      const lenHeader = parseInt(request.headers.get("content-length") || "0", 10);
+      if (lenHeader > 8192) {
+        return jsonError(413, "Request body too large (max 8KB)", corsOrigin);
       }
     }
 
