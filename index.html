@@ -1120,6 +1120,87 @@ tr.sel-row td{background:var(--blu3);}
     </div>
   </div>
 
+  <!-- ── SMART EXITS PANEL ──
+       ATR + EMA-cross auto-close for option positions. Three independently
+       toggleable rules. All OFF by default; opt-in via the master toggle.
+       Settings persist to localStorage. Order placement uses the proxy's
+       X-Trade-Token gate (must be armed in header).
+  -->
+  <div class="ts-panel" style="border-color:rgba(255,0,230,0.30);">
+    <div class="ts-panel-hdr">
+      <input type="checkbox" id="se-toggle" onchange="toggleSmartExits()">
+      <label for="se-toggle" style="color:var(--ngo);">&#9888; SMART EXITS</label>
+      <span style="color:var(--gry);font-size:10px;">ATR + EMA-cross auto-close for option positions (requires TRADE: armed)</span>
+      <span id="se-status" style="color:var(--gry2);font-size:10px;margin-left:auto;">OFF</span>
+    </div>
+    <div id="se-cfg" style="display:none;">
+      <div class="ts-cfg" style="border-bottom:1px solid var(--bg3);padding-bottom:10px;margin-bottom:10px;">
+        <span style="color:var(--ngo);font-size:10px;font-weight:700;letter-spacing:.5px;align-self:center;">RULE 1 &mdash; INTRADAY EMERGENCY</span>
+        <div class="ts-field" style="align-self:flex-end;">
+          <label>Enable</label>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+            <input type="checkbox" id="se-intra-on" onchange="syncSmartExitsFromUi()" style="width:auto;" title="Close any time during market hours if price moves adversely by this many ATRs from entry">
+            <span style="color:var(--gry);font-size:10px;">on</span>
+          </div>
+        </div>
+        <div class="ts-field">
+          <label>Threshold</label>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <input type="number" id="se-intra-mult" value="2.0" min="0.5" max="5" step="0.25" style="width:60px;" onchange="syncSmartExitsFromUi()" title="Multiplier of entry ATR. e.g. 2.0 = close if underlying drops more than 2 ATRs adverse">
+            <span style="color:var(--gry);font-size:10px;">x ATR adverse</span>
+          </div>
+        </div>
+        <div class="ts-field" style="flex:1;align-self:center;">
+          <span style="color:var(--gry);font-size:10px;font-style:italic;">Fires anytime during market hours. Catches gap-downs / news shocks before EOD.</span>
+        </div>
+      </div>
+
+      <div class="ts-cfg" style="border-bottom:1px solid var(--bg3);padding-bottom:10px;margin-bottom:10px;">
+        <span style="color:var(--ngo);font-size:10px;font-weight:700;letter-spacing:.5px;align-self:center;">RULE 2 &mdash; EOD ATR (&lt;15 min to close)</span>
+        <div class="ts-field" style="align-self:flex-end;">
+          <label>Enable</label>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+            <input type="checkbox" id="se-eod-atr-on" onchange="syncSmartExitsFromUi()" style="width:auto;">
+            <span style="color:var(--gry);font-size:10px;">on</span>
+          </div>
+        </div>
+        <div class="ts-field">
+          <label>Threshold</label>
+          <div style="display:flex;align-items:center;gap:4px;">
+            <select id="se-eod-atr-mult" onchange="syncSmartExitsFromUi()" style="background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:4px 6px;width:80px;">
+              <option value="0.5">0.5</option>
+              <option value="1.0" selected>1.0</option>
+            </select>
+            <span style="color:var(--gry);font-size:10px;">x ATR adverse</span>
+          </div>
+        </div>
+        <div class="ts-field" style="flex:1;align-self:center;">
+          <span style="color:var(--gry);font-size:10px;font-style:italic;">Fires only in final 15 min of session. Captures rolled-over positions before overnight decay.</span>
+        </div>
+      </div>
+
+      <div class="ts-cfg">
+        <span style="color:var(--ngo);font-size:10px;font-weight:700;letter-spacing:.5px;align-self:center;">RULE 3 &mdash; EOD EMA10/20 CROSS (&lt;15 min to close)</span>
+        <div class="ts-field" style="align-self:flex-end;">
+          <label>Enable</label>
+          <div style="display:flex;align-items:center;gap:4px;margin-top:2px;">
+            <input type="checkbox" id="se-eod-ema-on" onchange="syncSmartExitsFromUi()" style="width:auto;" title="Close at EOD if underlying's EMA10 has crossed below EMA20 (for calls; flipped for puts)">
+            <span style="color:var(--gry);font-size:10px;">on</span>
+          </div>
+        </div>
+        <div class="ts-field" style="flex:1;align-self:center;">
+          <span style="color:var(--gry);font-size:10px;font-style:italic;">Calls: close if EMA10 &lt; EMA20. Puts: close if EMA10 &gt; EMA20. Trend-failure exit.</span>
+        </div>
+      </div>
+
+      <div style="font-family:var(--ff-mono);font-size:9px;color:var(--gry2);margin-top:10px;border-top:1px solid var(--bg3);padding-top:8px;line-height:1.5;">
+        Entry ATR is snapshotted on first evaluation per position and persisted &mdash; stable across reloads.
+        Positions opened before this feature shipped have no <code>underlyingAtOpen</code> and are skipped (one warning per position).
+        After firing, a position is locked from re-firing for 30 min so Tradier fill state can catch up.
+      </div>
+    </div>
+  </div>
+
   <!-- Stats moved ABOVE the position table so they're always visible at a glance.
        TOTAL P&L = lifetime realized (sum of closed trades) + open unrealized.
        DAY P&L  = today's account-equity change tracked via localStorage history.
@@ -5755,6 +5836,325 @@ function fetchOptionContract(ticker,simPrice,callback,monthFilter){
    }).catch(function(){callback(null);});
  }).catch(function(){callback(null);});
 }
+// ===========================================================================
+//  SMART EXITS \u2014 ATR + EMA-cross auto-close for option positions
+// ===========================================================================
+// User-configurable rules that auto-close open option contracts based on
+// underlying price action vs the underlying's price + ATR at the moment the
+// contract was opened. Three independently toggleable rule families:
+//
+//   1. INTRADAY EMERGENCY \u2014 fires anytime during market hours if the
+//      underlying has moved adversely by >= intradayAtrMult x entry-ATR.
+//      Default 2.0 ATR. Catches gap-downs / news shocks / sharp reversals.
+//
+//   2. EOD ATR \u2014 fires only in the final closeMinutesBefore minutes of the
+//      session if the underlying has moved adversely by >= eodAtrMult x
+//      entry-ATR. Default 1.0 ATR (or 0.5 for tighter exit). Captures
+//      positions that rolled over during the day before overnight decay.
+//
+//   3. EOD EMA CROSS \u2014 fires in the final 15min if underlying's EMA10 has
+//      crossed below EMA20 (for long calls; flipped for puts). Trend-failure.
+//
+// All OFF by default \u2014 user opts in via SMART EXITS panel on Positions tab.
+// Requires X-Trade-Token armed for order placement to succeed.
+
+G.smartExits = {
+  enabled:              false,
+  intradayEnabled:      false,
+  intradayAtrMult:      2.0,
+  eodAtrEnabled:        false,
+  eodAtrMult:           1.0,    // 0.5 = tighter; 1.0 = standard
+  eodEmaCrossEnabled:   false,
+  atrPeriod:            14,
+  emaFast:              10,
+  emaSlow:              20,
+  closeMinutesBefore:   15,     // <15min to market close = "EOD"
+};
+
+function _seConfigKey(){ return 'rrjcar_smart_exits_v1'; }
+function loadSmartExitsConfig(){
+  try {
+    var raw = localStorage.getItem(_seConfigKey());
+    if (raw) {
+      var saved = JSON.parse(raw);
+      Object.keys(saved).forEach(function(k){ if (k in G.smartExits) G.smartExits[k] = saved[k]; });
+    }
+  } catch(e){}
+}
+function saveSmartExitsConfig(){
+  try { localStorage.setItem(_seConfigKey(), JSON.stringify(G.smartExits)); } catch(e){}
+}
+
+// Wilder ATR(period) \u2014 returns latest value or null if not enough data
+function computeATR(days, period){
+  if (!Array.isArray(days) || days.length < period + 1) return null;
+  var trs = [];
+  for (var i = 1; i < days.length; i++) {
+    var h = +days[i].high, l = +days[i].low, pc = +days[i-1].close;
+    if (!isFinite(h) || !isFinite(l) || !isFinite(pc)) continue;
+    trs.push(Math.max(h - l, Math.abs(h - pc), Math.abs(l - pc)));
+  }
+  if (trs.length < period) return null;
+  var seed = 0;
+  for (var j = 0; j < period; j++) seed += trs[j];
+  var atr = seed / period;
+  for (var k = period; k < trs.length; k++) {
+    atr = (atr * (period - 1) + trs[k]) / period;
+  }
+  return atr;
+}
+
+// EMA(period) \u2014 returns latest value of the EMA series
+function computeEMA(days, period){
+  if (!Array.isArray(days) || days.length < period) return null;
+  var k = 2 / (period + 1);
+  var sum = 0, valid = 0;
+  for (var i = 0; i < period; i++) {
+    var c = +days[i].close;
+    if (isFinite(c)) { sum += c; valid++; }
+  }
+  if (valid < period) return null;
+  var ema = sum / period;
+  for (var j = period; j < days.length; j++) {
+    var c2 = +days[j].close;
+    if (!isFinite(c2)) continue;
+    ema = c2 * k + ema * (1 - k);
+  }
+  return ema;
+}
+
+// Minutes until market close (3 PM CST per existing scanner clock).
+// Returns Infinity outside market hours so EOD-only rules don't fire after-hours.
+function minutesUntilMarketClose(){
+  var now = new Date();
+  var day = now.getDay();
+  if (day === 0 || day === 6) return Infinity;     // weekend
+  var hr = now.getHours(), mi = now.getMinutes();
+  var nowMin = hr * 60 + mi;
+  var openMin  = 8 * 60 + 30;   // 8:30 AM CST = 9:30 ET
+  var closeMin = 15 * 60;        // 3:00 PM CST = 4:00 ET
+  if (nowMin < openMin || nowMin >= closeMin) return Infinity;
+  return closeMin - nowMin;
+}
+
+// Snapshot the underlying's ATR at position open (lazy \u2014 computed first time
+// we evaluate, then memoized in posOpenData). Stable across reloads.
+async function ensureEntryAtr(p){
+  if (!G.posOpenData) G.posOpenData = {};
+  if (!G.posOpenData[p.symbol]) G.posOpenData[p.symbol] = {};
+  var pod = G.posOpenData[p.symbol];
+  if (typeof pod.entryAtr === 'number' && pod.entryAtr > 0) return pod.entryAtr;
+  if (!p.underlying) return null;
+  try {
+    var days = await fetchIndicatorHistory(p.underlying);
+    if (!days) return null;
+    var atr = computeATR(days, G.smartExits.atrPeriod);
+    if (atr && atr > 0) {
+      pod.entryAtr = atr;
+      try { localStorage.setItem('rrjcar_pos_open', JSON.stringify(G.posOpenData)); } catch(e){}
+    }
+    return atr;
+  } catch(e) { return null; }
+}
+
+// Close one position at market. Stocks use class=equity; options use
+// class=option with option_symbol. Returns true on confirmed Tradier order id.
+async function closePositionMarket(p, reason){
+  var creds = getTradierCreds();
+  if (!creds) { console.error('[smart-exit] no Tradier creds'); return false; }
+  var qty = Math.abs(p.qty || 0);
+  if (qty === 0) return false;
+
+  var body;
+  if (p.type === 'STOCK') {
+    body = 'class=equity'
+      + '&symbol=' + encodeURIComponent(p.symbol)
+      + '&side=' + (p.qty > 0 ? 'sell' : 'buy_to_cover')
+      + '&quantity=' + qty
+      + '&type=market&duration=day';
+  } else {
+    body = 'class=option'
+      + '&symbol=' + encodeURIComponent(p.underlying)
+      + '&option_symbol=' + encodeURIComponent(p.symbol)
+      + '&side=' + (p.qty > 0 ? 'sell_to_close' : 'buy_to_close')
+      + '&quantity=' + qty
+      + '&type=market&duration=day';
+  }
+
+  console.warn('[smart-exit] CLOSING ' + p.symbol + ' \u2014 ' + reason);
+  try { addAlert(p.underlying || p.symbol, 'SMART EXIT: ' + reason, 'nogo'); } catch(e){}
+
+  try {
+    var r = await fetch(creds.host + '/v1/accounts/' + creds.acct + '/orders', {
+      method: 'POST',
+      headers: { Authorization: 'Bearer '+creds.key, Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: body
+    });
+    var d = await r.json();
+    if (d && d.order && d.order.id) {
+      console.log('[smart-exit] order placed:', d.order.id);
+      var pod = G.posOpenData[p.symbol] || (G.posOpenData[p.symbol] = {});
+      pod.smartExitTriggered = Date.now();
+      try { localStorage.setItem('rrjcar_pos_open', JSON.stringify(G.posOpenData)); } catch(e){}
+      try { toast('SMART EXIT: ' + p.symbol + ' (' + reason.split(':')[0] + ')'); } catch(e){}
+      return true;
+    }
+    var errMsg = (d && (d.errors || d.error)) ? JSON.stringify(d.errors || d.error).slice(0,200) : 'no order.id';
+    console.error('[smart-exit] order rejected:', errMsg);
+    try { addAlert(p.symbol, 'SMART EXIT REJECTED: ' + errMsg + ' \u2014 manual close required', 'nogo'); } catch(e){}
+    return false;
+  } catch(e) {
+    console.error('[smart-exit] order error:', e.message);
+    try { addAlert(p.symbol, 'SMART EXIT ERROR: ' + e.message + ' \u2014 manual close required', 'nogo'); } catch(e2){}
+    return false;
+  }
+}
+
+// Single eval pass \u2014 checks every open position against enabled rules.
+async function checkSmartExits(){
+  var s = G.smartExits;
+  if (!s.enabled) return;
+  if (!G.positions || G.positions.length === 0) return;
+
+  var minsToClose = minutesUntilMarketClose();
+  var marketOpen = isFinite(minsToClose);
+  var isEod = marketOpen && minsToClose <= s.closeMinutesBefore;
+
+  for (var i = 0; i < G.positions.length; i++) {
+    var p = G.positions[i];
+    if (!p || !p.symbol) continue;
+    if (Math.abs(p.qty || 0) === 0) continue;
+
+    var pod = (G.posOpenData && G.posOpenData[p.symbol]) || {};
+
+    // Recently fired? Skip 30min so Tradier fill-state catches up
+    if (pod.smartExitTriggered && (Date.now() - pod.smartExitTriggered) < 30*60*1000) continue;
+
+    var entryUnderlying = pod.underlyingAtOpen || p.underlyingAtOpen || 0;
+    var currentUnderlying = p.underlyingNow || 0;
+    if (!entryUnderlying || !currentUnderlying) {
+      if (!pod._seWarnedNoEntry) {
+        console.warn('[smart-exit] '+p.symbol+': no underlyingAtOpen \u2014 opened before this feature shipped, skipping. Manually set G.posOpenData["'+p.symbol+'"].underlyingAtOpen to enroll.');
+        pod._seWarnedNoEntry = true;
+        if (!G.posOpenData[p.symbol]) G.posOpenData[p.symbol] = pod;
+      }
+      continue;
+    }
+
+    var entryAtr = await ensureEntryAtr(p);
+    if (!entryAtr) continue;
+
+    var deltaFromEntry = currentUnderlying - entryUnderlying;
+    var isPut = (p.type === 'PUT');
+    var adverseMove = isPut ? deltaFromEntry : -deltaFromEntry;   // positive = bad for the position
+    var adverseAtrs = adverseMove / entryAtr;
+
+    // Rule 1: INTRADAY EMERGENCY
+    if (s.intradayEnabled && marketOpen && adverseAtrs >= s.intradayAtrMult) {
+      var reason1 = 'INTRADAY EMERGENCY: ' + p.underlying + ' '
+        + (isPut ? '+' : '-') + Math.abs(deltaFromEntry).toFixed(2)
+        + ' = ' + adverseAtrs.toFixed(2) + ' ATR adverse (>= ' + s.intradayAtrMult + ' ATR)';
+      await closePositionMarket(p, reason1);
+      continue;
+    }
+
+    if (isEod) {
+      // Rule 2: EOD ATR
+      if (s.eodAtrEnabled && adverseAtrs >= s.eodAtrMult) {
+        var reason2 = 'EOD ATR (' + minsToClose + 'min to close): ' + p.underlying + ' '
+          + adverseAtrs.toFixed(2) + ' ATR adverse (>= ' + s.eodAtrMult + ' ATR)';
+        await closePositionMarket(p, reason2);
+        continue;
+      }
+      // Rule 3: EOD EMA CROSS
+      if (s.eodEmaCrossEnabled) {
+        try {
+          var days = await fetchIndicatorHistory(p.underlying);
+          if (days && days.length >= s.emaSlow + 5) {
+            var emaFast = computeEMA(days, s.emaFast);
+            var emaSlow = computeEMA(days, s.emaSlow);
+            if (emaFast && emaSlow) {
+              var bearish = emaFast < emaSlow;
+              var trendAdverse = isPut ? !bearish : bearish;
+              if (trendAdverse) {
+                var reason3 = 'EOD EMA (' + minsToClose + 'min to close): ' + p.underlying
+                  + ' EMA' + s.emaFast + ' (' + emaFast.toFixed(2) + ') '
+                  + (bearish ? '<' : '>') + ' EMA' + s.emaSlow + ' (' + emaSlow.toFixed(2) + ')';
+                await closePositionMarket(p, reason3);
+                continue;
+              }
+            }
+          }
+        } catch(e) { console.warn('[smart-exit] EMA check failed for '+p.underlying+':', e.message); }
+      }
+    }
+  }
+}
+
+// Polling timer \u2014 runs every 60s when enabled
+G._smartExitTimer = null;
+function startSmartExitsPoller(){
+  if (G._smartExitTimer) clearInterval(G._smartExitTimer);
+  G._smartExitTimer = setInterval(checkSmartExits, 60000);
+  setTimeout(checkSmartExits, 2000);   // first run after 2s so positions can hydrate
+  console.log('[smart-exit] poller started (60s interval)');
+}
+function stopSmartExitsPoller(){
+  if (G._smartExitTimer) { clearInterval(G._smartExitTimer); G._smartExitTimer = null; }
+  console.log('[smart-exit] poller stopped');
+}
+
+function toggleSmartExits(){
+  G.smartExits.enabled = !!eid('se-toggle').checked;
+  saveSmartExitsConfig();
+  var cfg = eid('se-cfg');
+  if (cfg) cfg.style.display = G.smartExits.enabled ? '' : 'none';
+  if (G.smartExits.enabled) {
+    startSmartExitsPoller();
+    try { toast('Smart Exits enabled \u2014 checking every 60s'); } catch(e){}
+  } else {
+    stopSmartExitsPoller();
+    try { toast('Smart Exits disabled'); } catch(e){}
+  }
+  _renderSmartExitStatus();
+}
+
+function _renderSmartExitStatus(){
+  var st = eid('se-status');
+  if (!st) return;
+  if (!G.smartExits.enabled) { st.textContent = 'OFF'; st.style.color = 'var(--gry)'; return; }
+  var rules = [];
+  if (G.smartExits.intradayEnabled)    rules.push('INTRADAY -' + G.smartExits.intradayAtrMult + 'ATR');
+  if (G.smartExits.eodAtrEnabled)      rules.push('EOD -' + G.smartExits.eodAtrMult + 'ATR');
+  if (G.smartExits.eodEmaCrossEnabled) rules.push('EOD EMA' + G.smartExits.emaFast + '/' + G.smartExits.emaSlow);
+  st.textContent = 'ON  \u00b7  ' + (rules.length ? rules.join('  \u00b7  ') : 'no rules selected');
+  st.style.color = rules.length ? 'var(--grn)' : 'var(--wrn)';
+}
+
+function syncSmartExitsFromUi(){
+  var s = G.smartExits;
+  s.intradayEnabled    = !!eid('se-intra-on').checked;
+  s.intradayAtrMult    = parseFloat(eid('se-intra-mult').value) || 2.0;
+  s.eodAtrEnabled      = !!eid('se-eod-atr-on').checked;
+  s.eodAtrMult         = parseFloat(eid('se-eod-atr-mult').value) || 1.0;
+  s.eodEmaCrossEnabled = !!eid('se-eod-ema-on').checked;
+  saveSmartExitsConfig();
+  _renderSmartExitStatus();
+}
+
+function applySmartExitsToUi(){
+  var s = G.smartExits;
+  if (eid('se-toggle'))         eid('se-toggle').checked          = s.enabled;
+  if (eid('se-intra-on'))       eid('se-intra-on').checked        = s.intradayEnabled;
+  if (eid('se-intra-mult'))     eid('se-intra-mult').value        = s.intradayAtrMult;
+  if (eid('se-eod-atr-on'))     eid('se-eod-atr-on').checked      = s.eodAtrEnabled;
+  if (eid('se-eod-atr-mult'))   eid('se-eod-atr-mult').value      = s.eodAtrMult;
+  if (eid('se-eod-ema-on'))     eid('se-eod-ema-on').checked      = s.eodEmaCrossEnabled;
+  if (eid('se-cfg'))            eid('se-cfg').style.display       = s.enabled ? '' : 'none';
+  _renderSmartExitStatus();
+  if (s.enabled && !G._smartExitTimer) startSmartExitsPoller();
+}
+
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 //  INDICATOR HISTORY CACHE + CALCULATIONS (RSI Accel, MFI, CMO)
 //  Single 25-day Tradier history fetch per ticker, 24hr localStorage TTL
@@ -15388,6 +15788,8 @@ function init(){
   loadNotifSettings();
   loadAutoTraderSettings();
   loadAutoTraderState();
+  loadSmartExitsConfig();    // hydrate G.smartExits from localStorage
+  applySmartExitsToUi();     // reflect into checkboxes + start poller if enabled
   loadPortfolio();
   // Populate sector checkboxes from the embedded universe
   // (CSV loader removed — embedded UNIVERSE_FULL is the single source of truth)
