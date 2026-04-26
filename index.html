@@ -9414,6 +9414,15 @@ function finishScan(){
     // Refresh the live theme leaderboard strip — uses the freshly-computed
     // intraday RS map so leaders update on every scan completion.
     try { if (typeof renderTopThemesStrip === 'function') renderTopThemesStrip(); } catch(e){}
+    // High-conviction signal check — fires AFTER enrichment fully drains so
+    // alerts + auto-fill use final scores including FMP, indicator history,
+    // theme RS, and broken-trend penalty. Was previously firing on
+    // preliminary scores immediately after the bulk pass; user would get
+    // routed to a pre-filled order ticket on a ticker whose final score
+    // was actually below the GO threshold.
+    try { if (typeof checkHighConvictionSignals === 'function') checkHighConvictionSignals(G.results); } catch(e){
+      console.warn('[scan] high-conviction check threw post-enrichment:', e.message);
+    }
     // STRAGGLERS CLEANUP PASS — re-enrich any top-200 ticker that finished
     // the scan with indEnriched=false. Common causes:
     //   - Tradier 429 dropped that ticker's history fetch (resolves with null)
@@ -9626,8 +9635,15 @@ function finishScan(){
   hideStaleBanner('tab-bs');
   // viewDetail also fires from renderBuySig itself — calling it here causes a
   // duplicate detail-panel fetch on every scan. Removed.
-  // Check for high-conviction signals after scan
-  checkHighConvictionSignals(G.results);
+  //
+  // High-conviction signal check MOVED to _maybeFinishScan (line ~9417). Was
+  // firing here on PRELIMINARY scores immediately after the bulk pass — would
+  // route the user to a pre-filled order ticket + send alerts based on scores
+  // missing FMP analyst grades, indicator history (RSI accel / MFI / CMO),
+  // intraday theme RS, and GEX flow data. By the time the user reacted, the
+  // final enriched score might be 30-50 points lower and no longer a GO.
+  // Now fires only AFTER both enrichment passes (FMP + indicator) drain
+  // and the cleanup pass settles, so alerts/auto-fill use final scores.
 
   // Auto-refresh GEX after scan so GEX bonus scores are applied for the rule
   // scorecard. Now covers all top-200 enriched tickers (was top 35) \u2014 meaning
