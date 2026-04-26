@@ -61,6 +61,33 @@ MASTER = ROOT / "industry" / "master_tickers.json"
 OUT_JSON = ROOT / "industry" / "theme_scores.json"
 HISTORY_JSON = ROOT / "industry" / "theme_scores_history.json"
 
+
+def atomic_write_json(target: Path, payload, indent=None) -> None:
+    """Write JSON atomically — never leave a truncated file on disk.
+
+    Pattern: serialize → write to <target>.tmp → rename .tmp over target.
+    POSIX guarantees rename() is atomic on the same filesystem, so a process
+    kill (timeout, OOM, SIGTERM) at any point either leaves the previous file
+    intact OR atomically swaps to the new one. Never produces a partial write.
+
+    Also rotates one .bak so a corrupt or rolled-back file can be recovered.
+    Without this, a runner killed mid-write produced truncated JSON, the next
+    run hit json.JSONDecodeError, silently reset to {} via the except handler,
+    and the entire 180-day theme history was wiped on the very next successful
+    run with zero alarm.
+    """
+    tmp = target.with_suffix(target.suffix + ".tmp")
+    bak = target.with_suffix(target.suffix + ".bak")
+    body = json.dumps(payload, indent=indent)
+    tmp.write_text(body)
+    # Rotate backup BEFORE the rename so we always have one prior good copy
+    if target.exists():
+        try:
+            os.replace(target, bak)
+        except OSError:
+            pass  # bak rotation is best-effort; don't block the main write
+    os.replace(tmp, target)
+
 LOOKBACK_DAYS = 260
 BENCHMARK = "SPY"
 
@@ -415,7 +442,20 @@ def append_history(theme_scores: dict[str, dict], asof: str) -> None:
         try:
             history = json.loads(HISTORY_JSON.read_text())
         except json.JSONDecodeError:
-            history = {}
+            # Primary file is corrupt — try the .bak written by atomic_write_json.
+            # Without this fallback, a single mid-write kill silently reset
+            # history to {}, wiping 180 days of trend data on the next run.
+            bak = HISTORY_JSON.with_suffix(HISTORY_JSON.suffix + ".bak")
+            if bak.exists():
+                try:
+                    history = json.loads(bak.read_text())
+                    print(f"      ⚠ {HISTORY_JSON.name} was corrupt — recovered from .bak ({len(history.get('dates', []))} days)")
+                except json.JSONDecodeError:
+                    history = {}
+                    print(f"      ⚠ {HISTORY_JSON.name} AND .bak both corrupt — starting fresh history")
+            else:
+                history = {}
+                print(f"      ⚠ {HISTORY_JSON.name} corrupt and no .bak — starting fresh history")
     history.setdefault("dates", [])
     history.setdefault("daily", {})
     history.setdefault("weekly", {})
@@ -514,7 +554,7 @@ def append_history(theme_scores: dict[str, dict], asof: str) -> None:
         print(f"      {len(deferred)} theme(s) absent this run but kept (need {PRUNE_THRESHOLD} consecutive): "
               f"{sorted([f'{t}({n})' for t, n in deferred])[:10]}{'...' if len(deferred) > 10 else ''}")
 
-    HISTORY_JSON.write_text(json.dumps(history))
+    atomic_write_json(HISTORY_JSON, history)
 
 
 def main():
@@ -570,7 +610,7 @@ def main():
         "windows": WINDOWS,
         "themes": scored,
     }
-    OUT_JSON.write_text(json.dumps(payload, indent=2))
+    atomic_write_json(OUT_JSON, payload, indent=2)
     print(f"      wrote {OUT_JSON.name} ({OUT_JSON.stat().st_size//1024} KB)")
 
     print(f"[4/4] appending to history...")

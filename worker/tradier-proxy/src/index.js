@@ -82,8 +82,17 @@ export default {
       .map((s) => s.trim())
       .filter(Boolean);
 
-    const isAllowedOrigin = allowed.length === 0 || allowed.includes(origin);
-    const corsOrigin = isAllowedOrigin ? origin : allowed[0] || "*";
+    // FAIL CLOSED: an empty ALLOWED_ORIGINS env var is treated as "deny all",
+    // not "allow all". Was the wrong fail-mode — a deploy that forgets to set
+    // wrangler.toml [vars] would silently open the proxy to the world AND
+    // reflect the attacker's Origin in the CORS header. Combined with a
+    // missing LIVE_MODE_TOKEN secret (gate auto-bypassed), that's full
+    // unauthorized access to the user's live Tradier account.
+    const isAllowedOrigin = allowed.length > 0 && allowed.includes(origin);
+    // corsOrigin defaults to the FIRST allowlisted origin (so preflights from
+    // unknown origins still get a deterministic, narrowly-scoped header).
+    // Never echoes "*" or unknown origins.
+    const corsOrigin = isAllowedOrigin ? origin : (allowed[0] || "https://invalid.example");
 
     // CORS preflight
     if (request.method === "OPTIONS") {

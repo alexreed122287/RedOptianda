@@ -2643,8 +2643,15 @@ window.clearApiLog = function(){
   toast('API log cleared');
 };
 
-// FMP circuit breaker — once an endpoint fails, stop trying for the session
-window._fmpDead = false;
+// FMP circuit breaker — once an endpoint fails, pause for a cooldown
+// (was: silenced for the entire session, which meant a single transient 403
+// from a CDN blip permanently disabled FMP. Auto-trader then evaluated
+// signals using only indicator-history — exactly the half-enriched data
+// problem the new _scanFinished poll was meant to prevent. The poll happily
+// resolved; the data was just incomplete because FMP was dead.)
+window._fmpDead = 0;              // timestamp when circuit tripped; 0 = closed
+window._FMP_CIRCUIT_RESET_MS = 30 * 60 * 1000;   // 30 min auto-reset
+window._fmpDeadToastShown = false;
 window._fmpRateLimited = 0;       // timestamp when 429 was hit; 0 = not limited
 window._fmpRateLimitLogs = 0;     // suppress log spam after a few
 window._fmpQueue = [];
@@ -2654,6 +2661,21 @@ window._FMP_MIN_SPACING_MS = 200;
 window._FMP_COOLDOWN_MS = 60000;
 window._FMP_QUOTA_KEY = 'rrjcar_fmp_quota_exhausted_until';
 window._fmpLastStart = 0;
+
+// Returns true if circuit breaker is still open. Auto-resets _fmpDead to 0
+// once the cooldown elapses so the next call gets a fresh chance — without
+// this, a one-time 403 silenced FMP forever and the user had to refresh.
+window._isFmpCircuitOpen = function(){
+  if (!window._fmpDead) return false;
+  if (Date.now() - window._fmpDead < window._FMP_CIRCUIT_RESET_MS) return true;
+  // Cooldown elapsed — reset and retry. Reset toast flag so a second trip
+  // re-notifies the user instead of being swallowed.
+  console.info('[FMP] Circuit breaker auto-reset after ' +
+               Math.round(window._FMP_CIRCUIT_RESET_MS/60000) + ' min — retrying FMP calls');
+  window._fmpDead = 0;
+  window._fmpDeadToastShown = false;
+  return false;
+};
 
 // Check persisted quota-exhausted state on init
 (function(){
@@ -2733,8 +2755,16 @@ function _fmpProcessQueue(){
         q.reject(new Error('FMP rate limit cooldown'));
       }
     } else if(r.status === 402 || r.status === 403){
-      window._fmpDead = true;
-      console.warn('[FMP] Circuit breaker tripped on', r.status, '\u2014 silencing further FMP calls this session');
+      window._fmpDead = Date.now();
+      console.warn('[FMP] Circuit breaker tripped on', r.status, '\u2014 silencing FMP for ' +
+                   Math.round(window._FMP_CIRCUIT_RESET_MS/60000) + ' min');
+      // One-shot toast so the user sees this \u2014 was silently disabling FMP
+      // with no UI feedback, leaving the auto-trader to evaluate against
+      // half-enriched results until manual page refresh.
+      if (!window._fmpDeadToastShown && typeof toast === 'function') {
+        window._fmpDeadToastShown = true;
+        toast('\u26a0 FMP returned ' + r.status + ' \u2014 paused 30min. Auto-trader will skip FMP-dependent rules until then.');
+      }
     }
     return r;
   }).then(function(r){ item.resolve(r); }).catch(function(err){
@@ -2748,7 +2778,7 @@ function _fmpProcessQueue(){
 // FMP fetch wrapper with circuit breaker + rate-limit throttle + queueing
 window.fmpFetch = function(url, opts){
   if(window._fmpQuotaExhausted) return Promise.reject(new Error('FMP quota exhausted'));
-  if(window._fmpDead) return Promise.reject(new Error('FMP circuit breaker open'));
+  if(window._isFmpCircuitOpen()) return Promise.reject(new Error('FMP circuit breaker open'));
   if(window._fmpRateLimited > 0 && (Date.now() - window._fmpRateLimited) < window._FMP_COOLDOWN_MS){
     return Promise.reject(new Error('FMP rate limit cooldown'));
   }
@@ -7566,7 +7596,7 @@ function finishScan(){
         setTimeout(_fmpNext, 5000);
         return;
       }
-      if(window._fmpDead) {
+      if(window._isFmpCircuitOpen()) {
         // Circuit breaker open \u2014 credit ALL remaining slots so _maybeFinishScan
         // can finalize. Was bailing without ever ticking fmpDone, leaving the
         // scan stuck at "Enriching N/N" forever (caller relied on watchdog).
@@ -7641,7 +7671,7 @@ function finishScan(){
       // Generation check \u2014 bail if scan was superseded
       if(myGen !== G._scanGen) return;
       if(days) G_HIST_CACHE[t]=days;
-      var fmpActive = fmpKey && !window._fmpDead && !(window._fmpRateLimited > 0 && (Date.now()-window._fmpRateLimited) < (window._FMP_COOLDOWN_MS||60000));
+      var fmpActive = fmpKey && !window._isFmpCircuitOpen() && !(window._fmpRateLimited > 0 && (Date.now()-window._fmpRateLimited) < (window._FMP_COOLDOWN_MS||60000));
       var p = fmpActive ? fetchFmpData(t) : Promise.resolve(null);
       p.then(function(){
         if(myGen !== G._scanGen) return;
