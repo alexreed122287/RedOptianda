@@ -919,13 +919,19 @@ tr.sel-row td{background:var(--blu3);}
       <button class="btn grn" style="font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="exportGoTickers('bs')" title="Copy a comma-separated list of all GO-signal tickers to the clipboard">▲ EXPORT GOs</button>
     </div>
   </div>
-  <div class="flt-bar" style="padding:4px 10px;gap:8px;">
+  <div class="flt-bar" style="padding:4px 10px;gap:8px;align-items:center;">
     <input type="text" id="bs-search" placeholder="Search ticker..." oninput="onBsSearch()" style="flex:1;min-width:160px;font-family:var(--ff-mono);font-size:11px;padding:5px 10px;background:var(--bg1);border:1px solid var(--bg3);border-radius:3px;color:var(--amb);">
+    <label style="font-size:10px;color:var(--gry);display:flex;align-items:center;gap:4px;cursor:pointer;" title="Hide NO-GO signals (long-calls-only — bearish setups aren't actionable)">
+      <input type="checkbox" id="bs-hide-nogo" onchange="toggleBsHideNoGo()" style="cursor:pointer;">
+      <span>Hide NO-GO</span>
+    </label>
   </div>
   <div class="split">
     <div class="split-l">
       <div class="sec-head">GO SIGNALS</div><div id="bs-go-list"></div>
-      <div class="sec-head">NO-GO SIGNALS</div><div id="bs-nogo-list"></div>
+      <div id="bs-nogo-section">
+        <div class="sec-head">NO-GO SIGNALS</div><div id="bs-nogo-list"></div>
+      </div>
     </div>
     <div class="split-r">
       <div class="det-wrap">
@@ -1250,7 +1256,8 @@ tr.sel-row td{background:var(--blu3);}
           <label>TYPE</label>
           <select id="ord-type" onchange="onOrderTypeChange();onSymbolChange()">
             <option value="CALL">CALL</option>
-            <option value="PUT">PUT</option>
+            <!-- PUT option removed for long-calls-only strategy. To re-enable
+                 directional flexibility, restore <option value="PUT">PUT</option>. -->
             <option value="STOCK">STOCK / ETF</option>
           </select>
         </div>
@@ -2034,7 +2041,7 @@ tr.sel-row td{background:var(--blu3);}
             <input type="text" id="pf-b-tk" placeholder="TICKER" maxlength="6" style="text-transform:uppercase;background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
             <input type="number" id="pf-b-strike" placeholder="Strike" step="0.5" min="0" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
             <input type="date" id="pf-b-exp" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
-            <select id="pf-b-type" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);"><option value="CALL">CALL</option><option value="PUT">PUT</option></select>
+            <select id="pf-b-type" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);"><option value="CALL">CALL</option><!-- PUT removed for long-calls-only --></select>
             <input type="number" id="pf-b-qty" placeholder="Qty" value="1" min="1" style="background:var(--bg0);border:var(--bdr);color:var(--wht);padding:6px;font-family:var(--ff-mono);">
             <button class="btn grn" style="font-size:10px;padding:6px 10px;" onclick="pfBuilderAdd()">+ ADD</button>
           </div>
@@ -6268,14 +6275,17 @@ async function _checkSmartExitsImpl(){
     if (!entryAtr) continue;
 
     var deltaFromEntry = currentUnderlying - entryUnderlying;
-    var isPut = (p.type === 'PUT');
-    var adverseMove = isPut ? deltaFromEntry : -deltaFromEntry;   // positive = bad for the position
+    // Long-calls-only: bearish move on underlying = bad for the call position.
+    // (Earlier this had `isPut` branches; user explicitly trades calls only,
+    // dropped to simplify. If you ever want to trade puts again, restore the
+    // sign-flip via `isPut ? deltaFromEntry : -deltaFromEntry`.)
+    var adverseMove = -deltaFromEntry;        // positive = call's underlying dropped = bad
     var adverseAtrs = adverseMove / entryAtr;
 
     // Rule 1: INTRADAY EMERGENCY
     if (s.intradayEnabled && marketOpen && adverseAtrs >= s.intradayAtrMult) {
-      var reason1 = 'INTRADAY EMERGENCY: ' + p.underlying + ' '
-        + (isPut ? '+' : '-') + Math.abs(deltaFromEntry).toFixed(2)
+      var reason1 = 'INTRADAY EMERGENCY: ' + p.underlying + ' -'
+        + Math.abs(deltaFromEntry).toFixed(2)
         + ' = ' + adverseAtrs.toFixed(2) + ' ATR adverse (>= ' + s.intradayAtrMult + ' ATR)';
       await closePositionMarket(p, reason1);
       continue;
@@ -6289,7 +6299,7 @@ async function _checkSmartExitsImpl(){
         await closePositionMarket(p, reason2);
         continue;
       }
-      // Rule 3: EOD EMA CROSS
+      // Rule 3: EOD EMA CROSS — bearish trend = bad for long calls
       if (s.eodEmaCrossEnabled) {
         try {
           var days = await fetchIndicatorHistory(p.underlying);
@@ -6298,11 +6308,9 @@ async function _checkSmartExitsImpl(){
             var emaSlow = computeEMA(days, s.emaSlow);
             if (emaFast && emaSlow) {
               var bearish = emaFast < emaSlow;
-              var trendAdverse = isPut ? !bearish : bearish;
-              if (trendAdverse) {
+              if (bearish) {
                 var reason3 = 'EOD EMA (' + minsToClose + 'min to close): ' + p.underlying
-                  + ' EMA' + s.emaFast + ' (' + emaFast.toFixed(2) + ') '
-                  + (bearish ? '<' : '>') + ' EMA' + s.emaSlow + ' (' + emaSlow.toFixed(2) + ')';
+                  + ' EMA' + s.emaFast + ' (' + emaFast.toFixed(2) + ') < EMA' + s.emaSlow + ' (' + emaSlow.toFixed(2) + ')';
                 await closePositionMarket(p, reason3);
                 continue;
               }
@@ -7634,8 +7642,12 @@ function scoreIt(ticker, ind, opt){
     : _fmpMissReason;
   var ptVal      = fmp ? (fmp.ptConsensus != null ? 'PT $'+(+fmp.ptConsensus).toFixed(2)+(fmp.ptHigh ? ' (Hi $'+fmp.ptHigh+')' : '') : 'No PT data') : _fmpMissReason;
 
+  // Long-calls-only bias: analyst upgrades are more predictive of upside
+  // than analyst downgrades are of downside. Bumped Analyst Revisions from
+  // +12 to +16 since the user trades calls only \u2014 this rule is a stronger
+  // bullish signal than the score originally weighted.
   var fmpChecks = [
-    {ok:analystOk, n:'Analyst Revisions \u2191', val:analystVal, pts:12},
+    {ok:analystOk, n:'Analyst Revisions \u2191', val:analystVal, pts:16},
     {ok:ptOk,      n:'Analyst PT Exists',         val:ptVal,      pts:8}
   ];
   fmpChecks.forEach(function(c){
@@ -7679,34 +7691,62 @@ function scoreIt(ticker, ind, opt){
       if(G.gexData[gi].t === ticker){ gexEntry = G.gexData[gi]; break; }
     }
   }
-  var gexCallHeavy = gexEntry ? (gexEntry.call >= 55) : false;
+  // GEX Call Heavy — TIERED for long-calls-only:
+  //   ≥70% calls = +8 (strong call-side conviction; meaningful flow signal)
+  //   55-69%     = +4 (mild lean; still positive but not high-conviction)
+  //   <55%       = 0  (rule fails)
+  // Was binary +6 — tiering rewards stronger flow conviction more, weakens
+  // the "barely call-heavy" signal that was being treated as full credit.
+  var gexCallPct = gexEntry ? gexEntry.call : 0;
+  var gexCallHeavy = gexCallPct >= 55;
+  var gexStrong = gexCallPct >= 70;
+  var gexPts = gexStrong ? 8 : (gexCallHeavy ? 4 : 0);
   var gexVal = gexEntry
     ? (gexEntry.sim ? '[SIM] ' : '') + gexEntry.call + '% calls / ' + gexEntry.put + '% puts'
+      + (gexStrong ? ' ★' : gexCallHeavy ? '' : '')
     : 'Run GEX/Flow tab first';
-  if(gexCallHeavy){ score += 6; techScore += 6; }
-  res.push({n:'GEX Call Heavy', pass:gexCallHeavy, val:gexVal, filter:false, pts:6, isGex:true});
+  if(gexPts > 0){ score += gexPts; techScore += gexPts; }
+  res.push({n:'GEX Call Heavy', pass:gexCallHeavy, val:gexVal, filter:false, pts:gexPts, isGex:true});
 
-  // Rule: Strong Sector (+5 / -5) — sector-rotation overlay from industry pipeline.
-  // Pass if ticker's strongest theme has dailyScore >= 75 (top quartile-ish).
-  // Penalty -5 if dailyScore <= 25 (bottom quartile). Pass-through if no mapping.
+  // Rule: Strong Sector (+8 / -8) — sector-rotation overlay from industry pipeline.
+  // Bumped from +5/-5 for the long-calls-only user: bullish unhedged bets
+  // depend more heavily on sector tailwind than hedged or directional-pair
+  // strategies do. Top-quartile theme = +8, bottom-quartile = -8.
   var themeInfo = (typeof getThemeStrength === 'function') ? getThemeStrength(ticker) : null;
   var sectorOk = false, sectorVal = 'No theme data';
   if (themeInfo) {
     var ds = themeInfo.dailyScore || 0;
     sectorVal = themeInfo.theme + ' (daily ' + ds.toFixed(1) + ')';
     if (ds >= 75) {
-      score += 5; fundScore += 5;
+      score += 8; fundScore += 8;
       sectorOk = true;
-      sectorVal += ' ↑';
+      sectorVal += ' ↑↑';
     } else if (ds <= 25) {
-      score -= 5; fundScore -= 5;
-      sectorVal += ' ↓ (weak sector — demoted)';
+      score -= 8; fundScore -= 8;
+      sectorVal += ' ↓↓ (weak sector — demoted)';
     }
   }
-  res.push({n:'Strong Sector', pass:sectorOk, val:sectorVal, filter:false, pts:5, isTheme:true});
+  res.push({n:'Strong Sector', pass:sectorOk, val:sectorVal, filter:false, pts:8, isTheme:true});
+
+  // NEW Rule: Broken Trend (-5 penalty only) — explicit bearish-pattern flag
+  // for long-calls-only. If price has fallen below EMA50, the medium-term
+  // trend is broken; calls fight gravity. No positive credit (price > EMA50
+  // is already implicit in EMA20 > EMA50 + Price > EMA200 rules above).
+  var brokenTrend = (ind && ind.price && ind.ema50 && ind.price < ind.ema50);
+  var brokenTrendVal = brokenTrend
+    ? '$'+fmt2(ind.price)+' < EMA50 $'+fmt2(ind.ema50)+' (trend broken — calls fight gravity)'
+    : (ind && ind.price && ind.ema50)
+      ? '$'+fmt2(ind.price)+' > EMA50 (trend intact)'
+      : 'Awaiting data';
+  if (brokenTrend) { score -= 5; techScore -= 5; }
+  res.push({n:'Broken Trend (penalty)', pass:!brokenTrend, val:brokenTrendVal, filter:false, pts:-5, isPenalty:true});
 
   // \u2500\u2500 GO DECISION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  var total = clamp(score, 0, 155); // 144 base + 6 GEX bonus + 5 sector overlay
+  // Score cap raised: 144 base + 8 GEX (was 6) + 8 sector (was 5) +
+  //   +4 Analyst Revisions delta (now 16, was 12) = 164 max for long-calls-only.
+  // Penalties (Broken Trend -5, weak sector -8, avoidBad) can push below 0;
+  // clamp to 0 so the GO threshold comparator (>=110) doesn't get confused.
+  var total = clamp(score, 0, 164);
   // GO threshold reads from the Min Score input in the scanner tab so the
   // user can tune what counts as a "GO". Falls back to 110 if input missing.
   var goThreshold = 110;
@@ -7860,7 +7900,9 @@ function buildDetail(r,detId,emptyId){
     +'</div>'
     +'<div style="padding:8px 12px;border-bottom:var(--bdr);display:flex;align-items:center;gap:10px;">'
     +'<button class="btn blu" style="font-size:12px;padding:5px 14px;" onclick="doBuyCall()">\u25b2 BUY CALL</button>'
-    +'<button class="btn" style="font-size:12px;padding:5px 14px;border-color:var(--gry2);color:var(--gry);" onclick="doBuyPut()">\u25bc BUY PUT</button>'
+    /* BUY PUT button hidden \u2014 long-calls-only strategy. doBuyPut() function
+       still exists below so it can be called from console / re-enabled if
+       direction-neutral trading ever returns. */
     +'<span style="color:var(--gry);font-size:10px;">Strike: $'+fmt2(opt.strike)+'  |  Exp: '+opt.exp+'</span>'
     +'</div>'
     +'<div class="s-hdr">RULE SCORECARD v3.5 <span style="font-size:10px;color:var(--gry);font-weight:400;">Tech '+techScore+' + Fund '+fundScore+' = '+r.score+'/150</span></div>'
@@ -8304,6 +8346,23 @@ function starHTML(ticker, size){
     +'style="cursor:pointer;color:'+color+';font-size:'+size+'px;padding:0 4px;user-select:none;">'+ch+'</span>';
 }
 function onBsSearch(){ G.bsQuery = (eid('bs-search') && eid('bs-search').value || '').trim().toUpperCase(); renderBuySig(); }
+
+// Long-calls-only UX: toggle to collapse the NO-GO column entirely.
+// Persists to localStorage so the setting survives reloads.
+function toggleBsHideNoGo(){
+  var cb = eid('bs-hide-nogo');
+  var hide = !!(cb && cb.checked);
+  try { localStorage.setItem('rrjcar_bs_hide_nogo', hide ? '1' : '0'); } catch(e){}
+  var sec = eid('bs-nogo-section');
+  if (sec) sec.style.display = hide ? 'none' : '';
+}
+function loadBsHideNoGo(){
+  try {
+    var saved = localStorage.getItem('rrjcar_bs_hide_nogo') === '1';
+    var cb = eid('bs-hide-nogo'); if (cb) cb.checked = saved;
+    var sec = eid('bs-nogo-section'); if (sec) sec.style.display = saved ? 'none' : '';
+  } catch(e){}
+}
 function onScSearch(){ G.scQuery = (eid('sc-search') && eid('sc-search').value || '').trim().toUpperCase(); renderScan(); }
 
 // Light / dark mode toggle \u2014 persists to localStorage
@@ -17201,6 +17260,8 @@ function init(){
   loadAutoTraderState();
   loadSmartExitsConfig();    // hydrate G.smartExits from localStorage
   applySmartExitsToUi();     // reflect into checkboxes + start poller if enabled
+  // Long-calls-only UX: restore "Hide NO-GO" preference
+  if (typeof loadBsHideNoGo === 'function') loadBsHideNoGo();
   // GEX cache + auto-schedule
   if (typeof loadGexCache === 'function') loadGexCache();
   if (typeof loadGexSchedule === 'function') {
