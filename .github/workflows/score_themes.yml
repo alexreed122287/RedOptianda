@@ -8,6 +8,7 @@ on:
 
 permissions:
   contents: write
+  issues: write   # F-3: needed for the failure-notification step
 
 jobs:
   score:
@@ -44,4 +45,28 @@ jobs:
           else
             git commit -m "auto: refresh theme scores $(date -u +%Y-%m-%d)"
             git push
+          fi
+
+      # F-3: surface failures as a GitHub issue. GH Actions auto-disables a
+      # scheduled workflow after 60 days without any successful run on the
+      # default branch, AND silent infra/yfinance breakage can produce a
+      # streak of failures the user never notices because the cron is
+      # background. Open an issue on failure (deduped via the
+      # `cron-failure` label so we don't spam — only one open issue at a time).
+      - name: Notify on failure
+        if: failure()
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set -e
+          # Make sure the dedup label exists before we try to filter by it.
+          gh label create cron-failure --description "score_themes workflow failures" --color d73a4a 2>/dev/null || true
+          existing=$(gh issue list --label cron-failure --state open --json number --jq '.[0].number' || echo "")
+          run_url="https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}"
+          ts=$(date -u +%Y-%m-%dT%H:%MZ)
+          if [ -n "$existing" ]; then
+            gh issue comment "$existing" --body "Cron failed again on ${ts}. Run: ${run_url}"
+          else
+            body="The score_themes workflow failed on ${ts}. Run: ${run_url}. This issue will be re-used for subsequent failures (commented on rather than reopened) and should be closed once the underlying problem is fixed."
+            gh issue create --title "score_themes cron failed: $(date -u +%Y-%m-%d)" --label cron-failure --body "$body"
           fi
