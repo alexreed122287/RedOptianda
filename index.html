@@ -926,6 +926,10 @@ tr.sel-row td{background:var(--blu3);}
       <span>Hide NO-GO</span>
     </label>
   </div>
+  <!-- Live theme leaderboard — top 5 by intraday RS vs SPY + bottom 3 laggards.
+       Updates after every scan. Min-width:0 + overflow allows horizontal
+       scroll on narrow viewports without breaking the layout. -->
+  <div class="top-themes-strip" style="background:var(--bg1);border-bottom:var(--bdr);padding:5px 10px;font-family:var(--ff-mono);font-size:11px;white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;letter-spacing:.3px;"></div>
   <div class="split">
     <div class="split-l">
       <div class="sec-head">GO SIGNALS</div><div id="bs-go-list"></div>
@@ -1018,6 +1022,9 @@ tr.sel-row td{background:var(--blu3);}
     <button class="btn grn" style="font-size:11px;" onclick="exportGoTickers('sc')" title="Copy a comma-separated list of all GO-signal tickers from current filtered results">▲ EXPORT GOs</button>
     <span id="sc-export-hint" style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);align-self:center;"></span>
   </div>
+  <!-- Live theme leaderboard (same render as BUY SIGNALS — both .top-themes-strip
+       elements get updated by renderTopThemesStrip via querySelectorAll). -->
+  <div class="top-themes-strip" style="background:var(--bg1);border-bottom:var(--bdr);padding:5px 10px;font-family:var(--ff-mono);font-size:11px;white-space:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;letter-spacing:.3px;"></div>
   <!-- Progress bar -->
   <div id="sc-progress-wrap" style="display:none;padding:6px 12px;background:var(--bg1);border-bottom:1px solid var(--bg3);">
     <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px;">
@@ -4140,6 +4147,11 @@ function switchTab(id){
   if(id==='cw'){cwRenderTable();}
   if(id==='pf'){ if(typeof renderPortfolio==='function') renderPortfolio(); }
   if(id==='perf'){ if(typeof renderPerformanceTab==='function') renderPerformanceTab(); }
+  // Refresh the live theme leaderboard whenever BS or SC tab opens — its
+  // strip is in the DOM but querySelectorAll won't find it until visible
+  if(id==='bs' || id==='sc'){
+    try { if (typeof renderTopThemesStrip === 'function') renderTopThemesStrip(); } catch(e){}
+  }
   if(id==='gex'){
     // Reflect saved schedule into the dropdown
     var sel = eid('gex-sched-sel');
@@ -7466,6 +7478,66 @@ function intradayRsToScore(rs){
   return Math.max(0, Math.min(100, 50 + (rs * 10)));
 }
 
+// Render the live theme leaderboard strip. Top 5 by intraday RS + bottom 3
+// laggards. Filters out themes with <3 members in current G.results to
+// suppress noise from tiny themes that one outlier ticker can dominate.
+// Called from _maybeFinishScan (after every scan) + on switchTab to BS/SC.
+function renderTopThemesStrip(){
+  var els = document.querySelectorAll('.top-themes-strip');
+  if (!els.length) return;
+  var rsMap = (typeof _ensureIntradayThemeRS === 'function') ? _ensureIntradayThemeRS() : {};
+
+  // Count theme members in G.results so we filter sparse themes
+  var counts = {};
+  if (G.results && G_THEME_OVERLAY && G_THEME_OVERLAY.ticker2theme) {
+    for (var i = 0; i < G.results.length; i++) {
+      var ti = G_THEME_OVERLAY.ticker2theme[G.results[i].ticker];
+      if (ti && ti.theme) counts[ti.theme] = (counts[ti.theme] || 0) + 1;
+    }
+  }
+
+  var rows = [];
+  Object.keys(rsMap).forEach(function(theme){
+    if ((counts[theme] || 0) < 3) return;
+    rows.push({ theme: theme, rs: rsMap[theme], n: counts[theme] });
+  });
+  rows.sort(function(a,b){ return b.rs - a.rs; });
+
+  if (!rows.length) {
+    els.forEach(function(el){
+      el.innerHTML = '<span style="color:var(--gry);font-size:10px;font-style:italic;">Run a scan to populate the live theme leaderboard</span>';
+    });
+    return;
+  }
+
+  function fmtRow(r, rank){
+    var col = r.rs > 2     ? 'var(--grn)'
+            : r.rs > 0     ? 'var(--amb)'
+            : r.rs > -1    ? 'var(--gry)'
+            :                'var(--ngo)';
+    var arrow = r.rs > 2  ? '⚡↑↑'
+              : r.rs > 0  ? '↑'
+              : r.rs > -2 ? '·'
+              :             '⚡↓↓';
+    var sign = r.rs >= 0 ? '+' : '';
+    var rankBit = rank ? '<b style="color:var(--gry2);">'+rank+'.</b> ' : '';
+    return '<span style="color:'+col+';" title="'+r.n+' members in current scan">'
+         + rankBit + r.theme + ' ' + sign + r.rs.toFixed(1) + '% ' + arrow
+         + '</span>';
+  }
+
+  var leaders  = rows.slice(0, 5);
+  var laggards = rows.slice(-3).reverse();
+
+  var html = '<span style="color:var(--ambb);font-size:10px;letter-spacing:1.5px;font-weight:700;">TOP THEMES NOW:</span> '
+    + leaders.map(function(r,i){return fmtRow(r, i+1);}).join('  <span style="color:var(--bg3);">·</span>  ')
+    + '  <span style="color:var(--bg3);">|</span>  '
+    + '<span style="color:var(--ngo);font-size:10px;letter-spacing:1.5px;font-weight:700;">LAGGARDS:</span> '
+    + laggards.map(function(r){return fmtRow(r);}).join('  <span style="color:var(--bg3);">·</span>  ');
+
+  els.forEach(function(el){ el.innerHTML = html; });
+}
+
 // Combined helper: returns { theme, dailyScore, intradayRs, intradayScore,
 // combinedScore, dominant } or null. Used by the Strong Sector rule + UI.
 function getThemeStrengthLive(ticker){
@@ -9339,6 +9411,9 @@ function finishScan(){
       go:      goCountFinal,
       nogo:    G.results.length - goCountFinal
     });
+    // Refresh the live theme leaderboard strip — uses the freshly-computed
+    // intraday RS map so leaders update on every scan completion.
+    try { if (typeof renderTopThemesStrip === 'function') renderTopThemesStrip(); } catch(e){}
     // STRAGGLERS CLEANUP PASS — re-enrich any top-200 ticker that finished
     // the scan with indEnriched=false. Common causes:
     //   - Tradier 429 dropped that ticker's history fetch (resolves with null)
