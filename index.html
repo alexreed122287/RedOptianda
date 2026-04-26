@@ -556,12 +556,27 @@ tr.sel-row td{background:var(--blu3);}
      Allow it to grow and wrap so the light/dark toggle, notify button,
      OPT BP indicator, etc. are all big enough to actually tap. */
   html, body{overflow-x:hidden !important;}
-  #hdr{height:auto !important;min-height:48px;padding:6px 10px !important;flex-wrap:wrap !important;gap:6px 8px !important;align-items:center !important;}
-  #hdr-tickers{flex-wrap:wrap !important;gap:8px 12px !important;justify-content:flex-start !important;flex:1 1 100%;order:3;padding:4px 0;border-top:1px solid rgba(0,212,255,0.1);}
+
+  /* H-1: lock header height so the page doesn't shift up/down when right-side
+     content reflows. Variable-width elements like #hdr-scan-status grow from
+     "SCAN: idle" (~70px) to "SCAN: 47/200 enriching..." (~190px) and back as
+     a scan runs, which previously caused #hdr-right to wrap onto a new line
+     mid-scan, increasing the header height and pushing the rest of the page
+     down. Reserving a 2-row min-height keeps the layout stable through every
+     state of the scan/auth/balance widgets. */
+  #hdr{height:auto !important;min-height:104px !important;padding:6px 10px !important;flex-wrap:wrap !important;gap:6px 8px !important;align-items:center !important;align-content:flex-start !important;}
+  #hdr-tickers{flex-wrap:wrap !important;gap:8px 12px !important;justify-content:flex-start !important;flex:1 1 100%;order:3;padding:4px 0;border-top:1px solid rgba(0,212,255,0.1);min-height:32px;}
   .htick{font-size:12px;}
   #hdr-logo{font-size:16px !important;letter-spacing:2px !important;flex:0 0 auto;order:1;}
   #hdr-logo .panda-icon{height:36px !important;}
-  #hdr-right{flex-wrap:wrap !important;gap:6px !important;font-size:12px !important;flex:1 1 auto;order:2;justify-content:flex-end;}
+  #hdr-right{flex-wrap:wrap !important;gap:6px !important;font-size:12px !important;flex:1 1 auto;order:2;justify-content:flex-end;min-height:48px;}
+
+  /* H-1: cap the width of state widgets that grow with content so they
+     wrap their own text instead of pushing siblings into a new flex line.
+     Empirically max-width 180px fits "SCAN: complete (1:23 ago)" and
+     "OPT BP: $12,345.67" without ellipsis at iPad zoom levels. */
+  #hdr-scan-status{max-width:200px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
+  #hdr-opt-bp{max-width:160px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
 
   /* Header buttons (light/dark toggle, NOTIFY, OPT BP, API counter, etc.)
      have inline style="" attributes so EVERY override needs !important. */
@@ -581,8 +596,16 @@ tr.sel-row td{background:var(--blu3);}
   }
   #clk, #mkt-status{font-size:12px !important;padding:4px 6px !important;white-space:nowrap;}
 
-  /* App body needs to recompute height since header is taller now */
+  /* App body needs to recompute height since header is taller now.
+     H-1: use 100dvh (dynamic viewport height) on browsers that support it
+     so the calculation tracks the visible area as iOS Safari's URL bar
+     collapses on scroll, instead of using 100vh which is always the
+     largest-possible viewport (causing a subtle bottom-clip when the URL
+     bar is visible). Older browsers fall back to 100vh via the first rule. */
   #app{height:auto !important;min-height:calc(100vh - 130px) !important;}
+  @supports (height: 100dvh){
+    #app{min-height:calc(100dvh - 130px) !important;}
+  }
 
   /* ── Tab bar: larger tap zones ── */
   .ntab{font-size:13px !important;padding:14px 18px !important;min-height:50px !important;}
