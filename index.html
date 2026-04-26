@@ -12076,13 +12076,31 @@ function saveKeys(){
     }
     return;
   }
+  // Capture prior proxy state BEFORE writing — used below to detect "newly enabled"
+  // so we can auto-flip mode→live (proxy + sandbox = synthetic Tradier test prices).
+  var _prevProxy = localStorage.getItem('rrjcar_tradier_proxy') || '';
   if (trProxy) localStorage.setItem('rrjcar_tradier_proxy', trProxy);
   else         localStorage.removeItem('rrjcar_tradier_proxy');
+  // Auto-flip mode to LIVE when proxy is being newly enabled with sandbox selected.
+  // The proxy injects the (live) key server-side; sandbox+proxy returns synthetic
+  // prices that look real but aren't (NVDA at $944 etc). Mark migration done so
+  // we don't fight the user if they deliberately re-pick sandbox later.
+  if (trProxy && !_prevProxy && mode === 'sandbox') {
+    mode = 'live';
+    if (eid('api-mode')) eid('api-mode').value = 'live';
+    localStorage.setItem('rrjcar_proxy_mode_migrated_v1', '1');
+    setTimeout(function(){
+      try { toast('Mode switched to LIVE — proxy + sandbox returns synthetic test prices'); } catch(_){}
+    }, 100);
+  }
   if(eid('tr-proxy-status')){
+    var _proxySandboxWarn = (trProxy && mode === 'sandbox')
+      ? ' ⚠ SANDBOX MODE: scans use synthetic Tradier test data — switch Mode to LIVE for real prices.'
+      : '';
     eid('tr-proxy-status').textContent = trProxy
-      ? 'Proxy active — local Tradier key will be ignored. Worker injects key server-side.'
+      ? ('Proxy active — local Tradier key ignored. Worker injects key server-side.' + _proxySandboxWarn)
       : 'Direct mode — using local Tradier key.';
-    eid('tr-proxy-status').className = 'api-status ' + (trProxy ? 'ok' : 'miss');
+    eid('tr-proxy-status').className = 'api-status ' + (trProxy ? (mode === 'sandbox' ? 'miss' : 'ok') : 'miss');
   }
   if(fmp)localStorage.setItem('rrjcar_fmp',fmp);
   // Mode-specific Tradier key + account (live/sandbox use different tokens)
@@ -12312,6 +12330,25 @@ function loadKeys(){
   var _hasBadFmp=_fmpRaw.length>0&&_fmpRaw.split('').some(function(c){return c.charCodeAt(0)>255;});
   if(_hasBadTr)localStorage.removeItem('rrjcar_tradier');if(_hasBadFmp)localStorage.removeItem('rrjcar_fmp');
   var fmp=localStorage.getItem('rrjcar_fmp')||'',tr=localStorage.getItem('rrjcar_tradier')||'',mode=localStorage.getItem('rrjcar_mode')||'sandbox',acct=localStorage.getItem('rrjcar_acct')||'';
+  // One-time migration: existing users who configured a Tradier proxy but
+  // never flipped Mode to LIVE were silently scanning Tradier sandbox (which
+  // returns synthetic test prices — NVDA at $944, EMA200 nowhere near reality).
+  // The proxy exists specifically to handle live data, so default mode=live
+  // when proxy is set. Flag-gated so we only flip ONCE — if the user then
+  // explicitly picks sandbox after migration we leave it alone.
+  try {
+    var _proxyForMig = localStorage.getItem('rrjcar_tradier_proxy') || '';
+    var _migrated = localStorage.getItem('rrjcar_proxy_mode_migrated_v1');
+    if (_proxyForMig && !_migrated && (mode === 'sandbox' || !mode)) {
+      mode = 'live';
+      localStorage.setItem('rrjcar_mode', 'live');
+      localStorage.setItem('rrjcar_proxy_mode_migrated_v1', '1');
+      // Defer toast until after DOM is up — loadKeys runs before toast() may exist
+      setTimeout(function(){
+        try { toast('Proxy detected — switched Mode to LIVE for real prices'); } catch(_){}
+      }, 1500);
+    }
+  } catch(_){}
   // Pre-populate FMP key for all users \u2014 saves team setup step
   // Individual keys entered in API tab override this default
   if(!fmp && typeof FMP_KEY_DEFAULT !== 'undefined' && FMP_KEY_DEFAULT){
@@ -12341,10 +12378,16 @@ function loadKeys(){
   var trProxy = localStorage.getItem('rrjcar_tradier_proxy') || '';
   if (eid('api-tr-proxy')) eid('api-tr-proxy').value = trProxy;
   if (eid('tr-proxy-status')) {
+    // Surface a visible warning if proxy is set but mode is still sandbox —
+    // that combo means the worker queries Tradier sandbox (synthetic test prices)
+    // even though the user "configured the proxy" thinking they'd get live data.
+    var _proxySandboxWarn = (trProxy && mode === 'sandbox')
+      ? ' ⚠ SANDBOX MODE: scans use synthetic Tradier test data — switch Mode to LIVE for real prices.'
+      : '';
     eid('tr-proxy-status').textContent = trProxy
-      ? 'Proxy active — local Tradier key ignored. Worker injects key server-side.'
+      ? ('Proxy active — local Tradier key ignored. Worker injects key server-side.' + _proxySandboxWarn)
       : 'Direct mode — using local Tradier key. (Optional: deploy worker/tradier-proxy for server-side key.)';
-    eid('tr-proxy-status').className = 'api-status ' + (trProxy ? 'ok' : 'miss');
+    eid('tr-proxy-status').className = 'api-status ' + (trProxy ? (mode === 'sandbox' ? 'miss' : 'ok') : 'miss');
   }
 }
 function updateClock(){
