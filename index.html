@@ -92,7 +92,13 @@ a{color:var(--blu);text-decoration:none;}
 .htick .tc{font-size:11px;}
 .tc.up{color:var(--blu);}
 .tc.dn{color:var(--wrn);}
-#hdr-right{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:11px;}
+#hdr-right{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:11px;}
+/* Logo + clock cluster — clock sits right of "OPTION PANDA" with a subtle
+   separator bar so the visual hierarchy is logo (brand) → clock (status)
+   without competing for attention. */
+#hdr-logo{position:relative;}
+#clk-logo{position:relative;padding-left:14px;}
+#clk-logo::before{content:"";position:absolute;left:0;top:50%;transform:translateY(-50%);width:1px;height:60%;background:var(--gry2);opacity:.5;}
 #clk{color:var(--amb);}
 #mkt-status{color:var(--gry);}
 /* Unify chip widgets on desktop so each "TRADE: armed", "OPT BP: ...", "F&G: 66 GREED",
@@ -280,15 +286,15 @@ tr.sel-row td{background:var(--blu3);}
 .ind-filter-lbl:hover{border-color:var(--gry);color:var(--wht);}
 .ind-filter-lbl input[type=checkbox]{width:auto;margin:0;accent-color:var(--amb);}
 .ind-filter-lbl:has(input:checked){border-color:var(--amb);color:var(--ambb);background:rgba(245,158,11,0.08);}
-/* MUST-PASS row: chips fill the row evenly (flex:1) so the whole bar uses
-   the available page width without horizontal scroll. Compact font + small
-   padding lets all 11 fit; if a chip's label is longer than its allocated
-   slice, it ellipsizes — full text still available via hover. */
+/* MUST-PASS row: chips keep their natural label widths (no flex:1 collapse).
+   Row scrolls horizontally if the cumulative width exceeds the viewport so
+   labels stay legible. The search box + filter count stay anchored to the
+   right edge by being last in DOM order. */
 .must-pass-row{align-items:center;}
-.must-pass-row .ind-filter-lbl{padding:3px 6px;font-size:10px;flex:1 1 0;min-width:0;justify-content:center;}
-.must-pass-row .ind-filter-lbl span{font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.must-pass-row .ind-filter-lbl{padding:3px 8px;font-size:10px;flex:0 0 auto;white-space:nowrap;}
+.must-pass-row .ind-filter-lbl span{font-size:10px;white-space:nowrap;}
 .must-pass-row > span:first-child{flex:0 0 auto;}   /* MUST PASS: label */
-.must-pass-row > input[type="text"]{flex:0 0 auto;width:160px;}
+.must-pass-row > input[type="text"]{flex:0 0 auto;width:160px;margin-left:auto;}
 .must-pass-row > #sc-filter-count{flex:0 0 auto;}
 .btn{background:var(--bg2);border:1px solid var(--amb3);border-radius:var(--rad);color:var(--amb);cursor:pointer;font-family:var(--ff);font-size:12px;font-weight:600;letter-spacing:.5px;padding:6px 12px;transition:all .2s;}
 .btn:hover{background:var(--amb3);}
@@ -968,7 +974,7 @@ tr.sel-row td{background:var(--blu3);}
 </head>
 <body>
 <div id="hdr">
-  <div id="hdr-logo"><img src="assets/pandas2.png" alt="" class="panda-icon"><span>OPTION PANDA</span></div>
+  <div id="hdr-logo"><img src="assets/pandas2.png" alt="" class="panda-icon"><span>OPTION PANDA</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span></div>
   <div id="hdr-tickers">
     <span class="htick"><span class="ts">SPY </span><span class="tv" id="h-spy">--</span> <span class="tc" id="h-spy-c"></span></span>
     <span class="htick"><span class="ts">QQQ </span><span class="tv" id="h-qqq">--</span> <span class="tc" id="h-qqq-c"></span></span>
@@ -998,7 +1004,10 @@ tr.sel-row td{background:var(--blu3);}
     <span id="hdr-adanos-x" class="hdr-adanos" data-platform="x" onclick="switchTab('sent')" title="X / Twitter market sentiment \u2014 click to open full panel">X: --</span>
     <span id="hdr-adanos-n" class="hdr-adanos" data-platform="news" onclick="switchTab('sent')" title="News market sentiment \u2014 click to open full panel">N: --</span>
     <span id="hdr-adanos-p" class="hdr-adanos" data-platform="polymarket" onclick="switchTab('sent')" title="Polymarket market sentiment \u2014 click to open full panel">P: --</span>
-    <span id="clk">--:--:--</span>
+    <!-- Clock relocated next to OPTION PANDA logo. Hidden span kept so the
+         existing updateClock() that writes to #clk continues to work. The
+         visible value is mirrored to #clk-logo by updateClock below. -->
+    <span id="clk" style="display:none !important;">--:--:--</span>
     <span id="mkt-status" style="display:none !important;">--</span>
     <span id="mode-badge" style="display:none !important;">SANDBOX</span>
     <!-- API counter relocated to top of API tab; keep #api-counter-badge in DOM (hidden) so existing JS that updates textContent still works -->
@@ -1142,8 +1151,9 @@ tr.sel-row td{background:var(--blu3);}
       <!-- Hidden legacy select kept for any untouched references -->
       <select id="sc-sect" style="display:none;"><option value="">All</option></select>
     </label>
-    <label>Signal <select id="sc-sig"><option value="">All</option><option value="GO" selected>GO</option><option value="NO-GO">NO-GO</option></select></label>
+    <!-- Order: Sector → Theme → Signal → Min Score (per user spec). -->
     <label title="Filter scan results to tickers in the chosen theme. Populated from theme_scores.json — see INDUSTRY tab for the full theme list and current ranks.">Theme <select id="sc-theme" onchange="applyFilters()" style="min-width:120px;"><option value="">All themes</option></select></label>
+    <label>Signal <select id="sc-sig"><option value="">All</option><option value="GO" selected>GO</option><option value="NO-GO">NO-GO</option></select></label>
     <!-- B-2 default Min Score bumped 89 -> 100. With theme overlay (added 2026-04)
          scores trend ~10 pts higher, so the historical "GO rate" at 89 became
          too permissive. 100 preserves the prior selectivity. Adjust to taste. -->
@@ -1151,11 +1161,10 @@ tr.sel-row td{background:var(--blu3);}
     <button class="btn" onclick="applyFilters()">FILTER</button>
     <button class="btn" onclick="clearFilters()" style="border-color:var(--gry2);color:var(--gry);">CLEAR</button>
   </div>
-  <!-- ── INDICATOR FILTERS ── single row, no wrapping. Each chip is compact
-       and the row distributes evenly across the page width. The chips shrink
-       (overflow ellipsis) before the row scrolls; user can hover for the
-       full label. -->
-  <div class="flt-bar must-pass-row" style="flex-wrap:nowrap;gap:4px;border-top:1px solid var(--bg3);padding:6px 10px;overflow-x:hidden;width:100%;">
+  <!-- ── INDICATOR FILTERS ── single row, natural chip widths preserved.
+       Container scrolls horizontally if chips collectively exceed viewport
+       width so labels stay readable instead of collapsing. -->
+  <div class="flt-bar must-pass-row" style="flex-wrap:nowrap;gap:6px;border-top:1px solid var(--bg3);padding:6px 10px;overflow-x:auto;width:100%;">
     <span style="font-family:var(--ff-mono);font-size:10px;color:var(--amb);letter-spacing:.5px;margin-right:4px;">MUST PASS:</span>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-analyst" onchange="applyFilters()"> <span>Analyst Revisions &#8593;</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-gex" onchange="applyFilters()"> <span>GEX Call Heavy</span></label>
@@ -15625,7 +15634,10 @@ function generateLiveModeToken(){
 function updateClock(){
   var now=new Date();var h=now.getHours(),m=now.getMinutes(),s=now.getSeconds();
   var ampm=h>=12?'PM':'AM';h=h%12||12;
-  var ts=[h,m<10?'0'+m:m,s<10?'0'+s:s].join(':')+' '+ampm+' CST';eid('clk').textContent=ts;
+  var ts=[h,m<10?'0'+m:m,s<10?'0'+s:s].join(':')+' '+ampm+' CST';
+  eid('clk').textContent=ts;
+  // Mirror to the relocated clock next to the OPTION PANDA logo.
+  var clkLogo=eid('clk-logo'); if(clkLogo) clkLogo.textContent=ts;
   var day=now.getDay(),hr=now.getHours(),min=now.getMinutes();
   var isWeekday=day>=1&&day<=5;var mktOpen=isWeekday&&(hr>8||(hr===8&&min>=30))&&hr<15;
   eid('mkt-status').textContent=mktOpen?'MARKET OPEN':'MARKET CLOSED';
@@ -18861,7 +18873,9 @@ function decorateIndustry(){
     var topScore = hits[0].score;
     var color = topScore >= 90 ? 'var(--grn)' : topScore >= 80 ? 'var(--amb)' : 'var(--ambb)';
     var lines = hits.slice(0, 6).map(function(h){
-      return '⚡ ' + h.theme + '  ' + h.score.toFixed(1) + (h.isCurated ? '' : '  (auto)');
+      // Use themeDisplay (stripped of legacy [TV] prefix) so the hover
+      // tooltip on the ⚡ badge shows clean theme names.
+      return '⚡ ' + (h.themeDisplay || h.theme) + '  ' + h.score.toFixed(1) + (h.isCurated ? '' : '  (auto)');
     });
     if(hits.length > 6) lines.push('… +' + (hits.length - 6) + ' more');
     var badge = document.createElement('span');
