@@ -13912,7 +13912,16 @@ async function submitRoll(){
       } else {
         l1Price=+(l1Price-l1Step).toFixed(2);
       }
-    }catch(e){rollLog('LEG 1 error: '+e.message,'err');l1Price=+(l1Price-l1Step).toFixed(2);}
+    }catch(e){
+      // P-4: respect the configured delay even when the submit threw, so a
+      // burst of 403s / rate-limit / network errors doesn't blast through
+      // every step price in milliseconds. Without this, a sustained auth
+      // failure (e.g., trade token rejected) submitted 30 orders in <1s
+      // and step-walked from ASK to BID in a single tick.
+      rollLog('LEG 1 error: '+e.message,'err');
+      l1Price=+(l1Price-l1Step).toFixed(2);
+      if(!G_roll.rollCancel) await sleep(delay*1000);
+    }
   }
 
   if(!l1Filled&&fallback==='market'&&!G_roll.rollCancel){
@@ -13986,7 +13995,12 @@ async function submitRoll(){
       } else {
         l2Price=+(l2Price+l2Step).toFixed(2);
       }
-    }catch(e){rollLog('LEG 2 error: '+e.message,'err');l2Price=+(l2Price+l2Step).toFixed(2);}
+    }catch(e){
+      // P-4: same delay-on-error fix as LEG 1 above.
+      rollLog('LEG 2 error: '+e.message,'err');
+      l2Price=+(l2Price+l2Step).toFixed(2);
+      if(!G_roll.rollCancel) await sleep(delay*1000);
+    }
   }
 
   if(!l2Filled&&fallback==='market'&&!G_roll.rollCancel){
