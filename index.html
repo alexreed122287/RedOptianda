@@ -2075,8 +2075,8 @@ tr.sel-row td{background:var(--blu3);}
   <div class="flt-bar" style="justify-content:space-between;align-items:center;flex-wrap:wrap;gap:8px;">
     <span style="font-family:var(--ff-brand);font-size:12px;color:var(--amb);letter-spacing:2px;">PORTFOLIO BUILDER</span>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
-      <span style="color:var(--gry);font-size:10px;" title="The Tradier account ID being pulled. Set via /v1/user/profile auto-discovery on first PULL TRADIER. Click ⚙ API tab to verify.">Tradier acct: <b id="pf-acct-display" style="color:var(--ambb);font-family:var(--ff-mono);">--</b></span>
-      <span style="color:var(--gry);font-size:10px;" title="Cash + cash-equivalents from Tradier balances endpoint. Pulled together with positions when you click PULL TRADIER.">Cash: <b id="pf-cash-display" style="color:var(--grn);font-family:var(--ff-mono);">$--</b></span>
+      <span style="color:var(--gry);" title="The Tradier account ID being pulled. Set via /v1/user/profile auto-discovery on first PULL TRADIER. Click API tab to verify.">Tradier acct: <b id="pf-acct-display" style="color:var(--ambb);font-family:var(--ff-mono);">--</b></span>
+      <span style="color:var(--gry);" title="Cash + cash-equivalents from Tradier balances endpoint. Pulled together with positions when you click PULL TRADIER.">Cash: <b id="pf-cash-display" style="color:var(--grn);font-family:var(--ff-mono);">$--</b></span>
       <span style="color:var(--gry);font-size:10px;" id="pf-last-update">Not loaded</span>
       <button class="btn blu" style="font-size:10px;padding:3px 10px;" onclick="pfRefreshAll()">&#8635; REFRESH ALL</button>
       <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--amb);color:var(--amb);" onclick="pfCopyAllTickers()" title="Copy comma-separated unique tickers from all columns">COPY ALL TICKERS</button>
@@ -11404,7 +11404,7 @@ function _wlDrawCandles(ticker, days, kind){
     yAxis:{scale:true, min:priceMin, max:priceMax, splitLine:{lineStyle:{color:'rgba(120,140,180,0.1)', type:'dashed'}}, axisLabel:{color:'#7090c8', fontSize:9, formatter:function(v){return '$'+v.toFixed(0);}}},
     dataZoom:[
       {type:'inside', start:zoomStart, end:100},
-      {type:'slider', start:zoomStart, end:100, bottom:2, height:18, borderColor:'rgba(0,212,255,0.15)', fillerColor:'rgba(0,212,255,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}}
+      {type:'slider', start:zoomStart, end:100, bottom:2, height:18, borderColor:'rgba(0,212,255,0.15)', fillerColor:'rgba(0,212,255,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}, showDetail:false}
     ],
     series:[
       {name:'Price', type:'candlestick', data: days.map(function(d){ return [+d.open, +d.close, +d.low, +d.high]; }),
@@ -11420,6 +11420,33 @@ function _wlDrawCandles(ticker, days, kind){
     G._wlResizeObs = new ResizeObserver(function(){ try{ ec.resize(); }catch(e){} });
     G._wlResizeObs.observe(canvas);
   }catch(e){}
+
+  // E-2: lock the dataZoom right edge to "present day" / latest candle.
+  // The user can pan/zoom to look further back in time but can't move the
+  // right edge past 100 (which would hide the current candle). When the
+  // dataZoom event fires with end<100, snap it back to 100 while preserving
+  // the user's chosen left edge (start). suppressLock guards against
+  // re-entrant fires from the setOption call inside the handler.
+  if(!ec._lockEndWired){
+    ec._lockEndWired = true;
+    ec.on('dataZoom', function(params){
+      if (ec._suppressLock) return;
+      var batch = params.batch || [params];
+      var needsClamp = false;
+      var newStart = null;
+      batch.forEach(function(b){
+        if (b && typeof b.end === 'number' && b.end < 100){
+          needsClamp = true;
+          if (typeof b.start === 'number') newStart = b.start;
+        }
+      });
+      if (needsClamp){
+        ec._suppressLock = true;
+        try { ec.dispatchAction({ type:'dataZoom', start: (newStart != null ? newStart : zoomStart), end: 100 }); }
+        finally { ec._suppressLock = false; }
+      }
+    });
+  }
   var sub = eid('wl-chart-sub');
   if(sub){
     var last = days[days.length-1];
@@ -16597,6 +16624,18 @@ function pfRenderColumn(col){
   html +=   '<button class="btn" style="font-size:9px;padding:3px 8px;border-color:var(--wrn);color:var(--wrn);" onclick="pfClearColumn(\''+col.id+'\')" title="Clear all rows">CLR</button>';
   html += '</div>';
 
+  // E-1: positions list collapsed by default; expand toggle via <details>.
+  // Pie chart + account stats stay visible (rendered above this block).
+  // localStorage persists per-column open/closed state under
+  // rrjcar_pf_col_open_<id> so reload remembers the user's choice.
+  var openKey = 'rrjcar_pf_col_open_' + col.id;
+  var openAttr = '';
+  try { if (localStorage.getItem(openKey) === '1') openAttr = ' open'; } catch(_){}
+  html += '<details class="pf-col-rows"' + openAttr + ' ontoggle="try{localStorage.setItem(\''+openKey+'\', this.open?1:0);}catch(_){}" style="border-top:var(--bdr);">';
+  html += '<summary style="cursor:pointer;padding:8px 10px;font-family:var(--ff-mono);font-size:10px;color:var(--gry);letter-spacing:1px;list-style:none;display:flex;align-items:center;justify-content:space-between;background:var(--bg2);">'
+        +   '<span>POSITIONS ('+colCount+(deadCount?(' + '+deadCount+' DEAD'):'')+')</span>'
+        +   '<span style="font-size:9px;color:var(--gry2);">CLICK TO EXPAND/COLLAPSE</span>'
+        + '</summary>';
   // Rows container
   html += '<div style="padding:4px;display:flex;flex-direction:column;gap:3px;overflow-y:auto;max-height:520px;">';
   if(!col.rows.length){
@@ -16607,6 +16646,7 @@ function pfRenderColumn(col){
     }
   }
   html += '</div>';
+  html += '</details>';
 
   html += '</div>';
   return html;
