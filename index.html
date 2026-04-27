@@ -110,11 +110,27 @@ a{color:var(--blu);text-decoration:none;}
   padding: 4px 10px !important;
   border-radius: 4px !important;
   min-height: 28px !important;
+  height: 28px !important;
   display: inline-flex !important;
   align-items: center !important;
   font-size: 11px !important;
+  font-weight: 600 !important;
   letter-spacing: .5px !important;
   white-space: nowrap !important;
+  box-sizing: border-box !important;
+}
+/* Clock + market status are plain text spans that sit between chips. Match
+   the same height/padding/font so the row reads as a uniform horizontal band. */
+#hdr-right > #clk,
+#hdr-right > #mkt-status {
+  height: 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  padding: 4px 8px !important;
+  font-size: 11px !important;
+  letter-spacing: .5px !important;
+  white-space: nowrap !important;
+  box-sizing: border-box !important;
 }
 #mode-badge{background:var(--amb3);color:var(--ambb);border:1px solid var(--amb);font-size:10px;font-weight:700;}
 /* z-index higher than logo so any overflow from header can't cover the
@@ -231,10 +247,16 @@ tr.sel-row td{background:var(--blu3);}
 .flt-bar{background:var(--bg1);border-bottom:var(--bdr);display:flex;flex-wrap:wrap;gap:6px;padding:6px 10px;flex-shrink:0;align-items:center;}
 .flt-bar label{color:var(--gry);font-size:10px;}
 .flt-bar select,.flt-bar input{background:var(--bg2);border:var(--bdr);color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 6px;border-radius:3px;}
-.ind-filter-lbl{display:flex;align-items:center;gap:4px;cursor:pointer;padding:3px 8px;border:1px solid var(--bg3);border-radius:3px;font-family:var(--ff-mono);font-size:10px;color:var(--gry);transition:border-color 0.15s,color 0.15s;}
+.ind-filter-lbl{display:flex;align-items:center;gap:4px;cursor:pointer;padding:3px 8px;border:1px solid var(--bg3);border-radius:3px;font-family:var(--ff-mono);font-size:10px;color:var(--gry);transition:border-color 0.15s,color 0.15s;white-space:nowrap;flex-shrink:0;}
 .ind-filter-lbl:hover{border-color:var(--gry);color:var(--wht);}
 .ind-filter-lbl input[type=checkbox]{width:auto;margin:0;accent-color:var(--amb);}
 .ind-filter-lbl:has(input:checked){border-color:var(--amb);color:var(--ambb);background:rgba(245,158,11,0.08);}
+/* MUST-PASS row: compact chips so all 11 fit on one line on a 1366+ display.
+   Smaller font + tighter padding shaves enough width that the row doesn't
+   overflow; if it does, the parent has overflow-x:auto so it scrolls
+   instead of wrapping to a second row. */
+.must-pass-row .ind-filter-lbl{padding:3px 6px;font-size:10px;}
+.must-pass-row .ind-filter-lbl span{font-size:10px;}
 .btn{background:var(--bg2);border:1px solid var(--amb3);border-radius:var(--rad);color:var(--amb);cursor:pointer;font-family:var(--ff);font-size:12px;font-weight:600;letter-spacing:.5px;padding:6px 12px;transition:all .2s;}
 .btn:hover{background:var(--amb3);}
 .btn.blu{border-color:var(--blu3);color:var(--blub);}
@@ -275,13 +297,17 @@ tr.sel-row td{background:var(--blu3);}
 .ts-row-cfg{background:var(--bg0);border-top:1px solid var(--amb3);padding:6px 10px;display:none;}
 .ts-row-cfg.open{display:table-row;}
 .ts-row-cfg td{padding:6px 10px!important;background:var(--bg0)!important;}
-.ts-inline{display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;}
-.ts-inline-field{display:flex;flex-direction:column;gap:2px;}
+/* Trail-stop inline config: was a 2-row grid with empty space between
+   columns. Now a single horizontal row with compact gap so every field
+   sits side-by-side. flex-wrap:nowrap keeps it from breaking; if narrow
+   the parent row scrolls horizontally. */
+.ts-inline{display:flex;gap:10px;flex-wrap:nowrap;align-items:center;overflow-x:auto;}
+.ts-inline-field{display:flex;flex-direction:row;gap:6px;align-items:center;flex-shrink:0;}
 .ts-inline-field label{color:var(--gry);font-size:9px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
-.ts-inline-field input{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 6px;width:60px;}
+.ts-inline-field input{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 6px;width:54px;}
 .ts-inline-field input:focus{border-color:var(--amb);outline:none;}
-.ts-inline-field select{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 5px;width:100px;}
-.ts-inline-sep{width:1px;background:var(--gry2);align-self:stretch;margin:0 2px;}
+.ts-inline-field select{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 5px;width:90px;}
+.ts-inline-sep{width:1px;background:var(--gry2);align-self:stretch;margin:0 4px;flex-shrink:0;}
 .ts-enable-btn{font-size:10px;padding:3px 8px;white-space:nowrap;}
 .ts-armed-indicator{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:middle;}
 .pos-src{color:var(--gry);font-size:10px;margin-left:auto;}
@@ -599,9 +625,12 @@ tr.sel-row td{background:var(--blu3);}
   #hdr-scan-status{max-width:200px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
   #hdr-opt-bp{max-width:160px !important;overflow:hidden !important;text-overflow:ellipsis !important;}
 
-  /* Header buttons (light/dark toggle, NOTIFY, OPT BP, API counter, etc.)
-     have inline style="" attributes so EVERY override needs !important. */
-  #theme-toggle, #push-toggle, #hdr-opt-bp, #api-counter-badge, #mode-badge{
+  /* Header buttons (light/dark toggle, NOTIFY, OPT BP, etc.) have inline
+     style="" attributes so EVERY override needs !important. NB:
+     #api-counter-badge is intentionally absent from this list — it was
+     relocated to the top of the API tab and the header instance is hidden
+     via the inline style="display:none !important;" attribute. */
+  #theme-toggle, #push-toggle, #hdr-opt-bp, #mode-badge{
     font-size:13px !important;
     padding:9px 14px !important;
     min-height:40px !important;
@@ -615,6 +644,8 @@ tr.sel-row td{background:var(--blu3);}
     cursor:pointer !important;
     white-space:nowrap !important;
   }
+  /* Belt-and-suspenders: even if some other CSS tries to show it, force hidden. */
+  #api-counter-badge{display:none !important;}
   #clk, #mkt-status{font-size:12px !important;padding:4px 6px !important;white-space:nowrap;}
 
   /* App body needs to recompute height since header is taller now.
@@ -768,14 +799,18 @@ tr.sel-row td{background:var(--blu3);}
   background: var(--ambb);
 }
 #tab-ind .ind-desc{color:var(--gry);font-size:11px;font-family:var(--ff-mono);padding:6px 10px;background:var(--amb3);border-left:2px solid var(--amb);line-height:1.5;}
-#tab-ind .ind-layout{display:grid;grid-template-columns:1fr 360px;gap:12px;}
-@media (max-width:1100px){#tab-ind .ind-layout{grid-template-columns:1fr;}}
+/* Industry tab layout: single column on every viewport. Heatmaps + history
+   stack BELOW the theme rankings table evenly instead of being squeezed
+   into a 360px sidebar that left half the page blank. */
+#tab-ind .ind-layout{display:grid;grid-template-columns:1fr;gap:12px;}
 #tab-ind .ind-panel{background:var(--bg1);border:var(--bdr);border-radius:var(--rad);overflow:hidden;}
 #tab-ind .ind-phead{padding:8px 12px;border-bottom:var(--bdr);font-family:var(--ff-brand);font-weight:700;font-size:11px;letter-spacing:2px;color:var(--amb);text-transform:uppercase;display:flex;align-items:center;gap:8px;}
 #tab-ind .ind-phead::before{content:"";width:6px;height:6px;background:var(--amb);border-radius:50%;box-shadow:0 0 10px rgba(0,212,255,.6);}
 #tab-ind .ind-phead .ind-pill{margin-left:auto;font-size:10px;color:var(--gry);padding:2px 8px;background:var(--bg2);border-radius:10px;letter-spacing:.05em;text-transform:none;font-family:var(--ff-mono);font-weight:400;}
 #tab-ind .ind-tbl{width:100%;border-collapse:collapse;font-size:13px;}
-#tab-ind .ind-tbl thead th{text-align:left;padding:7px 10px;color:var(--gry);font-weight:600;font-family:var(--ff-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:var(--bdr);background:var(--bg2);position:sticky;top:0;z-index:1;cursor:default;text-shadow:none;}
+/* Sticky table header — bumped z-index from 1 to 10 so the header doesn't
+   get visually covered by row content when scrolling. */
+#tab-ind .ind-tbl thead th{text-align:left;padding:7px 10px;color:var(--gry);font-weight:600;font-family:var(--ff-mono);font-size:10px;letter-spacing:1px;text-transform:uppercase;border-bottom:var(--bdr);background:var(--bg2);position:sticky;top:0;z-index:10;cursor:default;text-shadow:none;box-shadow:0 1px 0 var(--bdr);}
 #tab-ind .ind-tbl thead th.r{text-align:right;}
 #tab-ind .ind-tbl tbody tr{border-bottom:var(--bdr);cursor:pointer;transition:background .15s;}
 #tab-ind .ind-tbl tbody tr:hover{background:var(--amb3);}
@@ -919,7 +954,7 @@ tr.sel-row td{background:var(--blu3);}
     <span id="mkt-status">--</span>
     <span id="mode-badge">SANDBOX</span>
     <!-- API counter relocated to top of API tab; keep #api-counter-badge in DOM (hidden) so existing JS that updates textContent still works -->
-    <span id="api-counter-badge" style="display:none;" onclick="showApiBreakdown()">API: 0</span>
+    <span id="api-counter-badge" style="display:none !important;" onclick="showApiBreakdown()">API: 0</span>
     <span id="hdr-scan-status" title="Scan status — click to jump to FULL SCANNER" onclick="switchTab('sc')" style="display:none;cursor:pointer;background:rgba(112,144,200,0.08);border:1px solid rgba(112,144,200,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--gry);letter-spacing:.5px;user-select:none;">SCAN: idle</span>
     <span id="hdr-autoscan" title="Auto-scan settings — click to expand" onclick="toggleAutoScanPanel()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;user-select:none;">AUTO: OFF</span>
   </div>
@@ -1068,8 +1103,10 @@ tr.sel-row td{background:var(--blu3);}
     <button class="btn" onclick="applyFilters()">FILTER</button>
     <button class="btn" onclick="clearFilters()" style="border-color:var(--gry2);color:var(--gry);">CLEAR</button>
   </div>
-  <!-- ── INDICATOR FILTERS ── -->
-  <div class="flt-bar" style="flex-wrap:wrap;gap:6px;border-top:1px solid var(--bg3);padding:6px 10px;">
+  <!-- ── INDICATOR FILTERS ── single row, no wrapping. Each chip is compact
+       so all 11 fit horizontally on a normal desktop. Excess width scrolls
+       horizontally instead of breaking onto a second row. -->
+  <div class="flt-bar must-pass-row" style="flex-wrap:nowrap;gap:4px;border-top:1px solid var(--bg3);padding:6px 10px;overflow-x:auto;">
     <span style="font-family:var(--ff-mono);font-size:10px;color:var(--amb);letter-spacing:.5px;margin-right:4px;">MUST PASS:</span>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-analyst" onchange="applyFilters()"> <span>Analyst Revisions &#8593;</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-gex" onchange="applyFilters()"> <span>GEX Call Heavy</span></label>
@@ -2037,7 +2074,12 @@ tr.sel-row td{background:var(--blu3);}
     </div>
   </div>
   <div class="split" style="display:flex;flex:1;overflow:hidden;">
-    <div class="tbl-wrap" id="gx-tbl-wrap" style="flex:1;overflow:auto;">
+    <!-- GEX table gets a 1fr slice so it actually fills the available space.
+         The detail/empty panes are auto-sized: zero width when both are hidden,
+         widening only when a ticker row is clicked. Previously both panes had
+         flex:1 alongside the table, which left half the screen blank with the
+         "Click a ticker row" placeholder. -->
+    <div class="tbl-wrap" id="gx-tbl-wrap" style="flex:1 1 auto;overflow:auto;">
       <div class="empty-det" style="min-height:200px;">
         <div class="ei">&#9650;</div>
         <p>Click RUN GEX to fetch 30DTE options-flow data for the top 200 ranked scan results.<br>
@@ -2045,9 +2087,11 @@ tr.sel-row td{background:var(--blu3);}
            Auto-fires 20s after every scan.</span></p>
       </div>
     </div>
-    <div id="gx-detail" style="flex:1;border-left:var(--bdr);overflow:auto;display:none;">
+    <div id="gx-detail" style="flex:0 0 0;border-left:var(--bdr);overflow:auto;display:none;min-width:0;">
     </div>
-    <div id="gx-det-empty" style="flex:1;border-left:var(--bdr);overflow:auto;">
+    <!-- Empty-state placeholder hidden by default; viewDetail flips it visible
+         and gives it width when a row is clicked. -->
+    <div id="gx-det-empty" style="flex:0 0 0;border-left:var(--bdr);overflow:hidden;display:none;min-width:0;">
       <div class="empty-det" style="min-height:200px;"><div class="ei">&#9632;</div>
         <p>Click a ticker row to see its detail panel.</p></div>
     </div>
@@ -7442,6 +7486,18 @@ function _captureEntrySnapshot(pod, p, optionQuote){
       pod.entryThemeScore = ti.dailyScore;
     }
   } catch(e){}
+  // ATR(14) at entry. Per-user spec: ATR-derived exit prices on the positions
+  // tab are SNAPSHOTS at the time the position was opened, not live. They
+  // only update when the position is rolled (which creates a new pod). Stored
+  // alongside underlyingAtOpen so the renderer can compute static exit
+  // levels from the entry-time UL price.
+  try {
+    var hist = (typeof loadHistCache === 'function') ? loadHistCache(p.underlying) : null;
+    if (hist && hist.length >= 15 && typeof computeATR === 'function'){
+      var atr = computeATR(hist, 14);
+      if (atr && atr > 0) pod.entryAtr14 = atr;
+    }
+  } catch(e){}
   pod.entrySnapshotTs = Date.now();
 }
 
@@ -7476,7 +7532,10 @@ var G_THEME_OVERLAY = {
   fetchedAt: 0,
   ticker2theme: {},      // ticker -> { theme, dailyRank, dailyScore, weeklyScore }
 };
-var THEME_OVERLAY_KEY = 'rrjcar_theme_overlay_v1';
+// Bump _v1 -> _v2 to invalidate stale caches that still have the legacy
+// "[TV] ..." prefix in theme names. Old cache entries simply don't match
+// the new key and the overlay re-fetches with prefix stripped.
+var THEME_OVERLAY_KEY = 'rrjcar_theme_overlay_v2';
 var THEME_OVERLAY_TTL_MS = 6 * 60 * 60 * 1000;       // 6 hours
 
 function _loadThemeOverlayFromStorage(){
@@ -7523,11 +7582,18 @@ async function loadThemeOverlay(force){
     // A ticker can be in multiple themes (e.g. NVDA is in 'AI Infrastructure' AND
     // 'Semiconductors'). Use the theme with the HIGHEST daily score so the overlay
     // gives the ticker its best shot — bullish bias since we're long-side anyway.
+    // Strip the legacy "[TV] " prefix from theme names everywhere they
+    // appear in the overlay so the user never sees "[TV] Big Tech" in the
+    // scanner THEME column, theme dropdown, or detail-pane sector overlay.
+    function _stripTvPrefix(n){
+      return (typeof n === 'string' && n.indexOf('[TV] ') === 0) ? n.slice(5) : n;
+    }
     var ticker2theme = {};
     Object.keys(masterData.themes).forEach(function(themeName){
       var members = masterData.themes[themeName] || [];
       var themeScores = scoresData.themes[themeName];
       if (!themeScores || !themeScores.scores) return;
+      var displayName = _stripTvPrefix(themeName);
       var dailyScore  = themeScores.scores.daily  || 0;
       var weeklyScore = themeScores.scores.weekly || 0;
       var dailyRank   = (themeScores.rs_rank && themeScores.rs_rank['1M']) || 50;   // 1M RS rank as default
@@ -7535,7 +7601,7 @@ async function loadThemeOverlay(force){
         var existing = ticker2theme[t];
         if (!existing || dailyScore > existing.dailyScore) {
           ticker2theme[t] = {
-            theme: themeName,
+            theme: displayName,
             dailyScore: dailyScore,
             weeklyScore: weeklyScore,
             dailyRank: dailyRank,
@@ -8135,9 +8201,25 @@ function closeDetailPane(detId, emptyId){
 
 function buildDetail(r,detId,emptyId){
   var det=eid(detId),emp=eid(emptyId);
-  if(!r){if(emp)emp.style.display='flex';if(det)det.style.display='none';return;}
-  if(emp)emp.style.display='none';
-  if(det){det.style.display='flex';det.style.flexDirection='column';det.style.height='100%';det.style.overflow='hidden';}
+  // GEX tab special-cases the detail width: the table is the primary surface
+  // there, so the detail pane starts collapsed (flex:0 0 0) and opens to a
+  // fixed-width side panel only on row click. Other tabs (bs, sc) keep the
+  // legacy flex:1 behavior where the detail pane is the main content area.
+  var isGexTab = detId === 'gx-detail';
+  if(!r){
+    if(emp) emp.style.display='flex';
+    if(det) det.style.display='none';
+    if(isGexTab){
+      if(emp) emp.style.flex='0 0 0';
+      if(det) det.style.flex='0 0 0';
+    }
+    return;
+  }
+  if(emp){ emp.style.display='none'; if(isGexTab) emp.style.flex='0 0 0'; }
+  if(det){
+    det.style.display='flex'; det.style.flexDirection='column'; det.style.height='100%'; det.style.overflow='hidden';
+    if(isGexTab) det.style.flex='0 0 480px';
+  }
   // If chain view is active for this ticker, skip rebuilding the signals pane
   if(r && r.ticker){
     // If chain view is active for this ticker, skip signals rebuild
@@ -10642,7 +10724,7 @@ function renderScan(){
       });
       if(themesForTk.length > 6) tipLines.push('… +' + (themesForTk.length - 6) + ' more');
       var tip = 'Themes containing ' + tk + ' (sorted by current daily score):\n' + tipLines.join('\n');
-      themeCell = '<td style="font-size:11px;color:'+tColor+';max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:help;" '
+      themeCell = '<td style="font-size:11px;color:'+tColor+';max-width:140px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:default;" '
         + 'title="'+tip.replace(/"/g,'&quot;')+'">'
         + (top.isCurated ? '' : '<span style="opacity:.6;">·</span> ')
         + top.themeDisplay + (themesForTk.length > 1 ? ' <span style="color:var(--gry2);">+'+(themesForTk.length-1)+'</span>' : '')
@@ -11077,7 +11159,7 @@ function renderGex(){
     'EXP / STRIKE': 'Expiration date of the chain GEX was computed against, and the gamma-flip strike. These are the contract specs the rest of this row\u2019s metrics reference.',
     'FLOW': 'Aggregate directional bias from call/put OI. CALL HEAVY = bullish setup. PUT HEAVY = bearish setup.'
   };
-  function th(label){ return '<th title="'+_esc(defs[label]||'')+'" style="cursor:help;">'+label+'</th>'; }
+  function th(label){ return '<th title="'+_esc(defs[label]||'')+'" style="cursor:default;">'+label+'</th>'; }
   var html='<table><thead><tr>'
     + '<th>SYMBOL</th>'
     + th('NET GEX') + th('CALL OI') + th('PUT OI') + th('GAMMA FLIP')
@@ -11934,33 +12016,54 @@ function renderPositionsTable(pos,srcLabel){
       return '<td class="'+equityCls+'" style="white-space:nowrap;">'+fmtD(equity)+'</td>';
     })();
 
-    // D-9, D-10, D-11: ATR-based exit prices on the underlying.
+    // D-9 + ATR-snapshot: exit prices use the ATR captured at position open
+    // (G.posOpenData[sym].entryAtr14) and the underlying-at-open as the
+    // anchor. Values are STATIC for the life of the position — they don't
+    // re-compute as the stock moves. They only refresh when the position
+    // is rolled (which creates a new posOpenData entry).
+    //
+    // If the snapshot is missing (position opened before this feature
+    // shipped), fall back to live ATR + current UL with a "(live)" label
+    // so the user knows the difference.
     var atrCells = (function(){
-      var ulN = p.underlyingNow || 0;
-      var atr = 0;
-      try {
-        var hist = (typeof loadHistCache === 'function') ? loadHistCache(p.underlying) : null;
-        if (hist && hist.length >= 15 && typeof computeATR === 'function'){
-          atr = computeATR(hist, 14) || 0;
-        }
-      } catch(_){}
+      var pod = (G.posOpenData && G.posOpenData[sym]) || {};
+      var entryUl = pod.underlyingAtOpen || p.underlyingAtOpen || 0;
+      var entryAtr = pod.entryAtr14 || 0;
+      var isSnapshot = entryUl > 0 && entryAtr > 0;
+      var anchorUl = entryUl, anchorAtr = entryAtr;
+      // Fallback: live values if no snapshot is available (legacy positions)
+      if (!isSnapshot){
+        anchorUl = p.underlyingNow || 0;
+        try {
+          var hist = (typeof loadHistCache === 'function') ? loadHistCache(p.underlying) : null;
+          if (hist && hist.length >= 15 && typeof computeATR === 'function'){
+            anchorAtr = computeATR(hist, 14) || 0;
+          }
+        } catch(_){}
+      }
       function fp(v){ return v > 0 ? '$'+fmt2(v) : '<span style="color:var(--gry2);">--</span>'; }
-      if (!ulN || !atr){
+      if (!anchorUl || !anchorAtr){
         return '<td style="color:var(--gry2);">--</td><td style="color:var(--gry2);">--</td><td style="color:var(--gry2);">--</td>';
       }
-      var p05 = ulN - 0.5 * atr;
-      var p10 = ulN - 1.0 * atr;
-      var p20 = ulN - 2.0 * atr;
-      return '<td style="color:var(--ambb);font-family:var(--ff-mono);" title="0.5 × ATR(14) drop. ATR=$'+fmt2(atr)+'">'+fp(p05)+'</td>'
-           + '<td style="color:var(--wrn);font-family:var(--ff-mono);" title="1 × ATR(14) drop. ATR=$'+fmt2(atr)+'">'+fp(p10)+'</td>'
-           + '<td style="color:var(--ngo);font-weight:700;font-family:var(--ff-mono);" title="EMERGENCY — 2 × ATR(14) drop. Close immediately. ATR=$'+fmt2(atr)+'">'+fp(p20)+'</td>';
+      var p05 = anchorUl - 0.5 * anchorAtr;
+      var p10 = anchorUl - 1.0 * anchorAtr;
+      var p20 = anchorUl - 2.0 * anchorAtr;
+      var srcSuffix = isSnapshot ? '' : '<span style="color:var(--gry2);font-size:9px;margin-left:3px;">(live)</span>';
+      var titleNote = isSnapshot
+        ? 'Snapshot at entry: UL=$'+fmt2(anchorUl)+', ATR(14)=$'+fmt2(anchorAtr)+'. Updates only on roll.'
+        : 'Live (no entry snapshot): UL=$'+fmt2(anchorUl)+', ATR(14)=$'+fmt2(anchorAtr);
+      return '<td style="color:var(--ambb);font-family:var(--ff-mono);" title="0.5 × ATR drop. '+titleNote+'">'+fp(p05)+srcSuffix+'</td>'
+           + '<td style="color:var(--wrn);font-family:var(--ff-mono);" title="1 × ATR drop. '+titleNote+'">'+fp(p10)+'</td>'
+           + '<td style="color:var(--ngo);font-weight:700;font-family:var(--ff-mono);" title="EMERGENCY — 2 × ATR drop. Close immediately. '+titleNote+'">'+fp(p20)+'</td>';
     })();
 
-    // D-6: TRAIL cell consolidated into one cell, single horizontal row
+    // D-6: TRAIL cell consolidated into one cell, single horizontal row.
+    // Button label is "EDIT ▾" so it reads as "open the trailing-stop config
+    // for this position" — the previous "CFG" was too cryptic.
     var trailCell = '<td style="white-space:nowrap;">'
       + '<div style="display:inline-flex;align-items:center;gap:6px;">'
       +   trailBadge
-      +   '<button class="btn ts-enable-btn" style="font-size:10px;padding:3px 8px;'+(cfgEnabled?'border-color:var(--grn);color:var(--grn);':'')+'" onclick="toggleTsRow(\''+sym+'\')">CFG</button>'
+      +   '<button class="btn ts-enable-btn" style="font-size:10px;padding:3px 8px;'+(cfgEnabled?'border-color:var(--grn);color:var(--grn);':'')+'" onclick="toggleTsRow(\''+sym+'\')">EDIT ▾</button>'
       + '</div></td>';
 
     html += '<tr data-tk="'+tk+'" data-tp="'+tp+'" data-st="'+st+'" data-ex="'+ex+'" data-qty="'+qty+'" data-sym="'+sym+'">'
@@ -18641,7 +18744,7 @@ function decorateIndustry(){
     var badge = document.createElement('span');
     badge.className = 'ind-badge';
     badge.style.cssText = 'margin-left:4px;font-size:9px;color:' + color +
-      ';vertical-align:middle;cursor:help;text-shadow:0 0 6px ' + color + ';';
+      ';vertical-align:middle;cursor:default;text-shadow:0 0 6px ' + color + ';';
     badge.title = 'Strong industry themes (score ≥ ' + IND_STRONG_THRESHOLD + '):\n' + lines.join('\n');
     badge.textContent = '⚡';   // ⚡
     anchor.appendChild(badge);
