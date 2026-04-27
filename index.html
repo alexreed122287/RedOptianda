@@ -251,12 +251,16 @@ tr.sel-row td{background:var(--blu3);}
 .ind-filter-lbl:hover{border-color:var(--gry);color:var(--wht);}
 .ind-filter-lbl input[type=checkbox]{width:auto;margin:0;accent-color:var(--amb);}
 .ind-filter-lbl:has(input:checked){border-color:var(--amb);color:var(--ambb);background:rgba(245,158,11,0.08);}
-/* MUST-PASS row: compact chips so all 11 fit on one line on a 1366+ display.
-   Smaller font + tighter padding shaves enough width that the row doesn't
-   overflow; if it does, the parent has overflow-x:auto so it scrolls
-   instead of wrapping to a second row. */
-.must-pass-row .ind-filter-lbl{padding:3px 6px;font-size:10px;}
-.must-pass-row .ind-filter-lbl span{font-size:10px;}
+/* MUST-PASS row: chips fill the row evenly (flex:1) so the whole bar uses
+   the available page width without horizontal scroll. Compact font + small
+   padding lets all 11 fit; if a chip's label is longer than its allocated
+   slice, it ellipsizes — full text still available via hover. */
+.must-pass-row{align-items:center;}
+.must-pass-row .ind-filter-lbl{padding:3px 6px;font-size:10px;flex:1 1 0;min-width:0;justify-content:center;}
+.must-pass-row .ind-filter-lbl span{font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;}
+.must-pass-row > span:first-child{flex:0 0 auto;}   /* MUST PASS: label */
+.must-pass-row > input[type="text"]{flex:0 0 auto;width:160px;}
+.must-pass-row > #sc-filter-count{flex:0 0 auto;}
 .btn{background:var(--bg2);border:1px solid var(--amb3);border-radius:var(--rad);color:var(--amb);cursor:pointer;font-family:var(--ff);font-size:12px;font-weight:600;letter-spacing:.5px;padding:6px 12px;transition:all .2s;}
 .btn:hover{background:var(--amb3);}
 .btn.blu{border-color:var(--blu3);color:var(--blub);}
@@ -297,17 +301,15 @@ tr.sel-row td{background:var(--blu3);}
 .ts-row-cfg{background:var(--bg0);border-top:1px solid var(--amb3);padding:6px 10px;display:none;}
 .ts-row-cfg.open{display:table-row;}
 .ts-row-cfg td{padding:6px 10px!important;background:var(--bg0)!important;}
-/* Trail-stop inline config: was a 2-row grid with empty space between
-   columns. Now a single horizontal row with compact gap so every field
-   sits side-by-side. flex-wrap:nowrap keeps it from breaking; if narrow
-   the parent row scrolls horizontally. */
-.ts-inline{display:flex;gap:10px;flex-wrap:nowrap;align-items:center;overflow-x:auto;}
-.ts-inline-field{display:flex;flex-direction:row;gap:6px;align-items:center;flex-shrink:0;}
-.ts-inline-field label{color:var(--gry);font-size:9px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;}
-.ts-inline-field input{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 6px;width:54px;}
+/* Trail-stop inline config: every field sits in one horizontal row. !important
+   guards against the iPad media query forcing flex-wrap:wrap below. */
+.ts-inline{display:flex !important;gap:8px !important;flex-wrap:nowrap !important;align-items:center !important;overflow:visible !important;width:100% !important;}
+.ts-inline-field{display:flex !important;flex-direction:row !important;gap:5px !important;align-items:center !important;flex-shrink:1 !important;flex-wrap:nowrap !important;min-width:0 !important;}
+.ts-inline-field label{color:var(--gry);font-size:9px;letter-spacing:.5px;text-transform:uppercase;white-space:nowrap;flex-shrink:0;}
+.ts-inline-field input{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 6px;width:48px !important;flex-shrink:0;}
 .ts-inline-field input:focus{border-color:var(--amb);outline:none;}
-.ts-inline-field select{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 5px;width:90px;}
-.ts-inline-sep{width:1px;background:var(--gry2);align-self:stretch;margin:0 4px;flex-shrink:0;}
+.ts-inline-field select{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 5px;width:80px !important;flex-shrink:0;}
+.ts-inline-sep{width:1px;background:var(--gry2);align-self:stretch;margin:0 3px;flex-shrink:0;}
 .ts-enable-btn{font-size:10px;padding:3px 8px;white-space:nowrap;}
 .ts-armed-indicator{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:middle;}
 .pos-src{color:var(--gry);font-size:10px;margin-left:auto;}
@@ -719,7 +721,9 @@ tr.sel-row td{background:var(--blu3);}
   .tbl-wrap thead th{padding:14px 14px;font-size:11px;}
   .tbl-wrap tbody td{padding:12px 14px;}
   .tbl-wrap .btn, .tbl-wrap .cbtn{font-size:13px !important;padding:9px 14px !important;min-height:44px !important;min-width:44px !important;}
-  .ts-inline{flex-wrap:wrap !important;gap:12px 14px !important;}
+  /* iPad: keep single-row layout to match desktop. The base !important rules
+     handle this; previously this line forced wrap which we no longer want. */
+  .ts-inline{flex-wrap:nowrap !important;gap:6px !important;}
   .ts-inline-field{min-width:44%;}
   .ts-inline-field input, .ts-inline-field select{font-size:16px !important;padding:9px 11px !important;min-height:44px !important;}
 
@@ -947,12 +951,18 @@ tr.sel-row td{background:var(--blu3);}
   </div>
   <div id="hdr-right">
     <button id="theme-toggle" onclick="toggleLightMode()" title="Toggle light / dark mode" style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:2px 8px;font-size:10px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;cursor:pointer;">&#9788; LIGHT</button>
-    <button id="push-toggle" onclick="requestPushPerm()" title="Enable browser notifications for order fills, stop-loss triggers, rolls, and share buys" style="background:rgba(255,215,64,0.08);border:1px solid rgba(255,215,64,0.35);border-radius:3px;padding:2px 8px;font-size:10px;font-family:var(--ff-mono);color:var(--wrn);letter-spacing:.5px;cursor:pointer;">NOTIFY</button>
-    <span id="hdr-opt-bp" title="Option buying power from Tradier \u2014 click to refresh" onclick="fetchBalances()" style="cursor:pointer;background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.3);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--grn);letter-spacing:.5px;">OPT BP: --</span>
-    <span id="hdr-trade-token" title="Trade authorization for this session. Held in memory only \u2014 re-prompted next session. Required when WRITE_AUTH_TOKEN is set on the worker; otherwise informational." onclick="promptTradeToken()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;">TRADE: locked</span>
+    <!-- NOTIFY, OPT BP, MARKET STATUS, F&G, MODE BADGE: hidden per user spec.
+         Kept in DOM (display:none) so existing JS that updates textContent
+         (push-toggle perms, balances refresh, mkt-status sync, sentiment
+         badge inject, mode-badge live/sandbox indicator) keeps working
+         without needing wider refactors. The information is still available
+         in the API tab + SENTIMENT tab + status check console. -->
+    <button id="push-toggle" onclick="requestPushPerm()" title="Enable browser notifications for order fills, stop-loss triggers, rolls, and share buys" style="display:none !important;">NOTIFY</button>
+    <span id="hdr-opt-bp" title="Option buying power from Tradier \u2014 click to refresh" onclick="fetchBalances()" style="display:none !important;">OPT BP: --</span>
+    <span id="hdr-trade-token" title="Trade authorization for this session. Held in memory only \u2014 re-prompted next session." onclick="promptTradeToken()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;">TRADE: locked</span>
     <span id="clk">--:--:--</span>
-    <span id="mkt-status">--</span>
-    <span id="mode-badge">SANDBOX</span>
+    <span id="mkt-status" style="display:none !important;">--</span>
+    <span id="mode-badge" style="display:none !important;">SANDBOX</span>
     <!-- API counter relocated to top of API tab; keep #api-counter-badge in DOM (hidden) so existing JS that updates textContent still works -->
     <span id="api-counter-badge" style="display:none !important;" onclick="showApiBreakdown()">API: 0</span>
     <span id="hdr-scan-status" title="Scan status — click to jump to FULL SCANNER" onclick="switchTab('sc')" style="display:none;cursor:pointer;background:rgba(112,144,200,0.08);border:1px solid rgba(112,144,200,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--gry);letter-spacing:.5px;user-select:none;">SCAN: idle</span>
@@ -1104,9 +1114,10 @@ tr.sel-row td{background:var(--blu3);}
     <button class="btn" onclick="clearFilters()" style="border-color:var(--gry2);color:var(--gry);">CLEAR</button>
   </div>
   <!-- ── INDICATOR FILTERS ── single row, no wrapping. Each chip is compact
-       so all 11 fit horizontally on a normal desktop. Excess width scrolls
-       horizontally instead of breaking onto a second row. -->
-  <div class="flt-bar must-pass-row" style="flex-wrap:nowrap;gap:4px;border-top:1px solid var(--bg3);padding:6px 10px;overflow-x:auto;">
+       and the row distributes evenly across the page width. The chips shrink
+       (overflow ellipsis) before the row scrolls; user can hover for the
+       full label. -->
+  <div class="flt-bar must-pass-row" style="flex-wrap:nowrap;gap:4px;border-top:1px solid var(--bg3);padding:6px 10px;overflow-x:hidden;width:100%;">
     <span style="font-family:var(--ff-mono);font-size:10px;color:var(--amb);letter-spacing:.5px;margin-right:4px;">MUST PASS:</span>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-analyst" onchange="applyFilters()"> <span>Analyst Revisions &#8593;</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-gex" onchange="applyFilters()"> <span>GEX Call Heavy</span></label>
@@ -1126,15 +1137,15 @@ tr.sel-row td{background:var(--blu3);}
     <button class="btn blu" id="sc-run-btn" onclick="runScan()">↻ SCAN</button>
     <div style="display:flex;align-items:center;gap:6px;margin-left:8px;border-left:1px solid var(--gry2);padding-left:10px;">
       <span style="color:var(--gry);font-size:10px;letter-spacing:.5px;">SCREENER</span>
-      <label style="font-size:11px;color:var(--gry);">Min Price $<input type="number" id="sc-minprice" value="1" min="1" style="width:52px;font-size:11px;" title="Only include stocks above this price"></label>
-      <label style="font-size:11px;color:var(--gry);">Max Price $<input type="number" id="sc-maxprice" placeholder="any" min="1" style="width:62px;font-size:11px;" title="Only include stocks below this price — leave blank for no limit"></label>
-      <label style="font-size:11px;color:var(--gry);">Min AvgVol <input type="number" id="sc-minavgvol" value="500000" min="100000" step="100000" style="width:80px;font-size:11px;" title="Min average daily volume"></label>
-      <label style="font-size:11px;color:var(--gry);">Today Vol % <input type="number" id="sc-volratio" placeholder="any" min="0" max="200" style="width:46px;font-size:11px;" title="Today volume must be at least X% of avg volume. Leave blank to skip this filter.">%</label>
-      <label style="font-size:11px;color:var(--gry);" title="Filter OUT tickers where the option contract costs more than this amount. Uses last scanned option price.">Max Opt $ <input type="number" id="sc-maxoptprice" placeholder="any" min="0" step="0.50" style="width:58px;font-size:11px;"></label>
+      <label style="font-size:11px;color:var(--gry);">Min Price $<input type="number" id="sc-minprice" value="1" min="1" style="width:70px;font-size:11px;" title="Only include stocks above this price"></label>
+      <label style="font-size:11px;color:var(--gry);">Max Price $<input type="number" id="sc-maxprice" placeholder="any" min="1" style="width:80px;font-size:11px;" title="Only include stocks below this price — leave blank for no limit"></label>
+      <label style="font-size:11px;color:var(--gry);">Min AvgVol <input type="number" id="sc-minavgvol" value="500000" min="100000" step="100000" style="width:110px;font-size:11px;" title="Min average daily volume"></label>
+      <label style="font-size:11px;color:var(--gry);">Today Vol % <input type="number" id="sc-volratio" placeholder="any" min="0" max="200" style="width:64px;font-size:11px;" title="Today volume must be at least X% of avg volume. Leave blank to skip this filter.">%</label>
+      <label style="font-size:11px;color:var(--gry);" title="Filter OUT tickers where the option contract costs more than this amount. Uses last scanned option price.">Max Opt $ <input type="number" id="sc-maxoptprice" placeholder="any" min="0" step="0.50" style="width:80px;font-size:11px;"></label>
       <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--grn);color:var(--grn);" onclick="saveScanSettings()" title="Save current screener + filter settings to localStorage. Restored on every page load.">SAVE SETTINGS</button>
       <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--gry2);color:var(--gry);" onclick="resetScanSettings()" title="Reset screener + filters to factory defaults. Does NOT clear saved API keys or tokens.">&#8634; RESET DEFAULTS</button>
     </div>
-    <span id="sc-universe-label" style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);margin-left:4px;"></span>
+    <span id="sc-universe-label" style="display:none;"></span>
   </div>
   </div><!-- /#sc-filter-bars -->
   <!-- Export row (always visible, not part of collapsible filters) -->
@@ -10488,18 +10499,10 @@ function updateRegimeBadge(){
 }
 
 function injectSentimentBadge(){
-  if(document.getElementById('hdr-sent')) return;
-  var host = document.getElementById('hdr-right');
-  if(!host) return;
-  var span = document.createElement('span');
-  span.id = 'hdr-sent';
-  span.style.cssText = 'cursor:pointer;background:rgba(0,212,255,0.04);border:1px solid var(--gry2);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--gry);letter-spacing:.5px;';
-  span.textContent = 'F&G: …';
-  span.onclick = loadSentiment;
-  // Place before the mode-badge if possible (keeps OPT BP adjacent to API counter)
-  var modeBadge = document.getElementById('mode-badge');
-  if(modeBadge) host.insertBefore(span, modeBadge);
-  else host.appendChild(span);
+  // F&G sentiment badge hidden per user spec — sentiment data still loads in
+  // the SENTIMENT tab. The DOM element is no longer injected at all so it
+  // can't visually appear in the header.
+  return;
 }
 
 // Called at the end of renderScan() to paint loud-ticker badges on rows.
@@ -11452,9 +11455,6 @@ function _wlDrawCandles(ticker, days, kind){
     {yAxis:z.hi}
   ]; });
 
-  var priceMin = Math.min.apply(null, days.map(function(d){return +d.low;})) * 0.99;
-  var priceMax = Math.max.apply(null, days.map(function(d){return +d.high;})) * 1.01;
-
   // Default zoom: last ~22 bars (1 month daily, ~22 min intraday) \u2014 user can auto-zoom out
   var zoomStart = kind === 'daily'
     ? Math.max(0, Math.round(((days.length-22)/days.length)*100))
@@ -11483,10 +11483,25 @@ function _wlDrawCandles(ticker, days, kind){
     },
     grid:{left:56, right:12, top:18, bottom:40},
     xAxis:{type:'category', data:labels, axisLine:{lineStyle:{color:'rgba(120,140,180,0.15)'}}, axisLabel:{color:'#7090c8', fontSize:9, interval:Math.floor(days.length/6)}, splitLine:{show:false}},
-    yAxis:{scale:true, min:priceMin, max:priceMax, splitLine:{lineStyle:{color:'rgba(120,140,180,0.1)', type:'dashed'}}, axisLabel:{color:'#7090c8', fontSize:9, formatter:function(v){return '$'+v.toFixed(0);}}},
+    /* y-axis auto-rescales to the VISIBLE data range as the user zooms.
+       scale:true prevents ECharts from forcing a 0-baseline; min/max removed
+       so the axis tracks the candles in view. dataZoom filterMode:'filter'
+       (the default) tells ECharts to recompute axis bounds from the
+       in-range data on every zoom event. Decimal precision in axisLabel
+       ($X.XX) so a tight zoom on a $200 ticker doesn't lose resolution. */
+    yAxis:{
+      scale:true,
+      splitLine:{lineStyle:{color:'rgba(120,140,180,0.1)', type:'dashed'}},
+      axisLabel:{color:'#7090c8', fontSize:9, formatter:function(v){
+        // Adaptive precision: under $10 show 2 decimals, $10-100 show 1, $100+ show 0
+        if (v < 10)  return '$'+v.toFixed(2);
+        if (v < 100) return '$'+v.toFixed(1);
+        return '$'+v.toFixed(0);
+      }}
+    },
     dataZoom:[
-      {type:'inside', start:zoomStart, end:100},
-      {type:'slider', start:zoomStart, end:100, bottom:2, height:18, borderColor:'rgba(0,212,255,0.15)', fillerColor:'rgba(0,212,255,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}, showDetail:false}
+      {type:'inside', start:zoomStart, end:100, filterMode:'filter'},
+      {type:'slider', start:zoomStart, end:100, bottom:2, height:18, filterMode:'filter', borderColor:'rgba(0,212,255,0.15)', fillerColor:'rgba(0,212,255,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}, showDetail:false}
     ],
     series:[
       {name:'Price', type:'candlestick', data: days.map(function(d){ return [+d.open, +d.close, +d.low, +d.high]; }),
@@ -12086,49 +12101,44 @@ function renderPositionsTable(pos,srcLabel){
       +'</tr>';
 
     // Inline trailing stop config row
+    // Inline trail config row — fully flat: each <div class="ts-inline-field">
+    // contains label + input directly (no nested wrapper div), so the CSS
+    // flex-direction:row on the field puts label and input side-by-side.
     html += '<tr id="tscfg-'+sym+'" class="ts-row-cfg">'
       +'<td colspan="'+colCount+'">'
       +'<div class="ts-inline">'
-      +'<div class="ts-inline-field" style="justify-content:flex-end;">'
-      +'<label>Enable</label>'
-      +'<div style="display:flex;align-items:center;gap:4px;margin-top:2px;">'
-      +'<input type="checkbox" class="tsc-enabled" '+(cfgEnabled?'checked':'')+' style="width:auto;">'
-      +'<span style="color:var(--gry);font-size:10px;">Active</span>'
-      +'</div></div>'
-      +'<div class="ts-inline-sep"></div>'
-      +'<div class="ts-inline-field"><label>Activate at</label>'
-      +'<div style="display:flex;align-items:center;gap:4px;">'
-      +'<input type="number" class="tsc-activate" value="'+cfgActivate+'" min="0" step="1">'
-      +'<span style="color:var(--gry);font-size:10px;">% return</span>'
-      +'</div></div>'
-      +'<div class="ts-inline-field"><label>Close on</label>'
-      +'<div style="display:flex;align-items:center;gap:4px;">'
-      +'<input type="number" class="tsc-pullback" value="'+cfgPullback+'" min="1" step="1">'
-      +'<span style="color:var(--gry);font-size:10px;">% pullback</span>'
-      +'</div></div>'
-      +'<div class="ts-inline-sep"></div>'
-      +'<span style="color:var(--gry);font-size:9px;font-weight:700;letter-spacing:.5px;align-self:center;">DISABLE IF</span>'
-      +'<div class="ts-inline-field"><label>Return &lt;</label>'
-      +'<div style="display:flex;align-items:center;gap:4px;">'
-      +'<input type="number" class="tsc-disret" value="'+cfgDisRet+'" placeholder="--" min="0" step="1">'
-      +'<span style="color:var(--gry);font-size:10px;">%</span>'
-      +'</div></div>'
-      +'<div class="ts-inline-field"><label>Pullback &gt;</label>'
-      +'<div style="display:flex;align-items:center;gap:4px;">'
-      +'<input type="number" class="tsc-dispull" value="'+cfgDisPull+'" placeholder="--" min="0" step="1">'
-      +'<span style="color:var(--gry);font-size:10px;">% from high</span>'
-      +'</div></div>'
-      +'<div class="ts-inline-sep"></div>'
-      +'<div class="ts-inline-field"><label>Close via</label>'
-      +'<select class="tsc-closemode">'
-      +'<option value="step"'+(cfgCloseMode==='step'?' selected':'')+'>Step Fill</option>'
-      +'<option value="market"'+(cfgCloseMode==='market'?' selected':'')+'>Market</option>'
-      +'</select></div>'
-      +'<div class="ts-inline-field" style="justify-content:flex-end;"><label>&nbsp;</label>'
-      +'<div style="display:flex;gap:6px;">'
-      +'<button class="btn grn" style="font-size:10px;padding:3px 10px;" onclick="saveTsConfig(\''+sym+'\')">SAVE</button>'
-      +'<button class="btn wrn" style="font-size:10px;padding:3px 8px;" onclick="resetOneTsState(\''+sym+'\')">RESET</button>'
-      +'</div></div>'
+      +  '<div class="ts-inline-field"><label>Enable</label>'
+      +    '<input type="checkbox" class="tsc-enabled" '+(cfgEnabled?'checked':'')+' style="width:auto;flex-shrink:0;">'
+      +  '</div>'
+      +  '<div class="ts-inline-sep"></div>'
+      +  '<div class="ts-inline-field"><label>Activate</label>'
+      +    '<input type="number" class="tsc-activate" value="'+cfgActivate+'" min="0" step="1" title="% return">'
+      +    '<span style="color:var(--gry);font-size:9px;">%</span>'
+      +  '</div>'
+      +  '<div class="ts-inline-field"><label>Close on</label>'
+      +    '<input type="number" class="tsc-pullback" value="'+cfgPullback+'" min="1" step="1" title="% pullback from peak">'
+      +    '<span style="color:var(--gry);font-size:9px;">% pb</span>'
+      +  '</div>'
+      +  '<div class="ts-inline-sep"></div>'
+      +  '<span style="color:var(--gry);font-size:9px;font-weight:700;letter-spacing:.5px;flex-shrink:0;">OFF IF</span>'
+      +  '<div class="ts-inline-field"><label>Ret&lt;</label>'
+      +    '<input type="number" class="tsc-disret" value="'+cfgDisRet+'" placeholder="--" min="0" step="1" title="Disable if return below this %">'
+      +    '<span style="color:var(--gry);font-size:9px;">%</span>'
+      +  '</div>'
+      +  '<div class="ts-inline-field"><label>PB&gt;</label>'
+      +    '<input type="number" class="tsc-dispull" value="'+cfgDisPull+'" placeholder="--" min="0" step="1" title="Disable if pullback from peak above this %">'
+      +    '<span style="color:var(--gry);font-size:9px;">%</span>'
+      +  '</div>'
+      +  '<div class="ts-inline-sep"></div>'
+      +  '<div class="ts-inline-field"><label>Via</label>'
+      +    '<select class="tsc-closemode">'
+      +      '<option value="step"'+(cfgCloseMode==='step'?' selected':'')+'>Step</option>'
+      +      '<option value="market"'+(cfgCloseMode==='market'?' selected':'')+'>Market</option>'
+      +    '</select>'
+      +  '</div>'
+      +  '<div class="ts-inline-sep"></div>'
+      +  '<button class="btn grn" style="font-size:10px;padding:3px 10px;flex-shrink:0;" onclick="saveTsConfig(\''+sym+'\')">SAVE</button>'
+      +  '<button class="btn wrn" style="font-size:10px;padding:3px 8px;flex-shrink:0;" onclick="resetOneTsState(\''+sym+'\')">RESET</button>'
       +'</div></td></tr>';
 
     // D-7: P&L chart expansion row removed per user spec \u2014 the toggle button
