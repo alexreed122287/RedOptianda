@@ -2327,6 +2327,7 @@ tr.sel-row td{background:var(--blu3);}
     </div>
   </div>
   <div class="chain-tabs">
+    <div class="chain-tab" id="ind-tf-intraday" onclick="indSetTF('intraday')" title="Live theme rotation computed from the most recent scan results — no extra API calls">INTRADAY</div>
     <div class="chain-tab active" id="ind-tf-daily" onclick="indSetTF('daily')">DAILY</div>
     <div class="chain-tab" id="ind-tf-weekly" onclick="indSetTF('weekly')">WEEKLY</div>
     <div class="chain-tab" id="ind-tf-monthly" onclick="indSetTF('monthly')">MONTHLY</div>
@@ -9820,12 +9821,19 @@ function finishScan(){
     if(fmpDone < enrichTotal || indDone < enrichTotal) return;
     if(G._scanFinished) return;
     G._scanFinished = true;
+    G._scanFinishedAt = Date.now();   // INTRADAY industry view reads this for the freshness label
     G.scanRunning = false;     // gate cleared HERE, not after the bulk pass
     clearTimeout(_watchdogId);
     // Final render so the last batch under the throttle threshold lands
     G.results.sort(_resultRankCompare);
     G.filtered = excludedFilteredResults();
     renderBuySig(); renderScan();
+    // INTRADAY industry view: if user is currently on the industry tab AND
+    // viewing the intraday timeframe, auto-redraw with fresh data. Cheap —
+    // just re-renders from G.results which we just finalized above.
+    if (typeof IND !== 'undefined' && IND.tf === 'intraday' && IND.loaded){
+      try { indDraw(); } catch(_){}
+    }
     // Cache FULLY-ENRICHED results. Persists what renderBuySig + buildDetail
     // need on the next page load (rules table + minimal indicator snapshot)
     // while stripping the heavyweight `opt` greeks blob (re-fetched on detail
@@ -18661,9 +18669,10 @@ var IND = {
 };
 var IND_STRONG_THRESHOLD = 70;  // theme.scores.daily must be >= this to count
 var IND_TF_DESC = {
-  daily:   'DAILY VIEW — weights short-term momentum heavily (50% RS 1W + 25% RS 1M + 15% breadth + 10% trend). Use to spot fresh rotation. Higher noise; cross-check with weekly.',
-  weekly:  'WEEKLY VIEW — balanced short/intermediate (20% RS 1W + 50% RS 1M + 15% RS 3M + 15% breadth). Best signal for new positions in your typical 14-21 DTE call window.',
-  monthly: 'MONTHLY VIEW — durable leadership (15% RS 1M + 40% RS 3M + 30% RS 6M + 15% breadth 200). Slower-moving, lower noise, identifies sustained sector leadership for LEAPs/longer holds.'
+  intraday: 'INTRADAY VIEW — live theme rotation computed from the most recent scan results. Score = avg %change of theme members − SPY %change today, mapped to 0-100. NO extra API calls — pulls from G.results in memory. Refreshes on each scan. Use to confirm or contradict the daily rotation read.',
+  daily:    'DAILY VIEW — weights short-term momentum heavily (50% RS 1W + 25% RS 1M + 15% breadth + 10% trend). Use to spot fresh rotation. Higher noise; cross-check with weekly.',
+  weekly:   'WEEKLY VIEW — balanced short/intermediate (20% RS 1W + 50% RS 1M + 15% RS 3M + 15% breadth). Best signal for new positions in your typical 14-21 DTE call window.',
+  monthly:  'MONTHLY VIEW — durable leadership (15% RS 1M + 40% RS 3M + 30% RS 6M + 15% breadth 200). Slower-moving, lower noise, identifies sustained sector leadership for LEAPs/longer holds.'
 };
 
 function indEsc(s){ return String(s).replace(/[&<>"']/g,function(c){return{'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c];}); }
@@ -18765,7 +18774,7 @@ function indSetTF(tf){
   if(tf===IND.tf) return;
   IND.tf = tf;
   IND.expanded = {};
-  ['daily','weekly','monthly'].forEach(function(k){
+  ['intraday','daily','weekly','monthly'].forEach(function(k){
     var el = document.getElementById('ind-tf-'+k);
     if(el) el.classList.toggle('active', k===tf);
   });
@@ -18789,18 +18798,139 @@ function indFmtAsOf(genAt, asOf){
   return '--';
 }
 
+// INTRADAY view: build a ranked list using current G.results + theme overlay
+// instead of the cron-generated daily snapshot. Zero additional API calls —
+// every value comes from data already fetched by the most recent scan.
+//
+// Output array shape matches the daily ranked structure expected by indDraw
+// downstream (each entry: {name, t, score}). The synthesized `t` carries the
+// fields the renderer reads: members, curated_members, auto_members,
+// member_count, member_perf, scores, rs_rank, breadth_50, trend_above_50ema,
+// rs_excess_pct, breadth_200. Fields that don't apply to intraday (multi-week
+// breadth_200, trend_above_50ema) are set to plausible derivatives or null.
+function _computeIntradayThemeRanked(){
+  if (!G.results || !G.results.length) return [];
+  if (!G_THEME_OVERLAY || !G_THEME_OVERLAY.ticker2theme) return [];
+
+  // Find SPY's % change to use as the benchmark
+  var spyR = null;
+  for (var i = 0; i < G.results.length; i++) {
+    if (G.results[i].ticker === 'SPY') { spyR = G.results[i]; break; }
+  }
+  if (!spyR || typeof spyR.changePct !== 'number') return [];
+  var spyChg = spyR.changePct;
+
+  // Reuse master_tickers.json's theme membership (carried in IND.data) so we
+  // get full member coverage even for tickers not in the current scan
+  // results. For ranking metrics, we only count members that ARE in
+  // G.results (have a current %change).
+  var themesData = (IND.data && IND.data.themes) || {};
+  var resultsByTicker = {};
+  G.results.forEach(function(r){
+    if (typeof r.changePct === 'number') resultsByTicker[r.ticker] = r;
+  });
+
+  var out = [];
+  Object.keys(themesData).forEach(function(themeName){
+    var t = themesData[themeName] || {};
+    var members = t.members || [];
+    if (!members.length) return;
+
+    var perfMap = {};
+    var scannedMembers = 0;
+    var sumChg = 0;
+    var upCount = 0;
+    members.forEach(function(m){
+      var r = resultsByTicker[m];
+      if (!r) return;
+      perfMap[m] = r.changePct;
+      sumChg += r.changePct;
+      scannedMembers++;
+      if (r.changePct > 0) upCount++;
+    });
+    // Need at least 3 members in G.results to have a stable signal. Below
+    // that, one outlier ticker dominates the average and the score is noise.
+    if (scannedMembers < 3) return;
+
+    var avgChg = sumChg / scannedMembers;
+    var rsExcess = avgChg - spyChg;     // theme avg − SPY (today)
+    // Map rsExcess to 0-100: -5pp = 0, 0pp = 50, +5pp = 100. Linear, clamped.
+    var score = Math.max(0, Math.min(100, 50 + rsExcess * 10));
+    var breadth = Math.round((upCount / scannedMembers) * 100);
+
+    // Synthesize a `t`-shaped object so the existing renderer works as-is.
+    var synthT = Object.assign({}, t, {
+      member_perf: perfMap,
+      member_count: members.length,
+      breadth_50: breadth,                                  // intraday breadth (% up today)
+      breadth_200: null,
+      trend_above_50ema: rsExcess > 0,                       // up if outperforming SPY today
+      // scores: store our intraday score under all three keys so other
+      // callers that read t.scores.daily get the intraday number when
+      // INTRADAY view is active.
+      scores: { daily: score, weekly: score, monthly: score, intraday: score },
+      // rs_rank: put avg %change in the 1W slot, mark longer windows as null
+      rs_rank: { '1W': score, '1M': null, '3M': null, '6M': null },
+      // rs_excess_pct: put today's pp difference in the 1W slot
+      rs_excess_pct: { '1W': rsExcess, '1M': null, '3M': null, '6M': null }
+    });
+
+    out.push({ name: themeName, t: synthT, score: score, _avgChg: avgChg, _rsExcess: rsExcess });
+  });
+
+  out.sort(function(a, b){ return b.score - a.score; });
+  return out;
+}
+
 function indDraw(){
   if(!IND.data) return;
   var d = IND.data, themes = d.themes || {};
-  document.getElementById('ind-asof').textContent = indFmtAsOf(d.generated_at, d.as_of);
+  var isIntraday = (IND.tf === 'intraday');
+  // For INTRADAY view, surface a freshness label showing when the underlying
+  // scan finished. Falls back to a hint if no scan has run yet this session.
+  if (isIntraday) {
+    var asof = '—';
+    if (G.results && G.results.length && G._scanFinishedAt){
+      asof = 'live · scan @ ' + new Date(G._scanFinishedAt).toLocaleTimeString();
+    } else if (G.results && G.results.length){
+      asof = 'live · ' + G.results.length + ' tickers in memory';
+    } else {
+      asof = '⚠ no scan yet — run a scan to populate';
+    }
+    document.getElementById('ind-asof').textContent = asof;
+  } else {
+    document.getElementById('ind-asof').textContent = indFmtAsOf(d.generated_at, d.as_of);
+  }
   document.getElementById('ind-bench').textContent = d.benchmark || 'SPY';
   var keys = Object.keys(themes);
   document.getElementById('ind-count').textContent = keys.length;
 
-  var ranked = keys.map(function(n){
-    var t = themes[n]; var sc = (t.scores||{})[IND.tf];
-    return { name:n, t:t, score:(sc==null?0:sc) };
-  }).sort(function(a,b){ return b.score - a.score; });
+  var ranked;
+  if (isIntraday) {
+    ranked = _computeIntradayThemeRanked();
+    // If no scan data is available, show a helpful empty state instead of
+    // a blank table.
+    if (!ranked.length){
+      var body = document.getElementById('ind-body');
+      if (body) body.innerHTML = '<tr><td colspan="11" class="ind-empty">'
+        + (G.results && G.results.length
+            ? 'No themes have ≥3 members in the current scan results — INTRADAY view needs broader scan coverage to compute reliable per-theme metrics.'
+            : 'Run a scan first — INTRADAY view computes from G.results in memory and there are no results yet.')
+        + '</td></tr>';
+      // Still update the secondary stats so they don't show stale daily values
+      document.getElementById('ind-topdec').textContent = '0';
+      document.getElementById('ind-trend').textContent = '0/0';
+      document.getElementById('ind-b50').textContent = '--';
+      document.getElementById('ind-rank-count').textContent = '0 ranked';
+      document.getElementById('ind-desc').textContent = IND_TF_DESC[IND.tf];
+      return;
+    }
+  } else {
+    ranked = keys.map(function(n){
+      var t = themes[n]; var sc = (t.scores||{})[IND.tf];
+      return { name:n, t:t, score:(sc==null?0:sc) };
+    }).sort(function(a,b){ return b.score - a.score; });
+  }
 
   var topDecCount = Math.max(3, Math.floor(ranked.length * 0.1));
   document.getElementById('ind-topdec').textContent = topDecCount;
