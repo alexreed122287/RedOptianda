@@ -2914,6 +2914,19 @@ window._tradeTokenPersisted = false;   // tracks whether current value is from p
       // so an actively-used iPad doesn't expire mid-week. A truly idle
       // device hits the expiry cliff and clears.
       try { localStorage.setItem(TRADE_TOKEN_PERSIST_TTL_KEY, String(Date.now() + TRADE_TOKEN_PERSIST_TTL_MS)); } catch(_){}
+      // Refresh the badge once the DOM is ready. The restore IIFE runs as
+      // the script executes, but _updateTradeTokenBadge isn't defined until
+      // a few lines below AND the badge HTML literal still says "TRADE: locked"
+      // until something actively re-renders it. Without this nudge, an iPad
+      // that successfully restored a persisted token would still SHOW
+      // "locked" in the header even though state was fully armed — confusing
+      // (the user thinks ARM didn't take). Schedule on next tick + at
+      // DOMContentLoaded for safety.
+      var refresh = function(){ try { _updateTradeTokenBadge(); } catch(_){} };
+      setTimeout(refresh, 0);
+      if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', refresh, { once: true });
+      }
     }
   } catch(e){ /* localStorage unavailable — fail closed, memory-only */ }
 })();
