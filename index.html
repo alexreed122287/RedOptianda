@@ -95,7 +95,28 @@ a{color:var(--blu);text-decoration:none;}
 #hdr-right{display:flex;align-items:center;gap:10px;white-space:nowrap;font-size:11px;}
 #clk{color:var(--amb);}
 #mkt-status{color:var(--gry);}
-#mode-badge{background:var(--amb3);color:var(--ambb);border:1px solid var(--amb);padding:1px 6px;border-radius:2px;font-size:10px;font-weight:700;}
+/* Unify chip widgets on desktop so each "TRADE: armed", "OPT BP: ...", "F&G: 66 GREED",
+   "AUTO: OFF", "LIVE MODE", etc. has the same height + border-radius + padding profile.
+   Inline styles on each element override font-size/color, but we lock the box geometry
+   here so they stay visually consistent across the row. */
+#hdr-right > #theme-toggle,
+#hdr-right > #push-toggle,
+#hdr-right > #hdr-opt-bp,
+#hdr-right > #hdr-trade-token,
+#hdr-right > #mode-badge,
+#hdr-right > #hdr-scan-status,
+#hdr-right > #hdr-autoscan,
+#hdr-right > .hdr-chip {
+  padding: 4px 10px !important;
+  border-radius: 4px !important;
+  min-height: 28px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  font-size: 11px !important;
+  letter-spacing: .5px !important;
+  white-space: nowrap !important;
+}
+#mode-badge{background:var(--amb3);color:var(--ambb);border:1px solid var(--amb);font-size:10px;font-weight:700;}
 /* z-index higher than logo so any overflow from header can't cover the
    tab text (defense against the header-obstruction class of bug). */
 #nav{display:flex;background:var(--bg1);border-bottom:var(--bdr);overflow-x:auto;padding:0 8px;position:relative;z-index:20;}
@@ -873,7 +894,8 @@ tr.sel-row td{background:var(--blu3);}
     <span id="clk">--:--:--</span>
     <span id="mkt-status">--</span>
     <span id="mode-badge">SANDBOX</span>
-    <span id="api-counter-badge" title="Tradier API calls today (resets at midnight). Click to view breakdown." onclick="showApiBreakdown()" style="cursor:pointer;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;user-select:none;">API: 0</span>
+    <!-- API counter relocated to top of API tab; keep #api-counter-badge in DOM (hidden) so existing JS that updates textContent still works -->
+    <span id="api-counter-badge" style="display:none;" onclick="showApiBreakdown()">API: 0</span>
     <span id="hdr-scan-status" title="Scan status — click to jump to FULL SCANNER" onclick="switchTab('sc')" style="display:none;cursor:pointer;background:rgba(112,144,200,0.08);border:1px solid rgba(112,144,200,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--gry);letter-spacing:.5px;user-select:none;">SCAN: idle</span>
     <span id="hdr-autoscan" title="Auto-scan settings — click to expand" onclick="toggleAutoScanPanel()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;user-select:none;">AUTO: OFF</span>
   </div>
@@ -925,11 +947,11 @@ tr.sel-row td{background:var(--blu3);}
   <button class="ntab" onclick="switchTab('pos')">POSITIONS</button>
   <button class="ntab" onclick="switchTab('order')">ORDER TICKET</button>
   <button class="ntab" onclick="switchTab('al')">ALERTS</button>
-  <button class="ntab" onclick="switchTab('sent')">&#9678; SENTIMENT</button>
-  <button class="ntab" onclick="switchTab('api')">&#9881; API</button>
+  <button class="ntab" onclick="switchTab('sent')">SENTIMENT</button>
+  <button class="ntab" onclick="switchTab('api')">API</button>
   <button class="ntab" onclick="switchTab('pf')">PORTFOLIO</button>
   <button class="ntab" onclick="switchTab('ind')">INDUSTRY</button>
-  <button class="ntab" onclick="switchTab('perf')" title="Per-rule win rate, IV/HV bucket P&amp;L, and Kelly position sizing — drives data-backed strategy iteration">&#9650; PERFORMANCE</button>
+  <button class="ntab" onclick="switchTab('perf')" title="Per-rule win rate, IV/HV bucket P&amp;L, and Kelly position sizing — drives data-backed strategy iteration">PERFORMANCE</button>
   <button class="ntab" onclick="switchTab('gex')" title="Gamma exposure / 30DTE options-flow (call vs put OI) for the top 200 enriched tickers. Drives the GEX Call Heavy rule.">GEX / FLOW</button>
   <!-- OPTIONS WATCHLIST button hidden per user request — underlying tab pane
        (id="tab-cw") + cwRenderTable code path retained in case of re-enable. -->
@@ -1044,7 +1066,7 @@ tr.sel-row td{background:var(--blu3);}
       <label style="font-size:11px;color:var(--gry);">Min AvgVol <input type="number" id="sc-minavgvol" value="500000" min="100000" step="100000" style="width:80px;font-size:11px;" title="Min average daily volume"></label>
       <label style="font-size:11px;color:var(--gry);">Today Vol % <input type="number" id="sc-volratio" placeholder="any" min="0" max="200" style="width:46px;font-size:11px;" title="Today volume must be at least X% of avg volume. Leave blank to skip this filter.">%</label>
       <label style="font-size:11px;color:var(--gry);" title="Filter OUT tickers where the option contract costs more than this amount. Uses last scanned option price.">Max Opt $ <input type="number" id="sc-maxoptprice" placeholder="any" min="0" step="0.50" style="width:58px;font-size:11px;"></label>
-      <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--grn);color:var(--grn);" onclick="saveScanSettings()" title="Save current screener + filter settings to localStorage. Restored on every page load.">&#128190; SAVE SETTINGS</button>
+      <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--grn);color:var(--grn);" onclick="saveScanSettings()" title="Save current screener + filter settings to localStorage. Restored on every page load.">SAVE SETTINGS</button>
       <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--gry2);color:var(--gry);" onclick="resetScanSettings()" title="Reset screener + filters to factory defaults. Does NOT clear saved API keys or tokens.">&#8634; RESET DEFAULTS</button>
     </div>
     <span id="sc-universe-label" style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);margin-left:4px;"></span>
@@ -1898,6 +1920,13 @@ tr.sel-row td{background:var(--blu3);}
 
 <div class="tab-pane" id="tab-api">
   <div class="page-wrap">
+    <!-- API counter (relocated from header). Updated in lockstep with the
+         hidden #api-counter-badge by the existing fetch monkey-patch. -->
+    <div id="api-counter-tab-wrap" style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:10px 14px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.25);border-radius:4px;">
+      <span style="font-family:var(--ff-mono);font-size:11px;color:var(--gry);letter-spacing:.5px;">TRADIER API CALLS TODAY:</span>
+      <span id="api-counter-tab" onclick="showApiBreakdown()" title="Click to view per-endpoint breakdown" style="cursor:pointer;font-family:var(--ff-mono);font-size:14px;font-weight:700;color:var(--amb);">0</span>
+      <span style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);">(resets at midnight ET)</span>
+    </div>
     <div class="card"><div class="card-hdr">API CONFIGURATION</div>
     <div class="card-body api-form">
       <div class="api-row"><label>FMP API KEY (financialmodelingprep.com)</label><input id="api-fmp" type="password" placeholder="Enter FMP key..."><div class="api-status" id="fmp-status"></div></div>
@@ -2533,12 +2562,19 @@ tr.sel-row td{background:var(--blu3);}
 
   function updateBadge(n){
     var el=document.getElementById('api-counter-badge');
-    if(!el) return;
-    el.textContent='API: '+n;
-    // Color ramp: green < 100, amber < 200, red >= 200
-    el.style.borderColor = n<100?'rgba(0,230,118,0.4)':n<200?'rgba(255,215,64,0.4)':'rgba(255,0,230,0.5)';
-    el.style.color = n<100?'var(--grn)':n<200?'var(--wrn)':'var(--ngo)';
-    el.style.background = n<100?'rgba(0,230,118,0.07)':n<200?'rgba(255,215,64,0.07)':'rgba(255,0,230,0.08)';
+    if(el){
+      el.textContent='API: '+n;
+      // Color ramp: green < 100, amber < 200, red >= 200
+      el.style.borderColor = n<100?'rgba(0,230,118,0.4)':n<200?'rgba(255,215,64,0.4)':'rgba(255,0,230,0.5)';
+      el.style.color = n<100?'var(--grn)':n<200?'var(--wrn)':'var(--ngo)';
+      el.style.background = n<100?'rgba(0,230,118,0.07)':n<200?'rgba(255,215,64,0.07)':'rgba(255,0,230,0.08)';
+    }
+    // Mirror the count to the API tab's relocated counter (just numeric, with color ramp)
+    var tabEl = document.getElementById('api-counter-tab');
+    if(tabEl){
+      tabEl.textContent = n;
+      tabEl.style.color = n<100?'var(--grn)':n<200?'var(--wrn)':'var(--ngo)';
+    }
   }
 
   // Patch window.fetch
@@ -3043,6 +3079,8 @@ window.clearApiLog = function(){
   try{localStorage.removeItem('op_api_log');}catch(e){}
   var el=document.getElementById('api-counter-badge');
   if(el){el.textContent='API: 0';el.style.borderColor='rgba(0,212,255,0.25)';el.style.color='var(--amb)';el.style.background='rgba(0,212,255,0.08)';}
+  var tabEl=document.getElementById('api-counter-tab');
+  if(tabEl){tabEl.textContent='0';tabEl.style.color='var(--amb)';}
   var li=document.getElementById('api-log-list');if(li)li.innerHTML='';
   var su=document.getElementById('api-summary-row');if(su)su.innerHTML='';
   var mt=document.getElementById('api-modal-total');if(mt)mt.textContent='0 calls today';
