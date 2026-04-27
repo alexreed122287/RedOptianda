@@ -132,6 +132,35 @@ a{color:var(--blu);text-decoration:none;}
   white-space: nowrap !important;
   box-sizing: border-box !important;
 }
+
+/* Miniature Adanos sentiment chips. Compact pill with platform letter +
+   buzz number; left border tinted by net sentiment (green pos / red neg /
+   amber neutral). Hover tooltip carries the full BUZZ / SENT / BULL /
+   BEAR breakdown so the user can read the raw signal without leaving the
+   current tab. */
+.hdr-adanos {
+  cursor: pointer;
+  background: rgba(0, 212, 255, 0.04);
+  border: 1px solid var(--gry2);
+  border-left: 3px solid var(--gry2);
+  border-radius: 3px;
+  padding: 1px 8px;
+  font-size: 10px;
+  font-family: var(--ff-mono);
+  color: var(--gry);
+  letter-spacing: .5px;
+  white-space: nowrap;
+  user-select: none;
+  transition: border-color .2s, color .2s;
+  height: 28px;
+  display: inline-flex;
+  align-items: center;
+}
+.hdr-adanos:hover { color: var(--wht); border-color: var(--amb); }
+.hdr-adanos.sent-pos { border-left-color: var(--grn); color: var(--grn); }
+.hdr-adanos.sent-neg { border-left-color: var(--ngo); color: var(--ngo); }
+.hdr-adanos.sent-neu { border-left-color: var(--wrn); color: var(--wrn); }
+.hdr-adanos.sent-loading { opacity: 0.6; }
 #mode-badge{background:var(--amb3);color:var(--ambb);border:1px solid var(--amb);font-size:10px;font-weight:700;}
 /* z-index higher than logo so any overflow from header can't cover the
    tab text (defense against the header-obstruction class of bug). */
@@ -960,6 +989,15 @@ tr.sel-row td{background:var(--blu3);}
     <button id="push-toggle" onclick="requestPushPerm()" title="Enable browser notifications for order fills, stop-loss triggers, rolls, and share buys" style="display:none !important;">NOTIFY</button>
     <span id="hdr-opt-bp" title="Option buying power from Tradier \u2014 click to refresh" onclick="fetchBalances()" style="display:none !important;">OPT BP: --</span>
     <span id="hdr-trade-token" title="Trade authorization for this session. Held in memory only \u2014 re-prompted next session." onclick="promptTradeToken()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;">TRADE: locked</span>
+    <!-- Miniature Adanos sentiment chips. BUZZ score + colored dot for net
+         sentiment (green positive / red negative / amber neutral). Click any
+         chip to jump to the SENTIMENT tab for the full panel breakdown. Live
+         data from adanos-proxy.alexander-s-reed.workers.dev \u2014 refreshed every
+         5 minutes by _refreshAdanosChips below. -->
+    <span id="hdr-adanos-r" class="hdr-adanos" data-platform="reddit" onclick="switchTab('sent')" title="Reddit market sentiment \u2014 click to open full panel">R: --</span>
+    <span id="hdr-adanos-x" class="hdr-adanos" data-platform="x" onclick="switchTab('sent')" title="X / Twitter market sentiment \u2014 click to open full panel">X: --</span>
+    <span id="hdr-adanos-n" class="hdr-adanos" data-platform="news" onclick="switchTab('sent')" title="News market sentiment \u2014 click to open full panel">N: --</span>
+    <span id="hdr-adanos-p" class="hdr-adanos" data-platform="polymarket" onclick="switchTab('sent')" title="Polymarket market sentiment \u2014 click to open full panel">P: --</span>
     <span id="clk">--:--:--</span>
     <span id="mkt-status" style="display:none !important;">--</span>
     <span id="mode-badge" style="display:none !important;">SANDBOX</span>
@@ -10505,6 +10543,79 @@ function injectSentimentBadge(){
   return;
 }
 
+// ────────────────────────────────────────────────────────────────────────
+// Miniature Adanos chips in the header (Reddit / X / News / Polymarket)
+// ────────────────────────────────────────────────────────────────────────
+// Pulls market-sentiment from the Adanos worker proxy on a 5-min cadence
+// and updates four header chips with BUZZ + sentiment color. Click any
+// chip to switch to the SENTIMENT tab for the full panel breakdown.
+//
+// Endpoint: <proxy>/<platform>/stocks/v1/market-sentiment?days=1
+// Response shape: { buzz_score, sentiment_score, bullish_pct, bearish_pct, mentions, ... }
+//
+// Sentiment color buckets:
+//   sentiment_score >  +0.05  → positive (green)
+//   sentiment_score <  -0.05  → negative (red)
+//   otherwise                  → neutral (amber)
+
+var ADANOS_PROXY = 'https://adanos-proxy.alexander-s-reed.workers.dev';
+var ADANOS_REFRESH_MS = 5 * 60 * 1000;
+var _adanosTimer = null;
+
+function _adanosClassify(sent){
+  if (sent == null || isNaN(sent)) return 'sent-loading';
+  if (sent > 0.05) return 'sent-pos';
+  if (sent < -0.05) return 'sent-neg';
+  return 'sent-neu';
+}
+
+function _refreshAdanosChips(){
+  var platforms = [
+    { id: 'reddit',     path: '/reddit/stocks/v1',     elId: 'hdr-adanos-r', letter: 'R' },
+    { id: 'x',          path: '/x/stocks/v1',          elId: 'hdr-adanos-x', letter: 'X' },
+    { id: 'news',       path: '/news/stocks/v1',       elId: 'hdr-adanos-n', letter: 'N' },
+    { id: 'polymarket', path: '/polymarket/stocks/v1', elId: 'hdr-adanos-p', letter: 'P' },
+  ];
+  platforms.forEach(function(p){
+    var el = document.getElementById(p.elId);
+    if (!el) return;
+    el.classList.add('sent-loading');
+    fetch(ADANOS_PROXY + p.path + '/market-sentiment?days=1', {
+      method: 'GET',
+      // Note: this fetch goes through the scanner's main fetch monkey-patch.
+      // Adanos worker uses its own auth (key injected server-side), so no
+      // X-Live-Token / X-Trade-Token needed here.
+    })
+    .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
+    .then(function(d){
+      var buzz = (d && typeof d.buzz_score === 'number') ? d.buzz_score : null;
+      var sent = (d && typeof d.sentiment_score === 'number') ? d.sentiment_score : null;
+      var bull = (d && typeof d.bullish_pct === 'number') ? d.bullish_pct : null;
+      var bear = (d && typeof d.bearish_pct === 'number') ? d.bearish_pct : null;
+      el.classList.remove('sent-loading','sent-pos','sent-neg','sent-neu');
+      el.classList.add(_adanosClassify(sent));
+      el.textContent = p.letter + ': ' + (buzz != null ? buzz.toFixed(0) : '--');
+      el.title = p.id.toUpperCase() + ' market sentiment\n'
+        + 'BUZZ ' + (buzz != null ? buzz.toFixed(1) : '--')
+        + '   SENT ' + (sent != null ? (sent >= 0 ? '+' : '') + sent.toFixed(2) : '--')
+        + '\nBULL ' + (bull != null ? bull + '%' : '--')
+        + '   BEAR ' + (bear != null ? bear + '%' : '--')
+        + '\nClick to open SENTIMENT tab for full panels.';
+    })
+    .catch(function(err){
+      el.classList.remove('sent-loading','sent-pos','sent-neg','sent-neu');
+      el.textContent = p.letter + ': --';
+      el.title = p.id.toUpperCase() + ' sentiment unavailable: ' + (err && err.message || err);
+    });
+  });
+}
+
+function _startAdanosChips(){
+  if (_adanosTimer) return;
+  _refreshAdanosChips();
+  _adanosTimer = setInterval(_refreshAdanosChips, ADANOS_REFRESH_MS);
+}
+
 // Called at the end of renderScan() to paint loud-ticker badges on rows.
 // Color is driven by `net` (bull-bear normalized to -1..+1) which accounts
 // for neutral messages; falls back to bull_pct if net is unavailable.
@@ -18260,6 +18371,8 @@ function init(){
   loadThemeOverlay()
     .then(function(){ try { populateThemeDropdown(); } catch(e){} })
     .catch(function(e){ console.warn('[init] theme overlay failed:', e && e.message); });
+  // Adanos miniature chips in the header — start the 5-min refresh loop.
+  try { _startAdanosChips(); } catch(e){ console.warn('[init] adanos chips failed:', e && e.message); }
   loadPortfolio();
   // Populate sector checkboxes from the embedded universe
   // (CSV loader removed — embedded UNIVERSE_FULL is the single source of truth)
