@@ -3405,6 +3405,14 @@ window.clearApiLog = function(){
 // blob. Anyone who doesn't can't even guess what id to ask for. The blob
 // itself is encrypted, so even a worker compromise leaks ciphertext only.
 
+// Fallback proxy URL when localStorage doesn't have rrjcar_tradier_proxy yet.
+// Required for the bootstrap case: a fresh laptop wants to PULL from cloud,
+// but PULL needs to know which proxy to call, and that's exactly the value
+// being pulled (chicken-and-egg). Hardcoding a fallback solves the
+// bootstrap. Not sensitive — the workers.dev URL is exposed on every
+// Tradier request the deployed scanner makes anyway.
+var SYNC_FALLBACK_PROXY = 'https://tradier-proxy.alexander-s-reed.workers.dev';
+
 // Whitelist: which localStorage keys actually sync. Trade token + closed-trade
 // history + per-device caches are intentionally excluded. Direct-mode Tradier
 // keys (rrjcar_tradier / rrjcar_tradier_live) ARE included so a setup using
@@ -3504,8 +3512,11 @@ async function syncPushConfig(){
     var iv = crypto.getRandomValues(new Uint8Array(12));
     var ctBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, derived.key, plaintext);
     var body = JSON.stringify({ id: derived.id, iv: _b64encode(iv), ct: _b64encode(ctBuf) });
-    var proxy = (localStorage.getItem('rrjcar_tradier_proxy') || '').replace(/\/+$/, '');
-    if (!proxy) throw new Error('Tradier proxy URL not set — Sync uses the same proxy. Configure proxy URL above first.');
+    // Fall back to the hardcoded SYNC_FALLBACK_PROXY when localStorage doesn't
+    // have a proxy URL yet. Solves the chicken-and-egg PULL bootstrap on a
+    // fresh device that's trying to download its proxy URL FROM the cloud.
+    var proxy = ((localStorage.getItem('rrjcar_tradier_proxy') || SYNC_FALLBACK_PROXY) || '').replace(/\/+$/, '');
+    if (!proxy) throw new Error('No proxy URL available (SYNC_FALLBACK_PROXY also empty)');
     _syncStatus('Uploading…', 'var(--gry)');
     var res = await fetch(proxy + '/sync-config', {
       method: 'POST',
@@ -3530,8 +3541,11 @@ async function syncPullConfig(){
   try {
     _syncStatus('Deriving id…', 'var(--gry)');
     var derived = await _syncDerive(master);
-    var proxy = (localStorage.getItem('rrjcar_tradier_proxy') || '').replace(/\/+$/, '');
-    if (!proxy) throw new Error('Tradier proxy URL not set — Sync uses the same proxy. Configure proxy URL above first.');
+    // Fall back to the hardcoded SYNC_FALLBACK_PROXY when localStorage doesn't
+    // have a proxy URL yet. Solves the chicken-and-egg PULL bootstrap on a
+    // fresh device that's trying to download its proxy URL FROM the cloud.
+    var proxy = ((localStorage.getItem('rrjcar_tradier_proxy') || SYNC_FALLBACK_PROXY) || '').replace(/\/+$/, '');
+    if (!proxy) throw new Error('No proxy URL available (SYNC_FALLBACK_PROXY also empty)');
     _syncStatus('Downloading…', 'var(--gry)');
     var res = await fetch(proxy + '/sync-config?id=' + derived.id);
     if (res.status === 404) throw new Error('No config found for this master secret. Push from another device first.');
