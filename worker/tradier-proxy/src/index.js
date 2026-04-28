@@ -279,8 +279,16 @@ export default {
       // Same paste-newline trim + constant-time compare as X-Live-Token above
       const tradeProvided = (request.headers.get("X-Trade-Token") || "").trim();
       const tradeExpected = (env.WRITE_AUTH_TOKEN || "").trim();
-      if (!safeEqual(tradeProvided, tradeExpected)) {
+      if (!tradeProvided) {
         return jsonError(403, "Order placement requires X-Trade-Token header (click 'ENABLE TRADING' in scanner header to enter session token)", corsOrigin);
+      }
+      if (!safeEqual(tradeProvided, tradeExpected)) {
+        // Distinguish "value mismatch" from "header missing" so the scanner
+        // (and the user reading the log) doesn't waste time re-arming the
+        // same wrong token over and over. The previous flat-message version
+        // led to a recursive prompt → reject loop because the client kept
+        // wiping its in-memory token and re-prompting for it.
+        return jsonError(403, "X-Trade-Token value does not match the worker's WRITE_AUTH_TOKEN secret. Reset the secret (wrangler secret put WRITE_AUTH_TOKEN) and arm the same value in the scanner.", corsOrigin);
       }
     }
     // HC-D — partial-config foot-gun protection.
