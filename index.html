@@ -9323,23 +9323,11 @@ async function fetchDynamicUniverse(key, mode){
   var minAvgVol  = parseFloat(eid('sc-minavgvol')  ? eid('sc-minavgvol').value  : 50000) || 50000;
   var volRatioPct= parseFloat(eid('sc-volratio')   ? eid('sc-volratio').value   : 0)  || 0;
   var seen = {};
-  // Optional pre-scan theme filter — when a theme is selected in the SCAN
-  // toolbar, restrict the universe to that theme's curated members so we
-  // don't burn API calls scoring tickers that will be filtered out anyway.
-  // Empty/missing overlay falls through to "no theme filter".
-  var preTheme = (eid('sc-theme') && eid('sc-theme').value) || '';
-  var themeMembers = null;
-  if(preTheme){
-    try {
-      var t2t = (G_THEME_OVERLAY && G_THEME_OVERLAY.ticker2theme) || {};
-      var members = {};
-      Object.keys(t2t).forEach(function(tk){
-        var ti = t2t[tk];
-        if(ti && ti.theme === preTheme) members[tk] = true;
-      });
-      if(Object.keys(members).length > 0) themeMembers = members;
-    } catch(e){}
-  }
+  // Theme is intentionally NOT a pre-scan filter — restricting the universe
+  // to a theme's ~20 curated members would shrink the enrichment pool below
+  // SC_ENRICH_LIMIT (200) and starve the post-scan view of breadth. Theme
+  // narrowing happens later in applyFilters() against the fully scored
+  // results, so the full 200-ticker enrichment still runs every scan.
   var allTickers = UNIVERSE_FULL.filter(function(u){
     if(seen[u.t]) return false;
     seen[u.t] = true;
@@ -9348,14 +9336,12 @@ async function fetchDynamicUniverse(key, mode){
     if(!sectorAllowed(u.s)) return false;
     // Apply hard sector exclusion (e.g. health sectors except allowlist)
     if(!tickerPassesSectorExclusion(u.t, u.s)) return false;
-    // Theme pre-filter: if the user picked a theme, only scan its members
-    if(themeMembers && !themeMembers[u.t]) return false;
     return true;
   });
-  // Always include SPY as a market reference, regardless of sector/theme filter
+  // Always include SPY as a market reference, regardless of sector filter
   if(!seen['SPY']) allTickers.push({t:'SPY', s:'ETF'});
   if(allTickers.length === 0){
-    console.warn('[scan] No tickers match current sector/theme selection');
+    console.warn('[scan] No tickers match current sector selection');
     return [];
   }
   var BATCH_SIZE = 400;
@@ -10095,7 +10081,7 @@ function populateThemeDropdown(){
     });
   } catch(e){}
   var themes = Object.keys(byName).map(function(n){ return {name: n, score: byName[n]}; });
-  themes.sort(function(a,b){ return b.score - a.score; });
+  themes.sort(function(a,b){ return a.name.localeCompare(b.name); });
   var html = '<option value="">All themes</option>';
   themes.forEach(function(t){
     var label = t.name + (t.score ? ' ('+Math.round(t.score)+')' : '');
