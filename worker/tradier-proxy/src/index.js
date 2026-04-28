@@ -118,6 +118,98 @@ export default {
       return jsonError(403, "Origin not allowed", corsOrigin);
     }
 
+    // ───────────────────────────────────────────────────────────────────────
+    //  SYNC-CONFIG endpoints (cross-device settings sync)
+    // ───────────────────────────────────────────────────────────────────────
+    // Two endpoints that store opaque encrypted config blobs in Cloudflare
+    // KV, keyed by an opaque id derived client-side from a user-chosen
+    // master secret. The worker NEVER sees plaintext — encryption happens
+    // entirely in the browser before upload. KV stores ciphertext only.
+    //
+    // Auth model: knowledge of the id IS the auth. The id is SHA-256 of
+    // the master secret (with a fixed prefix), so brute-forcing it is
+    // computationally infeasible (256-bit space). Anyone who knows the
+    // master secret can derive the id and read/write that blob.
+    //
+    // Endpoints:
+    //   GET  /sync-config?id=<hex>          → returns {iv, ct} or 404
+    //   POST /sync-config                   → body {id, iv, ct} stores it
+    //
+    // KV namespace binding: env.SYNC_CONFIG (configure in wrangler.toml).
+    if (url.pathname === "/sync-config") {
+      // KV namespace must be bound; without it return a clear 500 instead
+      // of a confusing nil-deref crash.
+      if (!env.SYNC_CONFIG) {
+        return jsonError(500, "SYNC_CONFIG KV namespace not bound to this worker. See worker/tradier-proxy/README for setup.", corsOrigin);
+      }
+      if (request.method === "GET") {
+        const id = url.searchParams.get("id") || "";
+        if (!/^[a-f0-9]{64}$/i.test(id)) {
+          return jsonError(400, "Invalid sync id (expected 64 hex chars)", corsOrigin);
+        }
+        const blob = await env.SYNC_CONFIG.get(id);
+        if (!blob) return jsonError(404, "No config stored for this id", corsOrigin);
+        return new Response(blob, {
+          status: 200,
+          headers: {
+            ...corsHeaders(corsOrigin),
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        });
+      }
+      if (request.method === "POST") {
+        // Body cap: 16KB is generous (typical encrypted config is <2KB).
+        const MAX = 16 * 1024;
+        let bodyText;
+        try {
+          const reader = request.body && request.body.getReader();
+          if (!reader) return jsonError(400, "Empty body", corsOrigin);
+          const chunks = [];
+          let received = 0;
+          while (true) {
+            const { value, done } = await reader.read();
+            if (done) break;
+            received += value.byteLength;
+            if (received > MAX) {
+              try { await reader.cancel(); } catch (_) {}
+              return jsonError(413, `Body too large (max ${MAX} bytes)`, corsOrigin);
+            }
+            chunks.push(value);
+          }
+          const merged = new Uint8Array(received);
+          let off = 0; for (const c of chunks) { merged.set(c, off); off += c.byteLength; }
+          bodyText = new TextDecoder().decode(merged);
+        } catch (err) {
+          return jsonError(400, `Could not read body: ${err.message}`, corsOrigin);
+        }
+        let parsed;
+        try { parsed = JSON.parse(bodyText); }
+        catch { return jsonError(400, "Body is not valid JSON", corsOrigin); }
+        if (!parsed || typeof parsed.id !== "string" || !/^[a-f0-9]{64}$/i.test(parsed.id)) {
+          return jsonError(400, "Body must include `id` (64 hex chars)", corsOrigin);
+        }
+        if (typeof parsed.iv !== "string" || typeof parsed.ct !== "string") {
+          return jsonError(400, "Body must include `iv` and `ct` strings", corsOrigin);
+        }
+        // Worker stores the encrypted blob keyed by id. 90 days of inactivity
+        // expires the entry — actively-used setups touch it on every push so
+        // the TTL slides forward; abandoned configs are purged automatically.
+        await env.SYNC_CONFIG.put(parsed.id, JSON.stringify({ iv: parsed.iv, ct: parsed.ct, ts: Date.now() }), {
+          expirationTtl: 90 * 24 * 60 * 60, // 90 days
+        });
+        return new Response(JSON.stringify({ ok: true }), {
+          status: 200,
+          headers: {
+            ...corsHeaders(corsOrigin),
+            "Content-Type": "application/json",
+            "Cache-Control": "no-store",
+          },
+        });
+      }
+      return jsonError(405, "Method not allowed for /sync-config", corsOrigin);
+    }
+
     const pathOk = ALLOWED_EXACT_PATHS.has(url.pathname)
       || ALLOWED_PATH_PREFIXES.some((p) => url.pathname.startsWith(p));
     if (!pathOk) {

@@ -2106,6 +2106,40 @@ tr.sel-row td{background:var(--blu3);}
     </div></div>
 
 
+    <!-- ─── CROSS-DEVICE CONFIG SYNC ────────────────────────────────────
+         Encrypts a snapshot of localStorage settings using a master secret
+         the user types here, uploads the ciphertext to a Cloudflare KV
+         namespace via the Tradier proxy. On any other device, type the
+         same master secret + click PULL to restore. Worker never sees
+         plaintext — encryption is browser-side via SubtleCrypto AES-GCM.
+
+         Trade token is INTENTIONALLY excluded from sync (security-by-design).
+         Each device opts into trade-token persistence separately. -->
+    <div class="card" style="margin-top:14px;">
+      <div class="card-hdr">CROSS-DEVICE SETTINGS SYNC</div>
+      <div class="card-body" style="padding:12px 14px;">
+        <div style="font-family:var(--ff-mono);font-size:11px;color:var(--gry);line-height:1.6;margin-bottom:12px;">
+          Encrypts your scanner settings with a master secret you choose, stores in Cloudflare KV.
+          Use the same master secret on any other device to PULL down identical settings.<br>
+          <span style="color:var(--wrn);">Master secret never leaves this device.</span>
+          Worker only stores ciphertext.
+          <span style="color:var(--gry2);">Trade token is excluded from sync — re-arm per device for security.</span>
+        </div>
+        <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px;">
+          <label style="font-size:10px;color:var(--gry);min-width:110px;letter-spacing:.5px;">MASTER SECRET</label>
+          <input id="sync-master-secret" type="password" placeholder="20+ chars; same on every device" autocomplete="off" spellcheck="false" style="flex:1;min-width:240px;background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:12px;padding:8px 10px;">
+          <button class="btn" onclick="document.getElementById('sync-master-secret').type=document.getElementById('sync-master-secret').type==='password'?'text':'password'" title="Show / hide" style="font-size:10px;">SHOW</button>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;">
+          <button class="btn grn" onclick="syncPushConfig()" title="Encrypt current settings + upload to Cloudflare KV">▲ PUSH TO CLOUD</button>
+          <button class="btn blu" onclick="syncPullConfig()" title="Download from Cloudflare KV + decrypt + restore (page reloads)">▼ PULL FROM CLOUD</button>
+          <button class="btn" onclick="syncShowDiagnostic()" style="border-color:var(--gry2);color:var(--gry);" title="Show what would be synced + the derived id">DIAGNOSE</button>
+          <span id="sync-status" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);align-self:center;flex:1;text-align:right;"></span>
+        </div>
+        <div id="sync-diagnostic" style="display:none;font-family:var(--ff-mono);font-size:10px;color:var(--gry);background:var(--bg2);border:1px solid var(--bg3);border-radius:3px;padding:8px 10px;margin-top:10px;white-space:pre-wrap;word-break:break-all;"></div>
+      </div>
+    </div>
+
     <div class="card" style="margin-top:14px;">
       <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;">
         <span>API USAGE ANALYZER</span>
@@ -3351,6 +3385,201 @@ window.clearApiLog = function(){
   document.getElementById('api-breakdown-modal').style.display='none';
   toast('API log cleared');
 };
+
+// ───────────────────────────────────────────────────────────────────────────
+//  CROSS-DEVICE CONFIG SYNC (browser → Cloudflare KV via tradier-proxy)
+// ───────────────────────────────────────────────────────────────────────────
+// Encrypts a snapshot of localStorage settings with a master secret the user
+// enters in the API tab, uploads the ciphertext to Cloudflare KV via the
+// existing Tradier proxy. The same master secret on a different device pulls
+// the blob, decrypts, and restores. Worker NEVER sees plaintext.
+//
+// Crypto:
+//   - Storage id     = SHA-256(master + ":id")        — opaque KV lookup key
+//   - Encryption key = PBKDF2(master, ":enc-salt", 100000) → AES-GCM-256
+//   - IV is random per push (12 bytes)
+//   - Stored blob: { id, iv: base64, ct: base64 }
+//
+// Threat model: knowing the id IS the auth (it's a 256-bit hash of the
+// master). Anyone who knows the master can derive the id and read/write that
+// blob. Anyone who doesn't can't even guess what id to ask for. The blob
+// itself is encrypted, so even a worker compromise leaks ciphertext only.
+
+// Whitelist: which localStorage keys actually sync. Trade token + closed-trade
+// history + per-device caches are intentionally excluded.
+var SYNC_KEYS = [
+  'rrjcar_tradier_proxy',
+  'rrjcar_tradier_proxy_live_token',
+  'rrjcar_fmp',
+  'rrjcar_mode',
+  'rrjcar_acct',
+  'rrjcar_acct_live',
+  'rrjcar_scan_settings_v2',
+  'rrjcar_smart_exits_v1',
+  'rrjcar_gex_schedule_v1',
+  'rrjcar_notif_settings_v1',
+  'rrjcar_app_settings_v1',
+  'rrjcar_sel_sectors',
+  'rrjcar_wl',
+  'rrjcar_auto_scan',
+  'rrjcar_theme'
+];
+
+function _syncStatus(msg, color){
+  var el = document.getElementById('sync-status');
+  if (!el) return;
+  el.textContent = msg || '';
+  el.style.color = color || 'var(--gry)';
+}
+
+// Derive the storage id (64 hex chars) and AES-GCM key from a master secret.
+// Uses Web Crypto SubtleCrypto so all derivation runs in the browser; nothing
+// derived is ever sent to the worker.
+async function _syncDerive(master){
+  if (!master || master.length < 8) {
+    throw new Error('Master secret must be at least 8 characters (use 20+ for real security)');
+  }
+  var enc = new TextEncoder();
+  // 1) storage id = SHA-256(master + ":id"). Hex encoded.
+  var idBuf = await crypto.subtle.digest('SHA-256', enc.encode(master + ':id'));
+  var idHex = Array.from(new Uint8Array(idBuf)).map(function(b){ return ('0'+b.toString(16)).slice(-2); }).join('');
+  // 2) encryption key via PBKDF2(master, ":enc-salt", 100k iter) → AES-GCM-256
+  var keyMaterial = await crypto.subtle.importKey('raw', enc.encode(master), { name: 'PBKDF2' }, false, ['deriveKey']);
+  var aesKey = await crypto.subtle.deriveKey(
+    { name: 'PBKDF2', salt: enc.encode(':enc-salt:rrjcar'), iterations: 100000, hash: 'SHA-256' },
+    keyMaterial,
+    { name: 'AES-GCM', length: 256 },
+    false,
+    ['encrypt', 'decrypt']
+  );
+  return { id: idHex, key: aesKey };
+}
+
+function _b64encode(buf){
+  var bytes = new Uint8Array(buf);
+  var s = '';
+  for (var i = 0; i < bytes.length; i++) s += String.fromCharCode(bytes[i]);
+  return btoa(s);
+}
+function _b64decode(str){
+  var bin = atob(str);
+  var bytes = new Uint8Array(bin.length);
+  for (var i = 0; i < bin.length; i++) bytes[i] = bin.charCodeAt(i);
+  return bytes;
+}
+
+// Snapshot the syncable subset of localStorage into a plain object.
+function _syncSnapshot(){
+  var snap = {};
+  SYNC_KEYS.forEach(function(k){
+    try { var v = localStorage.getItem(k); if (v != null) snap[k] = v; } catch(_) {}
+  });
+  snap.__pushed_at = Date.now();
+  snap.__device = (navigator.userAgent.match(/(iPad|iPhone|Macintosh|Windows|Android)/) || ['unknown'])[0];
+  return snap;
+}
+
+async function syncPushConfig(){
+  var master = (document.getElementById('sync-master-secret') || {}).value || '';
+  try {
+    _syncStatus('Encrypting…', 'var(--gry)');
+    var derived = await _syncDerive(master);
+    var plaintext = new TextEncoder().encode(JSON.stringify(_syncSnapshot()));
+    var iv = crypto.getRandomValues(new Uint8Array(12));
+    var ctBuf = await crypto.subtle.encrypt({ name: 'AES-GCM', iv: iv }, derived.key, plaintext);
+    var body = JSON.stringify({ id: derived.id, iv: _b64encode(iv), ct: _b64encode(ctBuf) });
+    var proxy = (localStorage.getItem('rrjcar_tradier_proxy') || '').replace(/\/+$/, '');
+    if (!proxy) throw new Error('Tradier proxy URL not set — Sync uses the same proxy. Configure proxy URL above first.');
+    _syncStatus('Uploading…', 'var(--gry)');
+    var res = await fetch(proxy + '/sync-config', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body
+    });
+    if (!res.ok) {
+      var msg = 'HTTP ' + res.status;
+      try { var j = await res.json(); if (j && j.error) msg = j.error; } catch(_){}
+      throw new Error(msg);
+    }
+    _syncStatus('✓ Pushed ' + Object.keys(_syncSnapshot()).length + ' settings · ' + new Date().toLocaleTimeString(), 'var(--grn)');
+    if (typeof toast === 'function') toast('Settings pushed to cloud');
+  } catch (err) {
+    _syncStatus('Push failed: ' + (err && err.message || err), 'var(--ngo)');
+    if (typeof toast === 'function') toast('Push failed: ' + (err && err.message || err));
+  }
+}
+
+async function syncPullConfig(){
+  var master = (document.getElementById('sync-master-secret') || {}).value || '';
+  try {
+    _syncStatus('Deriving id…', 'var(--gry)');
+    var derived = await _syncDerive(master);
+    var proxy = (localStorage.getItem('rrjcar_tradier_proxy') || '').replace(/\/+$/, '');
+    if (!proxy) throw new Error('Tradier proxy URL not set — Sync uses the same proxy. Configure proxy URL above first.');
+    _syncStatus('Downloading…', 'var(--gry)');
+    var res = await fetch(proxy + '/sync-config?id=' + derived.id);
+    if (res.status === 404) throw new Error('No config found for this master secret. Push from another device first.');
+    if (!res.ok) {
+      var msg = 'HTTP ' + res.status;
+      try { var j = await res.json(); if (j && j.error) msg = j.error; } catch(_){}
+      throw new Error(msg);
+    }
+    var blob = await res.json();
+    if (!blob || !blob.iv || !blob.ct) throw new Error('Cloud blob malformed');
+    _syncStatus('Decrypting…', 'var(--gry)');
+    var iv = _b64decode(blob.iv);
+    var ct = _b64decode(blob.ct);
+    var ptBuf;
+    try {
+      ptBuf = await crypto.subtle.decrypt({ name: 'AES-GCM', iv: iv }, derived.key, ct);
+    } catch (e) {
+      throw new Error('Decryption failed — master secret is wrong or blob is corrupted');
+    }
+    var snap = JSON.parse(new TextDecoder().decode(ptBuf));
+    var restored = 0;
+    SYNC_KEYS.forEach(function(k){
+      if (snap[k] != null) { try { localStorage.setItem(k, snap[k]); restored++; } catch(_){} }
+    });
+    var pushedFrom = snap.__device || 'unknown';
+    var pushedAt = snap.__pushed_at ? new Date(snap.__pushed_at).toLocaleString() : 'unknown';
+    _syncStatus('✓ Pulled ' + restored + ' settings (from ' + pushedFrom + ' · ' + pushedAt + ') — reloading…', 'var(--grn)');
+    if (typeof toast === 'function') toast('Settings pulled — reloading');
+    setTimeout(function(){ location.reload(); }, 800);
+  } catch (err) {
+    _syncStatus('Pull failed: ' + (err && err.message || err), 'var(--ngo)');
+    if (typeof toast === 'function') toast('Pull failed: ' + (err && err.message || err));
+  }
+}
+
+// Diagnose — show what would be synced and the derived id (without uploading).
+// Useful for sanity-checking the master secret on a new device before
+// committing to a push or pull.
+async function syncShowDiagnostic(){
+  var master = (document.getElementById('sync-master-secret') || {}).value || '';
+  var diag = document.getElementById('sync-diagnostic');
+  if (!diag) return;
+  try {
+    var derived = await _syncDerive(master);
+    var snap = _syncSnapshot();
+    var keys = Object.keys(snap).filter(function(k){ return k.indexOf('__') !== 0; });
+    var out = 'Storage id (KV key): ' + derived.id + '\n';
+    out += 'Master length: ' + master.length + ' chars\n';
+    out += 'Will sync ' + keys.length + ' keys:\n';
+    keys.forEach(function(k){
+      var v = snap[k];
+      var isSensitive = /token|fmp|tradier/i.test(k);
+      var preview = isSensitive ? (v ? '[' + v.length + ' chars hidden]' : '(empty)') : (v && v.length > 60 ? v.slice(0,60) + '…' : v);
+      out += '  ' + k + '  =  ' + preview + '\n';
+    });
+    out += '\nTrade token: NOT synced (per-device opt-in for security)';
+    diag.textContent = out;
+    diag.style.display = 'block';
+    _syncStatus('Diagnostic ready', 'var(--gry)');
+  } catch (err) {
+    diag.textContent = 'Diagnostic failed: ' + (err && err.message || err);
+    diag.style.display = 'block';
+  }
+}
 
 // FMP circuit breaker — once an endpoint fails, pause for a cooldown
 // (was: silenced for the entire session, which meant a single transient 403
