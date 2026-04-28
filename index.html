@@ -5479,12 +5479,41 @@ function submitLimitAtPrice(creds,acct,occSym,sym,side,qty,otype,price){
     method:'POST',
     headers:{Authorization:'Bearer '+creds.key,Accept:'application/json','Content-Type':'application/x-www-form-urlencoded'},
     body:body
-  }).then(function(r){return r.json();})
-  .then(function(d){
-    if(d.order&&d.order.id)return{orderId:d.order.id,status:d.order.status};
-    var errs=d.errors?d.errors.error:'Unknown error';
-    if(!Array.isArray(errs))errs=[errs];
-    throw new Error(errs.join(' | '));
+  }).then(function(r){
+    // Capture status + raw text BEFORE JSON parsing so non-JSON or
+    // unexpected-shape responses don't collapse into "Unknown error".
+    return r.text().then(function(txt){ return { status:r.status, ok:r.ok, statusText:r.statusText, text:txt }; });
+  }).then(function(resp){
+    var d = null;
+    try { d = JSON.parse(resp.text); } catch(_) { /* non-JSON body */ }
+    if(d && d.order && d.order.id) return { orderId:d.order.id, status:d.order.status };
+    // Walk every known Tradier / proxy / fault error shape so the user
+    // actually sees the broker's reason instead of a flat "Unknown error".
+    var msgs = [];
+    if(d){
+      if(d.errors){
+        var e1 = d.errors.error || d.errors;
+        if(Array.isArray(e1)) e1.forEach(function(x){ msgs.push(typeof x==='string'?x:JSON.stringify(x)); });
+        else if(typeof e1 === 'string') msgs.push(e1);
+        else msgs.push(JSON.stringify(e1));
+      }
+      if(d.error)              msgs.push(typeof d.error==='string'?d.error:JSON.stringify(d.error));
+      if(d.fault){
+        if(d.fault.faultstring) msgs.push(d.fault.faultstring);
+        else                    msgs.push(JSON.stringify(d.fault));
+      }
+      if(d.message && msgs.length === 0) msgs.push(typeof d.message==='string'?d.message:JSON.stringify(d.message));
+    }
+    if(msgs.length === 0){
+      // Last resort: surface raw body (truncated) and HTTP status so the
+      // root cause is at least diagnosable from the log.
+      var snippet = (resp.text || '').replace(/\s+/g,' ').slice(0,200);
+      msgs.push('HTTP '+resp.status+(resp.statusText?(' '+resp.statusText):'')+(snippet?(' — '+snippet):' — empty body'));
+    } else if(!resp.ok){
+      // Prepend status so 4xx/5xx context isn't lost
+      msgs.unshift('HTTP '+resp.status);
+    }
+    throw new Error(msgs.join(' | '));
   });
 }
 
