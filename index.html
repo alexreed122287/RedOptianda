@@ -1176,7 +1176,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       <select id="sc-sect" style="display:none;"><option value="">All</option></select>
     </label>
     <!-- Order: Sector → Theme → Signal → Min Score (per user spec). -->
-    <label title="Filter scan results to tickers in the chosen theme. Populated from theme_scores.json — see INDUSTRY tab for the full theme list and current ranks.">Theme <select id="sc-theme" onchange="applyFilters()" style="min-width:120px;"><option value="">All themes</option></select></label>
+    <label title="Filter scan results to tickers in the chosen theme. Populated from theme_scores.json — see INDUSTRY tab for the full theme list and current ranks.">Theme <select id="sc-theme" onchange="applyFilters();_scheduleFilterRescan();" style="min-width:120px;"><option value="">All themes</option></select></label>
     <label>Signal <select id="sc-sig"><option value="">All</option><option value="GO" selected>GO</option><option value="NO-GO">NO-GO</option></select></label>
     <!-- B-2 default Min Score bumped 89 -> 100. With theme overlay (added 2026-04)
          scores trend ~10 pts higher, so the historical "GO rate" at 89 became
@@ -4606,6 +4606,13 @@ function closeSectorDropdown(){
   var dd = eid('sc-sect-dd');
   if(dd) dd.style.display = 'none';
   applyFilters();
+  // Auto re-scan with the newly-selected universe scope. The pre-scan
+  // sector filter restricts which tickers Tradier even sees in the bulk
+  // quote pass, so a user who selects sectors AFTER an initial scan
+  // would otherwise be stuck narrowing the OLD result set (which doesn't
+  // contain anything from newly-included sectors). Debounced via
+  // _filterChangeRescan so a flurry of toggles doesn't queue N scans.
+  _scheduleFilterRescan();
 }
 function selectAllSectors(selectAll){
   if(selectAll){
@@ -5381,7 +5388,12 @@ function isCloseAction(action){
   return action==='BUY_TO_CLOSE'||action==='SELL_TO_CLOSE'||action==='SELL';
 }
 
-// Updates the step fill label and default start-from based on open vs close
+// Updates the step fill label and default start-from based on open vs close.
+// Also re-anchors the LIMIT PRICE field so flipping ACTION between buy/sell
+// doesn't leave the limit pointing at the wrong side of the spread (was
+// causing sells to limit at BID \u2014 selling at the cheapest possible price \u2014
+// and buys to limit at ASK \u2014 paying the highest possible price \u2014 until the
+// user manually clicked SET BID / SET ASK).
 function updateStepFillMode(){
   var action=eid('ord-action').value;
   var closing=isCloseAction(action);
@@ -5397,6 +5409,18 @@ function updateStepFillMode(){
     lbl.innerHTML='\u25b2 STEP FILL MODE \u2014 start at bid, step UP toward ask until filled';
     lbl.style.color='var(--grn)';
     if(sfStart && sfStart.value==='ask') sfStart.value='bid'; // auto-flip default
+  }
+  // Auto-anchor the limit price to the side appropriate for the new action:
+  // - Any BUY  \u2192 BID (patient: only fill if seller hits our bid)
+  // - Any SELL \u2192 ASK (patient: only fill if buyer lifts our ask)
+  // Skipped if no live quote yet (user clicks REFRESH to populate).
+  if(G.liveQuote){
+    var lmt = eid('ord-lmt');
+    if(lmt){
+      var isBuy = action.indexOf('BUY') === 0;
+      var px = isBuy ? G.liveQuote.bid : G.liveQuote.ask;
+      if(px && px > 0) lmt.value = px.toFixed(2);
+    }
   }
 }
 
@@ -10181,6 +10205,24 @@ function finishScan(){
 }
 
 function getIndFilter(id){ var el=eid(id); return el?el.checked:false; }
+
+// Debounced re-scan after a sector / theme filter change. The pre-scan
+// universe filter is locked in at runScan() time, so changing the sectors
+// or theme AFTER results are already on screen would otherwise leave the
+// table stuck on whatever was scanned originally (e.g. all-sectors result
+// set being narrowed to a sector that wasn't actually scored). Schedules
+// a fresh runScan ~700ms after the last filter event so a flurry of
+// checkbox toggles only fires one scan.
+var _filterRescanTid = null;
+function _scheduleFilterRescan(){
+  if(_filterRescanTid) clearTimeout(_filterRescanTid);
+  _filterRescanTid = setTimeout(function(){
+    _filterRescanTid = null;
+    if(G.scanRunning) return;                              // don't stack on top of an in-flight scan
+    if(!G.results || !G.results.length) return;            // no prior scan → no need
+    if(typeof runScan === 'function') runScan();
+  }, 700);
+}
 
 // B-3: populate the theme filter dropdown. Iterate G_THEME_OVERLAY.ticker2theme
 // to build a unique set of {theme, dailyScore} pairs, then sort by score
