@@ -1150,6 +1150,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <button class="btn" onclick="applyStrategyMode('momentum')">&#9654; MOMENTUM</button>
     <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')">&#9670; BEST ITM CALLS</button>
     <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Surface pre-market gappers — biggest absolute %change vs prior close. Most useful between 4:00am and 9:30am ET when Tradier's `last` field reflects pre-market quotes.">&#9650; PRE-MARKET</button>
+    <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--gry2);color:var(--gry);" onclick="probePreMarketData()" title="One-shot live fetch of SPY/QQQ/NVDA/TSLA/AAPL — surfaces the raw `change_percentage` Tradier is returning right now. Use it to verify pre-market data is flowing.">VERIFY</button>
     <button class="btn" style="border-color:var(--gry2);color:var(--gry);" onclick="applyStrategyMode('clear')">&#10005; CLEAR</button>
     <span id="pre-market-pill" style="display:none;font-family:var(--ff-mono);font-size:9px;font-weight:800;letter-spacing:1.5px;background:var(--ambb);color:var(--bg0);padding:2px 8px;border-radius:2px;animation:today-pulse 2.4s ease-in-out infinite;" title="Pre-market session is active — Tradier `last` reflects extended-hours quotes. Use the PRE-MARKET preset to sort by gap %.">PRE-MARKET LIVE</span>
     <span id="strategy-desc-sc" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);font-style:italic;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;"></span>
@@ -8032,7 +8033,13 @@ function getDaysToEarnings(ticker){
 //
 // Used by every G.results / G.filtered sort so ranking is consistent across
 // re-renders. Manual column sorts (sortTable) keep their own comparator.
+// When the PRE-MARKET preset is active the ranking pivots to absolute gap
+// % so extended-hours movers float to the top instead of being buried by
+// the score-first ordering — that's the whole point of the preset.
 function _resultRankCompare(a, b){
+  if (G.activePreset === 'preMarket'){
+    return Math.abs(b.changePct || 0) - Math.abs(a.changePct || 0);
+  }
   // 1. score (primary, descending)
   var d = (b.score || 0) - (a.score || 0);
   if (d !== 0) return d;
@@ -10895,7 +10902,7 @@ function renderScan(){
     {k:'isGo',l:'SIGNAL'},
     {k:'sector',l:'SECTOR'},
     {k:'price',l:'PRICE'},
-    {k:'changePct',l:'CHG%'},
+    {k:'changePct',l:_chgColLabel()},
     {k:'volume',l:'VOLUME'},
     {k:'techScore',l:'TECH'},
     {k:'fundScore',l:'FUND'},
@@ -10921,7 +10928,16 @@ function renderScan(){
       return;
     }
     var arr=G.sortCol===c.k?(G.sortDir>0?' \u25b2':' \u25bc'):'';
-    th+='<th data-col="'+c.k+'" onclick="sortTable(this.dataset.col)">'+c.l+arr+'</th>';
+    var thAttrs = '';
+    if(c.k === 'changePct'){
+      var sess = _currentETSession();
+      var tip = sess === 'PRE'   ? 'Pre-market gap % vs prior close (Tradier `change_percentage` between 4:00\u20139:30am ET reflects extended-hours quotes \u2014 only populates once a ticker has an extended-hours trade).'
+              : sess === 'POST'  ? 'Post-market % change vs prior close (full day including after-hours trades).'
+              : sess === 'CLOSED'? 'Last-session % change vs prior close.'
+              :                    '% change vs prior close (intraday).';
+      thAttrs = ' title="'+tip+'"';
+    }
+    th+='<th data-col="'+c.k+'" onclick="sortTable(this.dataset.col)"'+thAttrs+'>'+c.l+arr+'</th>';
     var lbl=(c.l||'').toUpperCase();
     if(lbl==='SIG'||lbl==='SIGNAL'||lbl==='GO/NO-GO'||lbl==='GO'){
       th+='<th style="cursor:default;color:var(--amb);font-size:10px;letter-spacing:1px;">BUY</th>';
@@ -15334,21 +15350,36 @@ var STRATEGY_MODES = {
   }
 };
 
-// Pre-market session detector: 4:00am \u2014 9:30am ET on US weekdays. Doesn't
-// account for half-day holidays (Thanksgiving Friday, Christmas Eve) \u2014
-// good enough for a session pill, the user can ignore it on those days.
-function isPreMarketET(){
+// US-equity session classifier. Returns 'PRE' (4:00\u20139:30am ET),
+// 'REGULAR' (9:30am\u20134:00pm ET), 'POST' (4:00\u20138:00pm ET), or 'CLOSED'.
+// Weekend/holidays return 'CLOSED'. Used to label the scanner's CHG%
+// column and to drive the pre-market session pill.
+function _currentETSession(){
   try {
     var s = new Date().toLocaleString('en-US', {timeZone:'America/New_York', hour12:false,
       weekday:'short', hour:'2-digit', minute:'2-digit'});
-    // s e.g. "Mon, 04:23"
     var m = s.match(/^(\w{3}),?\s+(\d{1,2}):(\d{2})/);
-    if(!m) return false;
+    if(!m) return 'CLOSED';
     var dow = m[1];
-    if(dow === 'Sat' || dow === 'Sun') return false;
+    if(dow === 'Sat' || dow === 'Sun') return 'CLOSED';
     var minutes = parseInt(m[2],10) * 60 + parseInt(m[3],10);
-    return minutes >= 240 && minutes < 570; // 4:00 inclusive, 9:30 exclusive
-  } catch(_) { return false; }
+    if(minutes >= 240 && minutes < 570) return 'PRE';     // 4:00\u20139:30
+    if(minutes >= 570 && minutes < 960) return 'REGULAR'; // 9:30\u201316:00
+    if(minutes >= 960 && minutes < 1200) return 'POST';   // 16:00\u201320:00
+    return 'CLOSED';
+  } catch(_) { return 'CLOSED'; }
+}
+function isPreMarketET(){ return _currentETSession() === 'PRE'; }
+
+// Label for the scanner's CHG% column header \u2014 mirrors the session so the
+// user knows what `change_percentage` is reflecting (pre-market gap during
+// 4:00\u20139:30am, intraday change during regular hours, full-day +post during
+// after-hours, daily change otherwise).
+function _chgColLabel(){
+  var s = _currentETSession();
+  if(s === 'PRE')  return 'PRE %';
+  if(s === 'POST') return 'POST %';
+  return 'CHG%';
 }
 
 // Toggle the PRE-MARKET LIVE pill based on current ET time. Called on init
@@ -15359,9 +15390,50 @@ function _updatePreMarketPill(){
   pill.style.display = isPreMarketET() ? '' : 'none';
 }
 
+// One-shot probe of Tradier's quote endpoint that surfaces what the API is
+// actually returning right now for a few liquid tickers. Lets the user
+// confirm whether `change_percentage` is reflecting a pre-market gap or
+// stale prevclose data. Output goes to console + a multi-line toast.
+function probePreMarketData(){
+  var creds = (typeof getTradierCreds === 'function') ? getTradierCreds() : null;
+  if(!creds || !creds.host || !creds.key){
+    toast('Tradier API key not configured \u2014 open the API tab first');
+    return;
+  }
+  var probeSyms = 'SPY,QQQ,NVDA,TSLA,AAPL';
+  fetch(creds.host + '/v1/markets/quotes?symbols=' + probeSyms, {
+    headers: { Authorization: 'Bearer ' + creds.key, Accept: 'application/json' }
+  }).then(function(r){ return r.json(); }).then(function(d){
+    var arr = (d && d.quotes && d.quotes.quote)
+      ? (Array.isArray(d.quotes.quote) ? d.quotes.quote : [d.quotes.quote]) : [];
+    var session = _currentETSession();
+    var nyTime = new Date().toLocaleString('en-US', {timeZone:'America/New_York'});
+    console.log('[pre-market probe] ET:', nyTime, 'session:', session);
+    console.table(arr.map(function(q){
+      return {
+        symbol: q.symbol, last: q.last, prevclose: q.prevclose,
+        change: q.change, changePct: q.change_percentage,
+        last_volume: q.last_volume, volume: q.volume,
+        bid: q.bid, ask: q.ask, trade_date: q.trade_date
+      };
+    }));
+    var nonZero = arr.filter(function(q){ return Math.abs(parseFloat(q.change_percentage)||0) > 0.01; }).length;
+    var preMsg = (session === 'PRE')
+      ? (nonZero > 0
+          ? '\u2713 PRE-MARKET DATA LIVE \u2014 '+nonZero+'/'+arr.length+' show non-zero change. Full table in console.'
+          : '\u26a0 All probe tickers show 0% change \u2014 Tradier may not be streaming pre-market yet, or ETF/large-caps haven\'t printed extended-hours trades. Console has raw values.')
+      : 'Session: '+session+' \u2014 '+nonZero+'/'+arr.length+' non-zero changes. See console for raw values.';
+    toast(preMsg);
+  }).catch(function(e){
+    console.error('[pre-market probe] failed:', e);
+    toast('Probe failed: '+(e && e.message || e));
+  });
+}
+
 function applyStrategyMode(mode, silent){
   if(mode === 'clear'){
     clearFilters();
+    G.activePreset = null;
     switchTab('sc');
     if(eid('strategy-desc')) eid('strategy-desc').textContent = '';
     if(eid('strategy-desc-sc')) eid('strategy-desc-sc').textContent = '';
@@ -15370,6 +15442,7 @@ function applyStrategyMode(mode, silent){
 
   var sm = STRATEGY_MODES[mode];
   if(!sm) return;
+  G.activePreset = mode;
 
   // Apply signal and score filters. `||` was clobbering legitimate empty/zero
   // values from the preset (e.g. preMarket sets sig:'' and minScore:0).
