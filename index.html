@@ -4734,16 +4734,12 @@ function getRegime(){
   window._regimeCache = { ts: now, data: data };
   return data;
 }
-// Regime-conditional threshold (council #8). Permissive regime: lower threshold
-// (more candidates surface). Choppy/bearish: higher threshold or zero results.
-function regimeAdjustedThreshold(userThresh){
-  var r = getRegime();
-  if (r.regime === 'unknown') return userThresh;
-  if (r.regime === 'permissive') return Math.max(userThresh, 65);
-  if (r.regime === 'choppy')      return Math.max(userThresh, 85);
-  if (r.regime === 'bearish')     return 9999;  // effectively no GOs
-  return userThresh;
-}
+// Regime info — getRegime() above remains for the user to inspect SPY's vol
+// and 50DMA position. This function used to override the GO threshold based
+// on regime; per user instruction 2026-04-29 it is now a no-op (always
+// returns the user's chosen threshold unchanged). Removed to ensure scanner
+// surfaces all candidates regardless of macro regime.
+function regimeAdjustedThreshold(userThresh){ return userThresh; }
 
 // Re-classify every scanned ticker's GO/NO-GO status against the current
 // Min Score threshold, without re-fetching or re-scoring. Rules are unchanged
@@ -6573,69 +6569,14 @@ function submitOrder(){
   var occSym=buildOccSym(sym,type,strike,expRaw);
   var stepOn=eid('step-fill-toggle').checked;
 
-  // \u2550\u2550\u2550 TIER-1 SURVIVAL RAILS \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
-  // Council verdict 2026-04-29: until edge is paper-validated on n\u226540, the
-  // operator runs on hardcoded discipline. These four guards fire BEFORE
-  // the strategy gate and have NO override path in the UI.
-  // \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-
+  // \u2550\u2550\u2550 DUPLICATE-SUBMIT LOOP DETECTOR (only protective check that remains) \u2550\u2550\u2550
+  // Per user instruction 2026-04-29: removed MAX_RISK_PCT cap, daily/exit
+  // caps, 48h cooldown, and the strategy gate. Only the loop detector stays
+  // because it prevents accidental DUPLICATE FILLS from one user re-clicking
+  // when the prior submit didn't ACK fast enough \u2014 this is execution-safety,
+  // not behavioral discipline.
   if (action === 'BUY_TO_OPEN' && type !== 'STOCK') {
     var nowMs = Date.now();
-    var todayKey = new Date().toISOString().slice(0,10);
-
-    // \u2500\u2500 Rec #2: MAX_RISK_PCT = 0.005 (0.5% per trade) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    // Rejects orders larger than 0.5% of declared bankroll. Bankroll is
-    // pulled from rrjcar_pnl_baseline (set when user clicked RESET) or
-    // defaults to $10000. To raise the cap, use the Performance tab's
-    // bankroll input \u2014 but the reject still applies on top of that.
-    var bankroll = parseFloat(localStorage.getItem('rrjcar_pnl_baseline')||'10000') || 10000;
-    var MAX_RISK_PCT = 0.005;  // 50 basis points \u2014 hardcoded by council mandate
-    var lqGuard = G.liveQuote || {};
-    var askGuard = +lqGuard.ask || +lmt || 0;
-    var qtyGuard = parseInt(qty) || 1;
-    var notional = askGuard * qtyGuard * 100;
-    if (notional > bankroll * MAX_RISK_PCT) {
-      var maxQty = Math.floor((bankroll * MAX_RISK_PCT) / (askGuard * 100));
-      toast('Order rejected \u2014 exceeds 0.5% bankroll cap. Max qty for $'+askGuard.toFixed(2)+' contract: '+maxQty);
-      return;
-    }
-
-    // \u2500\u2500 Rec #3a: Daily trade cap (2 entries / 3 exits) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    var DAILY_ENTRY_CAP = 2;
-    var counters = JSON.parse(localStorage.getItem('rrjcar_daily_counters_'+todayKey) || '{"entries":0,"exits":0}');
-    if (counters.entries >= DAILY_ENTRY_CAP) {
-      var note = prompt('DAILY ENTRY CAP HIT ('+DAILY_ENTRY_CAP+'/day).\n\nLog WHY you wanted this trade (free text, saved to journal \u2014 required to dismiss):');
-      if (note && note.trim().length >= 10) {
-        var jrnl = JSON.parse(localStorage.getItem('rrjcar_overcap_journal') || '[]');
-        jrnl.push({ts:nowMs, sym:sym, note:note.trim(), counters:counters});
-        localStorage.setItem('rrjcar_overcap_journal', JSON.stringify(jrnl).slice(0, 200000));
-      }
-      toast('Order rejected \u2014 daily entry cap. Journaled.');
-      return;
-    }
-
-    // \u2500\u2500 Rec #3b: 48h repeat-symbol cooldown \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-    // Stored as map: rrjcar_recent_closes = { "TICKER": ts_ms_of_last_close }
-    var REPEAT_COOLDOWN_MS = 48 * 3600 * 1000;
-    var recentCloses = {};
-    try { recentCloses = JSON.parse(localStorage.getItem('rrjcar_recent_closes') || '{}'); } catch(_){}
-    var lastClose = recentCloses[sym];
-    if (lastClose && (nowMs - lastClose) < REPEAT_COOLDOWN_MS) {
-      var hoursLeft = ((REPEAT_COOLDOWN_MS - (nowMs - lastClose)) / 3600000).toFixed(1);
-      var prevReason = recentCloses[sym + '_reason'] || '(none recorded)';
-      var typed = prompt(
-        '48-HOUR COOLDOWN \u2014 '+sym+' was just closed.\n\n'
-        +'Hours remaining: '+hoursLeft+'\n\n'
-        +'To override, type the EXIT REASON from the prior trade from memory:\n'
-        +'(Hint: stored as "'+prevReason+'" \u2014 but you must retype it.)'
-      );
-      if (!typed || typed.trim().toUpperCase() !== String(prevReason).toUpperCase()) {
-        toast('Order rejected \u2014 cooldown override phrase mismatch. Wait '+hoursLeft+'h.');
-        return;
-      }
-    }
-
-    // \u2500\u2500 Rec #4: Loop detector (3 same-shape submits in 60s \u2192 lock) \u2500\u2500\u2500\u2500\u2500
     var loopWindow = 60000;
     var loopKey = sym + '|' + side + '|' + (lmt || 'mkt') + '|' + qty;
     var loopMap = {};
@@ -6644,13 +6585,12 @@ function submitOrder(){
     loopMap[loopKey].push(nowMs);
     try { sessionStorage.setItem('rrjcar_loop_map', JSON.stringify(loopMap)); } catch(_){}
     if (loopMap[loopKey].length >= 3) {
-      // Full-screen lock: alert + disable submit for 90s
       var btn = document.querySelector('button[onclick="submitOrder()"]');
       if (btn) { btn.disabled = true; btn.textContent = '\ud83d\udd12 LOOP-LOCK 90s'; }
       alert('\u26a0 LOOP DETECTED\n\n'
         + 'You just submitted the SAME order shape ('+sym+' '+side+' '+(lmt||'market')+' x'+qty+') 3 times in 60 seconds.\n\n'
-        + 'The previous order may already be working. Re-submitting compounds the risk of a duplicate fill.\n\n'
-        + 'Order panel locked for 90 seconds. Use this time to check the Tradier order log.');
+        + 'The previous order may already be working. Re-submitting risks a duplicate fill.\n\n'
+        + 'Order panel locked for 90 seconds \u2014 use this time to check the Tradier order log.');
       var unlock = nowMs + 90000;
       var spin = function(){
         var rem = Math.ceil((unlock - Date.now())/1000);
@@ -6659,7 +6599,6 @@ function submitOrder(){
           setTimeout(spin, 1000);
         } else if (btn) {
           btn.disabled = false; btn.textContent = '\u25b2 SUBMIT ORDER';
-          // Clear the loop key so they can submit once after unlock
           var lm = JSON.parse(sessionStorage.getItem('rrjcar_loop_map') || '{}');
           delete lm[loopKey];
           sessionStorage.setItem('rrjcar_loop_map', JSON.stringify(lm));
@@ -6670,24 +6609,17 @@ function submitOrder(){
     }
   }
 
-  // \u2500\u2500\u2500 PRE-TRADE STRATEGY GATE \u2500\u2500\u2500
-  // Only on OPEN orders for option contracts. Surfaces data-backed leakage
-  // points (penny strike, far-OTM delta, sub-14 DTE, wide spread).
-  // Three friction tiers: 0 warnings \u2192 no gate; 1 warning \u2192 confirm() dialog;
-  // \u22652 warnings \u2192 typed-phrase override + 60s cooldown + final confirm.
-  // Skip on close orders (always exit-able) and equity orders (rules N/A).
-  // Bypass sentinel: set after a hard-block cooldown completes; valid for 5s
-  // so the re-invoking submitOrder doesn't loop the gate.
-  var bypassActive = window._strategyGateBypass && (Date.now() - window._strategyGateBypass) < 5000;
-  if (bypassActive) { window._strategyGateBypass = 0; }
-  if (!bypassActive && type !== 'STOCK' && (action === 'BUY_TO_OPEN' || action === 'SELL_TO_OPEN')) {
+  // ─── STRATEGY WARNINGS (advisory only — console log, no UI block) ───
+  // Per user instruction 2026-04-29: removed all confirm()/prompt() friction
+  // for leakage points. Warnings are computed and surfaced via console for
+  // post-trade review; orders are never blocked.
+  if (type !== 'STOCK' && (action === 'BUY_TO_OPEN' || action === 'SELL_TO_OPEN')) {
     try {
       var lq = G.liveQuote || {};
       var dteCalc = null;
       if (expRaw) {
         try { dteCalc = Math.round((new Date(expRaw) - new Date()) / 864e5); } catch(_){}
       }
-      // Compute IV/HV ratio if we can — needs greeks + cached history
       var ivHvR = null;
       try {
         var ivAssess = _ivHvAssess({greeks:{smv_vol: (lq.greeks && lq.greeks.smv_vol) || lq.iv}}, sym);
@@ -6701,63 +6633,9 @@ function submitOrder(){
         ivHvRatio: ivHvR
       });
       if (warns.length) {
-        // HARD BLOCK with typed-override + 60-second delay (council verdict
-        // 2026-04-29). Prior confirm() was "theater" per the Contrarian.
-        // Threshold: \u22652 warnings \u2192 hard block; 1 warning still uses confirm.
-        // The hard-block path is async (Promise), so submitOrder must be
-        // restructured to await it. We do that with an IIFE that returns
-        // a thenable + a continuation-style structure.
-        var hardBlock = warns.length >= 2;
-        var msg = 'STRATEGY GATE \u2014 this contract has '+warns.length+' known leakage point'+(warns.length>1?'s':'')+':\n\n'
-                + warns.join('\n');
-        if (!hardBlock) {
-          if (!confirm(msg + '\n\nContinue anyway?')) {
-            toast('Order cancelled \u2014 strategy gate');
-            return;
-          }
-        } else {
-          // Multi-violation: typed override + 60s cooldown + final confirm.
-          // The phrase requires reading the violations carefully \u2014 autopilot
-          // typing won't pass.
-          var phrase = 'I ACKNOWLEDGE THE LEAKAGE';
-          var typed = prompt(msg
-            + '\n\n\u26a0 HARD BLOCK \u2014 '+warns.length+' violations exceeds threshold.'
-            + '\n\nTo override, type EXACTLY:\n\n  '+phrase
-            + '\n\n(Cancel or any other input \u2192 abort.)');
-          if (!typed || typed.trim() !== phrase) {
-            toast('Order cancelled \u2014 hard-block (override phrase not entered)');
-            return;
-          }
-          // Async cooldown: setTimeout-based. Submit button stays disabled,
-          // toast countdown runs every 10s. After 60s, final confirm fires.
-          // submitOrder() short-circuits here; final placement runs from the
-          // setTimeout callback.
-          var submitBtn = document.querySelector('button[onclick="submitOrder()"]');
-          if (submitBtn) { submitBtn.disabled = true; submitBtn.textContent = 'HOLD 60s'; }
-          toast('Override accepted \u2014 60s cooling-off period before submission');
-          var releaseAt = Date.now() + 60000;
-          var tick = function(){
-            var remaining = Math.ceil((releaseAt - Date.now())/1000);
-            if (remaining > 0) {
-              if (submitBtn) submitBtn.textContent = 'HOLD '+remaining+'s';
-              setTimeout(tick, 1000);
-            } else {
-              if (submitBtn) { submitBtn.disabled = false; submitBtn.textContent = '\u25b2 SUBMIT ORDER'; }
-              if (!confirm('60-second cooling-off complete.\n\nFINAL CONFIRMATION \u2014 submit with '+warns.length+' acknowledged leakage point'+(warns.length>1?'s':'')+'?\n\n'+warns.join('\n'))) {
-                toast('Order cancelled at final confirmation');
-                return;
-              }
-              // Re-invoke submitOrder; the warns.length === 0 path now runs
-              // because we set a sentinel flag to skip the gate on this re-entry.
-              window._strategyGateBypass = Date.now();
-              setTimeout(function(){ submitOrder(); }, 0);
-            }
-          };
-          setTimeout(tick, 1000);
-          return;  // submitOrder ends here; tick() resumes flow after cooldown
-        }
+        console.warn('[strategy-warnings] '+sym+': '+warns.length+' leakage point(s):\n  '+warns.join('\n  '));
       }
-    } catch(e) { /* gate is best-effort; never block on its own bug */ }
+    } catch(e) { /* advisory only; never block on its own bug */ }
   }
 
   // ── Tier-1 #3a counter increment: gate passed, this counts as an entry attempt
@@ -7811,15 +7689,10 @@ function fetchOptionContract(ticker,simPrice,callback,monthFilter){
      validExps = dates.filter(function(d){ return d.slice(0,7) === monthFilter; });
      if(!validExps.length){callback(null);return;}
    } else {
-     // Default mode: 14-50 calendar DTE window. Lower bound 14 avoids the
-     // theta cliff (last 2 weeks lose ~50% of remaining time value); upper
-     // bound 50 keeps premium reasonable. Old window was 10-35 — short
-     // bound was admitting weeklies that decayed under us.
-     validExps = dates.filter(function(d){ var cd=calDays(d); return cd>=14&&cd<=50; });
-     // Fallback: widen to 10-60 if nothing in target window
-     if(!validExps.length) validExps = dates.filter(function(d){ var cd=calDays(d); return cd>=10&&cd<=60; });
-     // Last resort: any future (rare — small-caps with sparse expiry calendars)
-     if(!validExps.length) validExps = dates.filter(function(d){ return calDays(d)>0; });
+     // Permissive DTE window (user instruction 2026-04-29: loosen filter).
+     // Surfaces anything with non-zero DTE. _optScore still applies score-
+     // level preferences via its δ-distance + spread terms.
+     validExps = dates.filter(function(d){ return calDays(d)>0; });
      if(!validExps.length){callback(null);return;}
    }
 
@@ -7839,20 +7712,15 @@ function fetchOptionContract(ticker,simPrice,callback,monthFilter){
    Promise.all(chainFetches).then(function(chains){
      var candidates = [];
 
-     // Data-backed reject layer (council 2026-04-29 tightening):
-     //   - delta < 0.55        : matches 0.70 stated strategy; was 0.30
-     //   - bid   < $0.30       : penny strikes, spread typically eats >40%
-     //   - spread% > 30        : illiquid; can't get out near mid
-     // Long-call only. Hard rejects, not soft preferences.
+     // ADVISORY filter only (user instruction 2026-04-29: loosened from
+     // hard reject to "include everything"). _optScore still penalizes wide
+     // spread + far-OTM via its δ-distance + spread% terms, but no contract
+     // is hard-rejected here. Sanity floor only: delta must be defined and
+     // within (0.02, 0.99). Penny strikes and wide-spread contracts surface.
      chains.forEach(function(chain){
        var calls = chain.opts.filter(function(o){
          if (o.option_type !== 'call') return false;
          if (!o.greeks || !(o.greeks.delta > 0.02) || !(o.greeks.delta < 0.99)) return false;
-         if (o.greeks.delta < 0.55) return false;                              // δ ≥ 0.55 (was 0.30)
-         if (!(o.bid > 0) || o.bid < 0.30) return false;                       // penny reject
-         var midPx = (o.bid + (o.ask||0)) / 2;
-         var spreadPct = midPx > 0 ? ((o.ask - o.bid) / midPx) * 100 : 999;
-         if (spreadPct > 30) return false;                                     // illiquid reject
          return true;
        });
        if(!calls.length) return;
@@ -14638,20 +14506,10 @@ function closePosition(symbol,type,strike,exp,qty){
   var action = isStock ? 'SELL' : 'SELL_TO_CLOSE';
   // Coerce qty to positive integer (Tradier returns negative qty for short positions)
   var absQty = Math.abs(parseInt(qty)||1) || 1;
-  // Tier-1 #3b: stamp the close timestamp + prompt for exit reason. The
-  // exit reason becomes the override phrase needed to re-enter this ticker
-  // within 48h. Skip for stocks (rule applies to options only).
+  // Increment daily exits counter (passive — no prompt). The 48h cooldown
+  // and exit-reason prompt were removed 2026-04-29 per user instruction.
   if (!isStock && symbol) {
     try {
-      var underlying = (symbol.match(/^[A-Z]+/) || [symbol])[0];
-      var reason = prompt('Closing '+symbol+'.\n\nIn ONE WORD or short phrase, what is your exit reason?\n(This will be required from memory to re-enter '+underlying+' within 48h. Suggested: "stop", "target", "exit-tilt", "ema-cross", "earnings".)\n\nLeave blank to skip — but you will be locked out for 48h with no override.');
-      reason = (reason || 'NO-REASON-RECORDED').trim().slice(0, 60);
-      var rc = {};
-      try { rc = JSON.parse(localStorage.getItem('rrjcar_recent_closes') || '{}'); } catch(_){}
-      rc[underlying] = Date.now();
-      rc[underlying + '_reason'] = reason;
-      try { localStorage.setItem('rrjcar_recent_closes', JSON.stringify(rc)); } catch(_){}
-      // Also bump the daily exits counter
       var todayK = new Date().toISOString().slice(0,10);
       var c = JSON.parse(localStorage.getItem('rrjcar_daily_counters_'+todayK) || '{"entries":0,"exits":0}');
       c.exits = (c.exits || 0) + 1;
