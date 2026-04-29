@@ -7598,6 +7598,158 @@ function computeRuleIC(horizon) {
   };
 }
 
+// SCAN-LEVEL SHADOW BOOK — per-rule pass/fail per scanned ticker per day.
+// Lets computeScanRuleIC() measure which of the 26 scoring rules actually
+// predict forward returns. Council #5 implementation extension 2026-04-29.
+//
+// Storage: rrjcar_shadow_scan_v1 = array of {
+//   ts, date (YYYY-MM-DD), ticker, score, isGo, price,
+//   rules: [{n, pass}, ...],   // 26 rule entries
+//   fwd1d, fwd3d, fwd5d        // null until refresh fills
+// }
+// Dedupe: one entry per (ticker, date). Cap 2000 entries FIFO.
+var _SHADOW_SCAN_KEY = 'rrjcar_shadow_scan_v1';
+
+function _shadowLogScanRow(r) {
+  if (!r || !r.ticker || !Array.isArray(r.rules)) return;
+  try {
+    var arr = [];
+    try { arr = JSON.parse(localStorage.getItem(_SHADOW_SCAN_KEY) || '[]') || []; } catch(_){}
+    var todayK = new Date().toISOString().slice(0, 10);
+    var dedupeKey = r.ticker + '|' + todayK;
+    // Skip if already logged this ticker today
+    for (var i = arr.length - 1; i >= 0; i--) {
+      if (arr[i].dedupeKey === dedupeKey) return;
+      // Stop scanning once we hit a different date — entries are append-only
+      if (arr[i].date !== todayK) break;
+    }
+    // Slim rule snapshot — name + pass only (drop val/pts to save bytes)
+    var ruleSnapshot = r.rules.map(function(rl){
+      return { n: rl.n, pass: !!rl.pass };
+    });
+    arr.push({
+      ts: Date.now(),
+      date: todayK,
+      ticker: r.ticker,
+      score: +r.score || 0,
+      isGo: !!r.isGo,
+      price: +r.price || 0,
+      sector: r.sector || '',
+      rules: ruleSnapshot,
+      fwd1d: null, fwd3d: null, fwd5d: null,
+      dedupeKey: dedupeKey
+    });
+    if (arr.length > 2000) arr = arr.slice(-2000);
+    localStorage.setItem(_SHADOW_SCAN_KEY, JSON.stringify(arr));
+  } catch(e) { /* localStorage quota / parse — silent */ }
+}
+
+// IC analysis on the SCAN shadow book. For each scoring rule, compute
+// Spearman rank correlation between (rule passed at scan time, 0/1) and
+// forward 5-day return on the underlying stock. Returns sorted list — top
+// rules are the ones contributing predictive signal; bottom are noise candidates.
+function computeScanRuleIC(horizon) {
+  horizon = horizon || 'fwd5d';
+  var arr = [];
+  try { arr = JSON.parse(localStorage.getItem(_SHADOW_SCAN_KEY) || '[]') || []; } catch(_){}
+  var withFwd = arr.filter(function(e){ return e[horizon] != null && isFinite(e[horizon]); });
+  if (withFwd.length < 10) {
+    return { ok: false, reason: 'Need ≥10 scan entries with '+horizon+' returns. Currently have '+withFwd.length+'. Run _shadowRefreshScanForward() after market close to backfill.' };
+  }
+  // Collect all unique rule names
+  var ruleSet = {};
+  withFwd.forEach(function(e){
+    (e.rules || []).forEach(function(rl){ ruleSet[rl.n] = true; });
+  });
+  function spearmanBin(passes, returns) {
+    // passes: 0/1 array; returns: continuous. Point-biserial-like for binary x.
+    var n = passes.length;
+    if (n < 5) return null;
+    // Compute mean return when pass=1 and pass=0
+    var rPass = [], rFail = [];
+    for (var i = 0; i < n; i++) {
+      if (passes[i]) rPass.push(returns[i]); else rFail.push(returns[i]);
+    }
+    if (rPass.length < 2 || rFail.length < 2) return null;
+    var mp = rPass.reduce(function(s,x){return s+x;},0) / rPass.length;
+    var mf = rFail.reduce(function(s,x){return s+x;},0) / rFail.length;
+    var mAll = returns.reduce(function(s,x){return s+x;},0) / n;
+    var sd = Math.sqrt(returns.reduce(function(s,x){return s+(x-mAll)*(x-mAll);},0) / n);
+    if (sd === 0) return 0;
+    // Point-biserial r approximation
+    var p = rPass.length / n, q = 1 - p;
+    return ((mp - mf) / sd) * Math.sqrt(p * q);
+  }
+  var rows = [];
+  Object.keys(ruleSet).forEach(function(name){
+    var passes = [], returns = [];
+    withFwd.forEach(function(e){
+      var rl = (e.rules || []).find(function(x){ return x.n === name; });
+      if (rl) { passes.push(rl.pass ? 1 : 0); returns.push(e[horizon]); }
+    });
+    var ic = spearmanBin(passes, returns);
+    var passRate = passes.reduce(function(s,x){return s+x;},0) / passes.length;
+    rows.push({ rule: name, n: passes.length, passRate: passRate, ic: ic });
+  });
+  // Sort by absolute IC descending; null IC last
+  rows.sort(function(a, b){
+    if (a.ic == null && b.ic == null) return 0;
+    if (a.ic == null) return 1;
+    if (b.ic == null) return -1;
+    return Math.abs(b.ic) - Math.abs(a.ic);
+  });
+  return {
+    ok: true,
+    horizon: horizon,
+    sample_size: withFwd.length,
+    rules: rows
+  };
+}
+
+// Backfill forward returns on scan-shadow entries. Call after market close.
+async function _shadowRefreshScanForward() {
+  var arr = [];
+  try { arr = JSON.parse(localStorage.getItem(_SHADOW_SCAN_KEY) || '[]') || []; } catch(_){}
+  if (!arr.length) return { updated: 0, total: 0 };
+  var creds = getTradierCreds();
+  if (!creds) return { updated: 0, total: arr.length, error: 'no creds' };
+  var nowMs = Date.now();
+  var dayMs = 86400000;
+  var updated = 0;
+  // Group tickers by age — fetch one quote per ticker, apply to all entries
+  var ticks = {};
+  arr.forEach(function(e){
+    var ageDays = (nowMs - e.ts) / dayMs;
+    var needs = (ageDays >= 1 && e.fwd1d == null)
+             || (ageDays >= 3 && e.fwd3d == null)
+             || (ageDays >= 5 && e.fwd5d == null);
+    if (needs) ticks[e.ticker] = true;
+  });
+  var tickList = Object.keys(ticks);
+  for (var i = 0; i < tickList.length; i++) {
+    var t = tickList[i];
+    try {
+      var url = creds.host + '/v1/markets/quotes?symbols=' + encodeURIComponent(t);
+      var r = await fetch(url, { headers: { Authorization: 'Bearer ' + creds.key, Accept: 'application/json' }});
+      var d = await r.json();
+      var q = d && d.quotes && d.quotes.quote;
+      var lastPx = q ? (+q.last || +q.close || 0) : 0;
+      if (!lastPx) continue;
+      // Apply to all matching entries
+      arr.forEach(function(e){
+        if (e.ticker !== t || !e.price || e.price <= 0) return;
+        var ageDays = (nowMs - e.ts) / dayMs;
+        var ret = ((lastPx - e.price) / e.price) * 100;
+        if (ageDays >= 1 && e.fwd1d == null) { e.fwd1d = ret; updated++; }
+        if (ageDays >= 3 && e.fwd3d == null) { e.fwd3d = ret; updated++; }
+        if (ageDays >= 5 && e.fwd5d == null) { e.fwd5d = ret; updated++; }
+      });
+    } catch(err) { /* skip per-ticker */ }
+  }
+  if (updated) localStorage.setItem(_SHADOW_SCAN_KEY, JSON.stringify(arr));
+  return { updated: updated, total_entries: arr.length, tickers_refreshed: tickList.length };
+}
+
 // Aggregate shadow-book stats — exposed for UI / console inspection.
 function shadowBookStats() {
   var arr = _shadowLoad();
@@ -11100,6 +11252,16 @@ function finishScan(){
 
   G.results.sort(_resultRankCompare);
   G.filtered = excludedFilteredResults();
+
+  // Council #5 commit 4: log every scanned ticker's per-rule pass/fail to
+  // the scan shadow book for later IC analysis. Only logs once per ticker
+  // per day (dedupe). Capped at 2000 entries FIFO. Ungated by score —
+  // we want signal data on losers as much as winners.
+  try {
+    if (typeof _shadowLogScanRow === 'function') {
+      G.results.forEach(function(r){ _shadowLogScanRow(r); });
+    }
+  } catch(_){}
 
   // Bulk pass done \u2014 preliminary scores are populated for ALL ~750 passed
   // tickers. Enrichment (FMP analyst grades + Tradier indicator history) for
