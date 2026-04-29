@@ -9294,24 +9294,23 @@ function scoreIt(ticker, ind, opt){
   // Relative strength vs SPY 5-day (positive outperformance)
   var rsRelOk = ind.relStr5d > 0;
 
-  // Price acceleration: today's % change > 5-day average % change
-  var accelOk = ind.changePct > ind.avgChangePct5d;
-
   // Above 200 EMA
   var ema200Ok = ind.ema200 > 0 ? ind.price > ind.ema200 : ind.ema20 > ind.ema50; // fallback if 200 not available
 
+  // Council 2026-04-29 commit 1 of 3 (drops):
+  //   - "Vol > Avg" flat threshold: too crude; replaced by U/D Volume Ratio in commit 2
+  //   - "Price Accel" (today %chg > 5d avg): anti-signal per Lehmann 1990 +
+  //     Lo-MacKinlay short-term reversal literature. Removed entirely.
   var techChecks = [
     {ok:rsiOk,   n:'RSI 40-70',        val:'RSI '+ind.rsi,                                          pts:8},
     {ok:macdOk,  n:'MACD Hist +',      val:''+(ind.macd>=0?'+':'')+ind.macd,                        pts:10},
     {ok:adxOk,   n:'ADX > 25',         val:'ADX '+ind.adx,                                          pts:8},
     {ok:emaOk,   n:'EMA20 > EMA50',    val:'$'+fmt2(ind.ema20)+' > $'+fmt2(ind.ema50),              pts:10},
-    {ok:volOk,   n:'Vol > Avg',        val:fmtK(ind.vol)+' > '+fmtK(ind.avgVol),                   pts:8},
     {ok:tfOk,    n:'TF Aligned 2/3',   val:ind.tf+'/3',                                             pts:12},
     {ok:sectOk,  n:'Sector PF > 2',    val:'PF '+pf,                                               pts:5},
     // Momentum Quality rules (Tradier-derived)
     {ok:hiOk,    n:'52Wk Hi Prox <15%',val:ind.week52hi>0?'$'+fmt2(ind.price)+' / $'+fmt2(ind.week52hi):'no data', pts:10},
     {ok:rsRelOk, n:'RS > SPY (5d)',    val:ind.relStr5d>0?'+'+ind.relStr5d.toFixed(2)+'%':ind.relStr5d.toFixed(2)+'%', pts:8},
-    {ok:accelOk, n:'Price Accel',      val:(ind.changePct>=0?'+':'')+ind.changePct.toFixed(2)+'% vs '+ind.avgChangePct5d.toFixed(2)+'%avg', pts:7},
     {ok:ema200Ok,n:'Price > EMA200',   val:ind.ema200>0?'$'+fmt2(ind.price)+' > $'+fmt2(ind.ema200):'via EMA trend', pts:6}
   ];
   techChecks.forEach(function(c){
@@ -9349,14 +9348,9 @@ function scoreIt(ticker, ind, opt){
   // Uses G_HIST_CACHE populated async by fetchIndicatorHistory() during detail load
   var histDays = G_HIST_CACHE[ticker] || null;
 
-  // Rule: RSI Accelerating (+12) \u2014 RSI(7) today > RSI(7) yesterday
-  var rsiAccelData = calcRSIAccel(histDays, 7);
-  var rsiAccelOk   = rsiAccelData.accel;
-  var rsiAccelVal  = histDays
-    ? (rsiAccelData.rsiYest + ' \u2192 ' + rsiAccelData.rsiToday + (rsiAccelOk ? ' \u2191' : ' \u2193'))
-    : 'Load detail to calculate';
-  if(rsiAccelOk){ score += 12; techScore += 12; }
-  res.push({n:'RSI Accelerating', pass:rsiAccelOk, val:rsiAccelVal, filter:false, pts:12, isHist:true});
+  // Council 2026-04-29 commit 1 of 3: RSI(7) Accelerating dropped. Daily
+  // RSI changes at 7-period are ~70% noise per Connors research; over-
+  // weighted at +12 pts and contributes no measurable IC.
 
   // Rule: MFI Bullish (+9) \u2014 MFI(7) > 40, volume-weighted buying pressure
   var mfiVal_raw = calcMFI(histDays, 7);
