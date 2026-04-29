@@ -5524,8 +5524,18 @@ function _strategyWarnings(opt){
   return warns;
 }
 
-// Submits a single limit order and returns a promise with {orderId, status}
-function submitLimitAtPrice(creds,acct,occSym,sym,side,qty,otype,price){
+// Submits a single limit order and returns a promise with {orderId, status}.
+// `tag` is optional Tradier order metadata (≤32 alphanumeric+_-+. chars). Used
+// to mark step-fill / roll legs so closed-trade reconciliation can attribute
+// slippage per leg + per attempt without depending on order-id correlation.
+function submitLimitAtPrice(creds,acct,occSym,sym,side,qty,otype,price,tag){
+  var tagStr = '';
+  if (tag) {
+    // Tradier silently rejects orders with invalid tag chars. Sanitize: keep
+    // only [A-Za-z0-9_+\-.] and trim to 32 chars.
+    var clean = String(tag).replace(/[^A-Za-z0-9_+\-.]/g,'').slice(0,32);
+    if (clean) tagStr = '&tag=' + encodeURIComponent(clean);
+  }
   var body='class=option'
     +'&symbol='+encodeURIComponent(sym)
     +'&option_symbol='+encodeURIComponent(occSym)
@@ -5533,7 +5543,8 @@ function submitLimitAtPrice(creds,acct,occSym,sym,side,qty,otype,price){
     +'&quantity='+qty
     +'&type=limit'
     +'&duration=day'
-    +'&price='+price.toFixed(2);
+    +'&price='+price.toFixed(2)
+    +tagStr;
   if(otype==='stock'){
     body='class=equity'
       +'&symbol='+encodeURIComponent(sym)
@@ -5541,7 +5552,8 @@ function submitLimitAtPrice(creds,acct,occSym,sym,side,qty,otype,price){
       +'&quantity='+qty
       +'&type=limit'
       +'&duration=day'
-      +'&price='+price.toFixed(2);
+      +'&price='+price.toFixed(2)
+      +tagStr;
   }
   // Pre-flight: when running through the proxy and the trade token isn't
   // armed, the worker will 403 us. Prompt now (modal) so auto-fill /
@@ -6675,6 +6687,28 @@ function simOpt(price){
   var exp=expDate.toISOString().slice(0,10);
   return{strike:strike,spread:spread,spreadPct:spreadPct,delta:delta,ext:ext,dte:dte,optPr:optPr,oi:oi,vol:vol2,exp:exp};
 }
+// Unified composite score for an option contract. Used by:
+//   - fetchOptionContract (Order Ticket FIND BEST)
+//   - rollLoadChain      (Roll modal chain)
+//   - renderChainForExp  (Detail-pane chain table)
+// All three previously used disjoint ranking methods (vol-desc, δ-0.40+OI+
+// spread, user-picked column sort) so the "best" pick on Order Ticket
+// often wasn't even visible in the Roll modal table. Now a single score.
+//
+// Score = (1 - |δ-0.40|)×40 + min(OI/1000, 30) + (1 - spread%)×30
+// Range: 0–100. δ-0.40 anchor balances OTM/ITM; OI ceiling caps small caps;
+// spread term penalizes illiquidity. Returns 0 for missing-greek inputs.
+function _optScore(o){
+  if(!o || !o.greeks || o.greeks.delta == null) return 0;
+  var d = Math.abs(+o.greeks.delta) || 0;
+  var oi = +o.open_interest || 0;
+  var bid = +o.bid || 0;
+  var ask = +o.ask || 0;
+  var spread = Math.max(ask - bid, 0);
+  var spreadPct = ask > 0 ? Math.min(spread / ask, 1) : 1;
+  return Math.round((1 - Math.abs(d - 0.40)) * 40 + Math.min(oi / 1000, 30) + (1 - spreadPct) * 30);
+}
+
 function fetchOptionContract(ticker,simPrice,callback,monthFilter){
  // monthFilter: optional 'YYYY-MM' string to restrict expiries to that month only
  var key=_getTradierKey();
@@ -6796,13 +6830,15 @@ function fetchOptionContract(ticker,simPrice,callback,monthFilter){
        if(withVol.length) pool = withVol;
      }
 
-     // Sort: primary=volume desc, tie-break within 20%=shorter DTE
+     // UNIFIED RANK — composite score (delta-0.40 + OI + tight spread).
+     // Was: volume-desc with DTE tiebreak, which gravitated to high-volume
+     // retail penny calls (the dominant entry pattern in 4/23-4/27 data).
+     // Now matches the Roll modal + chain table so "FIND BEST" picks the
+     // same contract that's ★-marked everywhere else.
+     pool.forEach(function(c){ c._score = _optScore(c.opt); });
      pool.sort(function(a,b){
-       var vA = a.vol>0?a.vol:(a.opt.open_interest||0);
-       var vB = b.vol>0?b.vol:(b.opt.open_interest||0);
-       var tied = Math.abs(vA-vB)/(Math.max(vA,vB)||1) <= 0.20;
-       if(tied) return a.dte-b.dte;
-       return vB-vA;
+       if (b._score !== a._score) return b._score - a._score;
+       return a.dte - b.dte;  // tie-break: shorter DTE wins (within target window)
      });
 
      var winner=pool[0];
@@ -8889,21 +8925,41 @@ async function renderChainForExp(ticker, expDate, underlyingPrice){
     return (av - bv) * mul;
   });
 
+  // Compute unified score per call + per put. Highest-scoring contract on
+  // each side gets a ★ badge so the user sees the same "best" pick that the
+  // Order Ticket FIND BEST and Roll modal would land on.
+  var callBest = {strike: null, score: -1};
+  var putBest  = {strike: null, score: -1};
+  allStrikes.forEach(function(strike){
+    if (calls[strike]) {
+      var sc = _optScore(calls[strike]);
+      if (sc > callBest.score) { callBest = {strike: strike, score: sc}; }
+    }
+    if (puts[strike]) {
+      var sp = _optScore(puts[strike]);
+      if (sp > putBest.score) { putBest = {strike: strike, score: sp}; }
+    }
+  });
+
   var rows = allStrikes.map(function(strike){
     var c = calls[strike];
     var p = puts[strike];
     var isATM = nearAtm !== null && strike === nearAtm;
     var callITM = underlyingPrice>0 && strike<underlyingPrice;
     var putITM  = underlyingPrice>0 && strike>underlyingPrice;
+    var callStar = (c && strike === callBest.strike && callBest.score > 0)
+      ? '<span style="color:var(--amb);font-size:9px;" title="Best call by composite score (delta+OI+spread)">★</span> ' : '';
+    var putStar = (p && strike === putBest.strike && putBest.score > 0)
+      ? '<span style="color:var(--amb);font-size:9px;" title="Best put by composite score (delta+OI+spread)">★</span> ' : '';
     var row = '<tr class="'+(isATM?'atm':'')+'" data-tk="'+ticker+'" data-str="'+strike+'" data-exp="'+expDate+'" onclick="chainRowClick(this.dataset.tk,this.dataset.str,this.dataset.exp)">';
     if(colsCall){
       var cc = callITM?'chain-itm':'chain-otm';
-      row += _td(_oi(c&&c.open_interest),cc)+_td(_oi(c&&c.volume),cc)+_td(c&&c.greeks?_iv(c.greeks.smv_vol):'--',cc)+_td(c&&c.greeks?_f(c.greeks.delta):'--',cc)+_td(c?DS+_f(c.bid):'--',cc)+_td(c?DS+_f(c.ask):'--',cc)+_td(c?DS+_f(c.last):'--',cc);
+      row += _td(_oi(c&&c.open_interest),cc)+_td(_oi(c&&c.volume),cc)+_td(c&&c.greeks?_iv(c.greeks.smv_vol):'--',cc)+_td(c&&c.greeks?_f(c.greeks.delta):'--',cc)+_td(c?DS+_f(c.bid):'--',cc)+_td(c?DS+_f(c.ask):'--',cc)+_td((callStar)+(c?DS+_f(c.last):'--'),cc);
     }
     row += _td(DS+fmt2(strike)+(isATM?' &#9670;':''),'strike-col');
     if(colsPut){
       var pc = putITM?'chain-itm':'chain-otm';
-      row += _td(p?DS+_f(p.last):'--',pc)+_td(p?DS+_f(p.bid):'--',pc)+_td(p?DS+_f(p.ask):'--',pc)+_td(p&&p.greeks?_f(p.greeks.delta):'--',pc)+_td(p&&p.greeks?_iv(p.greeks.smv_vol):'--',pc)+_td(_oi(p&&p.volume),pc)+_td(_oi(p&&p.open_interest),pc);
+      row += _td((putStar)+(p?DS+_f(p.last):'--'),pc)+_td(p?DS+_f(p.bid):'--',pc)+_td(p?DS+_f(p.ask):'--',pc)+_td(p&&p.greeks?_f(p.greeks.delta):'--',pc)+_td(p&&p.greeks?_iv(p.greeks.smv_vol):'--',pc)+_td(_oi(p&&p.volume),pc)+_td(_oi(p&&p.open_interest),pc);
     }
     row += '</tr>';
     return row;
@@ -13846,14 +13902,8 @@ function rollLoadChain(){
       eid('roll-chain-body').innerHTML='<tr><td colspan="7" style="padding:8px;color:var(--gry);text-align:center;">No contracts</td></tr>';
       return;
     }
-    // Score each contract
-    chain.forEach(function(o){
-      var d=Math.abs(+(o.greeks&&o.greeks.delta)||0);
-      var oi=+o.open_interest||0;
-      var spread=(+o.ask)-(+o.bid);
-      var spreadPct=o.ask>0?spread/o.ask:1;
-      o._score=Math.round((1-Math.abs(d-0.40))*40+Math.min(oi/1000,30)+(1-Math.min(spreadPct,1))*30);
-    });
+    // Score each contract via the unified _optScore helper
+    chain.forEach(function(o){ o._score = _optScore(o); });
     chain.sort(function(a,b){return +a.strike - +b.strike;});
     G_roll._chainCache=chain;
     G_roll._chainExp=newExp;
@@ -14022,13 +14072,7 @@ function rollSelectBest(fromUser){
         if(!Array.isArray(chain2)) chain2=[chain2];
         var newType=(eid('roll-new-type').value||'CALL').toLowerCase();
         chain2=chain2.filter(function(o){return o.option_type===newType;});
-        chain2.forEach(function(o){
-          var d=Math.abs(+(o.greeks&&o.greeks.delta)||0);
-          var oi=+o.open_interest||0;
-          var spread=(+o.ask)-(+o.bid);
-          var spreadPct=o.ask>0?spread/o.ask:1;
-          o._score=Math.round((1-Math.abs(d-0.40))*40+Math.min(oi/1000,30)+(1-Math.min(spreadPct,1))*30);
-        });
+        chain2.forEach(function(o){ o._score = _optScore(o); });
         chain2.sort(function(a,b){return +a.strike - +b.strike;});
         G_roll._chainCache=chain2;
         G_roll._chainExp=best.exp;
@@ -14135,6 +14179,128 @@ function cancelRollFill(){
   eid('roll-submit-btn').textContent='↻ EXECUTE ROLL';
 }
 
+// Atomic multi-leg roll. Single Tradier `class=multileg` order with both
+// legs in one body. Broker works the spread internally — typically fills
+// closer to mid than two sequential single-leg orders walking ask→bid /
+// bid→ask. Returns true on fill, false on rejection (caller falls back to
+// the sequential walker).
+//
+// Tradier multileg expects:
+//   class=multileg
+//   symbol=<underlying>
+//   type=debit|credit|even
+//   duration=day
+//   price=<positive net $ per contract>
+//   option_symbol[0]=<OCC>  side[0]=...  quantity[0]=...
+//   option_symbol[1]=<OCC>  side[1]=...  quantity[1]=...
+async function submitRollMultileg(c, acct, q1, q2, maxAtt, delay){
+  var l1q = G_roll.leg1Quote;
+  var l2  = G_roll.leg2;
+  var underlying = G_roll.ticker;
+
+  // Net price walker. NET = (BTO leg2 cost) - (STC leg1 proceeds).
+  // Positive net = DEBIT (you pay $ to roll); negative net = CREDIT (you receive $).
+  // We send Tradier `type=debit|credit|even` and a POSITIVE `price` (the abs net).
+  // Walker starts at the MID-MID net (most fair value); each retry tilts the net
+  // 1¢ in the direction unfavorable to you (more debit / less credit) up to maxAtt.
+  var l1Mid = (l1q.bid + l1q.ask) / 2;
+  var l2Mid = (l2.bid + l2.ask) / 2;
+  var netMid = l2Mid - l1Mid;             // positive = debit, negative = credit
+  var stepCent = 0.01;
+  // Cap how far we walk: half-spread of each leg combined is the absolute worst
+  // case, but we don't need to walk that far; cap at $0.20 above midnet for safety.
+  var maxWalk = Math.min(0.20, Math.max((l1q.ask - l1q.bid)/2 + (l2.ask - l2.bid)/2, 0.04));
+
+  for (var att = 1; att <= maxAtt; att++) {
+    if (G_roll.rollCancel) { rollLog('Cancelled at multileg attempt '+att,'err'); return false; }
+    var net = netMid + (att - 1) * stepCent;
+    if (net - netMid > maxWalk) { rollLog('Multileg walker reached max-walk limit; aborting','err'); return false; }
+
+    // Translate signed net into Tradier (type, abs price). `even` only when
+    // net rounds to zero — Tradier rejects type=debit with price=0.
+    var absPx = Math.abs(net);
+    var typeStr;
+    if (Math.abs(net) < 0.005) { typeStr = 'even'; absPx = 0; }
+    else if (net > 0)          { typeStr = 'debit'; }
+    else                       { typeStr = 'credit'; }
+    // Tradier requires price >= 0.01 except for `even`. Clamp.
+    if (typeStr !== 'even' && absPx < 0.01) absPx = 0.01;
+
+    rollLog('Multileg attempt '+att+'/'+maxAtt+' '+typeStr.toUpperCase()+' $'+absPx.toFixed(2)+' (net mid was $'+fmt2(Math.abs(netMid))+' '+(netMid>=0?'debit':'credit')+')','');
+
+    var tag = ('roll-'+underlying+'-ML-a'+att).replace(/[^A-Za-z0-9_+\-.]/g,'').slice(0,32);
+    var body = 'class=multileg'
+      + '&symbol=' + encodeURIComponent(underlying)
+      + '&type='   + typeStr
+      + '&duration=day'
+      + (typeStr === 'even' ? '' : '&price=' + absPx.toFixed(2))
+      + '&option_symbol[0]=' + encodeURIComponent(G_roll.occSym)
+      + '&side[0]=sell_to_close'
+      + '&quantity[0]=' + q1
+      + '&option_symbol[1]=' + encodeURIComponent(l2.occSym)
+      + '&side[1]=buy_to_open'
+      + '&quantity[1]=' + q2
+      + '&tag=' + encodeURIComponent(tag);
+
+    var orderHeaders = {
+      Authorization: 'Bearer ' + c.key,
+      Accept: 'application/json',
+      'Content-Type': 'application/x-www-form-urlencoded'
+    };
+    try {
+      var proxyForHdr = localStorage.getItem('rrjcar_tradier_proxy') || '';
+      if (proxyForHdr && window._tradeToken) orderHeaders['X-Trade-Token'] = window._tradeToken;
+    } catch(_) {}
+
+    try {
+      var resp = await fetch(c.host + '/v1/accounts/' + acct + '/orders', {
+        method: 'POST', headers: orderHeaders, body: body
+      });
+      var txt = await resp.text();
+      var d = null; try { d = JSON.parse(txt); } catch(_) {}
+      if (!d || !d.order || !d.order.id) {
+        var errMsg = (d && (d.errors || d.error || d.fault || d.message)) || ('HTTP '+resp.status+' '+(txt||'').slice(0,200));
+        // If the broker / proxy doesn't allow multileg at all, return false fast
+        // so caller falls back to sequential. Detect by the well-known shapes.
+        var errStr = (typeof errMsg === 'string') ? errMsg : JSON.stringify(errMsg);
+        rollLog('Multileg rejected: '+errStr,'err');
+        if (/multileg|class|account.*type|approval|level/i.test(errStr) && att === 1) {
+          // Permanent-looking error on first attempt — bail to sequential walker
+          rollLog('→ falling back to sequential walker','err');
+          return false;
+        }
+        // Otherwise step net and retry (transient error)
+        await sleep(delay * 1000);
+        continue;
+      }
+      var orderId = d.order.id;
+      rollLog('Multileg order #'+orderId+' placed','');
+      await sleep(delay * 1000);
+      if (G_roll.rollCancel) {
+        var uc = await cancelOrderVerbose(c, acct, orderId);
+        rollLog((uc.ok?'✓ ':'✗ ')+'Multileg cancel '+uc.msg, uc.ok?'ok':'err');
+        return false;
+      }
+      var st = await pollOrderStatus(c, acct, orderId);
+      rollLog('Multileg status: '+st.toUpperCase(), '');
+      if (st === 'filled') {
+        rollLog('✓ MULTILEG FILLED — '+typeStr.toUpperCase()+' $'+absPx.toFixed(2), 'ok');
+        pushNotify('Roll complete (atomic)', underlying+' rolled — '+typeStr+' $'+absPx.toFixed(2), 'roll-ml-'+orderId);
+        return true;
+      }
+      if (st === 'pending' || st === 'open' || st === 'partially_filled') {
+        var cr = await cancelOrderVerbose(c, acct, orderId);
+        rollLog((cr.ok?'✓ ':'⚠ ')+'Multileg cancel '+cr.msg, cr.ok?'':'err');
+      }
+    } catch (e) {
+      rollLog('Multileg error: '+(e&&e.message||e), 'err');
+      if (!G_roll.rollCancel) await sleep(delay * 1000);
+    }
+  }
+  rollLog('Multileg walker exhausted '+maxAtt+' attempts','err');
+  return false;
+}
+
 async function submitRoll(){
   if(!G_roll.leg2.occSym){toast('Find best contract first');return;}
   var c=rollGetCreds();
@@ -14208,6 +14374,30 @@ async function submitRoll(){
     return;
   }
 
+  // ── ATOMIC MULTILEG (preferred) ──
+  // Try multileg first \u2014 single order, broker works the spread internally,
+  // no naked-position window between legs. Falls back to sequential walker
+  // if account lacks multileg approval or Tradier rejects the combo type.
+  rollLog('═ ATTEMPTING ATOMIC MULTILEG ═','');
+  try {
+    var mlFilled = await submitRollMultileg(c, acct, q1, q2, Math.min(maxAtt, 12), delay);
+    if (mlFilled) {
+      eid('roll-status').textContent = 'Roll complete (atomic multileg)';
+      eid('roll-submit-btn').disabled = false; eid('roll-submit-btn').textContent = '\u21bb EXECUTE ROLL';
+      G_roll.rollActive = false;
+      toast('Roll complete: '+G_roll.ticker+' (atomic)');
+      setTimeout(function(){ if(G.acctId) fetchPositions(); }, 3000);
+      return;
+    }
+    rollLog('═ FALLING BACK TO SEQUENTIAL WALKER ═','');
+  } catch (e) {
+    rollLog('Multileg path threw: '+(e && e.message || e)+' \u2014 falling back to sequential','err');
+  }
+  if (G_roll.rollCancel) {
+    eid('roll-submit-btn').disabled=false; eid('roll-submit-btn').textContent='\u21bb EXECUTE ROLL';
+    G_roll.rollActive=false; return;
+  }
+
   // ── LEG 1: SELL TO CLOSE — start at MID, step DOWN toward (and past) BID ──
   // Starting at MID typically fills within a few attempts on liquid contracts;
   // brokers internalize spread when posted between bid and ask. Starting at
@@ -14238,8 +14428,9 @@ async function submitRoll(){
       break;
     }
     rollLog('LEG 1 attempt '+att+'/'+maxAtt+' @ $'+fmt2(price),'');
+    var l1Tag = 'roll-'+G_roll.ticker+'-L1-a'+att;
     try{
-      var res=await submitLimitAtPrice(c,acct,G_roll.occSym,G_roll.ticker,'sell_to_close',q1,'option',price);
+      var res=await submitLimitAtPrice(c,acct,G_roll.occSym,G_roll.ticker,'sell_to_close',q1,'option',price,l1Tag);
       rollLog('LEG 1 order #'+res.orderId+' placed','');
       await sleep(delay*1000);
       if(G_roll.rollCancel){
@@ -14328,8 +14519,9 @@ async function submitRoll(){
       break;
     }
     rollLog('LEG 2 attempt '+att2+'/'+maxAtt+' @ $'+fmt2(price2),'');
+    var l2Tag = 'roll-'+G_roll.ticker+'-L2-a'+att2;
     try{
-      var res2=await submitLimitAtPrice(c,acct,l2.occSym,G_roll.ticker,'buy_to_open',q2,'option',price2);
+      var res2=await submitLimitAtPrice(c,acct,l2.occSym,G_roll.ticker,'buy_to_open',q2,'option',price2,l2Tag);
       rollLog('LEG 2 order #'+res2.orderId+' placed','');
       await sleep(delay*1000);
       if(G_roll.rollCancel){
@@ -14431,13 +14623,15 @@ function matchTrades(orders){
     var qty=parseInt(o.exec_quantity||o.quantity)||1;
     // avg_fill_price can be 0 in sandbox \u2014 fall back to last_fill_price or stop_price
     var avgFill=parseFloat(o.avg_fill_price)||parseFloat(o.last_fill_price)||parseFloat(o.stop_price)||0;
+    // Limit price (the price you sent on the order) \u2014 needed for slippage calc
+    var limitPx=parseFloat(o.price)||0;
     var parsed=parseOccSymbolFull(sym);
     var isOpen=side==='buy_to_open'||side==='sell_to_open'||side==='buy';
     var isClose=side==='sell_to_close'||side==='buy_to_close'||side==='sell';
 
     if(isOpen){
       if(!opens[sym])opens[sym]=[];
-      opens[sym].push({qty:qty,price:avgFill,side:side,date:o.create_date,id:o.id});
+      opens[sym].push({qty:qty,price:avgFill,limitPx:limitPx,side:side,date:o.create_date,id:o.id,tag:o.tag||''});
     } else if(isClose){
       var openLots=opens[sym]||[];
       var closePx=avgFill;
@@ -14465,6 +14659,17 @@ function matchTrades(orders){
       var pnlPct = openPx>0 ? ((closePx-openPx)/openPx*100*(isLong?1:-1)) : 0;
       var holdDays=openDate?Math.round((new Date(o.create_date)-new Date(openDate))/(864e5)):0;
 
+      // SLIPPAGE per leg: positive = bad (paid more than limit on buy, got less on sell)
+      // Open-leg slippage: for BTO/buy → fill - limit (positive = paid more than asked)
+      // Close-leg slippage: for STC/sell → limit - fill (positive = got less than asked)
+      var openLot = openLots.length>0 ? openLots[0] : null;
+      var openLimit = openLot ? (openLot.limitPx||0) : 0;
+      var openSlipPerShare = (openLot && openLimit>0) ? (openLot.price - openLimit) : null; // long: fill-limit
+      var closeSlipPerShare = (limitPx>0 && closePx>0) ? (limitPx - closePx) : null;        // long: limit-fill
+      // Total slippage (per-contract, ×100 multiplier, × qty)
+      var totalSlipDollars = ((openSlipPerShare||0) + (closeSlipPerShare||0)) * 100 * closeQty;
+      var slipPct = (openPx > 0) ? ((openSlipPerShare||0) + (closeSlipPerShare||0)) / openPx * 100 : null;
+
       trades.push({
         symbol:sym,
         underlying:parsed.underlying,
@@ -14476,6 +14681,14 @@ function matchTrades(orders){
         closeDate:o.create_date?o.create_date.slice(0,10):'--',
         openPrice:openPx,
         closePrice:closePx,
+        openLimit:openLimit,
+        closeLimit:limitPx,
+        openSlipPerShare:openSlipPerShare,   // null if no limit on open
+        closeSlipPerShare:closeSlipPerShare, // null if no limit on close
+        slipDollars:totalSlipDollars,        // round-trip slippage in dollars
+        slipPct:slipPct,                     // round-trip slippage % of openPx
+        openTag:openLot?openLot.tag:'',
+        closeTag:o.tag||'',
         qty:closeQty,
         pnl:pnl,
         pnlPct:pnlPct,
@@ -14677,6 +14890,8 @@ function renderClosedTable(){
     +'<th>SYMBOL</th><th>TYPE</th><th>STRIKE</th><th>EXPIRY</th>'
     +'<th>QTY</th><th>OPEN DATE</th><th>CLOSE DATE</th><th>DAYS HELD</th>'
     +'<th>OPEN PRICE</th><th>CLOSE PRICE</th>'
+    +'<th title="Round-trip slippage in $: (open fill - open limit) + (close limit - close fill), \u00d7 qty \u00d7 100. Positive = paid more / got less than your limits.">SLIP $</th>'
+    +'<th title="Round-trip slippage as % of open fill price">SLIP %</th>'
     +'<th>P&L $</th><th>P&L %</th><th>RESULT</th><th></th>'
     +'</tr></thead><tbody>';
 
@@ -14685,6 +14900,20 @@ function renderClosedTable(){
     var resultBadge=t.pnl>=0
       ?'<span class="badge go">WIN</span>'
       :'<span class="badge nogo">LOSS</span>';
+    // Slippage cell \u2014 null when limits not available (manual orders, sandbox);
+    // positive slippage is bad (paid more than asked / got less); color amber
+    // for any non-zero slippage > $5 to draw the eye to bleed candidates.
+    var slipDol = (t.slipDollars != null && isFinite(t.slipDollars)) ? t.slipDollars : null;
+    var slipPctV = (t.slipPct != null && isFinite(t.slipPct)) ? t.slipPct : null;
+    var slipDolCell, slipPctCell;
+    if (slipDol == null) {
+      slipDolCell = '<span style="color:var(--gry2);">\u2014</span>';
+      slipPctCell = '<span style="color:var(--gry2);">\u2014</span>';
+    } else {
+      var slipCls = (slipDol > 5) ? 'pnl-neg' : (slipDol < -1 ? 'pnl-pos' : '');
+      slipDolCell = '<span class="'+slipCls+'">'+(slipDol>=0?'+':'')+fmtD(slipDol)+'</span>';
+      slipPctCell = '<span class="'+slipCls+'">'+(slipPctV>=0?'+':'')+fmt2(slipPctV||0)+'%</span>';
+    }
     var sym=t.symbol;
     html+='<tr data-sym="'+sym+'">'
       +'<td><b>'+t.underlying+'</b></td>'
@@ -14697,6 +14926,8 @@ function renderClosedTable(){
       +'<td style="color:var(--gry);">'+t.holdDays+'d</td>'
       +'<td>$'+fmt2(t.openPrice)+'</td>'
       +'<td>$'+fmt2(t.closePrice)+'</td>'
+      +'<td>'+slipDolCell+'</td>'
+      +'<td>'+slipPctCell+'</td>'
       +'<td class="'+pnlCls+'">'+(t.pnl>=0?'+':'')+fmtD(t.pnl)+'</td>'
       +'<td class="'+pnlCls+'">'+(t.pnlPct>=0?'+':'')+fmt2(t.pnlPct)+'%</td>'
       +'<td>'+resultBadge+'</td>'
@@ -14705,7 +14936,7 @@ function renderClosedTable(){
       +'</tr>'
       // Chart expansion row
       +'<tr id="clchart-'+sym+'" class="pos-chart-row">'
-      +'<td colspan="14">'
+      +'<td colspan="16">'
       +'<div class="pos-chart-inner">'
       +'<div class="pnl-chart-hdr">'
       +'<span class="pnl-chart-title">CLOSED TRADE P&L \u2014 '+t.underlying+' $'+fmt2(t.strike)+' '+t.type
