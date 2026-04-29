@@ -2175,7 +2175,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--amb);color:var(--amb);" onclick="pfCopyAllTickers()" title="Copy comma-separated unique tickers from all columns">COPY ALL TICKERS</button>
       <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--grn);color:var(--grn);" onclick="pfAddColumn()">+ ADD COLUMN</button>
       <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--wrn);color:var(--wrn);" onclick="pfExportCSV()" title="Long-form CSV — one row per position">&#10515; EXPORT CSV</button>
-      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ambb);color:var(--ambb);" onclick="pfExportMatrix()" title="Wide-form matrix — accounts as columns, positions with the same ticker/strike/expiry on one row. Copies markdown to clipboard + downloads .md.">&#10515; EXPORT MATRIX</button>
+      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ambb);color:var(--ambb);" onclick="pfExportMatrix()" title="Wide-form CSV — Ticker, Kind, Type, Strike, Expiry are separate columns; each account = its own column for quantity. Copies CSV to clipboard + downloads .csv (Excel-compatible UTF-8 with BOM).">&#10515; EXPORT MATRIX</button>
       <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ngo);color:var(--ngo);" onclick="pfResetAll()">RESET</button>
     </div>
   </div>
@@ -5494,6 +5494,36 @@ function cancelStepFill(){
   toast('Step fill cancelled');
 }
 
+// Returns array of warning strings for known retail-options leakage points.
+// NOT a hard block — just surfaces statistical drag so user makes the call.
+// Thresholds are conservative defaults derived from public retail-options
+// outcome studies; user can override on every prompt.
+function _strategyWarnings(opt){
+  var warns = [];
+  if (!opt) return warns;
+  var bid = +opt.bid || 0;
+  var ask = +opt.ask || 0;
+  var delta = (opt.delta != null) ? +opt.delta : null;
+  var dte = (opt.dte != null) ? +opt.dte : null;
+  if (bid > 0 && bid < 0.30) {
+    warns.push('• Bid $'+bid.toFixed(2)+' < $0.30 — penny strike (spread typically eats >40% of premium)');
+  }
+  if (delta != null && Math.abs(delta) < 0.30) {
+    warns.push('• Delta '+delta.toFixed(2)+' < 0.30 — far OTM, gamma decay dominates');
+  }
+  if (dte != null && dte < 14) {
+    warns.push('• DTE '+dte+' < 14 — theta cliff zone');
+  }
+  if (bid > 0 && ask > 0) {
+    var mid = (bid + ask) / 2;
+    var spreadPct = mid > 0 ? ((ask - bid) / mid * 100) : 0;
+    if (spreadPct > 30) {
+      warns.push('• Spread '+spreadPct.toFixed(0)+'% of mid — illiquid; can\'t exit near mid');
+    }
+  }
+  return warns;
+}
+
 // Submits a single limit order and returns a promise with {orderId, status}
 function submitLimitAtPrice(creds,acct,occSym,sym,side,qty,otype,price){
   var body='class=option'
@@ -5932,6 +5962,37 @@ function submitOrder(){
   var occSym=buildOccSym(sym,type,strike,expRaw);
   var stepOn=eid('step-fill-toggle').checked;
 
+  // \u2500\u2500\u2500 PRE-TRADE STRATEGY GATE \u2500\u2500\u2500
+  // Only on OPEN orders for option contracts. Surfaces data-backed leakage
+  // points (penny strike, far-OTM delta, sub-14 DTE, wide spread) and asks
+  // for explicit confirm. Not a block \u2014 user clicks Continue Anyway to override.
+  // Skip on close orders (you should always be able to exit a position) and
+  // on equity orders (rules don't apply).
+  if (type !== 'STOCK' && (action === 'BUY_TO_OPEN' || action === 'SELL_TO_OPEN')) {
+    try {
+      var lq = G.liveQuote || {};
+      var dteCalc = null;
+      if (expRaw) {
+        try { dteCalc = Math.round((new Date(expRaw) - new Date()) / 864e5); } catch(_){}
+      }
+      var warns = _strategyWarnings({
+        bid:   lq.bid,
+        ask:   lq.ask,
+        delta: (lq.greeks && lq.greeks.delta) || lq.delta || null,
+        dte:   dteCalc
+      });
+      if (warns.length) {
+        var msg = 'STRATEGY WARNING \u2014 this contract has '+warns.length+' known leakage point'+(warns.length>1?'s':'')+':\n\n'
+                + warns.join('\n')
+                + '\n\nContinue anyway?';
+        if (!confirm(msg)) {
+          toast('Order cancelled \u2014 strategy gate');
+          return;
+        }
+      }
+    } catch(e) { /* gate is best-effort; never block on its own bug */ }
+  }
+
   // \u2500\u2500 STEP FILL PATH \u2500\u2500
   if(stepOn&&otype==='limit'){
     var maxAtt=parseInt(eid('sf-max').value)||10;
@@ -5946,18 +6007,18 @@ function submitOrder(){
     var stepSize=calcEffectiveStepSize(bid||0, ask||0, maxAtt);
 
     // Determine start and limit prices based on direction
+    // CHANGED: anchor at MID instead of ASK/BID. Per slippage analysis (4/23-
+    // 4/27, 96 orders, 87.5% cancel rate), ask-anchored close walkers and
+    // bid-anchored open walkers were generating cancel-storms \u2014 most attempts
+    // never fill, fills come at or near limit anyway. MID gives a real chance
+    // of broker internalization on first attempt; subsequent steps walk one
+    // tick toward your worst-case (bid for close, ask for open) per attempt.
     var startPrice, limitPrice;
     if(closing){
-      // \u2550\u2550 CLOSE \u2550\u2550 ALWAYS start at ASK and step DOWN toward bid.
-      // SAFETY OVERRIDE: ignore sf-start dropdown for close orders. Selling at
-      // the bid first gives away the entire spread; we must always start high
-      // and walk down to find the best fill. This prevents the "started at bid"
-      // bug where a stale saved setting or missed auto-flip would submit at the
-      // worst possible price.
-      startPrice = ask || mid || (lmt && lmt > 0 ? lmt : 0);
-      limitPrice = bid || (startPrice ? +(startPrice * 0.98).toFixed(2) : 0);
-      // Honor a manual limit ONLY if it is ABOVE the ask (user explicitly
-      // wants to try higher first). Never let a manual limit pull us down to bid.
+      // CLOSE: start at MID, walk down to slightly below bid
+      startPrice = mid || ((bid && ask) ? +(((bid+ask)/2).toFixed(2)) : 0) || ask || (lmt && lmt > 0 ? lmt : 0);
+      limitPrice = (bid > 0 ? bid : (startPrice ? +(startPrice * 0.95).toFixed(2) : 0));
+      // Honor a manual limit ONLY if it is ABOVE mid (user wants to try higher first).
       if(lmt && lmt > 0 && lmt > startPrice){
         startPrice = lmt;
       }
@@ -5966,10 +6027,10 @@ function submitOrder(){
       startPrice = lmt;
       limitPrice = ask;
     } else {
-      // \u2550\u2550 OPEN \u2550\u2550 start at bid, step UP toward ask
-      if(startFrom==='mid') startPrice=mid||bid||(ask*0.98);
-      else if(startFrom==='ask') startPrice=ask;
-      else startPrice=bid; // default for open
+      // OPEN: default at MID, walk up toward (and slightly past) ask
+      if(startFrom==='ask') startPrice=ask;
+      else if(startFrom==='bid') startPrice=bid;
+      else startPrice = mid || ((bid && ask) ? +(((bid+ask)/2).toFixed(2)) : 0) || bid || (ask*0.98);
       limitPrice=ask||startPrice*1.02;
     }
 
@@ -6655,11 +6716,14 @@ function fetchOptionContract(ticker,simPrice,callback,monthFilter){
      validExps = dates.filter(function(d){ return d.slice(0,7) === monthFilter; });
      if(!validExps.length){callback(null);return;}
    } else {
-     // Default mode: 10-35 calendar DTE window
-     validExps = dates.filter(function(d){ var cd=calDays(d); return cd>10&&cd<35; });
-     // Fallback: widen to 7-50
-     if(!validExps.length) validExps = dates.filter(function(d){ var cd=calDays(d); return cd>7&&cd<50; });
-     // Last resort: any future
+     // Default mode: 14-50 calendar DTE window. Lower bound 14 avoids the
+     // theta cliff (last 2 weeks lose ~50% of remaining time value); upper
+     // bound 50 keeps premium reasonable. Old window was 10-35 — short
+     // bound was admitting weeklies that decayed under us.
+     validExps = dates.filter(function(d){ var cd=calDays(d); return cd>=14&&cd<=50; });
+     // Fallback: widen to 10-60 if nothing in target window
+     if(!validExps.length) validExps = dates.filter(function(d){ var cd=calDays(d); return cd>=10&&cd<=60; });
+     // Last resort: any future (rare — small-caps with sparse expiry calendars)
      if(!validExps.length) validExps = dates.filter(function(d){ return calDays(d)>0; });
      if(!validExps.length){callback(null);return;}
    }
@@ -6680,9 +6744,21 @@ function fetchOptionContract(ticker,simPrice,callback,monthFilter){
    Promise.all(chainFetches).then(function(chains){
      var candidates = [];
 
+     // Data-backed reject layer for known retail-options leakage points:
+     //   - delta < 0.30        : gamma decay dominates, far-OTM lotto
+     //   - bid   < $0.30       : penny strikes, spread typically eats >40% of premium
+     //   - spread% > 30        : illiquid; can't get out near mid
+     // Window remains long-call only. No opinion on style — just remove dud picks.
      chains.forEach(function(chain){
        var calls = chain.opts.filter(function(o){
-         return o.option_type==='call' && o.greeks && o.greeks.delta>0.02 && o.greeks.delta<0.99;
+         if (o.option_type !== 'call') return false;
+         if (!o.greeks || !(o.greeks.delta > 0.02) || !(o.greeks.delta < 0.99)) return false;
+         if (o.greeks.delta < 0.30) return false;                              // far-OTM reject
+         if (!(o.bid > 0) || o.bid < 0.30) return false;                       // penny reject
+         var midPx = (o.bid + (o.ask||0)) / 2;
+         var spreadPct = midPx > 0 ? ((o.ask - o.bid) / midPx) * 100 : 999;
+         if (spreadPct > 30) return false;                                     // illiquid reject
+         return true;
        });
        if(!calls.length) return;
 
@@ -14132,15 +14208,25 @@ async function submitRoll(){
     return;
   }
 
-  // ── LEG 1: SELL TO CLOSE — start at ASK, step DOWN toward BID ────────────
-  // Starting at ask gives best chance of quick fill on the close side
+  // ── LEG 1: SELL TO CLOSE — start at MID, step DOWN toward (and past) BID ──
+  // Starting at MID typically fills within a few attempts on liquid contracts;
+  // brokers internalize spread when posted between bid and ask. Starting at
+  // ASK was filling instantly only on aggressive markets — most often the
+  // ask order sits idle and we walk down all 30 attempts cancelling each.
+  // Real-world data (4/23-4/27): 87.5% cancel rate at ask-anchor; HIVE STC
+  // had 30 same-price attempts because $bid==$ask collapsed step to zero.
   var l1Spread=Math.max(l1q.ask-l1q.bid,0);
+  var l1Mid=(l1q.bid+l1q.ask)/2;
+  var l1Start=+l1Mid.toFixed(2);
+  // Step is at LEAST 1¢. Even when bid==ask (zero spread), we'll walk down
+  // from mid in 1¢ ticks rather than spamming the same price.
   var l1Step=Math.max(+(l1Spread*(coverage/100)/Math.max(maxAtt,1)).toFixed(2),0.01);
-  var l1Start=l1q.ask;   // start at ask (aggressive for STC)
-  var l1Limit=Math.max(l1q.bid, 0.01);   // step down to bid, never below $0.01
+  // Floor prevents Tradier rejection; we allow stepping past $bid because
+  // when bid==ask, the only way to actually move price is below "limit".
+  var l1Limit=Math.max(0.01, l1q.bid - l1Step*2);
 
   rollLog('LEG 1 — Sell to Close: '+G_roll.occSym+' x'+q1,'');
-  rollLog('Start: $'+fmt2(l1Start)+' | Step: -$'+fmt2(l1Step)+' (ask→bid)','');
+  rollLog('Start: $'+fmt2(l1Start)+' (mid) | Step: -$'+fmt2(l1Step)+' (mid→below bid)','');
 
   var l1Filled=false;
   var l1Price=l1Start;
@@ -14217,14 +14303,20 @@ async function submitRoll(){
     G_roll.rollActive=false; return;
   }
 
-  // ── LEG 2: BUY TO OPEN — start at BID, step UP toward ASK ───────────────
+  // ── LEG 2: BUY TO OPEN — start at MID, step UP toward (and past) ASK ─────
+  // Same rationale as LEG 1: bid-anchor was generating the AESI cluster
+  // (17 attempts walking $0.85→$0.92 by 1¢ each, never filling, paying 7¢
+  // chasing the spread). MID gives a real shot at internalization on the
+  // first attempt, then walks up in measurable steps.
   var l2Spread=Math.max(l2.ask-l2.bid,0);
+  var l2Mid=(l2.bid+l2.ask)/2;
+  var l2Start=+l2Mid.toFixed(2);
   var l2Step=Math.max(+(l2Spread*(coverage/100)/Math.max(maxAtt,1)).toFixed(2),0.01);
-  var l2Start=l2.bid;
-  var l2Limit=l2.ask;
+  // Allow stepping a bit past ask when bid==ask, same logic as LEG 1
+  var l2Limit=l2.ask + l2Step*2;
 
   rollLog('LEG 2 — Buy to Open: '+l2.occSym+' x'+q2,'');
-  rollLog('Start: $'+fmt2(l2Start)+' | Step: +$'+fmt2(l2Step)+' (bid→ask)','');
+  rollLog('Start: $'+fmt2(l2Start)+' (mid) | Step: +$'+fmt2(l2Step)+' (mid→above ask)','');
 
   var l2Filled=false;
   var l2Price=l2Start;
@@ -18949,49 +19041,47 @@ function pfExportMatrix(){
     }
     return 0;
   });
-  function fmtExp(exp){
-    if(!exp) return '—';
-    var p = exp.split('-'); // YYYY-MM-DD
-    if(p.length !== 3) return exp;
-    return parseInt(p[1],10) + '/' + parseInt(p[2],10);
+  // CSV cell escape: wrap in double quotes if value contains comma, quote, or newline.
+  // Doubles any embedded quotes per RFC 4180. Empty/null becomes empty cell.
+  function csvCell(v){
+    if(v == null) return '';
+    var s = String(v);
+    if(s === '') return '';
+    if(/[",\n\r]/.test(s)){
+      return '"' + s.replace(/"/g, '""') + '"';
+    }
+    return s;
   }
-  function fmtStrike(s){
-    if(s == null) return '—';
-    var n = parseFloat(s);
-    return '$' + (n % 1 === 0 ? n.toFixed(0) : String(n));
-  }
-  var hdr = ['Ticker','Strike','Expiry'].concat(cols.map(function(c){ return c.name; }));
-  var lines = [
-    '| ' + hdr.join(' | ') + ' |',
-    '|' + hdr.map(function(){ return '---'; }).join('|') + '|'
-  ];
+  // Each field gets its own column. Account quantities = one column per account.
+  // Strike/Type/Expiry are separate columns (not collapsed into one cell).
+  var hdr = ['Ticker','Kind','Type','Strike','Expiry'].concat(cols.map(function(c){ return c.name; }));
+  var lines = [ hdr.map(csvCell).join(',') ];
   rows.forEach(function(r){
-    var strikeCell = r.kind === 'shares'
-      ? 'shares'
-      : fmtStrike(r.strike) + (r.type === 'PUT' ? 'P' : '');
-    var line = [r.ticker, strikeCell, r.kind === 'shares' ? '—' : fmtExp(r.exp)];
+    var typeCell = r.kind === 'shares' ? '' : (r.type || 'CALL');
+    var strikeCell = r.kind === 'shares' ? '' : (r.strike != null ? r.strike : '');
+    var expCell = r.kind === 'shares' ? '' : (r.exp || '');
+    var rowFields = [r.ticker, r.kind, typeCell, strikeCell, expCell];
     cols.forEach(function(c){
       var qty = r.cells[c.id];
-      if(!qty) line.push('—');
-      else if(r.kind === 'shares') line.push(String(qty));
-      else line.push('x'+qty);
+      rowFields.push(qty ? String(qty) : '');
     });
-    lines.push('| ' + line.join(' | ') + ' |');
+    lines.push(rowFields.map(csvCell).join(','));
   });
-  var md = lines.join('\n');
+  var csv = lines.join('\n');
   var copied = false;
   try {
     if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(md);
+      navigator.clipboard.writeText(csv);
       copied = true;
     }
   } catch(e){}
-  var blob = new Blob([md], {type:'text/markdown'});
+  // BOM prefix so Excel auto-detects UTF-8 (otherwise unicode dashes/symbols break)
+  var blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8'});
   var a = document.createElement('a');
   a.href = URL.createObjectURL(blob);
-  a.download = 'portfolio_matrix_'+new Date().toISOString().slice(0,10)+'.md';
+  a.download = 'portfolio_matrix_'+new Date().toISOString().slice(0,10)+'.csv';
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  toast(rows.length + ' rows exported' + (copied ? ' — markdown copied to clipboard' : ''));
+  toast(rows.length + ' rows exported' + (copied ? ' — CSV copied to clipboard' : ''));
 }
 
 function loadPortfolio(){ /* no-op loader — data loaded on demand in renderPortfolio */ }
