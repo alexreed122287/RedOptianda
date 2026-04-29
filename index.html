@@ -9547,7 +9547,7 @@ function scoreIt(ticker, ind, opt){
     {ok:rsiCross, n:'RSI 50-65 (Cardwell)', val:'RSI '+ind.rsi,                                        pts:6},
     {ok:macdOk,   n:'MACD Hist +',        val:''+(ind.macd>=0?'+':'')+ind.macd,                        pts:10},
     {ok:adxOk,    n:'ADX > 25',           val:'ADX '+ind.adx,                                          pts:6},
-    {ok:adxEarly, n:'ADX 15-25 + DI+>DI-', val:'ADX '+ind.adx+' DI+'+((ind.diPlus||0).toFixed?ind.diPlus.toFixed(1):'?')+' DI-'+((ind.diMinus||0).toFixed?ind.diMinus.toFixed(1):'?'), pts:6},
+    {ok:adxEarly, n:'ADX 15-25 + DI+>DI-', val:'ADX '+ind.adx+' DI+'+(typeof ind.diPlus==='number'?ind.diPlus.toFixed(1):'?')+' DI-'+(typeof ind.diMinus==='number'?ind.diMinus.toFixed(1):'?'), pts:6},
     {ok:emaOk,    n:'EMA20 > EMA50',      val:'$'+fmt2(ind.ema20)+' > $'+fmt2(ind.ema50),              pts:10},
     {ok:tfOk,     n:'TF Aligned 2/3',     val:ind.tf+'/3',                                             pts:12},
     {ok:sectOk,   n:'Sector PF > 2',      val:'PF '+pf,                                                pts:5},
