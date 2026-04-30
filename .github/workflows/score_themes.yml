@@ -52,7 +52,29 @@ jobs:
             echo "No changes to commit"
           else
             git commit -m "auto: refresh theme scores $(date -u +%Y-%m-%d)"
-            git push
+            # Push with retry-on-race. The cron is long-running (~40min via
+            # Tradier) so non-cron commits can land in between checkout and
+            # push, causing "fetch first" rejection. Rebase + retry handles
+            # this transparently. Run 25141222712 hit exactly this race.
+            for attempt in 1 2 3 4 5; do
+              if git push; then
+                echo "Pushed on attempt $attempt"
+                exit 0
+              fi
+              echo "Push rejected on attempt $attempt — fetching + rebasing"
+              git fetch origin main
+              # Concurrent commits should never touch theme_scores*.json so
+              # rebase is conflict-free in practice. If a conflict somehow
+              # occurs, abort and surface via the Notify-on-failure step.
+              if ! git rebase origin/main; then
+                echo "Rebase failed — aborting and bailing"
+                git rebase --abort || true
+                exit 1
+              fi
+              sleep $((attempt * 2))
+            done
+            echo "All 5 push attempts failed"
+            exit 1
           fi
 
       # F-3: surface failures as a GitHub issue. GH Actions auto-disables a
