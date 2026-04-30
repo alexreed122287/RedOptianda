@@ -7658,7 +7658,9 @@ function _shadowLogScanRowsBatch(rows) {
       added++;
     }
     if (!added) return;
-    if (arr.length > 2000) arr = arr.slice(-2000);
+    // 2026-04-30: cap dropped 2000 → 500. 500 entries × ~1KB each = ~500KB
+    // (was ~1.5MB) — plenty for IC analysis (need ≥10 with fwd returns).
+    if (arr.length > 500) arr = arr.slice(-500);
     // Single setItem at the end — this is the 1660× speedup vs the
     // previous per-row implementation
     localStorage.setItem(_SHADOW_SCAN_KEY, JSON.stringify(arr));
@@ -7777,6 +7779,72 @@ async function _shadowRefreshScanForward() {
 }
 
 // Aggregate shadow-book stats — exposed for UI / console inspection.
+// ═══════════════════════════════════════════════════════════════════════════
+//  LOCALSTORAGE QUOTA RECOVERY — auto-purge older entries when full
+//  Safari mobile typically caps at ~5MB. The biggest hogs are rrjcar_hist_*
+//  (up to ~2.2MB), rrjcar_shadow_scan_v1 (up to ~500KB), and op_cache_scan_results
+//  (up to ~80KB). When a write fails with QuotaExceededError, this helper
+//  trims the oldest entries from the largest non-essential cache and reports
+//  bytes freed. Returns true if anything was freed (caller can retry write).
+// ═══════════════════════════════════════════════════════════════════════════
+
+function _freeLocalStorageSpace() {
+  var bytesFreed = 0;
+  // Tier 1: trim shadow_scan to its newest 250 entries (was 500)
+  try {
+    var s = localStorage.getItem('rrjcar_shadow_scan_v1');
+    if (s) {
+      var arr = JSON.parse(s);
+      if (Array.isArray(arr) && arr.length > 250) {
+        var origSize = s.length;
+        arr = arr.slice(-250);
+        localStorage.setItem('rrjcar_shadow_scan_v1', JSON.stringify(arr));
+        bytesFreed += origSize - localStorage.getItem('rrjcar_shadow_scan_v1').length;
+      }
+    }
+  } catch(_){}
+  // Tier 2: drop oldest 30% of rrjcar_hist_* entries (capped at 100, but each
+  // is ~22KB; trimming 30 entries ≈ 660KB freed)
+  try {
+    var histKeys = [];
+    for (var i = 0; i < localStorage.length; i++) {
+      var k = localStorage.key(i);
+      if (k && k.indexOf('rrjcar_hist_') === 0) {
+        try {
+          var v = JSON.parse(localStorage.getItem(k));
+          histKeys.push({ key: k, ts: (v && v.ts) || 0, size: (localStorage.getItem(k) || '').length });
+        } catch(_){}
+      }
+    }
+    if (histKeys.length > 30) {
+      histKeys.sort(function(a, b){ return a.ts - b.ts; });   // oldest first
+      var toDrop = Math.floor(histKeys.length * 0.30);
+      for (var j = 0; j < toDrop; j++) {
+        bytesFreed += histKeys[j].size;
+        localStorage.removeItem(histKeys[j].key);
+      }
+    }
+  } catch(_){}
+  console.log('[localStorage] auto-purge freed ~'+(bytesFreed/1024).toFixed(0)+'KB');
+  return bytesFreed > 0;
+}
+
+// Console helper for manual diagnosis. Returns sorted list of cache sizes.
+window.lsAudit = function(){
+  var entries = [];
+  for (var i = 0; i < localStorage.length; i++) {
+    var k = localStorage.key(i);
+    if (!k) continue;
+    var v = localStorage.getItem(k) || '';
+    entries.push({ key: k, kb: +(v.length / 1024).toFixed(1) });
+  }
+  entries.sort(function(a, b){ return b.kb - a.kb; });
+  console.table(entries.slice(0, 20));
+  var total = entries.reduce(function(s, e){ return s + e.kb; }, 0);
+  console.log('Total: '+total.toFixed(0)+'KB across '+entries.length+' keys');
+  return entries;
+};
+
 // ═══════════════════════════════════════════════════════════════════════════
 //  HIGH-CONVICTION SETUP FINDER — both-tier intersection helper
 //
@@ -11734,14 +11802,30 @@ function finishScan(){
         localStorage.setItem(CACHE_KEYS.scanTs, JSON.stringify(Date.now()));
         console.log('[scan-cache] persisted top '+slim.length+'/'+G.results.length+' results, '+(slimStr.length/1024).toFixed(0)+'KB');
       } catch(quotaErr) {
-        console.warn('[scan-cache] localStorage write failed ('+(quotaErr.name||'?')+') \u2014 '+(slimStr.length/1024).toFixed(0)+'KB attempted. Reducing to top-100 retry.');
-        try {
-          var smaller = slim.slice(0, 100);
-          localStorage.setItem(CACHE_KEYS.scanResults, JSON.stringify(smaller));
-          localStorage.setItem(CACHE_KEYS.scanTs, JSON.stringify(Date.now()));
-          console.log('[scan-cache] persisted reduced top-100 fallback');
-        } catch(e2) {
-          if (typeof toast === 'function') toast('\u26a0 Scan cache failed (localStorage full). Results visible this session only.');
+        console.warn('[scan-cache] localStorage write failed ('+(quotaErr.name||'?')+') \u2014 '+(slimStr.length/1024).toFixed(0)+'KB attempted. Auto-purging old caches and retrying.');
+        // Auto-purge older shadow_scan + hist entries to free space
+        var freed = false;
+        try { freed = (typeof _freeLocalStorageSpace === 'function') && _freeLocalStorageSpace(); } catch(_){}
+        // Retry with the SAME slim payload now that space is freed
+        var retried = false;
+        if (freed) {
+          try {
+            localStorage.setItem(CACHE_KEYS.scanResults, slimStr);
+            localStorage.setItem(CACHE_KEYS.scanTs, JSON.stringify(Date.now()));
+            console.log('[scan-cache] persisted top '+slim.length+' after auto-purge');
+            retried = true;
+          } catch(_){}
+        }
+        if (!retried) {
+          // Last resort: shrink to top 100 + retry one more time
+          try {
+            var smaller = slim.slice(0, 100);
+            localStorage.setItem(CACHE_KEYS.scanResults, JSON.stringify(smaller));
+            localStorage.setItem(CACHE_KEYS.scanTs, JSON.stringify(Date.now()));
+            console.log('[scan-cache] persisted reduced top-100 fallback');
+          } catch(e2) {
+            if (typeof toast === 'function') toast('\u26a0 Scan cache failed (localStorage full even after purge). Run lsAudit() in console to inspect.');
+          }
         }
       }
     } catch(_) { /* serialization throw \u2014 extremely unlikely */ }
