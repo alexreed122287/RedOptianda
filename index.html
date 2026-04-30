@@ -9880,7 +9880,7 @@ function scoreIt(ticker, ind, opt){
   if (donchianOk) { score += 12; techScore += 12; }
   res.push({n:'20d Donchian Breakout', pass:donchianOk, val:donchianDetail, filter:false, pts:12, isHist:true});
 
-  // ── RULE: JT 12-1 Cross-Sectional Momentum (+15) ──────────────────────
+  // ── RULE: JT 12-1 Cross-Sectional Momentum (+20) ──────────────────────
   // Total return from t-252 to t-21 (skip last month — Jegadeesh-Titman 1993,
   // confirmed by Asness-Moskowitz-Pedersen 2013). Threshold: top quintile of
   // typical S&P 500 momentum (~+25% over the window). Approximated via
