@@ -1191,7 +1191,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <!-- B-2 default Min Score bumped 89 -> 100. With theme overlay (added 2026-04)
          scores trend ~10 pts higher, so the historical "GO rate" at 89 became
          too permissive. 100 preserves the prior selectivity. Adjust to taste. -->
-    <label>Min Score <input type="number" id="sc-minscore" value="150" style="width:60px;" onchange="reclassifyGoThreshold()" title="Council 2026-04-29: bumped from 100 → 150 to match the new ~250-pt max from added Minervini Template, Pocket Pivot, VCP, BBW Squeeze, Donchian, JT 12-1, U/D Volume rules. ≈ 60% of max."></label>
+    <label>Min Score <input type="number" id="sc-minscore" value="165" style="width:60px;" onchange="reclassifyGoThreshold()" title="Recommended default 165 (≈69% of new ~240-pt max). New max 240 reflects 7 evidence-based rules added 2026-04-29 (Minervini Template, Pocket Pivot, VCP, BBW Squeeze, Donchian, JT 12-1, U/D Volume)."></label>
     <button class="btn" onclick="applyFilters()">FILTER</button>
     <button class="btn" onclick="clearFilters()" style="border-color:var(--gry2);color:var(--gry);">CLEAR</button>
   </div>
@@ -1881,7 +1881,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
         <div class="api-row" style="align-items:center;">
           <label style="flex:0 0 200px;">MIN SCORE THRESHOLD</label>
           <input type="number" id="at-min-score" value="120" min="89" max="150" style="width:70px;" oninput="saveAutoTraderSettings()">
-          <span style="color:var(--gry);font-size:11px;margin-left:8px;">/ 150 — score is the only gate</span>
+          <span style="color:var(--gry);font-size:11px;margin-left:8px;">/ 240 — score is the only gate</span>
         </div>
         <div class="api-row" style="align-items:center;">
           <label style="flex:0 0 200px;">MARKET HOURS ONLY</label>
@@ -4746,8 +4746,8 @@ function regimeAdjustedThreshold(userThresh){ return userThresh; }
 // so we just flip isGo based on total score. Then re-render + re-filter.
 function reclassifyGoThreshold(){
   var el = eid('sc-minscore');
-  var thresh = el && el.value !== '' ? parseInt(el.value) : 150;
-  if(isNaN(thresh)) thresh = 150;
+  var thresh = el && el.value !== '' ? parseInt(el.value) : 165;
+  if(isNaN(thresh)) thresh = 165;
   // Apply regime-conditional override
   thresh = regimeAdjustedThreshold(thresh);
   if(!G.results || !G.results.length) return;
@@ -10076,7 +10076,7 @@ function buildDetail(r,detId,emptyId){
     '<div class="det-hdr"><span class="det-tk">'+_esc(r.ticker)+'</span>'
     +'<span class="det-pr">$'+fmt2(r.price)+'</span>'
     +'<span class="det-sig '+sigCls+'">'+sigLbl+'</span>'
-    +'<span class="det-meta">'+_esc(r.sector)+' | Score: <b>'+Math.round(r.score)+'</b>/150 | Tech: '+techScore+' Fund: '+fundScore+' | Passes: '+r.passes+'/14'
+    +'<span class="det-meta">'+_esc(r.sector)+' | Score: <b>'+Math.round(r.score)+'</b>/240 | Tech: '+techScore+' Fund: '+fundScore+' | Passes: '+r.passes+'/'+(Array.isArray(r.rules)?r.rules.length:14)
       + (function(){
           var dte = (typeof getDaysToEarnings === 'function') ? getDaysToEarnings(r.ticker) : null;
           if (dte === null) return '';
@@ -10167,7 +10167,7 @@ function buildDetail(r,detId,emptyId){
        direction-neutral trading ever returns. */
     +'<span style="color:var(--gry);font-size:10px;">Strike: $'+fmt2(opt.strike)+'  |  Exp: '+opt.exp+'</span>'
     +'</div>'
-    +'<div class="s-hdr">RULE SCORECARD v3.5 <span style="font-size:10px;color:var(--gry);font-weight:400;">Tech '+techScore+' + Fund '+fundScore+' = '+r.score+'/150</span></div>'
+    +'<div class="s-hdr">RULE SCORECARD v4.0 <span style="font-size:10px;color:var(--gry);font-weight:400;">Tech '+techScore+' + Fund '+fundScore+' = '+r.score+'/240</span></div>'
     +'<div class="rules-grid">'+rulesHtml+'</div>'
     +'</div>'
     +'</div>'; // close det-signals wrapper
@@ -10732,7 +10732,7 @@ function renderBuySig(){
                :                  'var(--ngo)';
     var _tipParts = [
       'Rank tiebreakers (in order):',
-      '1. Score: ' + Math.round(r.score) + '/150',
+      '1. Score: ' + Math.round(r.score) + '/240',
       '2. Tech: ' + _tech + '/85',
       '3. RS 5D: ' + _rsTxt + ' (vs SPY)',
       '4. Theme: ' + _thTxt + ' (top sector score)',
@@ -12451,7 +12451,7 @@ function renderScan(){
                                  : (rs5d >= 0 ? '+' : '') + rs5d.toFixed(2) + '%';
 
     // Score bar \u2014 visual fill showing score out of 122
-    var scorePct=Math.round((r.score/150)*100);
+    var scorePct=Math.round((r.score/240)*100);
     var scoreBar='<div style="display:inline-flex;align-items:center;gap:5px;">'
       +'<b>'+Math.round(r.score)+'</b>'
       +'<div style="width:36px;height:4px;background:var(--bg3);border-radius:2px;display:inline-block;vertical-align:middle;">'
@@ -16443,7 +16443,7 @@ function fireBrowserNotif(ticker, score, sector, price, rulesSummary){
   var s = getNotifSettings();
   if(!s.browser) return;
   var n = new Notification('\u2605 HIGH CONVICTION: ' + ticker, {
-    body: 'Score: ' + score + '/150 | ' + sector + ' | $' + price.toFixed(2) + '\n' + rulesSummary,
+    body: 'Score: ' + score + '/240 | ' + sector + ' | $' + price.toFixed(2) + '\n' + rulesSummary,
     icon: 'https://ruizminer.github.io/rrjcar-Terminal-v3/favicon.ico',
     tag:  'rrjcar-' + ticker, // replaces previous notification for same ticker
     requireInteraction: true  // stays until user dismisses
@@ -16486,7 +16486,7 @@ function fireEmailAlert(ticker, score, sector, price, rulesSummary){
 function sendEmailJsAlert(s, ticker, score, sector, price, rulesSummary){
   emailjs.send(s.ejsService, s.ejsTemplate, {
     ticker:       ticker,
-    score:        score + '/150',
+    score:        score + '/240',
     sector:       sector,
     price:        '$' + price.toFixed(2),
     signal_time:  new Date().toLocaleString(),
@@ -16545,7 +16545,7 @@ function autoFillHighConviction(r, optData){
         + '<b>' + r.ticker + ' CALL</b>'
         + (optData && optData.strike ? ' &nbsp;$' + fmt2(optData.strike) : '')
         + (optData && optData.exp    ? ' &nbsp;Exp: ' + optData.exp : '')
-        + '<br>Score: <b>' + r.score + '/150</b> | ' + r.sector + ' | $' + fmt2(r.price)
+        + '<br>Score: <b>' + r.score + '/240</b> | ' + r.sector + ' | $' + fmt2(r.price)
         + '<br><span style="color:var(--gry);font-size:10px;">Review fields then click SUBMIT ORDER</span>';
       res.className = 'ord-result show';
       res.style.borderColor = 'var(--grn)';
@@ -17091,25 +17091,29 @@ function atExecuteTrade(signal, budget){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
 var STRATEGY_MODES = {
+  // Thresholds rebalanced 2026-04-30 for the new ~240-pt max scoring system
+  // (added 7 evidence-based rules: Minervini Template, Pocket Pivot, U/D Vol,
+  // VCP, BBW Squeeze, Donchian, JT 12-1). Approximate %-of-max preserved:
+  // HIGH CONVICTION ~83%, BREAKOUT/MOMENTUM ~67%, BEST ITM CALLS ~75%.
   highConviction: {
     label: '\u2605 HIGH CONVICTION',
-    desc: 'PROVEN ticker + Score \u226590 + Analyst Revisions \u2191 + GEX Call Heavy \u2014 the rarest, highest-quality setups',
-    filters: {sig:'GO', minScore:120, analyst:true, proven:true, gex:true}
+    desc: 'PROVEN ticker + Score \u2265200 + Analyst Revisions \u2191 + GEX Call Heavy \u2014 rarest, highest-quality setups (\u224883% of max)',
+    filters: {sig:'GO', minScore:200, analyst:true, proven:true, gex:true}
   },
   breakout: {
     label: '\u25b2 BREAKOUT',
-    desc: 'Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 \u2014 stocks breaking out with market leadership',
-    filters: {sig:'GO', minScore:89, hi52:true, rs:true, macd:true, tf:true}
+    desc: 'Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 \u2014 stocks breaking out with market leadership (\u226560% of max)',
+    filters: {sig:'GO', minScore:160, hi52:true, rs:true, macd:true, tf:true}
   },
   momentum: {
     label: '\u25b6 MOMENTUM',
-    desc: 'MACD + + Above EMA200 + Vol > Avg + RS > SPY \u2014 strong trending stocks with volume confirmation',
-    filters: {sig:'GO', minScore:89, macd:true, ema200:true, vol:true, rs:true}
+    desc: 'MACD + + Above EMA200 + Vol > Avg + RS > SPY \u2014 strong trending stocks with volume confirmation (\u226560% of max)',
+    filters: {sig:'GO', minScore:160, macd:true, ema200:true, rs:true}
   },
   bestItmCalls: {
     label: '\u25c6 BEST ITM CALLS',
-    desc: 'Score \u2265110 + liquid ($5+, 1M+ avg vol) + in-play today (vol \u2265 avg) + contract \u2264$8 \u2014 deep-ITM (\u03b4 0.70\u20130.90) calls on bullish momentum names. Click SCAN to run.',
-    filters: {sig:'GO', minScore:110, macd:true, ema200:true, vol:true, rs:true,
+    desc: 'Score \u2265180 + liquid ($5+, 1M+ avg vol) + in-play today + contract \u2264$8 \u2014 deep-ITM (\u03b4 0.70\u20130.90) calls on bullish momentum names (\u226575% of max)',
+    filters: {sig:'GO', minScore:180, macd:true, ema200:true, rs:true,
               minPrice:5, minAvgVol:1000000, volRatio:100, maxOptPrice:8}
   },
   preMarket: {
