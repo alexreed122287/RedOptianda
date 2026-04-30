@@ -7777,6 +7777,167 @@ async function _shadowRefreshScanForward() {
 }
 
 // Aggregate shadow-book stats — exposed for UI / console inspection.
+// ═══════════════════════════════════════════════════════════════════════════
+//  HIGH-CONVICTION SETUP FINDER — both-tier intersection helper
+//
+//  The scoring system rewards two opposing setups:
+//    1. TREND-CONFIRMED rules (Minervini Template, JT 12-1, Donchian breakout,
+//       52wk Hi <5%, Strong Sector) — fire when a stock is ALREADY ripping.
+//    2. CONSOLIDATION rules (Pocket Pivot, VCP — ATR Contraction, BBW Squeeze,
+//       U/D Volume Ratio) — fire BEFORE the breakout, on accumulation/coiling.
+//
+//  A stock that fires BOTH tiers simultaneously is the rare "caught the
+//  consolidation right at the breakout point" setup — exactly the early
+//  Stage-2 entry that long calls thrive on (vs. chasing extended trend).
+//
+//  Usage in browser console:
+//    findHighConvictionSetups()             // defaults: ≥2 trend, ≥2 consol
+//    findHighConvictionSetups({minTrend:3, minConsol:3, minScore:140})
+//    findExtendedTrend()                    // INVERSE — trend-fired but no consol
+// ═══════════════════════════════════════════════════════════════════════════
+
+var _RULE_TIERS = {
+  trend: [
+    'Minervini Trend Template',
+    'JT 12-1 Momentum',
+    '20d Donchian Breakout',
+    '52Wk Hi Prox <5% (G-H)',
+    '52Wk Hi Prox <15%',
+    'Strong Sector',
+    'EMA20 > EMA50',
+    'Price > EMA200',
+    'RS > SPY (5d)',
+    'RS > SPY (21d)',
+  ],
+  consol: [
+    'Pocket Pivot',
+    'VCP — ATR Contraction',
+    'BBW Squeeze (<p20 of 120d)',
+    'U/D Volume Ratio (50d)',
+    'ADX 15-25 + DI+>DI-',           // emerging trend, not late confirmation
+    'RSI 50-65 (Cardwell)',          // mid-zone re-entry
+  ],
+};
+
+function _rulePassedByName(rules, name) {
+  if (!Array.isArray(rules)) return false;
+  for (var i = 0; i < rules.length; i++) {
+    if (rules[i] && rules[i].n === name && rules[i].pass) return true;
+  }
+  return false;
+}
+
+function _countTierPasses(rules, tierNames) {
+  if (!Array.isArray(rules)) return 0;
+  var n = 0;
+  for (var i = 0; i < tierNames.length; i++) {
+    if (_rulePassedByName(rules, tierNames[i])) n++;
+  }
+  return n;
+}
+
+// Returns sorted array of high-conviction setups (≥minTrend trend + ≥minConsol
+// consolidation rules passing). Logs a pretty table to the console for fast
+// scanning. Returns the data so it's callable from other code.
+function findHighConvictionSetups(opts) {
+  opts = opts || {};
+  var minTrend = (opts.minTrend != null) ? opts.minTrend : 2;
+  var minConsol = (opts.minConsol != null) ? opts.minConsol : 2;
+  var minScore = (opts.minScore != null) ? opts.minScore : 0;
+  var requireEnriched = (opts.requireEnriched !== false);
+
+  if (!G.results || !G.results.length) {
+    console.warn('[hi-conviction] No scan results in memory. Run a scan first.');
+    return [];
+  }
+
+  var hits = [];
+  G.results.forEach(function(r) {
+    if (requireEnriched && !r.indEnriched) return;
+    if (r.score < minScore) return;
+    var t = _countTierPasses(r.rules, _RULE_TIERS.trend);
+    var c = _countTierPasses(r.rules, _RULE_TIERS.consol);
+    if (t >= minTrend && c >= minConsol) {
+      hits.push({
+        ticker: r.ticker,
+        score: r.score,
+        sector: r.sector,
+        trendPasses: t,
+        consolPasses: c,
+        isGo: !!r.isGo,
+        // Which specific rules fired — useful for triage
+        trendRules: _RULE_TIERS.trend.filter(function(n){ return _rulePassedByName(r.rules, n); }),
+        consolRules: _RULE_TIERS.consol.filter(function(n){ return _rulePassedByName(r.rules, n); }),
+      });
+    }
+  });
+
+  hits.sort(function(a, b){
+    // Primary: most consolidation passes (rarer, more important for entry timing)
+    if (b.consolPasses !== a.consolPasses) return b.consolPasses - a.consolPasses;
+    // Secondary: highest score
+    return b.score - a.score;
+  });
+
+  console.log('[hi-conviction] '+hits.length+' both-tier setups (≥'+minTrend+' trend + ≥'+minConsol+' consol):');
+  if (hits.length > 0) {
+    console.table(hits.map(function(h){
+      return {
+        ticker: h.ticker,
+        score: h.score,
+        trend: h.trendPasses + '/' + _RULE_TIERS.trend.length,
+        consol: h.consolPasses + '/' + _RULE_TIERS.consol.length,
+        isGo: h.isGo ? '✓' : '',
+        sector: h.sector,
+      };
+    }));
+  }
+  return hits;
+}
+
+// INVERSE — find extended trends where consol rules ALL failed. These are the
+// "missed-the-entry, chasing extended" setups to AVOID for long calls.
+// Useful for de-risking a candidate list: if your scan has 30 trend-fired
+// names but 25 of them failed all 4 consolidation rules, those 25 are
+// chase-trades not entry-trades.
+function findExtendedTrend(opts) {
+  opts = opts || {};
+  var minTrend = (opts.minTrend != null) ? opts.minTrend : 3;
+  var maxConsol = (opts.maxConsol != null) ? opts.maxConsol : 0;
+  var minScore = (opts.minScore != null) ? opts.minScore : 100;
+
+  if (!G.results || !G.results.length) {
+    console.warn('[extended] No scan results in memory. Run a scan first.');
+    return [];
+  }
+
+  var hits = [];
+  G.results.forEach(function(r) {
+    if (!r.indEnriched) return;
+    if (r.score < minScore) return;
+    var t = _countTierPasses(r.rules, _RULE_TIERS.trend);
+    var c = _countTierPasses(r.rules, _RULE_TIERS.consol);
+    if (t >= minTrend && c <= maxConsol) {
+      hits.push({
+        ticker: r.ticker,
+        score: r.score,
+        sector: r.sector,
+        trendPasses: t,
+        consolPasses: c,
+      });
+    }
+  });
+
+  hits.sort(function(a, b){ return b.score - a.score; });
+  console.log('[extended] '+hits.length+' extended-trend candidates (≥'+minTrend+' trend, ≤'+maxConsol+' consol — likely chase-trades for long calls):');
+  if (hits.length > 0) {
+    console.table(hits.map(function(h){
+      return { ticker: h.ticker, score: h.score, trend: h.trendPasses, consol: h.consolPasses, sector: h.sector };
+    }));
+  }
+  return hits;
+}
+
 function shadowBookStats() {
   var arr = _shadowLoad();
   function avg(vals) {
