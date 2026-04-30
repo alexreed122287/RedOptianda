@@ -1082,6 +1082,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <!-- API counter relocated to top of API tab; keep #api-counter-badge in DOM (hidden) so existing JS that updates textContent still works -->
     <span id="api-counter-badge" style="display:none !important;" onclick="showApiBreakdown()">API: 0</span>
     <span id="hdr-scan-status" title="Scan status — click to jump to FULL SCANNER" onclick="switchTab('sc')" style="display:none;cursor:pointer;background:rgba(112,144,200,0.08);border:1px solid rgba(112,144,200,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--gry);letter-spacing:.5px;user-select:none;">SCAN: idle</span>
+    <span id="bg-enrich-badge" style="display:none;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--blub);letter-spacing:.5px;user-select:none;">↻ ENRICH 0/0</span>
     <span id="hdr-autoscan" title="Auto-scan settings — click to expand" onclick="toggleAutoScanPanel()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;user-select:none;">AUTO: OFF</span>
   </div>
 </div>
@@ -8528,6 +8529,144 @@ async function fetchIndicatorHistory(ticker){
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
+//  BACKGROUND ENRICHMENT — gradually fill G_HIST_CACHE for tickers ranked
+//  61-200 after a scan completes, so the new evidence-based rules
+//  (Minervini Trend Template, JT 12-1, Pocket Pivot, BBW Squeeze, VCP,
+//  Donchian, U/D Volume) can fire on more than just the foreground top-60.
+//
+//  Design (2026-04-29):
+//   - Triggered 30 seconds after _maybeFinishScan completes
+//   - Processes ONE ticker per 2 seconds (~30/min, well under 115/min worker)
+//   - Tradier history only — FMP is left for explicit detail-pane clicks
+//     (preserves daily FMP quota for what the user actually inspects)
+//   - Auto-pauses if user starts a new scan, manually clicks a detail pane,
+//     or worker rate limits hit
+//   - Stops at rank 200 (configurable via _BG_ENRICH_MAX_RANK)
+//   - Idempotent: skips already-enriched (r.indEnriched=true) tickers
+//   - Re-scores each ticker after enrichment so r.score reflects the new
+//     rules' contributions; renderBuySig + renderScan refresh the UI
+// ═══════════════════════════════════════════════════════════════════════════
+
+window._bgEnrich = window._bgEnrich || {
+  active: false,
+  paused: false,
+  cursor: 0,
+  total: 0,
+  enriched: 0,
+  intervalId: null,
+  startedAt: 0,
+};
+var _BG_ENRICH_MAX_RANK = 200;     // process tickers ranked 1-200; foreground enrich already covers 1-60
+var _BG_ENRICH_TICK_MS = 2000;     // 1 fetch per 2s = 30/min (well under 115/min worker cap)
+var _BG_ENRICH_START_DELAY = 30000; // 30s after scan finishes before starting
+
+function _startBgEnrichment() {
+  // Don't start if a scan is mid-flight or another enrichment cycle is already running.
+  if (G.scanRunning) return;
+  if (window._bgEnrich.active) return;
+  if (!G.results || G.results.length === 0) return;
+  // Sort current results so cursor maps to ranking
+  var ranked = G.results.slice().sort(_resultRankCompare);
+  var queue = ranked.slice(0, _BG_ENRICH_MAX_RANK).filter(function(r){ return !r.indEnriched; });
+  if (queue.length === 0) {
+    console.log('[bg-enrich] all top-'+_BG_ENRICH_MAX_RANK+' already enriched; skipping');
+    return;
+  }
+  window._bgEnrich.active = true;
+  window._bgEnrich.paused = false;
+  window._bgEnrich.cursor = 0;
+  window._bgEnrich.total = queue.length;
+  window._bgEnrich.enriched = 0;
+  window._bgEnrich.startedAt = Date.now();
+  window._bgEnrich.queue = queue;
+  console.log('[bg-enrich] starting — '+queue.length+' tickers queued (rank 61-'+_BG_ENRICH_MAX_RANK+')');
+  _renderBgEnrichBadge();
+  window._bgEnrich.intervalId = setInterval(_bgEnrichTick, _BG_ENRICH_TICK_MS);
+}
+
+async function _bgEnrichTick() {
+  var st = window._bgEnrich;
+  if (!st.active || st.paused) return;
+  if (st.cursor >= st.queue.length) { _stopBgEnrichment('completed'); return; }
+  var r = st.queue[st.cursor++];
+  if (r.indEnriched) { return; } // double-check before fetching (e.g., user clicked detail meanwhile)
+  try {
+    var days = await fetchIndicatorHistory(r.ticker);
+    if (days && days.length >= 100) {
+      G_HIST_CACHE[r.ticker] = days;
+      r.indEnriched = true;
+      st.enriched++;
+      // Re-score with new history; the 7 new rules can now compute
+      try {
+        var newScore = scoreIt(r.ticker, r.ind, r.opt);
+        r.score = newScore.score;
+        r.techScore = newScore.techScore;
+        r.fundScore = newScore.fundScore;
+        r.isGo = newScore.isGo;
+        r.rules = newScore.rules;
+        r.passes = newScore.passes;
+      } catch(e) { /* per-ticker score failure is non-fatal */ }
+    }
+  } catch (e) {
+    // Rate-limit hit (429) or network — pause for 60s then resume
+    if (e && /429|rate|limit/i.test(String(e.message || e))) {
+      console.warn('[bg-enrich] rate-limit hit, pausing 60s');
+      st.paused = true;
+      setTimeout(function(){ st.paused = false; }, 60000);
+    }
+  }
+  _renderBgEnrichBadge();
+  // Re-render scan results table every 10 enrichments so the user sees
+  // updated scores without a full refresh storm.
+  if (st.enriched > 0 && st.enriched % 10 === 0) {
+    try { G.results.sort(_resultRankCompare); G.filtered = excludedFilteredResults(); renderBuySig(); renderScan(); } catch(_){}
+  }
+}
+
+function _stopBgEnrichment(reason) {
+  var st = window._bgEnrich;
+  if (st.intervalId) { clearInterval(st.intervalId); st.intervalId = null; }
+  console.log('[bg-enrich] stopped ('+reason+') — enriched '+st.enriched+'/'+st.total+' in '+Math.round((Date.now()-st.startedAt)/1000)+'s');
+  st.active = false;
+  // Final re-sort + render
+  try {
+    G.results.sort(_resultRankCompare);
+    G.filtered = excludedFilteredResults();
+    renderBuySig();
+    renderScan();
+  } catch(_){}
+  _renderBgEnrichBadge();
+}
+
+function _pauseBgEnrichment(reason) {
+  var st = window._bgEnrich;
+  if (!st.active) return;
+  console.log('[bg-enrich] paused ('+(reason||'manual')+')');
+  st.paused = true;
+}
+function _resumeBgEnrichment() {
+  var st = window._bgEnrich;
+  if (!st.active) return;
+  console.log('[bg-enrich] resumed');
+  st.paused = false;
+}
+
+function _renderBgEnrichBadge() {
+  var el = document.getElementById('bg-enrich-badge');
+  if (!el) return;
+  var st = window._bgEnrich;
+  if (!st.active) {
+    el.style.display = 'none';
+    return;
+  }
+  el.style.display = 'inline-flex';
+  el.textContent = (st.paused ? '⏸' : '↻') + ' ENRICH ' + st.enriched + '/' + st.total;
+  el.title = 'Background enrichment of tickers ranked 61–'+_BG_ENRICH_MAX_RANK+
+             '. ' + (st.paused ? 'Paused (rate limit or scan in progress).' :
+                                  'Fetching ~30 tickers/min so the new evidence-based rules can score them.');
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
 //  LUXALGO SMC — BEARISH ORDER BLOCK DETECTION (Internal OBs, pivot size 5)
 //  Port of LuxAlgo "Smart Money Concepts" v5 (CC BY-NC-SA 4.0)
 //  Separate 260-day daily cache; 24hr TTL. Used by "Clear Bearish OB ≥5%" filter.
@@ -11198,6 +11337,9 @@ async function runScan(opts){
   }
 
   G.scanRunning = true;
+  // Halt any in-flight background enrichment so its rate-limit usage
+  // doesn't conflict with the foreground scan's bulk-quote burst.
+  try { if (typeof _stopBgEnrichment === 'function') _stopBgEnrichment('new scan started'); } catch(_){}
 
   var key = _getTradierKey();
   var mode = localStorage.getItem('rrjcar_mode') || 'sandbox';
@@ -11423,6 +11565,13 @@ function finishScan(){
     G._scanFinishedAt = Date.now();   // INTRADAY industry view reads this for the freshness label
     G.scanRunning = false;     // gate cleared HERE, not after the bulk pass
     clearTimeout(_watchdogId);
+    // Background enrichment: 30s after scan finishes, gradually fill
+    // G_HIST_CACHE for tickers ranked 61-200 so the new evidence-based rules
+    // can score them. Throttled to ~30/min, auto-pauses on user activity.
+    setTimeout(function(){
+      try { if (typeof _startBgEnrichment === 'function') _startBgEnrichment(); }
+      catch(e){ console.warn('[bg-enrich] start threw:', e && e.message || e); }
+    }, _BG_ENRICH_START_DELAY);
     // Final render so the last batch under the throttle threshold lands
     G.results.sort(_resultRankCompare);
     G.filtered = excludedFilteredResults();
@@ -11434,29 +11583,45 @@ function finishScan(){
       try { indDraw(); } catch(_){}
     }
     // Cache FULLY-ENRICHED results. Persists what renderBuySig + buildDetail
-    // need on the next page load (rules table + minimal indicator snapshot)
-    // while stripping the heavyweight `opt` greeks blob (re-fetched on detail
-    // click). Earlier slim-cache crashed renderBuySig with `r.ind.rsi`
-    // undefined \u2014 now we keep r.ind (small) and r.rules (~14 short objects
-    // per ticker, well under quota for ~750 tickers).
+    // need on the next page load. 2026-04-29: with the new 26-rule scoring
+    // engine + 1660-ticker universe, the full slim cache was exceeding
+    // localStorage's 5MB cap and silently failing \u2014 leaving the user with
+    // no cached results on reload. Now caps at top-300 by score (still
+    // covers GO-threshold candidates with margin) and explicitly logs +
+    // toasts on quota failure so the user knows.
     try {
-      var slim = G.results.map(function(r){
+      var SLIM_CAP = 300;
+      var ranked = G.results.slice().sort(_resultRankCompare);
+      var slim = ranked.slice(0, SLIM_CAP).map(function(r){
         return { ticker:r.ticker, sector:r.sector, score:r.score, isGo:r.isGo,
                  techScore:r.techScore, fundScore:r.fundScore,
                  price:r.price, change:r.change, changePct:r.changePct,
                  volume:r.volume, avgVol:r.avgVol,
                  fmpEnriched:!!r.fmpEnriched, indEnriched:!!r.indEnriched,
-                 // Keep ind (tiny \u2014 rsi/adx/ema flags) + rules (small) so
-                 // renderBuySig / buildDetail don't NPE on cache restore.
                  ind: r.ind || {},
-                 rules: Array.isArray(r.rules) ? r.rules : [],
+                 // Trim rules to only PASSING ones \u2014 failing rules can be re-derived
+                 // on detail click. Roughly halves the rule-array size.
+                 rules: Array.isArray(r.rules) ? r.rules.filter(function(rl){ return rl.pass; }) : [],
                  passes: Array.isArray(r.passes) ? r.passes : []
-                 // (opt is the heavy greeks blob \u2014 re-fetched on detail click)
         };
       });
-      cacheSet(CACHE_KEYS.scanResults, slim);
-      cacheSet(CACHE_KEYS.scanTs, Date.now());
-    } catch(_) { /* quota \u2014 skip cache, scan still works in-session */ }
+      var slimStr = JSON.stringify(slim);
+      try {
+        localStorage.setItem(CACHE_KEYS.scanResults, slimStr);
+        localStorage.setItem(CACHE_KEYS.scanTs, JSON.stringify(Date.now()));
+        console.log('[scan-cache] persisted top '+slim.length+'/'+G.results.length+' results, '+(slimStr.length/1024).toFixed(0)+'KB');
+      } catch(quotaErr) {
+        console.warn('[scan-cache] localStorage write failed ('+(quotaErr.name||'?')+') \u2014 '+(slimStr.length/1024).toFixed(0)+'KB attempted. Reducing to top-100 retry.');
+        try {
+          var smaller = slim.slice(0, 100);
+          localStorage.setItem(CACHE_KEYS.scanResults, JSON.stringify(smaller));
+          localStorage.setItem(CACHE_KEYS.scanTs, JSON.stringify(Date.now()));
+          console.log('[scan-cache] persisted reduced top-100 fallback');
+        } catch(e2) {
+          if (typeof toast === 'function') toast('\u26a0 Scan cache failed (localStorage full). Results visible this session only.');
+        }
+      }
+    } catch(_) { /* serialization throw \u2014 extremely unlikely */ }
     var goCountFinal = G.results.filter(function(r){ return r.isGo; }).length;
     setScanComplete({
       scanned: (typeof UNIVERSE_FULL !== 'undefined') ? UNIVERSE_FULL.length : 0,
