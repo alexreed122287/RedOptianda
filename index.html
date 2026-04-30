@@ -139,34 +139,6 @@ a{color:var(--blu);text-decoration:none;}
   box-sizing: border-box !important;
 }
 
-/* Miniature Adanos sentiment chips. Compact pill with platform letter +
-   buzz number; left border tinted by net sentiment (green pos / red neg /
-   amber neutral). Hover tooltip carries the full BUZZ / SENT / BULL /
-   BEAR breakdown so the user can read the raw signal without leaving the
-   current tab. */
-.hdr-adanos {
-  cursor: pointer;
-  background: rgba(0, 212, 255, 0.04);
-  border: 1px solid var(--gry2);
-  border-left: 3px solid var(--gry2);
-  border-radius: 3px;
-  padding: 1px 8px;
-  font-size: 10px;
-  font-family: var(--ff-mono);
-  color: var(--gry);
-  letter-spacing: .5px;
-  white-space: nowrap;
-  user-select: none;
-  transition: border-color .2s, color .2s;
-  height: 28px;
-  display: inline-flex;
-  align-items: center;
-}
-.hdr-adanos:hover { color: var(--wht); border-color: var(--amb); }
-.hdr-adanos.sent-pos { border-left-color: var(--grn); color: var(--grn); }
-.hdr-adanos.sent-neg { border-left-color: var(--ngo); color: var(--ngo); }
-.hdr-adanos.sent-neu { border-left-color: var(--wrn); color: var(--wrn); }
-.hdr-adanos.sent-loading { opacity: 0.6; }
 #mode-badge{background:var(--amb3);color:var(--ambb);border:1px solid var(--amb);font-size:10px;font-weight:700;}
 /* z-index higher than logo so any overflow from header can't cover the
    tab text (defense against the header-obstruction class of bug). */
@@ -872,8 +844,6 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    but an iframe falls back to its default 150px. The 80px buffer covers
    the header (32px) + nav (~45px) above #app on wide viewports; narrow
    viewports where the header wraps will scroll a bit, which is fine. */
-#tab-sent{height:calc(100vh - 80px);min-height:500px;}
-#tab-sent #sent-iframe{height:100%;min-height:500px;}
 .chain-tabs{display:flex;gap:0;border-bottom:var(--bdr);background:var(--bg1);flex-shrink:0;}
 .chain-tab{padding:6px 14px;font-family:var(--ff-mono);font-size:11px;color:var(--gry);cursor:pointer;border-bottom:2px solid transparent;letter-spacing:.5px;}
 .chain-tab.active{color:var(--ambb);border-bottom-color:var(--ambb);}
@@ -1064,15 +1034,6 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <button id="push-toggle" onclick="requestPushPerm()" title="Enable browser notifications for order fills, stop-loss triggers, rolls, and share buys" style="display:none !important;">NOTIFY</button>
     <span id="hdr-opt-bp" title="Option buying power from Tradier \u2014 click to refresh" onclick="fetchBalances()" style="display:none !important;">OPT BP: --</span>
     <span id="hdr-trade-token" title="Trade authorization for this session. Held in memory only \u2014 re-prompted next session." onclick="promptTradeToken()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;">TRADE: locked</span>
-    <!-- Miniature Adanos sentiment chips. BUZZ score + colored dot for net
-         sentiment (green positive / red negative / amber neutral). Click any
-         chip to jump to the SENTIMENT tab for the full panel breakdown. Live
-         data from adanos-proxy.alexander-s-reed.workers.dev \u2014 refreshed every
-         5 minutes by _refreshAdanosChips below. -->
-    <span id="hdr-adanos-r" class="hdr-adanos" data-platform="reddit" onclick="switchTab('sent')" title="Reddit market sentiment \u2014 click to open full panel">R: --</span>
-    <span id="hdr-adanos-x" class="hdr-adanos" data-platform="x" onclick="switchTab('sent')" title="X / Twitter market sentiment \u2014 click to open full panel">X: --</span>
-    <span id="hdr-adanos-n" class="hdr-adanos" data-platform="news" onclick="switchTab('sent')" title="News market sentiment \u2014 click to open full panel">N: --</span>
-    <span id="hdr-adanos-p" class="hdr-adanos" data-platform="polymarket" onclick="switchTab('sent')" title="Polymarket market sentiment \u2014 click to open full panel">P: --</span>
     <!-- Clock relocated next to OPTION PANDA logo. Hidden span kept so the
          existing updateClock() that writes to #clk continues to work. The
          visible value is mirrored to #clk-logo by updateClock below. -->
@@ -1132,7 +1093,6 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   <button class="ntab" onclick="switchTab('pos')">POSITIONS</button>
   <button class="ntab" onclick="switchTab('order')">ORDER TICKET</button>
   <button class="ntab" onclick="switchTab('al')">ALERTS</button>
-  <button class="ntab" onclick="switchTab('sent')">SENTIMENT</button>
   <button class="ntab" onclick="switchTab('api')">API</button>
   <button class="ntab" onclick="switchTab('pf')">PORTFOLIO</button>
   <button class="ntab" onclick="switchTab('ind')">INDUSTRY</button>
@@ -1776,16 +1736,6 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     </div>
 
   </div>
-</div>
-
-<div class="tab-pane" id="tab-sent">
-  <iframe id="sent-iframe"
-    title="Sentiment Panel"
-    src="about:blank"
-    style="border:0;width:100%;height:100%;flex:1;background:var(--bg0);"
-    referrerpolicy="no-referrer"
-    loading="lazy"
-    sandbox="allow-scripts allow-popups allow-forms"></iframe>   <!-- dropped allow-same-origin: combo with allow-scripts is the well-known sandbox-escape footgun -->
 </div>
 
 <div class="tab-pane" id="tab-al">
@@ -4863,7 +4813,6 @@ function switchTab(id){
   var btn=document.querySelector('.ntab[onclick="switchTab(\''+id+'\')"]');
   if(btn)btn.classList.add('active');
   if(id==='al')renderAlerts();
-  if(id==='sent'){ if(typeof renderSentimentTab==='function') renderSentimentTab(); }
   if(id==='ind')renderIndustryTab();
   if(id==='closed'){
     // Load from cache first, show stale banner
@@ -10855,7 +10804,6 @@ function renderBuySig(){
   if(G.results.length>0&&!G.selTicker){viewDetail(G.results[0].ticker,'bs-detail','bs-empty');}
 
   // Cross-tab indicators on each card: ◉ for loud-on-sentiment, ⚡ for member-of-strong-industry-theme
-  if(typeof decorateSentiment === 'function') decorateSentiment();
   if(typeof decorateIndustry  === 'function') decorateIndustry();
 }
 
@@ -12376,289 +12324,6 @@ function sortTable(col){
   renderScan();
 }
 
-// ══════════════════════════════════════════════════════════════════════════
-//  SENTIMENT OVERLAY — consumes sentiment-panel/data/latest.json
-//  Three read-only uses: header regime badge, per-row loud-ticker badge,
-//  visual tiebreaker via color. Never used to time entries.
-// ══════════════════════════════════════════════════════════════════════════
-var SENT = { regime: null, loudMap: {}, loadedAt: 0, status: 'idle' };
-var SENT_URL = 'https://alexreed122287.github.io/sentiment-panel/data/latest.json';
-var SENT_REFRESH_MS = 30 * 60 * 1000;  // 30 minutes (client poll). Underlying snapshot rebuilds hourly 9a-3p ET, weekdays.
-
-function loadSentiment(){
-  SENT.status = 'loading';
-  // If sent tab is visible, re-render to show the "Refreshing…" state in the toolbar
-  var sp = document.getElementById('tab-sent');
-  if(sp && sp.classList.contains('active') && SENT.raw && typeof renderSentimentTab === 'function') renderSentimentTab();
-  fetch(SENT_URL, {cache:'no-cache'}).then(function(r){
-    if(!r.ok) throw new Error('HTTP '+r.status);
-    return r.json();
-  }).then(function(j){
-    SENT.raw = j;
-    SENT.regime = j.regime || null;
-    SENT.loudMap = {};
-    (j.loud_tickers || []).forEach(function(t){ SENT.loudMap[t.ticker] = t; });
-    SENT.tickerSent = j.ticker_sentiment || {};
-    SENT.trending = j.trending || [];
-    SENT.redditCashtags = j.reddit_cashtags || [];
-    SENT.loadedAt = Date.now();
-    SENT.status = 'ok';
-    updateRegimeBadge();
-    if(typeof decorateSentiment === 'function') decorateSentiment();
-    // Re-render sent tab if it's currently visible
-    var sentPane = document.getElementById('tab-sent');
-    if(sentPane && sentPane.classList.contains('active') && typeof renderSentimentTab === 'function') renderSentimentTab();
-  }).catch(function(e){
-    SENT.status = 'error';
-    SENT.error = String(e);
-    updateRegimeBadge();
-  });
-}
-
-// Build a compact 30-day F&G sparkline as inline SVG
-function fgSparklineSVG(history, w, h){
-  if(!history || !history.length) return '';
-  w = w || 52; h = h || 12;
-  var vals = history.map(function(p){ return p.score; });
-  var min = Math.min.apply(null, vals);
-  var max = Math.max.apply(null, vals);
-  var range = Math.max(max - min, 1);
-  var pts = vals.map(function(v, i){
-    var x = (i / (vals.length - 1 || 1)) * w;
-    var y = h - ((v - min) / range) * h;
-    return x.toFixed(1) + ',' + y.toFixed(1);
-  }).join(' ');
-  var last = vals[vals.length - 1];
-  var color = regimeColor(last);
-  return '<svg width="' + w + '" height="' + h + '" viewBox="0 0 ' + w + ' ' + h +
-         '" style="vertical-align:middle;margin-left:4px;overflow:visible;">' +
-         '<polyline fill="none" stroke="' + color + '" stroke-width="1.2" points="' + pts + '"/>' +
-         '</svg>';
-}
-
-function regimeColor(score){
-  if(score == null) return 'var(--gry)';
-  if(score <= 24) return '#ef4444';      // extreme fear — red
-  if(score <= 44) return '#f59e0b';      // fear — orange
-  if(score <= 55) return 'var(--gry)';   // neutral — gray
-  if(score <= 75) return 'var(--grn)';   // greed — green
-  return '#fbbf24';                       // extreme greed — yellow (contrarian signal)
-}
-
-function updateRegimeBadge(){
-  var el = document.getElementById('hdr-sent');
-  if(!el) return;
-  if(SENT.status === 'loading' && !SENT.regime){ el.innerHTML = 'F&G: …'; return; }
-  if(SENT.status === 'error' || !SENT.regime || SENT.regime.ok === false){
-    el.innerHTML = 'F&G: --';
-    el.style.color = 'var(--gry)';
-    el.style.borderColor = 'var(--gry2)';
-    el.title = 'Sentiment feed unavailable' + (SENT.error ? ': ' + SENT.error : '');
-    return;
-  }
-  var r = SENT.regime;
-  var c = regimeColor(r.score);
-  var spark = fgSparklineSVG(r.history || [], 48, 12);
-  // S-2: escape Adanos-returned rating string (sentiment API). Score is
-  // Math.round() so always numeric; rating is free-form text.
-  el.innerHTML = '<span style="vertical-align:middle;">F&amp;G: ' + Math.round(r.score) + ' ' + _esc((r.rating || '').toUpperCase()) + '</span>' + spark;
-  el.style.color = c;
-  el.style.borderColor = c;
-  var age = Math.round((Date.now() - new Date(r.timestamp || SENT.loadedAt).getTime()) / 60000);
-  el.title = 'CNN Fear & Greed: ' + r.score.toFixed(1) + ' (' + r.rating + ')\n' +
-             'Prev close: ' + r.previous_close + ' · 1wk: ' + r.previous_1_week + ' · 1mo: ' + r.previous_1_month + '\n' +
-             'Sparkline: last ' + (r.history ? r.history.length : 0) + ' sessions. Updated ' + age + ' min ago. Click to refresh.';
-}
-
-function injectSentimentBadge(){
-  // F&G sentiment badge hidden per user spec — sentiment data still loads in
-  // the SENTIMENT tab. The DOM element is no longer injected at all so it
-  // can't visually appear in the header.
-  return;
-}
-
-// ────────────────────────────────────────────────────────────────────────
-// Miniature Adanos chips in the header (Reddit / X / News / Polymarket)
-// ────────────────────────────────────────────────────────────────────────
-// Pulls market-sentiment from the Adanos worker proxy on a 5-min cadence
-// and updates four header chips with BUZZ + sentiment color. Click any
-// chip to switch to the SENTIMENT tab for the full panel breakdown.
-//
-// Endpoint: <proxy>/<platform>/stocks/v1/market-sentiment?days=1
-// Response shape: { buzz_score, sentiment_score, bullish_pct, bearish_pct, mentions, ... }
-//
-// Sentiment color buckets:
-//   sentiment_score >  +0.05  → positive (green)
-//   sentiment_score <  -0.05  → negative (red)
-//   otherwise                  → neutral (amber)
-
-var ADANOS_PROXY = 'https://adanos-proxy.alexander-s-reed.workers.dev';
-var ADANOS_REFRESH_MS = 5 * 60 * 1000;
-var _adanosTimer = null;
-
-function _adanosClassify(sent){
-  if (sent == null || isNaN(sent)) return 'sent-loading';
-  if (sent > 0.05) return 'sent-pos';
-  if (sent < -0.05) return 'sent-neg';
-  return 'sent-neu';
-}
-
-function _refreshAdanosChips(){
-  var platforms = [
-    { id: 'reddit',     path: '/reddit/stocks/v1',     elId: 'hdr-adanos-r', letter: 'R' },
-    { id: 'x',          path: '/x/stocks/v1',          elId: 'hdr-adanos-x', letter: 'X' },
-    { id: 'news',       path: '/news/stocks/v1',       elId: 'hdr-adanos-n', letter: 'N' },
-    { id: 'polymarket', path: '/polymarket/stocks/v1', elId: 'hdr-adanos-p', letter: 'P' },
-  ];
-  platforms.forEach(function(p){
-    var el = document.getElementById(p.elId);
-    if (!el) return;
-    el.classList.add('sent-loading');
-    fetch(ADANOS_PROXY + p.path + '/market-sentiment?days=1', {
-      method: 'GET',
-      // Note: this fetch goes through the scanner's main fetch monkey-patch.
-      // Adanos worker uses its own auth (key injected server-side), so no
-      // X-Live-Token / X-Trade-Token needed here.
-    })
-    .then(function(r){ if (!r.ok) throw new Error('HTTP '+r.status); return r.json(); })
-    .then(function(d){
-      var buzz = (d && typeof d.buzz_score === 'number') ? d.buzz_score : null;
-      var sent = (d && typeof d.sentiment_score === 'number') ? d.sentiment_score : null;
-      var bull = (d && typeof d.bullish_pct === 'number') ? d.bullish_pct : null;
-      var bear = (d && typeof d.bearish_pct === 'number') ? d.bearish_pct : null;
-      el.classList.remove('sent-loading','sent-pos','sent-neg','sent-neu');
-      el.classList.add(_adanosClassify(sent));
-      el.textContent = p.letter + ': ' + (buzz != null ? buzz.toFixed(0) : '--');
-      el.title = p.id.toUpperCase() + ' market sentiment\n'
-        + 'BUZZ ' + (buzz != null ? buzz.toFixed(1) : '--')
-        + '   SENT ' + (sent != null ? (sent >= 0 ? '+' : '') + sent.toFixed(2) : '--')
-        + '\nBULL ' + (bull != null ? bull + '%' : '--')
-        + '   BEAR ' + (bear != null ? bear + '%' : '--')
-        + '\nClick to open SENTIMENT tab for full panels.';
-    })
-    .catch(function(err){
-      el.classList.remove('sent-loading','sent-pos','sent-neg','sent-neu');
-      el.textContent = p.letter + ': --';
-      el.title = p.id.toUpperCase() + ' sentiment unavailable: ' + (err && err.message || err);
-    });
-  });
-}
-
-function _startAdanosChips(){
-  if (_adanosTimer) return;
-  _refreshAdanosChips();
-  _adanosTimer = setInterval(_refreshAdanosChips, ADANOS_REFRESH_MS);
-}
-
-// Called at the end of renderScan() to paint loud-ticker badges on rows.
-// Color is driven by `net` (bull-bear normalized to -1..+1) which accounts
-// for neutral messages; falls back to bull_pct if net is unavailable.
-function decorateSentiment(){
-  if(!SENT.loudMap || SENT.status !== 'ok') return;
-  // Both FULL SCANNER (tr[data-ticker]) and BUY SIGNALS (.sig-card[data-ticker])
-  // get the same loud-ticker badge — anchor differs by container type.
-  var nodes = document.querySelectorAll('tr[data-ticker], .sig-card[data-ticker]');
-  nodes.forEach(function(node){
-    var tk = node.dataset.ticker;
-    var loud = SENT.loudMap[tk];
-    if(!loud) return;
-    var tdTk = node.matches('tr') ? node.children[1] : node.querySelector('.tk');
-    if(!tdTk || tdTk.querySelector('.sent-badge')) return;
-    var net = loud.net;           // -1..+1, tagged-messages-only
-    var bp  = loud.bull_pct;      // 0..100, tagged-messages-only
-    var color, label;
-    if(net != null){
-      color = net >= 0.3 ? 'var(--grn)' : net <= -0.3 ? 'var(--red)' : 'var(--amb)';
-      label = (net >= 0 ? '+' : '') + net.toFixed(2);
-    } else if(bp != null){
-      color = bp >= 60 ? 'var(--grn)' : bp <= 40 ? 'var(--red)' : 'var(--amb)';
-      label = bp + '% bull';
-    } else {
-      color = 'var(--amb)';
-      label = 'untagged';
-    }
-    var srcs = (loud.sources || []).join('+');
-    var tip = 'Loud on ' + srcs + ' · net ' + label +
-              (bp != null ? ' (' + bp + '% bull)' : '') +
-              (loud.reddit_mentions ? ' · ' + loud.reddit_mentions + ' Reddit posts' : '') +
-              (loud.stocktwits_score ? ' · StT score ' + loud.stocktwits_score : '') +
-              (loud.message_count ? ' · ' + loud.message_count + ' msgs' : '');
-    var badge = document.createElement('span');
-    badge.className = 'sent-badge';
-    badge.style.cssText = 'margin-left:4px;font-size:9px;color:'+color+';vertical-align:middle;';
-    badge.title = tip;
-    badge.textContent = '\u25c9';  // fisheye glyph
-    tdTk.appendChild(badge);
-  });
-}
-
-// Boot: pre-fetch IND data so industry badges appear on BS/SC rows without
-// requiring the user to visit the INDUSTRY tab first. Cheap (~30 KB JSON).
-(function(){
-  function bootInd(){ if(typeof renderIndustryTab === 'function') renderIndustryTab(); }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bootInd);
-  else bootInd();
-})();
-
-// ── SENT tab renderer ──────────────────────────────────────────────────
-// Tab body is now a full-pane iframe to https://alexreed122287.github.io/sentiment-panel/
-// (the standalone React/Vite dashboard from the sentiment-panel repo). The legacy
-// SENT loader still runs on its 30-min poll because the header F&G badge and per-row
-// loud-ticker decorations consume SENT.regime / SENT.loudMap independently of this tab.
-var SENT_PANEL_URL = 'https://alexreed122287.github.io/sentiment-panel/';
-function renderSentimentTab(){
-  var iframe = document.getElementById('sent-iframe');
-  if(!iframe) return;
-  // Lazy-load on first activation: src defaults to about:blank in the HTML so the
-  // panel doesn't fetch until the user opens this tab. Subsequent tab switches
-  // are no-ops (the panel keeps its own state inside the iframe).
-  if(iframe.src && iframe.src.indexOf('alexreed122287.github.io') >= 0) return;
-  // Daily cachebuster on iframe src so browser doesn't serve stale iframe HTML
-  // referencing an old bundle hash after a sentiment-panel redeploy. Bumps once
-  // per UTC day — long enough to keep the GH Pages CDN warm, short enough that
-  // a deploy is visible same-day. (Was: bare URL, which made the browser keep
-  // serving old HTML for hours/days even though the new dist was already live.)
-  var dayBuster = new Date().toISOString().slice(0,10).replace(/-/g,'');
-  // Send the current theme to the iframe as soon as it loads so it doesn't
-  // start in dark mode and flicker. Also re-send on every load (which catches
-  // hard refresh, navigation, etc).
-  iframe.addEventListener('load', function(){
-    try {
-      var isLight = document.body.classList.contains('light-mode');
-      iframe.contentWindow && iframe.contentWindow.postMessage({
-        source: 'option-panda',
-        type: 'theme',
-        theme: isLight ? 'light' : 'dark'
-      }, '*');
-    } catch(e){}
-  });
-  iframe.src = SENT_PANEL_URL + '?v=' + dayBuster;
-}
-
-// Helper: called from SENT tab row clicks — drops ticker into the scanner's
-// CUSTOM box and switches tabs, so the user can immediately run a scan.
-function addToScanner(tk){
-  var el = document.getElementById('sc-custom-tickers');
-  if(el){
-    var existing = (el.value || '').split(',').map(function(s){return s.trim();}).filter(Boolean);
-    if(existing.indexOf(tk) < 0){ existing.push(tk); el.value = existing.join(', '); }
-    if(typeof saveCustomTickers === 'function') saveCustomTickers();
-  }
-  if(typeof switchTab === 'function') switchTab('sc');
-  if(typeof toast === 'function') toast('Added ' + tk + ' to scanner');
-}
-
-// Boot: load sentiment on startup and refresh periodically
-(function(){
-  function boot(){
-    injectSentimentBadge();
-    loadSentiment();
-    setInterval(loadSentiment, SENT_REFRESH_MS);
-  }
-  if(document.readyState === 'loading') document.addEventListener('DOMContentLoaded', boot);
-  else boot();
-})();
-
 function renderScan(){
   var wrap=eid('sc-tbl-wrap');
   if(!G.filtered.length){
@@ -12867,7 +12532,6 @@ function renderScan(){
   });
 
   wrap.innerHTML='<table><thead><tr>'+th+'</tr></thead><tbody>'+rows+'</tbody></table>';
-  if(typeof decorateSentiment === 'function') decorateSentiment();
   if(typeof decorateIndustry  === 'function') decorateIndustry();
 }
 </script>
