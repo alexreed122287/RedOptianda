@@ -9655,7 +9655,7 @@ function scoreIt(ticker, ind, opt){
   var techChecks = [
     {ok:rsiOk,    n:'RSI 40-70',          val:'RSI '+ind.rsi,                                          pts:6},
     {ok:rsiCross, n:'RSI 50-65 (Cardwell)', val:'RSI '+ind.rsi,                                        pts:6},
-    {ok:macdOk,   n:'MACD Hist +',        val:''+(ind.macd>=0?'+':'')+ind.macd,                        pts:10},
+    {ok:macdOk,   n:'MACD Hist +',        val:''+(ind.macd>=0?'+':'')+ind.macd,                        pts:6},
     {ok:adxOk,    n:'ADX > 25',           val:'ADX '+ind.adx,                                          pts:6},
     {ok:adxEarly, n:'ADX 15-25 + DI+>DI-', val:'ADX '+ind.adx+' DI+'+(typeof ind.diPlus==='number'?ind.diPlus.toFixed(1):'?')+' DI-'+(typeof ind.diMinus==='number'?ind.diMinus.toFixed(1):'?'), pts:6},
     {ok:emaOk,    n:'EMA20 > EMA50',      val:'$'+fmt2(ind.ema20)+' > $'+fmt2(ind.ema50),              pts:10},
@@ -9689,7 +9689,7 @@ function scoreIt(ticker, ind, opt){
   // +12 to +16 since the user trades calls only \u2014 this rule is a stronger
   // bullish signal than the score originally weighted.
   var fmpChecks = [
-    {ok:analystOk, n:'Analyst Revisions \u2191', val:analystVal, pts:16},
+    {ok:analystOk, n:'Analyst Revisions \u2191', val:analystVal, pts:12},
     {ok:ptOk,      n:'Analyst PT Exists',         val:ptVal,      pts:8}
   ];
   fmpChecks.forEach(function(c){
@@ -9896,8 +9896,8 @@ function scoreIt(ticker, ind, opt){
       jtDetail = '12-1 ret '+jt12_1.toFixed(1)+'% '+(jtOk ? '✓ (≥25 ~ top quintile)' : '✗ (need ≥25)');
     }
   }
-  if (jtOk) { score += 15; techScore += 15; }
-  res.push({n:'JT 12-1 Momentum', pass:jtOk, val:jtDetail, filter:false, pts:15, isHist:true});
+  if (jtOk) { score += 20; techScore += 20; }
+  res.push({n:'JT 12-1 Momentum', pass:jtOk, val:jtDetail, filter:false, pts:20, isHist:true});
 
   // \u2500\u2500 GO DECISION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
   // \u2500\u2500 SECTION C: GEX Confirmation (bonus rule, +6 pts, no penalty) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
