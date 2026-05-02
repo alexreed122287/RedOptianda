@@ -93,8 +93,10 @@ a{color:var(--blu);text-decoration:none;}
 .htick .ts{color:var(--gry);}
 .htick .tv{color:var(--wht);font-weight:600;}
 .htick .tc{font-size:12px;letter-spacing:0;text-transform:none;font-weight:500;}
-.tc.up{color:var(--blu);}
-.tc.dn{color:var(--wrn);}
+/* Index daily-change colors per user spec 2026-05-02: explicit green/red.
+   Was cyan / amber-warning which read as 'live data' rather than direction. */
+.tc.up{color:var(--grn);font-weight:600;}
+.tc.dn{color:#ef4444;font-weight:600;}
 #hdr-right{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:11px;}
 /* Logo + clock cluster — clock sits right of "OPTION PANDA" with a subtle
    separator bar so the visual hierarchy is logo (brand) → clock (status)
@@ -304,7 +306,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    copy is in view, creating a seamless infinite loop with no jump.
    Each theme entry inside is .theme-chip which is click-to-filter. */
 .top-themes-strip{overflow:hidden !important;}
-.themes-marquee{display:inline-flex;flex-wrap:nowrap;gap:24px;align-items:center;animation:themes-scroll 90s linear infinite;will-change:transform;}
+.themes-marquee{display:inline-flex;flex-wrap:nowrap;gap:10px;align-items:center;animation:themes-scroll 90s linear infinite;will-change:transform;}
 .themes-marquee:hover{animation-play-state:paused;}
 @keyframes themes-scroll{
   0%{transform:translateX(0);}
@@ -1074,13 +1076,13 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 <div id="hdr">
   <div id="hdr-logo"><img src="assets/pandas2.png" alt="" class="panda-icon"><span>OPTION PANDA</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span></div>
   <div id="hdr-tickers">
-    <span class="htick"><span class="ts">SPY </span><span class="tv" id="h-spy">--</span> <span class="tc" id="h-spy-c"></span></span>
-    <span class="htick"><span class="ts">QQQ </span><span class="tv" id="h-qqq">--</span> <span class="tc" id="h-qqq-c"></span></span>
-    <span class="htick"><span class="ts">DIA </span><span class="tv" id="h-dia">--</span> <span class="tc" id="h-dia-c"></span></span>
-    <span class="htick"><span class="ts">IWM </span><span class="tv" id="h-iwm">--</span> <span class="tc" id="h-iwm-c"></span></span>
-    <span class="htick"><span class="ts">VIX </span><span class="tv" id="h-vix">--</span> <span class="tc" id="h-vix-c"></span></span>
-    <span class="htick"><span class="ts">GLD </span><span class="tv" id="h-gld">--</span> <span class="tc" id="h-gld-c"></span></span>
-    <span class="htick"><span class="ts">SPX </span><span class="tv" id="h-spx">--</span> <span class="tc" id="h-spx-c"></span></span>
+    <span class="htick"><span class="ts">SPY </span><span class="tv" id="h-spy">--</span> <span class="tc" id="h-spy-c">(--)</span></span>
+    <span class="htick"><span class="ts">QQQ </span><span class="tv" id="h-qqq">--</span> <span class="tc" id="h-qqq-c">(--)</span></span>
+    <span class="htick"><span class="ts">DIA </span><span class="tv" id="h-dia">--</span> <span class="tc" id="h-dia-c">(--)</span></span>
+    <span class="htick"><span class="ts">IWM </span><span class="tv" id="h-iwm">--</span> <span class="tc" id="h-iwm-c">(--)</span></span>
+    <span class="htick"><span class="ts">VIX </span><span class="tv" id="h-vix">--</span> <span class="tc" id="h-vix-c">(--)</span></span>
+    <span class="htick"><span class="ts">GLD </span><span class="tv" id="h-gld">--</span> <span class="tc" id="h-gld-c">(--)</span></span>
+    <span class="htick"><span class="ts">SPX </span><span class="tv" id="h-spx">--</span> <span class="tc" id="h-spx-c">(--)</span></span>
   </div>
   <div id="hdr-right">
     <button id="theme-toggle" onclick="toggleLightMode()" title="Toggle light / dark mode" style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:2px 8px;font-size:10px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;cursor:pointer;">&#9788; LIGHT</button>
@@ -1212,7 +1214,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   <!-- Strategy mode quick filters — inline gap/font overrides removed; the
        base .flt-bar / .flt-bar .btn rules now drive sizing for consistency
        with every other filter row in the app. -->
-  <div class="flt-bar collapsible" id="sc-bar-strategy" style="border-bottom:1px solid var(--bg3);">
+  <div class="flt-bar collapsible" id="sc-bar-strategy" data-default-collapsed style="border-bottom:1px solid var(--bg3);">
     <button type="button" class="sec-toggle" title="Collapse / expand the STRATEGY presets row">STRATEGY</button>
     <button class="btn blu" onclick="applyStrategyMode('highConviction')">&#9733; HIGH CONVICTION</button>
     <button class="btn" onclick="applyStrategyMode('breakout')">&#9650; BREAKOUT</button>
@@ -1224,7 +1226,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <span id="pre-market-pill" style="display:none;font-family:var(--ff-mono);font-size:9px;font-weight:800;letter-spacing:1.5px;background:var(--ambb);color:var(--bg0);padding:2px 8px;border-radius:2px;animation:today-pulse 2.4s ease-in-out infinite;" title="Pre-market session is active — Tradier `last` reflects extended-hours quotes. Use the PRE-MARKET preset to sort by gap %.">PRE-MARKET LIVE</span>
     <span id="strategy-desc-sc" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);font-style:italic;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;"></span>
   </div>
-  <div class="flt-bar collapsible" id="sc-bar-filters">
+  <div class="flt-bar collapsible" id="sc-bar-filters" data-default-collapsed>
     <button type="button" class="sec-toggle" title="Collapse / expand the FILTERS row">FILTERS</button>
     <label>Sectors
       <span class="sect-wrap">
@@ -1270,14 +1272,14 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <!-- B-2 default Min Score bumped 89 -> 100. With theme overlay (added 2026-04)
          scores trend ~10 pts higher, so the historical "GO rate" at 89 became
          too permissive. 100 preserves the prior selectivity. Adjust to taste. -->
-    <label>Min Score <input type="number" id="sc-minscore" value="140" style="width:60px;" onchange="reclassifyGoThreshold()" title="Recommended default 140 (≈58% of ~240-pt max). Calibrated to observed score distribution — the new evidence-based rules (Minervini, JT 12-1, BBW Squeeze, etc.) rarely hit max simultaneously, so the actual top of distribution sits near 140-160, not 165+. Crank higher (160-180) for highest-conviction filtering."></label>
+    <label>Min Score <input type="number" id="sc-minscore" value="150" style="width:60px;" onchange="reclassifyGoThreshold()" title="Default 150 (≈63% of ~240-pt max). Calibrated to observed score distribution — top of distribution sits near 140-160; 150 keeps GO list focused on conviction setups without being so strict that nothing fires."></label>
     <button class="btn" onclick="applyFilters()">FILTER</button>
     <button class="btn" onclick="clearFilters()" style="border-color:var(--gry2);color:var(--gry);">CLEAR</button>
   </div>
   <!-- ── INDICATOR FILTERS ── inherits .flt-bar padding/gap; flex-wrap:nowrap
        only override is to keep all chips on one row. Container scrolls
        horizontally if chips exceed viewport width. -->
-  <div class="flt-bar must-pass-row collapsible" id="sc-bar-mustpass" style="flex-wrap:nowrap;border-top:1px solid var(--bg3);overflow-x:auto;width:100%;">
+  <div class="flt-bar must-pass-row collapsible" id="sc-bar-mustpass" data-default-collapsed style="flex-wrap:nowrap;border-top:1px solid var(--bg3);overflow-x:auto;width:100%;">
     <button type="button" class="sec-toggle" title="Collapse / expand the MUST PASS chips row" style="margin-right:4px;">MUST PASS:</button>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-analyst" onchange="applyFilters()"> <span>Analyst Revisions &#8593;</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-gex" onchange="applyFilters()"> <span>GEX Call Heavy</span></label>
@@ -1293,7 +1295,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <input type="text" id="sc-search" placeholder="Search ticker..." oninput="onScSearch()" style="margin-left:auto;font-family:var(--ff-mono);font-size:11px;padding:3px 8px;background:var(--bg1);border:1px solid var(--bg3);border-radius:3px;color:var(--amb);width:160px;">
     <span id="sc-filter-count" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);"></span>
   </div>
-  <div class="flt-bar collapsible" id="sc-bar-screener" style="flex-wrap:wrap;gap:6px;">
+  <div class="flt-bar collapsible" id="sc-bar-screener" data-default-collapsed style="flex-wrap:wrap;gap:6px;">
     <button type="button" class="sec-toggle" title="Collapse / expand the SCAN button + SCREENER row">SCREENER</button>
     <button class="btn blu" id="sc-run-btn" onclick="runScan()">↻ SCAN</button>
     <span id="sc-last-scan" class="dyn-w" style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);width:230px;text-align:left;" title="Timestamp of the most recent SCAN completion. Persists across page reloads from localStorage.">Last scan: never</span>
@@ -2099,7 +2101,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       <span id="api-counter-tab" onclick="showApiBreakdown()" title="Click to view per-endpoint breakdown" style="cursor:pointer;font-family:var(--ff-mono);font-size:14px;font-weight:700;color:var(--amb);">0</span>
       <span style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);">(resets at midnight ET)</span>
     </div>
-    <div class="card collapsible" id="api-card"><div class="card-hdr">API CONFIGURATION</div>
+    <div class="card collapsible" id="api-card" data-default-collapsed><div class="card-hdr">API CONFIGURATION</div>
     <div class="card-body api-form">
       <div class="api-row"><label>FMP API KEY (financialmodelingprep.com)</label><input id="api-fmp" type="password" placeholder="Enter FMP key..."><div class="api-status" id="fmp-status"></div></div>
       <div class="api-row"><label>TRADIER API KEY</label><input id="api-tr" type="password" placeholder="Enter Tradier key..."><div class="api-status" id="tr-status"></div></div>
@@ -2154,7 +2156,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 
          Trade token is INTENTIONALLY excluded from sync (security-by-design).
          Each device opts into trade-token persistence separately. -->
-    <div class="card" style="margin-top:14px;">
+    <div class="card collapsible" id="cross-device-card" data-default-collapsed style="margin-top:14px;">
       <div class="card-hdr">CROSS-DEVICE SETTINGS SYNC</div>
       <div class="card-body" style="padding:12px 14px;">
         <div style="font-family:var(--ff-mono);font-size:11px;color:var(--gry);line-height:1.6;margin-bottom:12px;">
@@ -9876,17 +9878,17 @@ function renderTopThemesStrip(){
   var laggards = rows.slice(-3).reverse();
 
   var content = '<span style="color:var(--ambb);font-size:10px;letter-spacing:1.5px;font-weight:700;">TOP THEMES NOW:</span> '
-    + leaders.map(function(r,i){return fmtRow(r, i+1);}).join('  <span style="color:var(--bg3);">·</span>  ')
+    + leaders.map(function(r,i){return fmtRow(r, i+1);}).join('<span style="color:var(--bg3);margin:0 4px;">·</span>')
     + '  <span style="color:var(--bg3);">|</span>  '
     + '<span style="color:var(--ngo);font-size:10px;letter-spacing:1.5px;font-weight:700;">LAGGARDS:</span> '
-    + laggards.map(function(r){return fmtRow(r);}).join('  <span style="color:var(--bg3);">·</span>  ');
+    + laggards.map(function(r){return fmtRow(r);}).join('<span style="color:var(--bg3);margin:0 4px;">·</span>');
 
   // The marquee animation translates -50% to loop seamlessly, so we render
   // the content TWICE side by side; the second copy slides into view as
   // the first slides off. aria-hidden on the duplicate so screen readers
   // don't read the same headlines twice.
   var html = '<div class="themes-marquee">'
-           + '<span style="display:inline-flex;gap:24px;align-items:center;padding-right:24px;">' + content + '</span>'
+           + '<span style="display:inline-flex;gap:10px;align-items:center;padding-right:10px;">' + content + '</span>'
            + '<span style="display:inline-flex;gap:24px;align-items:center;padding-right:24px;" aria-hidden="true">' + content + '</span>'
            + '</div>';
 
@@ -12673,7 +12675,7 @@ var SCAN_SETTING_DEFAULTS = {
   'sc-minavgvol':    '500000',
   'sc-volratio':     '',
   'sc-maxoptprice':  '',
-  'sc-minscore':     '100',
+  'sc-minscore':     '150',
   'sc-sig':          'GO',
   'sc-theme':        '',
   'filt-earn-days':  '1'
@@ -12755,7 +12757,7 @@ function clearFilters(){
   if(eid('sc-sect'))        eid('sc-sect').value = '';
   if(eid('sc-theme'))       eid('sc-theme').value = '';   // 'All themes'
   if(eid('sc-sig'))         eid('sc-sig').value  = '';   // 'All' — shows both GO and NO-GO
-  if(eid('sc-minscore'))    eid('sc-minscore').value = '140';  // calibrated to observed distribution top
+  if(eid('sc-minscore'))    eid('sc-minscore').value = '150';  // calibrated to observed distribution top
   if(eid('sc-maxoptprice')) eid('sc-maxoptprice').value = '';
   // Reset sector multi-select to "all"
   G.selectedSectors = new Set();
@@ -17876,8 +17878,8 @@ var STRATEGY_MODES = {
   // HIGH CONVICTION ~83%, BREAKOUT/MOMENTUM ~67%, BEST ITM CALLS ~75%.
   highConviction: {
     label: '\u2605 HIGH CONVICTION',
-    desc: 'PROVEN ticker + Score \u2265160 + Analyst Revisions \u2191 + GEX Call Heavy \u2014 rarest, highest-quality setups (\u226567% of max)',
-    filters: {sig:'GO', minScore:160, analyst:true, proven:true, gex:true}
+    desc: 'PROVEN ticker + Score \u2265150 + Analyst Revisions \u2191 + GEX Call Heavy \u2014 rarest, highest-quality setups (\u224863% of max)',
+    filters: {sig:'GO', minScore:150, analyst:true, proven:true, gex:true}
   },
   breakout: {
     label: '\u25b2 BREAKOUT',
@@ -17897,11 +17899,12 @@ var STRATEGY_MODES = {
   },
   preMarket: {
     label: '\u25b2 PRE/POST MARKET',
-    desc: 'Extended-hours gappers \u2014 sorted by absolute gap %. Tradier `last` reflects pre-market quotes 4:00\u20139:30am ET, after-hours quotes 4:00\u20138:00pm ET, and the most recent extended-hours print on weekends. Permissive thresholds (intraday technicals are unreliable outside RTH).',
-    // Loose criteria: technical indicators are noisy before the cash open.
-    // Liquidity gate kept (1M avg vol) so the gappers are tradeable. Sort by
-    // |changePct| handled in applyStrategyMode (post-filter).
-    filters: {sig:'', minScore:0, minPrice:3, minAvgVol:1000000, volRatio:0,
+    desc: 'Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score \u2265150 + Analyst Revisions \u2191 + GEX Call Heavy), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.',
+    // Per user spec 2026-05-02: pre/post defaults mirror HIGH CONVICTION
+    // exactly so the user gets the same conviction gate during extended
+    // hours. _sortByGap still re-sorts the surviving GOs by |gap%| so the
+    // biggest movers float to the top within the HC subset.
+    filters: {sig:'GO', minScore:150, analyst:true, proven:true, gex:true,
               _sortByGap:true}
   }
 };
@@ -18586,9 +18589,14 @@ function updateHeaderQuotes(){
       var span = eid('h-'+p.id);
       var container = span ? span.closest('.htick') : null;
       if(!q || !(parseFloat(q.last||q.prevclose)>0)){
-        // No data returned (e.g. Tradier sandbox or account plan doesn't
-        // include this index). Hide the ticker slot rather than showing "--".
-        if(container) container.style.display = 'none';
+        // No data returned (Tradier sandbox / account-plan gap). Keep the
+        // ticker slot visible with placeholder values so the indices strip
+        // doesn't reflow when one symbol drops out — user wants the daily
+        // change percentage always present, not hidden on missing data.
+        if(container) container.style.display = '';
+        if(span) span.textContent = '--';
+        var celMissing = eid('h-'+p.id+'-c');
+        if(celMissing){ celMissing.textContent = '(--)'; celMissing.className = 'tc'; }
         return;
       }
       if(container) container.style.display = '';
