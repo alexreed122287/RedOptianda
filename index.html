@@ -312,6 +312,16 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 }
 .theme-chip{cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity .15s;}
 .theme-chip:hover{opacity:.7;text-decoration:underline;}
+/* Positions tab visual reorder — panels (Trailing Stop + Smart Exits) live
+   AFTER the table even though they appear earlier in the markup. flex.order
+   moves them visually without restructuring the DOM (which would break the
+   ID lookups and event-handler attachment patterns scattered through the
+   positions JS path). The id="pos-bottom-panels" wrapper exists explicitly
+   so we can target it with order:99 here. */
+#tab-pos.tab-pane.active{display:flex;flex-direction:column;}
+#tab-pos #pos-bottom-panels{order:99;display:block !important;}
+#tab-pos #pos-header-row{order:1;}
+#tab-pos #pos-tbl-wrap{order:2;}
 .flt-bar label{color:var(--gry);font-size:10px;display:inline-flex;align-items:center;gap:6px;letter-spacing:.5px;}
 .flt-bar select,.flt-bar input{background:var(--bg2);border:var(--bdr);color:var(--wht);font-family:var(--ff);font-size:11px;padding:6px 8px;border-radius:3px;height:30px;box-sizing:border-box;}
 /* Buttons inside filter bars: lock height to match inputs/selects so the row
@@ -1351,12 +1361,30 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   </div>
 </div>
 <div class="tab-pane" id="tab-pos">
-  <div class="pos-toolbar">
-    <button class="btn blu" onclick="fetchPositions()">&#8635; REFRESH POSITIONS</button>
-    <button class="btn wrn" onclick="clearPositions()">&#10005; CLEAR</button>
-    <span class="pos-src" id="pos-src"></span>
+  <!-- Combined header — Total P&L, Day P&L, key counters, and the Refresh +
+       Clear buttons all live on one row. Was previously split across a
+       toolbar (buttons) and a stats-bar (P&L) which forced the user to
+       scan two horizontal regions. -->
+  <div class="stats-bar" id="pos-header-row" style="border-top:none;align-items:stretch;">
+    <div class="stat-box"><div class="stat-label">TOTAL P&amp;L <span onclick="resetTotalPnl()" title="Reset Total P&amp;L counter to $0. Clears the local closed-trades history and snapshots the current broker realized P&amp;L as the new baseline. Open-position unrealized P&amp;L is not affected." style="cursor:pointer;font-size:9px;color:var(--gry);margin-left:6px;text-decoration:underline;letter-spacing:.5px;">RESET</span></div><div class="stat-val" id="pos-pnl" title="Lifetime: realized (closed trades) + unrealized (open positions)">$0.00</div></div>
+    <div class="stat-box"><div class="stat-label">DAY P&amp;L</div><div class="stat-val" id="pos-daypnl" title="Today's change in total account equity">$0.00</div></div>
+    <div class="stat-box"><div class="stat-label">OPEN POSITIONS</div><div class="stat-val amb" id="pos-count">0</div></div>
+    <div class="stat-box" title="Positions opened or rolled today (NY calendar date). Closing one of these intraday counts toward your PDT day-trade tally — be careful before clicking CLOSE."><div class="stat-label">OPENED TODAY</div><div class="stat-val" id="pos-today-count" style="color:var(--ambb);">0</div></div>
+    <div class="stat-box"><div class="stat-label">CASH</div><div class="stat-val amb" id="pos-cash" title="Total cash available (from Tradier balances)">--</div></div>
+    <div class="stat-box"><div class="stat-label">ACCOUNT VALUE</div><div class="stat-val amb" id="pos-acctval" title="Total equity = positions market value + cash">--</div></div>
+    <!-- Action buttons docked at the right end of the same row -->
+    <div class="stat-box" style="flex:0 0 auto;display:flex;align-items:center;gap:6px;padding:6px 12px;border-left:1px solid var(--bg3);">
+      <button class="btn blu" style="font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="fetchPositions()">&#8635; REFRESH</button>
+      <button class="btn wrn" style="font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="clearPositions()">&#10005; CLEAR</button>
+      <span class="pos-src dyn-w" id="pos-src" style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);width:140px;text-align:left;"></span>
+    </div>
   </div>
 
+  <!-- TRAILING STOP + SMART EXITS panels live BELOW the table — they're
+       configuration surfaces the user touches once per session, not data
+       they're scanning constantly. Wrapping them in this container lets us
+       move them as a single block. -->
+  <div id="pos-bottom-panels" style="display:none;">
   <!-- ── TRAILING STOP PANEL ── -->
   <div class="ts-panel">
     <div class="ts-panel-hdr">
@@ -1504,19 +1532,8 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       </div>
     </div>
   </div>
+  </div><!-- /#pos-bottom-panels -->
 
-  <!-- Stats moved ABOVE the position table so they're always visible at a glance.
-       TOTAL P&L = lifetime realized (sum of closed trades) + open unrealized.
-       DAY P&L  = today's account-equity change tracked via localStorage history.
-       CASH     = b.total_cash from Tradier balances (purchasing power slice). -->
-  <div class="stats-bar" id="pos-stats" style="border-bottom:var(--bdr);border-top:none;">
-    <div class="stat-box"><div class="stat-label">TOTAL P&amp;L <span onclick="resetTotalPnl()" title="Reset Total P&amp;L counter to $0. Clears the local closed-trades history and snapshots the current broker realized P&amp;L as the new baseline. Open-position unrealized P&amp;L is not affected." style="cursor:pointer;font-size:9px;color:var(--gry);margin-left:6px;text-decoration:underline;letter-spacing:.5px;">RESET</span></div><div class="stat-val" id="pos-pnl" title="Lifetime: realized (closed trades) + unrealized (open positions)">$0.00</div></div>
-    <div class="stat-box"><div class="stat-label">DAY P&amp;L</div><div class="stat-val" id="pos-daypnl" title="Today's change in total account equity">$0.00</div></div>
-    <div class="stat-box"><div class="stat-label">OPEN POSITIONS</div><div class="stat-val amb" id="pos-count">0</div></div>
-    <div class="stat-box" title="Positions opened or rolled today (NY calendar date). Closing one of these intraday counts toward your PDT day-trade tally — be careful before clicking CLOSE."><div class="stat-label">OPENED TODAY</div><div class="stat-val" id="pos-today-count" style="color:var(--ambb);">0</div></div>
-    <div class="stat-box"><div class="stat-label">CASH</div><div class="stat-val amb" id="pos-cash" title="Total cash available (from Tradier balances)">--</div></div>
-    <div class="stat-box"><div class="stat-label">ACCOUNT VALUE</div><div class="stat-val amb" id="pos-acctval" title="Total equity = positions market value + cash">--</div></div>
-  </div>
   <div class="tbl-wrap" id="pos-tbl-wrap">
     <div class="empty-det" id="pos-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Click Refresh Positions to load</p></div>
   </div>
@@ -14441,26 +14458,32 @@ function renderPositionsTable(pos,srcLabel){
     return _dte(a) - _dte(b);
   });
 
+  // Column order (per user spec, 2026-05-02):
+  //   QTY → MID (price) → EQUITY come together as the "size + price + value"
+  //   triplet so the user can read the full size of the position in one
+  //   horizontal sweep. TRAIL is moved to the far right because it's
+  //   configuration, not data — the user looks at it occasionally rather
+  //   than scanning it across rows.
   var html='<table><thead><tr>'
     +'<th>TICKER</th>'
     +'<th class="col-opened">OPENED</th>'
-    +'<th title="Trailing-stop status + per-position config. Click to expand.">TRAIL</th>'
     +'<th>CLOSE</th>'
     +'<th>ROLL</th>'
+    +'<th>QTY</th>'
+    +'<th title="Current contract mid price (bid+ask)/2 — what one contract is worth right now">PRICE</th>'
     +'<th title="Current value of your position (mark x qty x multiplier)">EQUITY</th>'
     +'<th>P/L $</th>'
     +'<th>P/L %</th>'
     +'<th>STRIKE</th>'
     +'<th>EXP</th>'
     +'<th>DTE</th>'
-    +'<th>QTY</th>'
-    +'<th title="Current contract mid price (bid+ask)/2 — what one contract is worth right now">MID</th>'
     +'<th title="Current underlying stock price">STOCK PRICE</th>'
     +'<th title="Underlying stock price at the time you bought this position">ENTRY PRICE</th>'
     +'<th title="Underlying price needed for the contract to break even at expiration">B/E</th>'
     +'<th title="Stock price after a 0.5 × ATR(14) drop from current — soft exit signal">1/2 ATR</th>'
     +'<th title="Stock price after a 1 × ATR(14) drop from current — typical stop">1 ATR</th>'
     +'<th title="Stock price after a 2 × ATR(14) drop from current — emergency exit. If price reaches this, close immediately regardless of P&L.">EMERGENCY EXIT</th>'
+    +'<th title="Trailing-stop status + per-position config. Click to expand.">TRAIL</th>'
     +'</tr></thead><tbody>';
   colCount = 19; // total columns (used by inline config row)
 
@@ -14654,35 +14677,33 @@ function renderPositionsTable(pos,srcLabel){
 
     var openedToday = _isOpenedTodayET(p.openTs);
     if(openedToday) todayCount++;
+    // Build the price (mid) cell once so we can place it between QTY and EQUITY
+    var priceCell = (function(){
+      var bb = +p.bid || 0, aa = +p.ask || 0, ll = +p.last || 0;
+      var mid = (bb > 0 && aa > 0) ? (bb + aa) / 2 : ll;
+      if(!(mid > 0)) return '<td style="color:var(--gry2);">—</td>';
+      return '<td title="bid '+fmt2(bb)+' / ask '+fmt2(aa)+'" style="color:var(--ambb);font-weight:600;">$'+fmt2(mid)+'</td>';
+    })();
     html += '<tr data-tk="'+tk+'" data-tp="'+tp+'" data-st="'+st+'" data-ex="'+ex+'" data-qty="'+qty+'" data-sym="'+sym+'"'
       + (openedToday ? ' class="pos-row-today" title="Opened or rolled today — closing intraday triggers a PDT day-trade"' : '')
       + '>'
       +'<td><b>'+tk+'</b>'+(isStock?' <span style="color:var(--gry);font-size:10px;">EQ</span>':'')+'</td>'  // TICKER
       +formatOpenedDateTime(p, openedToday)                                                                  // OPENED
-      +trailCell                                                                                              // TRAIL (badge + CFG button)
       +'<td style="white-space:nowrap;"><button class="cbtn" onclick="doClose(this)">CLOSE</button></td>'    // CLOSE
       +rollCell                                                                                               // ROLL
-      +equityCell                                                                                             // EQUITY (current value)
+      +'<td>'+qty+(isStock?' <span style="color:var(--gry2);font-size:9px;">sh</span>':'')+'</td>'           // QTY
+      +priceCell                                                                                              // PRICE (contract/share mid)
+      +equityCell                                                                                             // EQUITY (qty x price x mult)
       +'<td class="'+pnlCls+'">'+(p.pnl>=0?'+':'')+fmtD(p.pnl)+'</td>'                                       // P/L $
       +'<td class="'+pnlCls+'">'+(p.pnlPct>=0?'+':'')+fmtP(p.pnlPct)+'</td>'                                 // P/L %
       +strikeCell                                                                                             // STRIKE
       +expCell                                                                                                // EXP (MM/DD/YY)
       +dteCell                                                                                                // DTE
-      +'<td>'+qty+(isStock?' <span style="color:var(--gry2);font-size:9px;">sh</span>':'')+'</td>'           // QTY
-      +(function(){
-         // MID: contract mark price (bid+ask)/2 → what one contract is worth
-         // right now. Falls back to last when bid/ask aren't both populated
-         // (after-hours / illiquid). Stocks show the current price directly.
-         var bb = +p.bid || 0, aa = +p.ask || 0, ll = +p.last || 0;
-         var mid = (bb > 0 && aa > 0) ? (bb + aa) / 2 : ll;
-         if(!(mid > 0)) return '<td style="color:var(--gry2);">—</td>';
-         var label = isStock ? '$'+fmt2(mid) : '$'+fmt2(mid);
-         return '<td title="bid '+fmt2(bb)+' / ask '+fmt2(aa)+'" style="color:var(--ambb);font-weight:600;">'+label+'</td>';
-       })()                                                                                                  // MID
       +'<td style="color:var(--gry3)">'+(isStock?'—':ulCell)+'</td>'                                    // STOCK PRICE (current UL)
       +ulEntryCell                                                                                            // ENTRY PRICE (UL when opened)
       +beCell                                                                                                 // B/E
       +atrCells                                                                                               // 1/2 ATR | 1 ATR | EMERGENCY EXIT
+      +trailCell                                                                                              // TRAIL (far right)
       +'</tr>';
 
     // Inline trailing stop config row
