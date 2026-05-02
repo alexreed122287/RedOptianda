@@ -290,6 +290,14 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 .flt-bar.collapsible .sec-toggle{font-family:var(--ff-mono);font-size:10px;color:var(--amb);letter-spacing:.5px;background:none;border:none;padding:0 6px 0 0;}
 .flt-bar.collapsible.collapsed > *:not(.sec-toggle){display:none !important;}
 .flt-bar.collapsible.collapsed{padding-top:6px;padding-bottom:6px;}
+/* GEX coverage indicator on scanner rows. Green ✓ if the ticker already
+   has GEX data; amber 'RUN' pill if it doesn't (clickable to fetch
+   just-this-ticker so the user can score tickers outside the top-200 cap). */
+.gex-pill{display:inline-block;font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.5px;padding:1px 5px;border-radius:2px;margin-left:6px;vertical-align:middle;}
+.gex-pill.ok{background:rgba(0,230,118,.15);color:var(--grn);border:1px solid rgba(0,230,118,.4);}
+.gex-pill.mis{background:rgba(255,179,0,.10);color:var(--ambb);border:1px solid rgba(255,179,0,.4);cursor:pointer;}
+.gex-pill.mis:hover{background:rgba(255,179,0,.25);}
+.gex-pill.busy{background:rgba(0,212,255,.10);color:var(--blu);border:1px solid rgba(0,212,255,.4);cursor:wait;}
 .flt-bar label{color:var(--gry);font-size:10px;display:inline-flex;align-items:center;gap:6px;letter-spacing:.5px;}
 .flt-bar select,.flt-bar input{background:var(--bg2);border:var(--bdr);color:var(--wht);font-family:var(--ff);font-size:11px;padding:6px 8px;border-radius:3px;height:30px;box-sizing:border-box;}
 /* Buttons inside filter bars: lock height to match inputs/selects so the row
@@ -12813,13 +12821,22 @@ function renderScan(){
                : _why === '↓ score' ? 'var(--gry)'
                : _why === '= tied' ? 'var(--gry)'
                :                     'var(--ambb)';   // tiebreaker beats stand out
+    // GEX coverage indicator: ✓ if data present, RUN pill if missing
+    // (clicking the pill calls runGexForTicker(t) — single-ticker fetch).
+    var _gxEntry = gexMap[tk];
+    var gexPill;
+    if (_gxEntry && !_gxEntry.sim) {
+      gexPill = '<span class="gex-pill ok" title="GEX data loaded — '+_gxEntry.flow+', '+_gxEntry.call+'% calls">✓</span>';
+    } else {
+      gexPill = '<span class="gex-pill mis" data-tk="'+tk+'" onclick="event.stopPropagation();runGexForTicker(\''+tk+'\')" title="No GEX data for '+tk+' (outside top-200 batch). Click to fetch single-ticker flow.">RUN</span>';
+    }
     rows+='<tr data-ticker="'+tk+'" onclick="viewDetail(this.dataset.ticker,\'sc-detail\',\'sc-det-empty\')">'
       +'<td style="text-align:center;padding:0;">'+starHTML(tk,14)+'</td>'
       +'<td style="text-align:center;font-size:10px;color:var(--gry2);font-family:var(--ff-mono);" title="'+_whyTitle.replace(/"/g,'&quot;')+'">'
       +  '<div style="line-height:1.1;">'+(idx+1)+'</div>'
       +  (_why ? '<div style="font-size:8px;color:'+_whyCol+';margin-top:1px;white-space:nowrap;">'+_why+'</div>' : '')
       +'</td>'
-      +'<td><b>'+tk+'</b></td>'
+      +'<td><b>'+tk+'</b>'+gexPill+'</td>'
       +'<td>'+scoreBar+'</td>'
       +'<td>'+sigBadge+'</td>'
       +'<td><button class="btn" style="font-size:10px;padding:3px 10px;white-space:nowrap;border-color:var(--amb);color:var(--amb);background:var(--amb3);" onclick="event.stopPropagation();openContractPanel(\''+tk+'\')" title="View all call contracts">▲ BUY</button></td>'
@@ -13309,6 +13326,89 @@ function renderGex(){
   wrap.innerHTML=html;
   var _gt3=eid('gex-ts'); if(_gt3) _gt3.textContent='Updated: '+new Date().toLocaleTimeString()
     +' \u2014 '+(G.results&&G.results.length>0?'top scan results':'static list');
+}
+
+// Single-ticker GEX fetch — used by the scanner's amber RUN GEX pill so
+// the user can pull flow data for a ticker outside the top-200 batch cap
+// without re-running the full ~4min sweep. Reuses the same expirations +
+// chains pipeline as runGex but for one symbol; result is merged into
+// G.gexData so the scanner row immediately flips to the ✓ state.
+function runGexForTicker(t){
+  if (!t) return;
+  var key = _getTradierKey();
+  if (!key) { try { toast('No Tradier key — set one in API tab first'); } catch(_){} return; }
+  var mode = 'sandbox'; try { mode = localStorage.getItem('rrjcar_mode') || 'sandbox'; } catch(_){}
+  var host = mode === 'live' ? 'https://api.tradier.com' : 'https://sandbox.tradier.com';
+  // Flip the on-row pill to a 'busy' state so the user sees feedback
+  var pill = document.querySelector('.gex-pill.mis[data-tk="'+t+'"]');
+  if (pill) { pill.className = 'gex-pill busy'; pill.textContent = '…'; }
+  var today = new Date();
+  tradierFetch(host+'/v1/markets/options/expirations?symbol='+encodeURIComponent(t)+'&includeAllRoots=true', {
+    headers: { Authorization: 'Bearer ' + key, Accept: 'application/json' }
+  }, 6*60*60*1000).then(function(r){return r.json();}).then(function(d){
+    var dates = []; try { dates = d.expirations.date; if(!Array.isArray(dates)) dates=[dates]; } catch(_){}
+    var best = null, bestDiff = 999;
+    dates.forEach(function(dt){
+      var dte = Math.round((new Date(dt) - today) / 864e5);
+      var diff = Math.abs(dte - 35);
+      if (dte >= 20 && dte <= 70 && diff < bestDiff) { bestDiff = diff; best = {date:dt, dte:dte}; }
+    });
+    if (!best) { if (pill) { pill.className = 'gex-pill mis'; pill.textContent = 'RUN'; } try { toast('No 30DTE expiry available for ' + t); } catch(_){} return; }
+    return tradierFetch(host+'/v1/markets/options/chains?symbol='+encodeURIComponent(t)+'&expiration='+best.date+'&greeks=false', {
+      headers: { Authorization: 'Bearer ' + key, Accept: 'application/json' }
+    }, 5*60*1000).then(function(r){return r.json();}).then(function(d2){
+      var opts = []; try { opts = d2.options.option; if(!Array.isArray(opts)) opts=[opts]; } catch(_){}
+      var callOI=0, putOI=0, callVol=0, putVol=0;
+      opts.forEach(function(opt){
+        var oi = parseInt(opt.open_interest)||0, vol = parseInt(opt.volume)||0;
+        if (opt.option_type === 'call') { callOI += oi; callVol += vol; }
+        else { putOI += oi; putVol += vol; }
+      });
+      var totalOI = callOI + putOI || 1;
+      var totalVol = callVol + putVol || 1;
+      var callPctOI  = Math.round((callOI / totalOI) * 100);
+      var callPctVol = Math.round((callVol / totalVol) * 100);
+      var callPct = Math.round((callPctOI * 0.6) + (callPctVol * 0.4));
+      callPct = Math.max(10, Math.min(90, callPct));
+      var result = G.results.filter(function(rr){ return rr.ticker === t; })[0];
+      var price = result ? result.price : 0;
+      var netOI = callOI - putOI;
+      var gexMag = price > 0 ? Math.round(Math.abs(netOI) * price / 1e6) : Math.abs(netOI);
+      var gexSign = netOI >= 0 ? 1 : -1;
+      // Gamma flip strike (highest near-ATM combined OI)
+      var flipStrike = price, maxOI = 0;
+      opts.forEach(function(opt){
+        var strike = parseFloat(opt.strike) || 0;
+        if (price && Math.abs(strike - price) > price * 0.1) return;
+        var oi = parseInt(opt.open_interest) || 0;
+        if (oi > maxOI) { maxOI = oi; flipStrike = strike; }
+      });
+      var entry = {
+        t: t, gex: gexSign * Math.max(1, gexMag), flip: flipStrike || price,
+        call: callPct, put: 100 - callPct, callOI: callOI, putOI: putOI,
+        dte: best.dte, exp: best.date, price: price,
+        flow: callPct >= 50 ? 'CALL HEAVY' : 'PUT HEAVY',
+        flowCls: callPct >= 50 ? 'go' : 'nogo', sim: false
+      };
+      if (!Array.isArray(G.gexData)) G.gexData = [];
+      G.gexData = G.gexData.filter(function(g){ return g.t !== t; }).concat([entry]);
+      try { saveGexCache(); } catch(_){}
+      // Re-score this single ticker so the rule scorecard reflects the new flow data
+      try {
+        if (result && typeof scoreIt === 'function') {
+          var updated = scoreIt(result.ticker, result.ind, result.opt);
+          result.score = updated.score; result.techScore = updated.techScore;
+          result.isGo = updated.isGo; result.rules = updated.rules; result.passes = updated.passes;
+        }
+      } catch(_){}
+      try { renderScan(); renderBuySig(); } catch(_){}
+      try { toast('GEX loaded for ' + t + ': ' + entry.flow); } catch(_){}
+    });
+  }).catch(function(e){
+    console.warn('[gex-single] failed for ' + t + ':', e && e.message);
+    if (pill) { pill.className = 'gex-pill mis'; pill.textContent = 'RUN'; }
+    try { toast('GEX fetch failed for ' + t); } catch(_){}
+  });
 }
 
 function loadWL(){try{var s=localStorage.getItem('rrjcar_wl');if(s)G.wlTickers=JSON.parse(s);}catch(e){}if(!G.wlTickers.length)G.wlTickers=['SPY','QQQ','AAPL','MSFT','NVDA'];}
