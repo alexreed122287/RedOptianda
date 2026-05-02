@@ -1282,6 +1282,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <button type="button" class="sec-toggle" title="Collapse / expand the SCAN button + SCREENER row">SCREENER</button>
     <button class="btn blu" id="sc-run-btn" onclick="runScan()">↻ SCAN</button>
     <span id="sc-last-scan" class="dyn-w" style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);width:230px;text-align:left;" title="Timestamp of the most recent SCAN completion. Persists across page reloads from localStorage.">Last scan: never</span>
+    <span id="sc-data-status" class="dyn-w" style="display:none;font-size:10px;font-family:var(--ff-mono);width:200px;text-align:left;cursor:pointer;" title="Click for data-coverage details from the last scan."></span>
     <span style="color:var(--gry);font-size:10px;letter-spacing:.5px;border-left:1px solid var(--gry2);padding-left:14px;margin-left:4px;">SCREENER</span>
     <label>Min Price $<input type="number" id="sc-minprice" value="1" min="1" style="width:70px;" title="Only include stocks above this price"></label>
     <label>Max Price $<input type="number" id="sc-maxprice" placeholder="any" min="1" style="width:80px;" title="Only include stocks below this price — leave blank for no limit"></label>
@@ -10562,6 +10563,9 @@ function buildDetail(r,detId,emptyId){
   // classification (bounded enum: 'go'/'nogo'/'GO'/'NO-GO') and don't need it.
   det.innerHTML=
     '<div class="det-hdr"><span class="det-tk">'+_esc(r.ticker)+'</span>'
+    + (r.companyName
+        ? '<span class="det-coname" style="margin-left:10px;color:var(--gry);font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;font-family:var(--ff);" title="Company name (Tradier)">'+_esc(r.companyName)+'</span>'
+        : '')
     +'<span class="det-pr">$'+fmt2(r.price)+'</span>'
     +'<span class="det-sig '+sigCls+'">'+sigLbl+'</span>'
     +'<span class="det-meta">'+_esc(r.sector)+' | Score: <b>'+Math.round(r.score)+'</b>/240 | Tech: '+techScore+' Fund: '+fundScore+' | Passes: '+r.passes+'/'+(Array.isArray(r.rules)?r.rules.length:14)
@@ -11492,6 +11496,66 @@ function autoScanCheckAlerts(){
   }
 }
 
+// Render the scan-complete data-coverage status chip. Inspects the result
+// set for missing enrichment (Tradier history, FMP fundamentals, GEX flow,
+// theme overlay) and surfaces a one-line summary; click expands a detail
+// toast so the user can act (e.g. wait for cleanup pass, run GEX, etc.).
+function _renderScanDataStatus(stats){
+  var el = eid('sc-data-status');
+  if (!el) return;
+  var topN = Math.min(200, (G.results || []).length);
+  if (!topN) { el.style.display = 'none'; return; }
+  var top = G.results.slice(0, topN);
+  var indMissing = top.filter(function(r){ return !r.indEnriched; }).length;
+  var fmpMissing = top.filter(function(r){ return !r.fmpEnriched; }).length;
+  var gexCovered = (G.gexData && G.gexData.length) || 0;
+  var gexMissing = topN - gexCovered;
+  var themesMissing = !(typeof G_THEME_OVERLAY !== 'undefined' && G_THEME_OVERLAY && G_THEME_OVERLAY.ticker2theme && Object.keys(G_THEME_OVERLAY.ticker2theme).length);
+  var fmpPaused = false;
+  try {
+    var pausedUntil = parseInt(localStorage.getItem('rrjcar_fmp_paused_until') || '0', 10);
+    if (pausedUntil && Date.now() < pausedUntil) fmpPaused = true;
+  } catch(_){}
+  var issues = [];
+  // Stragglers cleanup runs at +3s, so up to 5% indMissing is expected pre-cleanup
+  if (indMissing > Math.max(5, topN * 0.05)) {
+    issues.push({label:'Tradier history', n:indMissing, total:topN, reason:'Rate-limited or 429s on history fetch — cleanup pass retries in ~3s.'});
+  }
+  if (fmpMissing > Math.max(10, topN * 0.10) && !fmpPaused) {
+    issues.push({label:'FMP fundamentals', n:fmpMissing, total:topN, reason:'FMP didn\'t return profile/grades for these tickers — coverage gap or rate-limited.'});
+  }
+  if (fmpPaused) {
+    issues.push({label:'FMP', n:topN, total:topN, reason:'FMP API paused (likely 429 or 402 hit). Resumes automatically.'});
+  }
+  if (gexMissing > 0) {
+    issues.push({label:'GEX/Flow', n:gexMissing, total:topN, reason:'Run GEX tab or click RUN on individual rows. GEX auto-fires 20s after scan if a key is configured.'});
+  }
+  if (themesMissing) {
+    issues.push({label:'Theme overlay', n:topN, total:topN, reason:'theme_scores.json failed to load — Strong Sector + theme filter rules will pass-through.'});
+  }
+  if (!issues.length) {
+    el.style.display = 'inline-block';
+    el.style.color = 'var(--grn)';
+    el.textContent = '✓ data complete';
+    el.title = 'All scoring inputs present for the top-' + topN + ' ranked tickers.';
+    el.onclick = null;
+    return;
+  }
+  el.style.display = 'inline-block';
+  el.style.color = 'var(--wrn)';
+  var summary = '⚠ ' + issues.length + ' data gap' + (issues.length===1?'':'s');
+  el.textContent = summary;
+  // Detailed tooltip + click-to-expand
+  var detail = issues.map(function(i){
+    return '• ' + i.label + ': missing ' + i.n + '/' + i.total + ' — ' + i.reason;
+  }).join('\n');
+  el.title = 'Scan data-coverage gaps:\n\n' + detail + '\n\n(Click for a longer explanation.)';
+  el.onclick = function(){
+    try { toast(summary + ': ' + issues.map(function(i){return i.label+' '+i.n+'/'+i.total;}).join(' · '), 6000); } catch(_){}
+    try { addAlert('SCAN', summary + ' — ' + issues.map(function(i){return i.label;}).join(', '), 'warn'); } catch(_){}
+  };
+}
+
 function setScanComplete(stats){
   // stats: {scanned, passed, scored, go, nogo}
   var bar = eid('sc-prog-bar');
@@ -11531,6 +11595,10 @@ function setScanComplete(stats){
     lastEl.textContent = '✓ Scan complete ' + d.toLocaleTimeString();
     lastEl.style.color = 'var(--grn)';
   }
+  // Data-coverage status chip — surfaces missing/failed enrichment so the
+  // user can see WHY a ticker scored low or has no GEX rule outcome,
+  // instead of silently looking at incomplete data.
+  try { _renderScanDataStatus(stats); } catch(e){ console.warn('[scan] data-status render threw:', e.message); }
   // Desktop notification (only when user explicitly enabled). Falls back silently.
   try {
     if('Notification' in window && Notification.permission === 'granted'
@@ -11720,6 +11788,10 @@ async function fetchDynamicUniverse(key, mode){
     if(avgVol > 0 && (todayVol / avgVol) * 100 < volRatioPct) return;
     passed.push({
       t: u.t, s: u.s,
+      // Carry the company name from Tradier's bulk-quote 'description' field
+      // through to the detail panel so the user sees 'AAPL — Apple Inc'
+      // instead of just 'AAPL'. Free byproduct of a quote we already fetch.
+      companyName: (q.description || '').trim(),
       price: price, change: change, changePct: changePct,
       volume: todayVol, avgVol: avgVol,
       week52hi: parseFloat(q.week_52_high) || 0,
@@ -11869,7 +11941,7 @@ async function runScan(opts){
       var sc2 = scoreIt(u.t, ind, usedOpt);
 
       G.results.push({
-        ticker: u.t, sector: u.s, price: u.price,
+        ticker: u.t, sector: u.s, companyName: u.companyName || '', price: u.price,
         change: u.change, changePct: u.changePct,
         volume: u.volume, ind: ind, opt: usedOpt,
         score: sc2.score, techScore: sc2.techScore, fundScore: sc2.fundScore,
