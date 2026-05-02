@@ -405,7 +405,14 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 .pos-src{color:var(--gry);font-size:10px;margin-left:auto;}
 .pnl-pos{color:var(--blu);}
 .pnl-neg{color:var(--wrn);}
-.ord-form{max-width:620px;padding:16px;}
+.ord-form{max-width:620px;padding:12px 14px 8px;}
+/* Compact spacing on the order-ticket form so all critical controls are
+   visible without scrolling. Was 16px padding + 10px row margin = a lot
+   of vertical real estate burned on whitespace. */
+.ord-form .qp-refresh-row{margin-bottom:6px;}
+.ord-form .quote-panel{margin-bottom:8px;}
+.ord-form .auto-sel-box{margin-bottom:8px;padding:8px 10px;}
+.ord-form .step-fill-box{margin-bottom:6px;}
 /* ── STOCK vs OPTIONS mode for the Order Ticket ── */
 .ord-form.mode-stock .ord-opt-only{display:none !important;}
 .ord-form.mode-stock .ord-stk-only-opt{}
@@ -425,7 +432,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 .sect-opt:hover{background:var(--bg2);}
 .sect-opt input{margin:0;cursor:pointer;}
 .sect-opt .sect-opt-count{color:var(--gry);font-size:9px;margin-left:auto;}
-.ord-row{display:flex;gap:10px;margin-bottom:10px;flex-wrap:wrap;}
+.ord-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
 .ord-row label{color:var(--gry);font-size:10px;display:block;margin-bottom:3px;}
 .ord-row input,.ord-row select{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:12px;padding:5px 8px;width:100%;}
 .ord-row input:focus,.ord-row select:focus{border-color:var(--amb);outline:none;}
@@ -435,17 +442,17 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 
 /* ── QUOTE PANEL ── */
 .quote-panel{display:flex;gap:0;background:var(--bg1);border:1px solid var(--amb3);border-radius:4px;margin-bottom:12px;overflow:hidden;}
-.qp-cell{flex:1;padding:8px 14px;text-align:center;border-right:var(--bdr);}
+.qp-cell{flex:1;padding:5px 12px;text-align:center;border-right:var(--bdr);}
 .qp-cell:last-child{border-right:none;}
 .qp-lbl{color:var(--gry);font-size:9px;letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;}
-.qp-val{font-size:20px;font-weight:700;letter-spacing:.5px;font-family:var(--ff);}
+.qp-val{font-size:16px;font-weight:700;letter-spacing:.5px;font-family:var(--ff);}
 .qp-val.bid{color:var(--wrn);}
 .qp-val.ask{color:var(--blu);}
 .qp-val.mid{color:var(--ambb);}
 .qp-spread{font-size:10px;color:var(--gry);margin-top:2px;}
 .qp-loading{color:var(--gry2);font-size:11px;animation:pulse 1s infinite;}
 @keyframes pulse{0%,100%{opacity:.4;}50%{opacity:1;}}
-.qp-refresh-row{display:flex;align-items:center;gap:8px;margin-bottom:10px;}
+.qp-refresh-row{display:flex;align-items:center;gap:8px;margin-bottom:6px;}
 .qp-ts{color:var(--gry2);font-size:10px;}
 
 /* ── STEP FILL ── */
@@ -831,27 +838,27 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   .ind-filter-lbl input[type="checkbox"]{width:22px !important;height:22px !important;}
 
   /* ── Order Ticket: widen the form so two columns of fields fit comfortably ── */
-  .ord-form{max-width:920px !important;padding:18px !important;}
-  .ord-row{gap:14px;margin-bottom:14px;}
-  .ord-row input, .ord-row select{font-size:16px !important;padding:10px 12px !important;}
+  /* Tightened 2026-05-02 per user spec: more controls visible without scroll. */
+  .ord-form{max-width:920px !important;padding:10px 14px 8px !important;}
+  .ord-row{gap:8px;margin-bottom:6px;}
+  .ord-row input, .ord-row select{font-size:14px !important;padding:7px 10px !important;}
   .ord-field{min-width:140px;}
 
-  /* ── Live-quote panel: bigger BID/ASK numbers and tap zones ── */
-  .quote-panel{margin-bottom:14px;}
-  .qp-cell{padding:12px 14px;}
-  .qp-val{font-size:24px;}
-  .qp-lbl{font-size:11px;}
+  /* ── Live-quote panel: compact strip so BID/ASK + downstream fields fit on first screen ── */
+  .quote-panel{margin-bottom:6px;}
+  .qp-cell{padding:5px 12px;}
+  .qp-val{font-size:18px;}
+  .qp-lbl{font-size:10px;margin-bottom:1px;}
 
-  /* ── Step fill config: each field gets enough room to tap ── */
-  .step-fill-box{padding:14px 16px;}
-  .step-fill-cfg{gap:14px;}
+  /* ── Step fill config: compact (collapsed via toggle on first load) ── */
+  .step-fill-box{padding:8px 12px;}
+  .step-fill-cfg{gap:10px;}
   .step-cfg-field input, .step-cfg-field select{
-    min-width:120px !important;
-    font-size:16px !important;
-    padding:9px 11px !important;
-    min-height:44px !important;
+    min-width:100px !important;
+    font-size:13px !important;
+    padding:6px 9px !important;
   }
-  .step-fill-hdr label{font-size:13px;line-height:1.4;}
+  .step-fill-hdr label{font-size:12px;line-height:1.3;}
 
   /* ── Multi-select sector dropdown: wider with finger-friendly rows ── */
   .sect-btn{min-height:44px !important;min-width:200px !important;font-size:14px !important;padding:10px 14px !important;}
@@ -1753,7 +1760,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       <div class="step-fill-box">
         <div class="step-fill-hdr">
           <input type="checkbox" id="step-fill-toggle" onchange="toggleStepFill()">
-          <label for="step-fill-toggle" id="sf-mode-label">&#9650; STEP FILL MODE — start at bid, step toward ask until filled</label>
+          <label for="step-fill-toggle" id="sf-mode-label">&#9650; STEP FILL MODE — Start at BID, step up toward ASK (best buy price)</label>
         </div>
         <div class="step-fill-cfg" id="step-fill-cfg" style="display:none;">
           <div class="step-cfg-field">
@@ -6161,16 +6168,13 @@ function updateStepFillMode(){
   var lbl=eid('sf-mode-label');
   var sfStart=eid('sf-start');
   if(selling){
-    lbl.innerHTML='\u25bc STEP FILL MODE \u2014 start at ASK, step DOWN toward bid (best sell price)';
+    lbl.innerHTML='\u25bc STEP FILL MODE \u2014 Start at ASK, step down toward BID (best sell price)';
     lbl.style.color='var(--wrn)';
-    // Any sell action (open or close) should start at ASK and walk down so
-    // we capture the spread instead of giving it up. Submit logic also
-    // force-overrides; keeping the UI honest prevents confusion.
     if(sfStart && sfStart.value !== 'ask') sfStart.value='ask';
   } else {
-    lbl.innerHTML='\u25b2 STEP FILL MODE \u2014 start at BID, step UP toward ask (best buy price)';
+    lbl.innerHTML='\u25b2 STEP FILL MODE \u2014 Start at BID, step up toward ASK (best buy price)';
     lbl.style.color='var(--grn)';
-    if(sfStart && sfStart.value==='ask') sfStart.value='bid'; // auto-flip default
+    if(sfStart && sfStart.value==='ask') sfStart.value='bid';
   }
   // Auto-anchor the limit price to the side appropriate for the new action:
   // - Any BUY  \u2192 BID (patient: only fill if seller hits our bid)
