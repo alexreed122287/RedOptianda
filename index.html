@@ -338,21 +338,27 @@ a{color:var(--blu);text-decoration:none;}
 #tab-wl #wl-tbl-wrap table{font-size:12px;width:100%;table-layout:auto;}
 #tab-wl #wl-tbl-wrap th,#tab-wl #wl-tbl-wrap td{padding:5px 6px;white-space:nowrap;}
 /* Item 4: lock columns to the pane — SYMBOL/SIGNAL/BUY/✗ keep fixed
-   width; COMPANY + CHG % shrink to fill. No horizontal scroll on
-   laptop. */
+   width; COMPANY shrinks to fill. No horizontal scroll on laptop.
+   Also overflow:hidden on the wrap so anything that does exceed
+   width gets clipped instead of overflowing the right edge. */
+#tab-wl #wl-tbl-wrap{overflow-x:hidden;}
 #tab-wl #wl-tbl-wrap table{table-layout:fixed;}
 #tab-wl #wl-tbl-wrap thead th:nth-child(1),
-#tab-wl #wl-tbl-wrap tbody td:nth-child(1){width:64px;}
+#tab-wl #wl-tbl-wrap tbody td:nth-child(1){width:60px;}
 #tab-wl #wl-tbl-wrap thead th:nth-child(2),
 #tab-wl #wl-tbl-wrap tbody td:nth-child(2){width:auto;overflow:hidden;text-overflow:ellipsis;}
 #tab-wl #wl-tbl-wrap thead th:nth-child(3),
 #tab-wl #wl-tbl-wrap tbody td:nth-child(3){width:64px;text-align:right;}
 #tab-wl #wl-tbl-wrap thead th:nth-child(4),
-#tab-wl #wl-tbl-wrap tbody td:nth-child(4){width:64px;}
+#tab-wl #wl-tbl-wrap tbody td:nth-child(4){width:60px;}
+/* BUY column needs room for the '▲ BUY' button + padding so it
+   doesn't push ✗ off the pane edge. */
 #tab-wl #wl-tbl-wrap thead th:nth-child(5),
-#tab-wl #wl-tbl-wrap tbody td:nth-child(5){width:64px;}
+#tab-wl #wl-tbl-wrap tbody td:nth-child(5){width:74px;text-align:center;padding-left:2px;padding-right:2px;}
+#tab-wl #wl-tbl-wrap tbody td:nth-child(5) button{padding:3px 6px !important;font-size:10px !important;min-width:0 !important;}
 #tab-wl #wl-tbl-wrap thead th:nth-child(6),
-#tab-wl #wl-tbl-wrap tbody td:nth-child(6){width:36px;}
+#tab-wl #wl-tbl-wrap tbody td:nth-child(6){width:32px;padding-left:2px;padding-right:4px;}
+#tab-wl #wl-tbl-wrap tbody td:nth-child(6) button{padding:3px 6px !important;}
 .sec-head{background:var(--bg2);border-bottom:var(--bdr);color:var(--amb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 12px;position:sticky;top:0;z-index:5;text-shadow:0 0 20px rgba(0,212,255,.3);}
 .sig-card{border-bottom:var(--bdr);cursor:pointer;padding:8px 10px;transition:background .15s;display:flex;justify-content:space-between;align-items:flex-start;}
 .sig-card:hover{background:var(--bg2);}
@@ -1438,6 +1444,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <!-- SCAN + status: scroll-locked to right (item 5) — buttons keep
          their full width, dyn-w spans truncate first -->
     <button class="btn blu" id="sc-run-btn-top" onclick="runScan()" style="margin-left:auto;font-size:11px;padding:6px 14px;flex:0 0 auto;white-space:nowrap;">↻ SCAN</button>
+    <button class="btn grn" id="sc-export-go-top" onclick="exportGoTickers('sc')" style="font-size:11px;padding:6px 12px;flex:0 0 auto;white-space:nowrap;" title="Copy a comma-separated list of all GO-signal tickers from current filtered results">▲ EXPORT GOs</button>
     <span id="sc-last-scan" class="dyn-w" style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);width:160px;flex:0 1 160px;min-width:60px;text-align:left;" title="Timestamp of the most recent SCAN completion. Persists across page reloads from localStorage.">Last scan: never</span>
     <span id="sc-data-status" class="dyn-w" style="display:none;font-size:10px;font-family:var(--ff-mono);width:140px;flex:0 1 140px;min-width:0;text-align:left;cursor:pointer;" title="Click for data-coverage details from the last scan."></span>
   </div>
@@ -1534,7 +1541,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <label title="Filter OUT tickers where the option contract costs more than this amount. Uses last scanned option price.">Max Opt $ <input type="number" id="sc-maxoptprice" placeholder="any" min="0" step="0.50" style="width:100px;"></label>
     <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="saveScanSettings()" title="Save current screener + filter settings to localStorage. Restored on every page load.">SAVE</button>
     <button class="btn" style="border-color:var(--gry2);color:var(--gry);" onclick="resetScanSettings()" title="Reset screener + filters to factory defaults. Does NOT clear saved API keys or tokens.">&#8634; RESET</button>
-    <button class="btn grn" style="margin-left:auto;" onclick="exportGoTickers('sc')" title="Copy a comma-separated list of all GO-signal tickers from current filtered results">▲ EXPORT GOs</button>
+    <!-- EXPORT GOs button moved to the sticky action row (next to SCAN). -->
     <span id="sc-export-hint" style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);"></span>
     <span id="sc-universe-label" style="display:none;"></span>
   </div>
@@ -1624,7 +1631,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
             <span id="wl-chart-title">--</span>
             <span id="wl-chart-sub" style="color:var(--gry);font-size:10px;">--</span>
           </div>
-          <div id="wl-chart-canvas" style="flex:1;position:relative;background:var(--bg0);">
+          <div id="wl-chart-canvas" style="flex:1;position:relative;background:var(--bg0);min-height:300px;padding-bottom:8px;">
             <div id="wl-chart-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--gry);font-size:11px;font-family:var(--ff-mono);letter-spacing:1px;">\u2014 select a ticker \u2014</div>
           </div>
         </div>
@@ -2015,7 +2022,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       <!-- ── STEP FILL BOX ── -->
       <div class="step-fill-box">
         <div class="step-fill-hdr">
-          <input type="checkbox" id="step-fill-toggle" onchange="toggleStepFill()">
+          <input type="checkbox" id="step-fill-toggle" checked onchange="toggleStepFill()">
           <label for="step-fill-toggle" id="sf-mode-label">&#9650; STEP FILL MODE — Start at BID, step up toward ASK (best buy price)</label>
         </div>
         <div class="step-fill-cfg" id="step-fill-cfg" style="display:none;">
@@ -14550,7 +14557,7 @@ function _wlDrawCandles(ticker, days, kind){
           + (e50 ? '<br><span style="color:#ff5252">EMA50:$'+e50+'</span>' : '');
       }
     },
-    grid:{left:56, right:12, top:18, bottom:40},
+    grid:{left:56, right:12, top:18, bottom:60},
     xAxis:{type:'category', data:labels, axisLine:{lineStyle:{color:'rgba(120,140,180,0.15)'}}, axisLabel:{color:'#7090c8', fontSize:9, interval:Math.floor(days.length/6)}, splitLine:{show:false}},
     /* y-axis auto-rescales to the VISIBLE data range as the user zooms.
        scale:true prevents ECharts from forcing a 0-baseline; min/max removed
@@ -14570,7 +14577,7 @@ function _wlDrawCandles(ticker, days, kind){
     },
     dataZoom:[
       {type:'inside', start:zoomStart, end:100, filterMode:'filter'},
-      {type:'slider', start:zoomStart, end:100, bottom:2, height:18, filterMode:'filter', borderColor:'rgba(0,212,255,0.15)', fillerColor:'rgba(0,212,255,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}, showDetail:false}
+      {type:'slider', start:zoomStart, end:100, bottom:8, height:22, filterMode:'filter', borderColor:'rgba(0,212,255,0.15)', fillerColor:'rgba(0,212,255,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}, showDetail:false}
     ],
     series:[
       {name:'Price', type:'candlestick', data: days.map(function(d){ return [+d.open, +d.close, +d.low, +d.high]; }),
@@ -21875,6 +21882,12 @@ function init(){
   loadKeys();
   loadWL();
   loadAppSettings();
+  // User spec 2026-05-02: Step Fill ON by default. Fire toggleStepFill so
+  // the config panel + label reflect the checked state on first render.
+  try {
+    var _sft = document.getElementById('step-fill-toggle');
+    if (_sft && _sft.checked && typeof toggleStepFill === 'function') toggleStepFill();
+  } catch(_){}
   // Restore the SYNC card's "include trade token" checkbox state so the
   // user's choice persists across reloads. Persisted under
   // rrjcar_sync_include_trade ("1" / "0"); checkbox change-handler writes it.
