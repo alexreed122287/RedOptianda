@@ -337,12 +337,14 @@ a{color:var(--blu);text-decoration:none;}
 #tab-wl .split-r{width:58%;}
 #tab-wl #wl-tbl-wrap table{font-size:12px;width:100%;table-layout:auto;}
 #tab-wl #wl-tbl-wrap th,#tab-wl #wl-tbl-wrap td{padding:5px 6px;white-space:nowrap;}
-/* Item 4: lock columns to the pane — SYMBOL/SIGNAL/BUY/✗ keep fixed
-   width; COMPANY shrinks to fill. No horizontal scroll on laptop.
-   Also overflow:hidden on the wrap so anything that does exceed
-   width gets clipped instead of overflowing the right edge. */
-#tab-wl #wl-tbl-wrap{overflow-x:hidden;}
-#tab-wl #wl-tbl-wrap table{table-layout:fixed;}
+/* User spec 2026-05-03: never clip buttons/text — let the table
+   horizontal-scroll inside its pane instead. table-layout:auto so
+   columns size to natural content width; overflow-x:auto on the
+   wrap surfaces a scroll bar when the pane is too narrow. */
+#tab-wl #wl-tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch;}
+#tab-wl #wl-tbl-wrap::-webkit-scrollbar{height:6px;}
+#tab-wl #wl-tbl-wrap::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+#tab-wl #wl-tbl-wrap table{table-layout:auto;min-width:520px;}
 #tab-wl #wl-tbl-wrap thead th:nth-child(1),
 #tab-wl #wl-tbl-wrap tbody td:nth-child(1){width:60px;}
 #tab-wl #wl-tbl-wrap thead th:nth-child(2),
@@ -462,7 +464,13 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    row-pad:   10px 14px  (vertical / horizontal padding of every flt-bar)
    ctrl-h:    30px (height of every button / input / select inside flt-bar)
 */
-.flt-bar{background:var(--bg1);border-bottom:var(--bdr);display:flex;flex-wrap:wrap;gap:10px;padding:10px 14px;flex-shrink:0;align-items:center;}
+.flt-bar{background:var(--bg1);border-bottom:var(--bdr);display:flex;flex-wrap:nowrap;gap:10px;padding:10px 14px;flex-shrink:0;align-items:center;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+/* User spec 2026-05-03: never wrap buttons/text on laptop. Rows that
+   exceed width get a horizontal scroll instead. The hidden scrollbar
+   styling keeps the chrome clean while preserving touch-pad scroll. */
+.flt-bar::-webkit-scrollbar{height:6px;}
+.flt-bar::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
+.flt-bar > *{flex-shrink:0;}
 /* Stable-width container for live-updating text (counters, timestamps, status
    labels). Without these, growing text inside a flex row pushes adjacent
    controls — e.g. the GEX progress chip dragged the AUTO dropdown leftward
@@ -632,7 +640,10 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 .sect-opt:hover{background:var(--bg2);}
 .sect-opt input{margin:0;cursor:pointer;}
 .sect-opt .sect-opt-count{color:var(--gry);font-size:9px;margin-left:auto;}
-.ord-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:wrap;}
+.ord-row{display:flex;gap:8px;margin-bottom:6px;flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;}
+.ord-row > *{flex-shrink:0;}
+.ord-row::-webkit-scrollbar{height:6px;}
+.ord-row::-webkit-scrollbar-thumb{background:var(--bg3);border-radius:3px;}
 .ord-row label{color:var(--gry);font-size:10px;display:block;margin-bottom:3px;}
 .ord-row input,.ord-row select{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:12px;padding:5px 8px;width:100%;}
 .ord-row input:focus,.ord-row select:focus{border-color:var(--amb);outline:none;}
@@ -10174,8 +10185,8 @@ function renderTopThemesStrip(){
   // Top industries only — no laggards section per user spec.
   var leaders = rows.slice(0, 8);
 
-  var content = '<span style="color:var(--ambb);font-size:10px;letter-spacing:1.5px;font-weight:700;">TOP THEMES NOW:</span> '
-    + leaders.map(function(r,i){return fmtRow(r, i+1);}).join('<span style="color:var(--bg3);margin:0 4px;">·</span>');
+  // 'TOP THEMES NOW:' label removed 2026-05-03 per user spec.
+  var content = leaders.map(function(r,i){return fmtRow(r, i+1);}).join('<span style="color:var(--bg3);margin:0 4px;">·</span>');
 
   // The marquee animation translates -50% to loop seamlessly, so we render
   // the content TWICE side by side; the second copy slides into view as
@@ -16443,6 +16454,17 @@ function rollLoadChain(){
     }
     // Score each contract via the unified _optScore helper
     chain.forEach(function(o){ o._score = _optScore(o); });
+    // User report 2026-05-03: roll window showed duplicate strike rows.
+    // Tradier includeAllRoots=true returns multi-root contracts (regular
+    // + mini, plus stock-split-adjusted legacy roots) — same strike,
+    // different OCC symbol. Dedupe by strike keeping the contract with
+    // the highest score (proxy for the most-liquid root).
+    var byStrike = {};
+    chain.forEach(function(o){
+      var k = String(+o.strike);
+      if (!byStrike[k] || (o._score||0) > (byStrike[k]._score||0)) byStrike[k] = o;
+    });
+    chain = Object.keys(byStrike).map(function(k){ return byStrike[k]; });
     chain.sort(function(a,b){return +a.strike - +b.strike;});
     G_roll._chainCache=chain;
     G_roll._chainExp=newExp;
@@ -19109,19 +19131,33 @@ function updateHeaderQuotes(){
       var span = eid('h-'+p.id);
       var container = span ? span.closest('.htick') : null;
       if(!q || !(parseFloat(q.last||q.prevclose)>0)){
-        // No data returned (Tradier sandbox / account-plan gap). Keep the
-        // ticker slot visible with placeholder values so the indices strip
-        // doesn't reflow when one symbol drops out — user wants the daily
-        // change percentage always present, not hidden on missing data.
+        // No live data — keep the slot visible. If the span already
+        // shows a previous price/% (from earlier successful poll or
+        // cache), DON'T overwrite to '(--)' — preserving the last
+        // known value addresses user spec 2026-05-03: 'display the
+        // last % change even in ah'. Only stamp '--' on first load
+        // when nothing has been shown yet.
         if(container) container.style.display = '';
-        if(span) span.textContent = '--';
-        var celMissing = eid('h-'+p.id+'-c');
-        if(celMissing){ celMissing.textContent = '(--)'; celMissing.className = 'tc'; }
+        var existingPrice = span && span.textContent && span.textContent.trim();
+        var celExisting = eid('h-'+p.id+'-c');
+        var existingChg = celExisting && celExisting.textContent && celExisting.textContent.trim();
+        if (!existingPrice || existingPrice === '--') { if(span) span.textContent = '--'; }
+        if (!existingChg || existingChg === '(--)' || existingChg === '') {
+          if(celExisting){ celExisting.textContent = '(--)'; celExisting.className = 'tc'; }
+        }
         return;
       }
       if(container) container.style.display = '';
       var price=parseFloat(q.last||q.prevclose)||0;
-      var chgPct=parseFloat(q.change_percentage)||0;
+      // Daily % change: prefer Tradier's pre-computed change_percentage,
+      // but fall back to (last - prevclose) / prevclose * 100 when that
+      // field is zero/missing — important during AH when some indices
+      // (VIX, SPX) report a populated `last` but a stale `change_percentage`.
+      var chgPct = parseFloat(q.change_percentage);
+      if (!chgPct && q.prevclose && +q.prevclose > 0) {
+        chgPct = ((price - +q.prevclose) / +q.prevclose) * 100;
+      }
+      chgPct = chgPct || 0;
       if(span) span.textContent='$'+fmt2(price);
       hqCache[p.id]=price;
       var cel=eid('h-'+p.id+'-c');
