@@ -335,8 +335,24 @@ a{color:var(--blu);text-decoration:none;}
    still gets the majority — the chart is meaningful at 50%+ width. */
 #tab-wl .split-l{width:42%;}
 #tab-wl .split-r{width:58%;}
-#tab-wl #wl-tbl-wrap table{font-size:12px;width:100%;}
-#tab-wl #wl-tbl-wrap th,#tab-wl #wl-tbl-wrap td{padding:6px 8px;}
+#tab-wl #wl-tbl-wrap table{font-size:12px;width:100%;table-layout:auto;}
+#tab-wl #wl-tbl-wrap th,#tab-wl #wl-tbl-wrap td{padding:5px 6px;white-space:nowrap;}
+/* Item 4: lock columns to the pane — SYMBOL/SIGNAL/BUY/✗ keep fixed
+   width; COMPANY + CHG % shrink to fill. No horizontal scroll on
+   laptop. */
+#tab-wl #wl-tbl-wrap table{table-layout:fixed;}
+#tab-wl #wl-tbl-wrap thead th:nth-child(1),
+#tab-wl #wl-tbl-wrap tbody td:nth-child(1){width:64px;}
+#tab-wl #wl-tbl-wrap thead th:nth-child(2),
+#tab-wl #wl-tbl-wrap tbody td:nth-child(2){width:auto;overflow:hidden;text-overflow:ellipsis;}
+#tab-wl #wl-tbl-wrap thead th:nth-child(3),
+#tab-wl #wl-tbl-wrap tbody td:nth-child(3){width:64px;text-align:right;}
+#tab-wl #wl-tbl-wrap thead th:nth-child(4),
+#tab-wl #wl-tbl-wrap tbody td:nth-child(4){width:64px;}
+#tab-wl #wl-tbl-wrap thead th:nth-child(5),
+#tab-wl #wl-tbl-wrap tbody td:nth-child(5){width:64px;}
+#tab-wl #wl-tbl-wrap thead th:nth-child(6),
+#tab-wl #wl-tbl-wrap tbody td:nth-child(6){width:36px;}
 .sec-head{background:var(--bg2);border-bottom:var(--bdr);color:var(--amb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 12px;position:sticky;top:0;z-index:5;text-shadow:0 0 20px rgba(0,212,255,.3);}
 .sig-card{border-bottom:var(--bdr);cursor:pointer;padding:8px 10px;transition:background .15s;display:flex;justify-content:space-between;align-items:flex-start;}
 .sig-card:hover{background:var(--bg2);}
@@ -460,6 +476,16 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 .flt-bar.collapsible .sec-toggle{font-family:var(--ff-mono);font-size:10px;color:var(--amb);letter-spacing:.5px;background:none;border:none;padding:0 6px 0 0;}
 .flt-bar.collapsible.collapsed > *:not(.sec-toggle){display:none !important;}
 .flt-bar.collapsible.collapsed{padding-top:6px;padding-bottom:6px;}
+/* When inside the new 4-segment sticky bar, the legacy in-row .sec-toggle
+   header is redundant — hide it and let the segment header drive collapse. */
+.flt-bar.collapsible > .sec-toggle{display:none !important;}
+.flt-bar.collapsible.collapsed{display:none !important;}
+/* 4-segment header chips in the sticky action row (item 8a) */
+.sec-seg{display:inline-flex;align-items:center;gap:4px;background:none;border:1px solid var(--bg3);border-radius:3px;color:var(--gry);font-family:var(--ff-mono);font-size:10px;letter-spacing:.5px;padding:5px 9px;cursor:pointer;flex:0 0 auto;white-space:nowrap;text-transform:uppercase;transition:color .12s,border-color .12s;}
+.sec-seg:hover{color:var(--amb);border-color:var(--amb3);}
+.sec-seg.open{color:var(--amb);border-color:var(--amb);background:var(--amb3);}
+.sec-seg.open .sec-seg-arr{transform:rotate(90deg);}
+.sec-seg-arr{display:inline-block;font-size:9px;color:var(--amb);transition:transform .15s;}
 /* Scanner detail panel — keep all interior content (especially button
    rows) inside the panel boundary. The det-hdr and any .ord-row inside
    wrap rather than overflow horizontally; watchlist buttons + action
@@ -1392,17 +1418,28 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 </div>
 <div class="tab-pane active" id="tab-sc">
   <!-- Mobile-only: condensed action bar with SCAN + Filters toggle -->
-  <!-- Permanent action row — always visible, independent of SCREENER
-       collapse state. User spec 2026-05-02: 'keep the Scan button
-       always visible without having to open up the screener section'. -->
-  <div class="flt-bar" id="sc-action-row" style="display:flex;align-items:center;gap:8px;border-bottom:1px solid var(--bg3);padding:6px 10px;">
-    <button type="button" class="mobile-filter-toggle show" onclick="toggleMobileFilters()" id="sc-mobile-filter-btn" style="flex:0 0 auto;">
+  <!-- Sticky action row — single line: 4 section toggles + SCAN + status.
+       Each segment toggles its corresponding sc-bar-* collapsible inline.
+       SCAN is always reachable. Row is sticky so it stays at the top while
+       results scroll below; filter sections themselves scroll up out of
+       view when expanded then collapsed. User spec 2026-05-02: items
+       1 + 5 + 6b + 8a combined. -->
+  <div class="flt-bar" id="sc-action-row" style="display:flex;align-items:center;gap:6px;border-bottom:1px solid var(--bg3);padding:5px 8px;position:sticky;top:0;z-index:50;background:var(--bg1);flex-wrap:nowrap;">
+    <!-- Hidden mobile filter toggle stays for code paths that target it -->
+    <button type="button" class="mobile-filter-toggle" onclick="toggleMobileFilters()" id="sc-mobile-filter-btn" style="display:none;">
       <span>☰</span><span>FILTERS</span><span class="mft-arr">▾</span>
       <span id="sc-mobile-filter-count" style="margin-left:8px;color:var(--gry);font-size:10px;"></span>
     </button>
-    <button class="btn blu" id="sc-run-btn-top" onclick="runScan()" style="margin-left:auto;font-size:11px;padding:6px 14px;flex:0 0 auto;">↻ SCAN</button>
-    <span id="sc-last-scan" class="dyn-w" style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);width:200px;text-align:left;flex:0 0 auto;" title="Timestamp of the most recent SCAN completion. Persists across page reloads from localStorage.">Last scan: never</span>
-    <span id="sc-data-status" class="dyn-w" style="display:none;font-size:10px;font-family:var(--ff-mono);width:170px;text-align:left;cursor:pointer;flex:0 0 auto;" title="Click for data-coverage details from the last scan."></span>
+    <!-- 4-segment collapsible header bar (item 8a) -->
+    <button type="button" class="sec-seg" data-target="sc-bar-strategy" onclick="toggleSecSeg('sc-bar-strategy')" title="Click to expand / collapse the STRATEGY presets row"><span class="sec-seg-arr">▶</span>STRATEGY</button>
+    <button type="button" class="sec-seg" data-target="sc-bar-filters" onclick="toggleSecSeg('sc-bar-filters')" title="Click to expand / collapse the FILTERS row"><span class="sec-seg-arr">▶</span>FILTERS</button>
+    <button type="button" class="sec-seg" data-target="sc-bar-mustpass" onclick="toggleSecSeg('sc-bar-mustpass')" title="Click to expand / collapse the MUST PASS chips row"><span class="sec-seg-arr">▶</span>MUST PASS</button>
+    <button type="button" class="sec-seg" data-target="sc-bar-screener" onclick="toggleSecSeg('sc-bar-screener')" title="Click to expand / collapse the SCREENER inputs"><span class="sec-seg-arr">▶</span>SCREENER</button>
+    <!-- SCAN + status: scroll-locked to right (item 5) — buttons keep
+         their full width, dyn-w spans truncate first -->
+    <button class="btn blu" id="sc-run-btn-top" onclick="runScan()" style="margin-left:auto;font-size:11px;padding:6px 14px;flex:0 0 auto;white-space:nowrap;">↻ SCAN</button>
+    <span id="sc-last-scan" class="dyn-w" style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);width:160px;flex:0 1 160px;min-width:60px;text-align:left;" title="Timestamp of the most recent SCAN completion. Persists across page reloads from localStorage.">Last scan: never</span>
+    <span id="sc-data-status" class="dyn-w" style="display:none;font-size:10px;font-family:var(--ff-mono);width:140px;flex:0 1 140px;min-width:0;text-align:left;cursor:pointer;" title="Click for data-coverage details from the last scan."></span>
   </div>
   <div id="sc-filter-bars">
   <!-- Strategy mode quick filters — inline gap/font overrides removed; the
@@ -1492,7 +1529,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <button type="button" class="sec-toggle" title="Collapse / expand the SCREENER inputs">SCREENER</button>
     <label>Min Price $<input type="number" id="sc-minprice" value="1" min="1" style="width:90px;" title="Only include stocks above this price"></label>
     <label>Max Price $<input type="number" id="sc-maxprice" placeholder="any" min="1" style="width:100px;" title="Only include stocks below this price — leave blank for no limit"></label>
-    <label>Min AvgVol <input type="number" id="sc-minavgvol" value="500000" min="100000" step="100000" style="width:140px;" title="Min average daily volume"></label>
+    <label>Min AvgVol <input type="text" inputmode="numeric" id="sc-minavgvol" value="500,000" oninput="formatCommaInput(this)" style="width:140px;" title="Min average daily volume — typed value formats with commas (e.g. 500,000)"></label>
     <label>Today Vol % <input type="number" id="sc-volratio" placeholder="any" min="0" max="200" style="width:90px;" title="Today volume must be at least X% of avg volume. Leave blank to skip this filter.">%</label>
     <label title="Filter OUT tickers where the option contract costs more than this amount. Uses last scanned option price.">Max Opt $ <input type="number" id="sc-maxoptprice" placeholder="any" min="0" step="0.50" style="width:100px;"></label>
     <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="saveScanSettings()" title="Save current screener + filter settings to localStorage. Restored on every page load.">SAVE</button>
@@ -1555,8 +1592,13 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
        the popup would always appear and where the tickers would be
        scrollable through within that frame'. -->
   <div id="sc-body" style="flex:1;display:flex;flex-direction:row;overflow:hidden;min-height:0;">
-    <div class="tbl-wrap" id="sc-tbl-wrap" style="flex:0 0 50%;min-width:340px;overflow:auto;border-right:1px solid var(--bg3);min-height:0;"><div class="empty-det" id="sc-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Run a scan to see results</p></div></div>
-    <div id="sc-det-empty" style="display:none;"></div><div id="sc-detail" style="flex:1;min-width:0;overflow-y:auto;overflow-x:hidden;display:none;"></div>
+    <!-- Item 7: scanner table takes the FULL viewport width when no
+         ticker is selected. Click a row → detail panel expands to 35%
+         of the body width with a smooth transition; table shrinks
+         smoothly to 65%. .sc-detail-active marker is set/cleared by
+         viewDetail to drive these widths. -->
+    <div class="tbl-wrap" id="sc-tbl-wrap" style="flex:1 1 100%;min-width:0;overflow:auto;border-right:none;min-height:0;transition:flex-basis .2s ease, max-width .2s ease;"><div class="empty-det" id="sc-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Run a scan to see results</p></div></div>
+    <div id="sc-det-empty" style="display:none;"></div><div id="sc-detail" style="flex:0 0 0;width:0;min-width:0;overflow-y:auto;overflow-x:hidden;display:none;border-left:1px solid var(--bg3);transition:flex-basis .2s ease, width .2s ease;"></div>
   </div>
 </div>
 
@@ -4829,6 +4871,24 @@ function fmtK(n){if(!n||isNaN(n))return'0';if(Math.abs(n)>=1e6)return(n/1e6).toF
 function fmtComma(n){
   if(n==null||isNaN(n))return'0';
   return Math.round(n).toLocaleString('en-US');
+}
+// Live comma-formatter for typed-in numeric inputs. Strips non-digits,
+// re-inserts commas, and preserves caret position relative to the
+// digit count so the user can keep typing without the cursor jumping
+// to the end. User spec 2026-05-02: 'have keyed in numbers use a
+// comma when greater than 999'.
+function formatCommaInput(el){
+  if(!el) return;
+  var raw = el.value || '';
+  var caretFromEnd = raw.length - (el.selectionEnd || raw.length);
+  var digits = raw.replace(/[^\d]/g, '');
+  if (!digits) { el.value = ''; return; }
+  var formatted = parseInt(digits, 10).toLocaleString('en-US');
+  el.value = formatted;
+  // Re-aim the caret to the same offset from the end so commas being
+  // inserted mid-string don't dump the cursor at position 0.
+  var newCaret = Math.max(0, formatted.length - caretFromEnd);
+  try { el.setSelectionRange(newCaret, newCaret); } catch(_){}
 }
 function rnd(a,b){return a+Math.random()*(b-a);}
 function clamp(v,a,b){return Math.max(a,Math.min(b,v));}
@@ -11291,6 +11351,27 @@ function chainRowClick(ticker, strike, expDate){
   }, 120);
 }
 
+// Item 7 (laptop only) — drive the table/detail width split via the
+// 'active' state. iPhone bottom-sheet rule (position:fixed) overrides
+// these on ≤480px so this is no-op on mobile. Only applies to the
+// scanner pane (sc-detail / sc-tbl-wrap). Other detail panels (bs)
+// retain their own inline-flex layout.
+function _setSelDetailWidth(detId, active){
+  if (detId !== 'sc-detail') return;
+  var det = eid('sc-detail');
+  var tbl = eid('sc-tbl-wrap');
+  if (!det || !tbl) return;
+  if (active){
+    det.style.flex = '0 0 35%';
+    det.style.width = '35%';
+    tbl.style.flex = '0 0 65%';
+  } else {
+    det.style.flex = '0 0 0';
+    det.style.width = '0';
+    tbl.style.flex = '1 1 100%';
+  }
+}
+
 function viewDetail(ticker,detId,emptyId){
  // Toggle behavior — clicking the SAME ticker again closes the detail
  // panel. User spec: 'Allow clicking the same ticker again to close the
@@ -11304,6 +11385,8 @@ function viewDetail(ticker,detId,emptyId){
    document.querySelectorAll('tr.sel-row').forEach(function(row){row.classList.remove('sel-row');});
    document.querySelectorAll('.sig-card.sel').forEach(function(c){c.classList.remove('sel');});
    G.selTicker = null;
+   // Item 7: collapse detail back to width 0 so table reclaims full width
+   _setSelDetailWidth(detId, false);
    return;
  }
  var r=null;
@@ -11313,6 +11396,8 @@ function viewDetail(ticker,detId,emptyId){
  document.querySelectorAll('.sig-card').forEach(function(c){c.classList.toggle('sel',c.dataset.ticker===ticker);});
  document.querySelectorAll('tr.sel-row').forEach(function(row){row.classList.remove('sel-row');});
  document.querySelectorAll('tr[data-ticker="'+ticker+'"]').forEach(function(row){row.classList.add('sel-row');});
+ // Item 7: expand the detail panel to 35% of the body width
+ _setSelDetailWidth(detId, true);
  buildDetail(r,detId,emptyId);
 
  var tradierKey=_getTradierKey();
@@ -12034,7 +12119,7 @@ async function fetchDynamicUniverse(key, mode){
   var host = mode === 'live' ? 'https://api.tradier.com' : 'https://sandbox.tradier.com';
   var minPrice   = parseFloat(eid('sc-minprice')   ? eid('sc-minprice').value   : 1)  || 1;
   var maxPrice   = parseFloat(eid('sc-maxprice')   ? eid('sc-maxprice').value   : 0)   || 0;
-  var minAvgVol  = parseFloat(eid('sc-minavgvol')  ? eid('sc-minavgvol').value  : 50000) || 50000;
+  var minAvgVol  = parseFloat(((eid('sc-minavgvol') && eid('sc-minavgvol').value) || '50000').replace(/,/g,'')) || 50000;
   var volRatioPct= parseFloat(eid('sc-volratio')   ? eid('sc-volratio').value   : 0)  || 0;
   var seen = {};
   // Pre-scan theme filter: when a theme is selected in the SCAN toolbar,
@@ -13045,7 +13130,7 @@ var SCAN_SETTINGS_VERSION = 2;
 var SCAN_SETTING_DEFAULTS = {
   'sc-minprice':     '1',
   'sc-maxprice':     '',
-  'sc-minavgvol':    '500000',
+  'sc-minavgvol':    '500,000',
   'sc-volratio':     '',
   'sc-maxoptprice':  '',
   'sc-minscore':     '160',
@@ -14190,7 +14275,9 @@ function refreshWL(){
       }
       var u=null;for(var i=0;i<UNIVERSE.length;i++){if(UNIVERSE[i].t===t){u=UNIVERSE[i];break;}}if(!u)u={s:'--'};
       var ind=simInd(t,q.price),opt=simOpt(q.price),sc=scoreIt(t,ind,opt);
-      if(!existingResult){G.results.push({ticker:t,sector:u.s,companyName:coName!=='--'?coName:'',price:q.price,change:q.change,changePct:q.changePct,volume:q.volume,ind:ind,opt:opt,score:sc.score,isGo:sc.isGo,filtersPass:sc.filtersPass,rules:sc.rules,passes:sc.passes});}
+      // Item 3 fix 2026-05-02: do NOT push watchlist tickers into G.results.
+      // The watchlist table builds its own rows; pushing here was leaking
+      // watchlist symbols into the FULL SCANNER table as 'random tickers'.
       var chgCls=q.changePct>=0?'pnl-pos':'pnl-neg';
       var sigBadge=sc.isGo?'<span class="badge go">GO</span>':'<span class="badge nogo">NO-GO</span>';
       html+='<tr data-ticker="'+t+'" onclick="wlSelectTicker(this.dataset.ticker)">'
@@ -18520,7 +18607,7 @@ function applyStrategyMode(mode, silent){
   // Optional screener inputs — only written when the preset specifies them
   if(f.minPrice    !== undefined && eid('sc-minprice'))    eid('sc-minprice').value    = f.minPrice;
   if(f.maxPrice    !== undefined && eid('sc-maxprice'))    eid('sc-maxprice').value    = f.maxPrice;
-  if(f.minAvgVol   !== undefined && eid('sc-minavgvol'))   eid('sc-minavgvol').value   = f.minAvgVol;
+  if(f.minAvgVol   !== undefined && eid('sc-minavgvol'))   eid('sc-minavgvol').value   = (Math.round(+f.minAvgVol)||0).toLocaleString('en-US');
   if(f.volRatio    !== undefined && eid('sc-volratio'))    eid('sc-volratio').value    = f.volRatio;
   if(f.maxOptPrice !== undefined && eid('sc-maxoptprice')) eid('sc-maxoptprice').value = f.maxOptPrice;
 
@@ -22559,15 +22646,33 @@ function initCollapsibles(){
       : el.querySelector('.card-hdr');
     if (!trigger) return;
     trigger.addEventListener('click', function(e){
-      // Don't toggle when the user clicks an interactive child (CLEAR button,
-      // input, link, etc.) inside the header.
       if (e.target.closest('button:not(.sec-toggle), a, input, select')) return;
       el.classList.toggle('collapsed');
       try { localStorage.setItem(key, el.classList.contains('collapsed') ? '1' : '0'); } catch(_){}
     });
   });
+  // Sync the 4-segment header chips (item 8a) to current collapse state.
+  document.querySelectorAll('.sec-seg').forEach(function(seg){
+    var targetId = seg.dataset.target;
+    var target = document.getElementById(targetId);
+    if (!target) return;
+    if (!target.classList.contains('collapsed')) seg.classList.add('open');
+  });
 }
 window.addEventListener('DOMContentLoaded', initCollapsibles);
+
+// Toggle a single .flt-bar.collapsible from its 4-segment header chip.
+// Persists state to localStorage so the section's open/closed sticks
+// across reloads, matching the behavior of the legacy .sec-toggle path.
+function toggleSecSeg(targetId){
+  var target = document.getElementById(targetId);
+  if (!target) return;
+  target.classList.toggle('collapsed');
+  var key = 'op_collapse_' + targetId;
+  try { localStorage.setItem(key, target.classList.contains('collapsed') ? '1' : '0'); } catch(_){}
+  var seg = document.querySelector('.sec-seg[data-target="'+targetId+'"]');
+  if (seg) seg.classList.toggle('open', !target.classList.contains('collapsed'));
+}
 
 window.addEventListener('DOMContentLoaded',init);</script>
 </body>
