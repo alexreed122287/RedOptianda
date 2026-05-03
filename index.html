@@ -156,7 +156,7 @@ a{color:var(--blu);text-decoration:none;}
 #mode-badge{background:var(--amb3);color:var(--ambb);border:1px solid var(--amb);font-size:10px;font-weight:700;}
 /* z-index higher than logo so any overflow from header can't cover the
    tab text (defense against the header-obstruction class of bug). */
-#nav{display:flex;background:var(--bg1);border-bottom:var(--bdr);overflow-x:auto;padding:0 8px;position:relative;z-index:20;}
+#nav{display:flex;flex-wrap:wrap;flex-shrink:0;background:var(--bg1);border-bottom:var(--bdr);overflow-x:hidden;padding:0 8px;position:relative;z-index:20;}
 .ntab{background:none;border:none;border-bottom:2px solid transparent;color:var(--gry);cursor:pointer;font-family:var(--ff);font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:10px 16px;white-space:nowrap;transition:all .2s;}
 .ntab:hover{color:var(--wht);}
 .ntab.active{color:var(--amb);border-bottom-color:var(--amb);text-shadow:0 0 15px rgba(0,212,255,.4);}
@@ -231,9 +231,11 @@ a{color:var(--blu);text-decoration:none;}
   /* iPad portrait: keep two-pane scanner but give the table a fair share */
   #sc-tbl-wrap{flex:0 0 55% !important;}
   #sc-detail{flex:1 1 45% !important;}
-  /* Tab nav: ensure horizontal scroll */
-  #nav{flex-wrap:nowrap !important;overflow-x:auto !important;
-    -webkit-overflow-scrolling:touch;}
+  /* Tab nav: WRAP onto rows if total width exceeds viewport. User spec
+     2026-05-02: tabs were hidden behind horizontal-scroll on 1024px
+     windows because total .ntab width (~1070px) exceeded viewport. */
+  #nav{flex-wrap:wrap !important;overflow-x:hidden !important;}
+  .ntab{flex:0 1 auto;}
 }
 
 /* ═════════════════════════════════════════════════════════════════════
