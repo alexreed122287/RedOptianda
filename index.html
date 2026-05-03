@@ -84,9 +84,13 @@ a{color:var(--blu);text-decoration:none;}
    overflowed DOWN into the nav row and obscured the leftmost tab text
    (e.g., "BUY SIGNALS" rendered as "UY SIGNALS"). Bump min-height to
    accommodate the icon naturally. */
-#hdr{display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border-bottom:2px solid var(--amb);padding:0 12px;min-height:56px;flex-wrap:wrap;gap:4px;}
-#hdr-logo{color:var(--amb);font-weight:700;font-size:16px;letter-spacing:3px;white-space:nowrap;font-family:var(--ff-brand);text-shadow:0 0 12px rgba(0,212,255,.7);display:flex;align-items:center;gap:14px;position:relative;z-index:10;}
-#hdr-logo .panda-icon{height:48px;width:auto;object-fit:contain;filter:drop-shadow(0 0 6px rgba(0,212,255,.4)) drop-shadow(0 0 2px rgba(0,212,255,.25));flex-shrink:0;}
+#hdr{display:flex;align-items:center;justify-content:space-between;background:var(--bg1);border-bottom:2px solid var(--amb);padding:0 12px;min-height:clamp(56px, 7vw, 96px);flex-wrap:wrap;gap:4px;}
+/* Responsive logo + brand: clamp scales the icon and text fluidly with
+   viewport width. Min/max preserve mobile + ultrawide bounds. User spec
+   2026-05-02: 'resize the pandas to be larger along with the words Option
+   Panda dependent on the size of the device it is opened on'. */
+#hdr-logo{color:var(--amb);font-weight:700;font-size:clamp(16px, 1.5vw, 28px);letter-spacing:clamp(2px, 0.25vw, 5px);white-space:nowrap;font-family:var(--ff-brand);text-shadow:0 0 12px rgba(0,212,255,.7);display:flex;align-items:center;gap:clamp(10px, 1vw, 22px);position:relative;z-index:10;}
+#hdr-logo .panda-icon{height:clamp(48px, 5vw, 84px);width:auto;object-fit:contain;filter:drop-shadow(0 0 6px rgba(0,212,255,.4)) drop-shadow(0 0 2px rgba(0,212,255,.25));flex-shrink:0;}
 #hdr{border-bottom:none !important;box-shadow:none !important;}
 #hdr-tickers{display:flex;gap:12px;flex-wrap:wrap;justify-content:center;flex:1;}
 .htick{font-size:13px;white-space:nowrap;letter-spacing:1.5px;text-transform:uppercase;font-weight:600;}
@@ -1167,9 +1171,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     </label>
     <span id="auto-scan-status" style="margin-left:auto;color:var(--gry2);font-size:10px;"></span>
   </div>
-  <div style="margin-top:6px;font-size:10px;color:var(--gry2);max-width:1400px;margin-left:auto;margin-right:auto;">
-    With Tradier-fetch caching live, each scan ≈ 700 API calls. At 15 min × 6.5h trading = 26 scans/day = ~18k calls (~4% of daily ceiling).
-  </div>
+  <!-- API budget commentary removed 2026-05-02 per user spec. -->
 </div>
 <div id="nav">
   <!-- BUY SIGNALS button hidden — FULL SCANNER has the same data with more
@@ -1241,11 +1243,11 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
        with every other filter row in the app. -->
   <div class="flt-bar collapsible" id="sc-bar-strategy" data-default-collapsed style="border-bottom:1px solid var(--bg3);">
     <button type="button" class="sec-toggle" title="Collapse / expand the STRATEGY presets row">STRATEGY</button>
-    <button class="btn blu" onclick="applyStrategyMode('highConviction')" title="PROVEN ticker + Score ≥150 + Analyst Revisions ↑ + GEX Call Heavy — rarest, highest-quality setups (≈63% of max).">&#9733; HIGH CONVICTION</button>
+    <button class="btn blu" onclick="applyStrategyMode('highConviction')" title="PROVEN ticker + Score ≥160 + Analyst Revisions ↑ + GEX Call Heavy — rarest, highest-quality setups (≈67% of max).">&#9733; HIGH CONVICTION</button>
     <button class="btn" onclick="applyStrategyMode('breakout')" title="Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 — stocks breaking out with market leadership.">&#9650; BREAKOUT</button>
     <button class="btn" onclick="applyStrategyMode('momentum')" title="MACD + + Above EMA200 + Vol > Avg + RS > SPY — strong trending stocks with volume confirmation.">&#9654; MOMENTUM</button>
     <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')" title="Score ≥180 + liquid (\$5+, 1M+ avg vol) + in-play today + contract ≤\$8 — deep-ITM (δ 0.70–0.90) calls on bullish momentum names.">&#9670; BEST ITM CALLS</button>
-    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score ≥150 + Analyst Revisions ↑ + GEX Call Heavy), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.">&#9650; PRE/POST MARKET</button>
+    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score ≥160 + Analyst Revisions ↑ + GEX Call Heavy), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.">&#9650; PRE/POST MARKET</button>
     <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--gry2);color:var(--gry);" onclick="probePreMarketData()" title="One-shot live fetch of SPY/QQQ/NVDA/TSLA/AAPL — surfaces the raw `change_percentage` Tradier is returning right now. Use it to verify pre-market data is flowing.">VERIFY</button>
     <button class="btn" style="border-color:var(--gry2);color:var(--gry);" onclick="applyStrategyMode('clear')">&#10005; CLEAR</button>
     <span id="pre-market-pill" style="display:none;font-family:var(--ff-mono);font-size:9px;font-weight:800;letter-spacing:1.5px;background:var(--ambb);color:var(--bg0);padding:2px 8px;border-radius:2px;animation:today-pulse 2.4s ease-in-out infinite;" title="Pre-market session is active — Tradier `last` reflects extended-hours quotes. Use the PRE-MARKET preset to sort by gap %.">PRE-MARKET LIVE</span>
@@ -1296,7 +1298,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <!-- B-2 default Min Score bumped 89 -> 100. With theme overlay (added 2026-04)
          scores trend ~10 pts higher, so the historical "GO rate" at 89 became
          too permissive. 100 preserves the prior selectivity. Adjust to taste. -->
-    <label>Min Score <input type="number" id="sc-minscore" value="150" style="width:80px;" onchange="reclassifyGoThreshold()" title="Default 150 (≈63% of ~240-pt max). Calibrated to observed score distribution — top of distribution sits near 140-160; 150 keeps GO list focused on conviction setups without being so strict that nothing fires."></label>
+    <label>Min Score <input type="number" id="sc-minscore" value="160" style="width:80px;" onchange="reclassifyGoThreshold()" title="Default 160 (≈67% of ~240-pt max). Pulls only the top-of-distribution conviction setups — score histogram peaks 140-160, so 160 keeps the GO list short and high quality."></label>
     <button class="btn" onclick="applyFilters()">FILTER</button>
     <button class="btn" onclick="clearFilters()" style="border-color:var(--gry2);color:var(--gry);">CLEAR</button>
   </div>
@@ -1311,7 +1313,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-52hi" onchange="applyFilters()"> <span>52Wk Hi &lt;15%</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-rs" onchange="applyFilters()"> <span>RS &gt; SPY</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-macd" onchange="applyFilters()"> <span>MACD +</span></label>
-    <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-tf" onchange="applyFilters()"> <span>TF Aligned 2/3</span></label>
+    <label class="ind-filter-lbl" title="TF Aligned = Time-Frame Aligned. Counts how many of three trend timeframes (e.g. daily / hourly / 15-min) are pointing the same direction. 2/3 = at least two of three timeframes agree, which filters out stocks that look bullish on one timeframe but are choppy on others."><input type="checkbox" class="ind-filter" id="filt-tf" onchange="applyFilters()"> <span>TF Aligned 2/3</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-ema200" onchange="applyFilters()"> <span>Above EMA200</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-vol" onchange="applyFilters()"> <span>Vol &gt; Avg</span></label>
     <label class="ind-filter-lbl" title="Hide tickers with earnings within N days. Earnings = binary event; even good signals turn into 50/50 coin flips. Default 1 day — bump higher to be more conservative."><input type="checkbox" class="ind-filter" id="filt-no-earn" onchange="applyFilters()"> <span>No Earnings &lt;<input type="number" id="filt-earn-days" value="1" min="1" max="30" style="width:32px;font-size:10px;padding:1px 3px;background:var(--bg2);border:1px solid var(--bg3);color:var(--amb);" onchange="applyFilters()" onclick="event.stopPropagation()">d</span></label>
@@ -2662,7 +2664,10 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 
 <!-- ── CONTRACT PANEL MODAL ── -->
 <div id="contract-panel" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto;">
-  <div style="background:var(--bg1);border:1px solid var(--amb);border-radius:8px;padding:0;max-width:780px;width:95%;margin:0 auto 40px;">
+  <!-- Modal width widened 2026-05-02 — was 780px, action-column buttons
+       (BUY NOW + WATCH) overflowed. Bumped to 1100px with overflow-x:hidden
+       and width:min(95vw, 1100px) so it fits any viewport without spilling. -->
+  <div style="background:var(--bg1);border:1px solid var(--amb);border-radius:8px;padding:0;width:min(95vw, 1100px);max-width:1100px;margin:0 auto 40px;overflow-x:hidden;">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:var(--bdr);background:var(--bg2);">
       <div style="display:flex;align-items:center;gap:12px;">
         <span id="cp-ticker" style="font-family:var(--ff-brand);font-size:20px;font-weight:700;color:var(--amb);text-shadow:var(--glow-cyan);"></span>
@@ -2678,22 +2683,24 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       <div style="padding:10px 18px;background:var(--bg2);border-bottom:var(--bdr);display:flex;gap:16px;font-size:11px;color:var(--gry);">
         <span>&#9650; Call contracts ranked by liquidity (OI × volume)</span>
       </div>
-      <table style="width:100%;border-collapse:collapse;font-size:12px;">
+      <div style="overflow-x:auto;">
+      <table style="width:100%;border-collapse:collapse;font-size:12px;table-layout:auto;">
         <thead>
           <tr style="background:var(--bg2);">
-            <th id="cp-h-expDate" onclick="cpSortBy('expDate')" style="padding:8px 14px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">EXPIRY</th>
-            <th id="cp-h-dte" onclick="cpSortBy('dte')" style="padding:8px 14px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">DTE</th>
-            <th id="cp-h-strike" onclick="cpSortBy('strike')" style="padding:8px 14px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">STRIKE</th>
-            <th id="cp-h-mid" onclick="cpSortBy('mid')" style="padding:8px 14px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">PREMIUM</th>
-            <th id="cp-h-delta" onclick="cpSortBy('delta')" style="padding:8px 14px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">DELTA</th>
-            <th style="padding:8px 14px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);">BID/ASK</th>
-            <th id="cp-h-oi" onclick="cpSortBy('oi')" style="padding:8px 14px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">OI</th>
-            <th id="cp-h-totalScore" onclick="cpSortBy('totalScore')" style="padding:8px 14px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">SCORE</th>
-            <th style="padding:8px 14px;text-align:center;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);">ACTIONS</th>
+            <th id="cp-h-expDate" onclick="cpSortBy('expDate')" style="padding:8px 10px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;white-space:nowrap;">EXPIRY</th>
+            <th id="cp-h-dte" onclick="cpSortBy('dte')" style="padding:8px 8px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">DTE</th>
+            <th id="cp-h-strike" onclick="cpSortBy('strike')" style="padding:8px 10px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">STRIKE</th>
+            <th id="cp-h-mid" onclick="cpSortBy('mid')" style="padding:8px 10px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">PREMIUM</th>
+            <th id="cp-h-delta" onclick="cpSortBy('delta')" style="padding:8px 10px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">DELTA</th>
+            <th style="padding:8px 10px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);white-space:nowrap;">BID/ASK</th>
+            <th id="cp-h-oi" onclick="cpSortBy('oi')" style="padding:8px 10px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">OI</th>
+            <th id="cp-h-totalScore" onclick="cpSortBy('totalScore')" style="padding:8px 10px;text-align:left;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);cursor:pointer;user-select:none;">SCORE</th>
+            <th style="padding:8px 10px;text-align:center;color:var(--amb);font-size:10px;letter-spacing:1.5px;border-bottom:var(--bdr);">ACTIONS</th>
           </tr>
         </thead>
         <tbody id="cp-tbody"></tbody>
       </table>
+      </div>
     </div>
   </div>
 </div>
@@ -9908,9 +9915,32 @@ function renderTopThemesStrip(){
   });
   rows.sort(function(a,b){ return b.rs - a.rs; });
 
+  // Pre-scan fallback — when no live RS data exists, populate the ribbon
+  // from the static daily scores in theme_scores.json so the user sees
+  // theme names + dailyScore on first page load. User spec 2026-05-02:
+  // 'wanted it below the indices at the top of the page always visible'.
+  if (!rows.length) {
+    try {
+      var t2t = (typeof G_THEME_OVERLAY !== 'undefined' && G_THEME_OVERLAY && G_THEME_OVERLAY.ticker2theme) || {};
+      var byTheme = {};
+      Object.keys(t2t).forEach(function(tk){
+        var ti = t2t[tk];
+        if (!ti || !ti.theme) return;
+        if (!(ti.theme in byTheme) || (ti.dailyScore || 0) > byTheme[ti.theme].score) {
+          byTheme[ti.theme] = { theme: ti.theme, score: ti.dailyScore || 0 };
+        }
+      });
+      var staticRows = Object.keys(byTheme).map(function(k){ return byTheme[k]; });
+      staticRows.sort(function(a,b){ return b.score - a.score; });
+      if (staticRows.length) {
+        // Map dailyScore → fake rs so the existing fmtRow path can render uniformly
+        rows = staticRows.slice(0, 8).map(function(s){ return { theme: s.theme, rs: (s.score-50)/10, n: 0 }; });
+      }
+    } catch(_){}
+  }
   if (!rows.length) {
     els.forEach(function(el){
-      el.innerHTML = '<span style="color:var(--gry);font-size:10px;font-style:italic;">Run a scan to populate the live theme leaderboard</span>';
+      el.innerHTML = '<span style="color:var(--gry);font-size:10px;font-style:italic;">Loading theme leaderboard…</span>';
     });
     return;
   }
@@ -10728,7 +10758,7 @@ function buildDetail(r,detId,emptyId){
     +'<div class="ig-cell"><div class="ig-lbl">EMA20/50</div><div class="ig-val '+(ind.ema20>ind.ema50?'pos':'neg')+'">'+fmt2(ind.ema20)+' / '+fmt2(ind.ema50)+'</div></div>'
     +'<div class="ig-cell"><div class="ig-lbl">EMA200</div><div class="ig-val '+(ind.price>ind.ema200?'pos':'warn')+'">$'+fmt2(ind.ema200)+'</div></div>'
     +'<div class="ig-cell"><div class="ig-lbl">ATR</div><div class="ig-val">'+fmt2(ind.atr)+'</div></div>'
-    +'<div class="ig-cell"><div class="ig-lbl">TF Aligned</div><div class="ig-val '+(ind.tf>=2?'pos':'warn')+'">'+ind.tf+'/3</div></div>'
+    +'<div class="ig-cell" title="TF Aligned = Time-Frame Aligned. Counts how many of three trend timeframes (e.g. daily / hourly / 15-min) are pointing the same direction. ≥2/3 passes."><div class="ig-lbl">TF Aligned</div><div class="ig-val '+(ind.tf>=2?'pos':'warn')+'">'+ind.tf+'/3</div></div>'
     +'<div class="ig-cell"><div class="ig-lbl">Volume</div><div class="ig-val '+(ind.vol>ind.avgVol?'pos':'warn')+'">'+fmtK(ind.vol)+'</div></div>'
     +'<div class="ig-cell"><div class="ig-lbl">RS vs SPY 5d</div><div class="ig-val '+(ind.relStr5d>0?'pos':'warn')+'">'+(ind.relStr5d>=0?'+':'')+ind.relStr5d+'%</div></div>'
     +'<div class="ig-cell"><div class="ig-lbl">52Wk High</div><div class="ig-val '+(ind.price>=ind.week52hi*0.85?'pos':'warn')+'">'+'$'+fmt2(ind.week52hi)+'</div></div>'
@@ -12659,23 +12689,14 @@ function finishScan(){
 
 function getIndFilter(id){ var el=eid(id); return el?el.checked:false; }
 
-// Debounced re-scan after a sector / theme filter change. The pre-scan
-// universe filter is locked in at runScan() time, so changing the sectors
-// or theme AFTER results are already on screen would otherwise leave the
-// table stuck on whatever was scanned originally (e.g. all-sectors result
-// set being narrowed to a sector that wasn't actually scored). Schedules
-// a fresh runScan ~700ms after the last filter event so a flurry of
-// checkbox toggles only fires one scan.
-var _filterRescanTid = null;
-function _scheduleFilterRescan(){
-  if(_filterRescanTid) clearTimeout(_filterRescanTid);
-  _filterRescanTid = setTimeout(function(){
-    _filterRescanTid = null;
-    if(G.scanRunning) return;                              // don't stack on top of an in-flight scan
-    if(!G.results || !G.results.length) return;            // no prior scan → no need
-    if(typeof runScan === 'function') runScan();
-  }, 700);
-}
+// Filter changes used to debounce-trigger a fresh runScan so the universe
+// filter could be re-applied. Disabled 2026-05-02 per user spec: 'do not
+// scan just because i opened the scanner page or selected between
+// strategies'. Filter changes now only re-filter the existing in-memory
+// results via applyFilters; the user clicks SCAN explicitly to refresh
+// data. The function stays defined so existing onchange handlers don't
+// throw a ReferenceError.
+function _scheduleFilterRescan(){ /* no-op — re-scan only on explicit SCAN click */ }
 
 // B-3: populate the theme filter dropdown. Iterate G_THEME_OVERLAY.ticker2theme
 // to build a unique set of {theme, dailyScore} pairs, then sort by score
@@ -12855,7 +12876,7 @@ var SCAN_SETTING_DEFAULTS = {
   'sc-minavgvol':    '500000',
   'sc-volratio':     '',
   'sc-maxoptprice':  '',
-  'sc-minscore':     '150',
+  'sc-minscore':     '160',
   'sc-sig':          'GO',
   'sc-theme':        '',
   'filt-earn-days':  '1'
@@ -12937,7 +12958,7 @@ function clearFilters(){
   if(eid('sc-sect'))        eid('sc-sect').value = '';
   if(eid('sc-theme'))       eid('sc-theme').value = '';   // 'All themes'
   if(eid('sc-sig'))         eid('sc-sig').value  = '';   // 'All' — shows both GO and NO-GO
-  if(eid('sc-minscore'))    eid('sc-minscore').value = '150';  // calibrated to observed distribution top
+  if(eid('sc-minscore'))    eid('sc-minscore').value = '160';  // calibrated to observed distribution top
   if(eid('sc-maxoptprice')) eid('sc-maxoptprice').value = '';
   // Reset sector multi-select to "all"
   G.selectedSectors = new Set();
@@ -13746,6 +13767,11 @@ function runGex(){
       toast('GEX loaded \u2014 scores + scorecards updated');
       // Re-check high-conviction signals now that GEX bonus is applied
       checkHighConvictionSignals(G.results);
+      // Follow-up sector GEX pass \u2014 user spec 2026-05-02: 'apply this scan
+      // at minimum always to remaining electronic sectors and technology
+      // services sector tickers not already scanned'. Fires 5s after the
+      // main batch completes so the rate limiter has time to settle.
+      try { setTimeout(_runSectorGexFollowup, 5000); } catch(e) { console.warn('[gex] sector followup schedule failed:', e); }
     });
   })
   .catch(function(e){
@@ -13822,6 +13848,56 @@ function renderGex(){
 // without re-running the full ~4min sweep. Reuses the same expirations +
 // chains pipeline as runGex but for one symbol; result is merged into
 // G.gexData so the scanner row immediately flips to the ✓ state.
+// Follow-up GEX pass for tickers in Electronic Technology + Technology
+// Services that didn't make the top-200 batch. Per user spec 2026-05-02:
+// 'beyond the initial batch of 200 tickers gex is calculated for, the
+// scan is still taking place in the background for remaining tickers'
+// — yes for indicator history but not GEX. This function adds GEX
+// coverage for those two sectors so the rule scorecard can score them
+// fully without manual single-ticker RUN clicks.
+function _runSectorGexFollowup(){
+  try {
+    if (!Array.isArray(G.results) || G.results.length === 0) return;
+    var key = _getTradierKey();
+    if (!key) return;
+    var SECTORS = ['Electronic Technology', 'Technology Services'];
+    var alreadyHaveGex = {};
+    if (Array.isArray(G.gexData)) {
+      G.gexData.forEach(function(g){ if (g && g.t) alreadyHaveGex[g.t] = true; });
+    }
+    var remaining = G.results.filter(function(r){
+      if (!r || !r.ticker || alreadyHaveGex[r.ticker]) return false;
+      if (!r.sector) return false;
+      return SECTORS.indexOf(r.sector) >= 0;
+    }).map(function(r){ return r.ticker; });
+    if (remaining.length === 0) {
+      console.log('[gex-followup] nothing to do — all Electronic Technology + Technology Services tickers already have GEX');
+      return;
+    }
+    console.log('[gex-followup] fetching GEX for ' + remaining.length + ' remaining ' + SECTORS.join(' + ') + ' tickers');
+    try { addAlert('GEX', 'Background GEX pass: '+remaining.length+' '+SECTORS.join(' / ')+' tickers', 'warn'); } catch(_){}
+    // Sequential pacing — 600ms between dispatches keeps us under the
+    // tradierFetch rate limiter (95/min) without bursting. Each ticker
+    // resolves through runGexForTicker which already merges into G.gexData
+    // and re-renders the scanner.
+    var idx = 0;
+    function _next(){
+      if (idx >= remaining.length) {
+        try { toast('Background GEX pass complete — '+remaining.length+' more tickers covered'); } catch(_){}
+        try { saveGexCache(); } catch(_){}
+        return;
+      }
+      var t = remaining[idx++];
+      try { runGexForTicker(t); } catch(e) { console.warn('[gex-followup] '+t+': '+e.message); }
+      // 1.5s gap accounts for the two API calls runGexForTicker makes
+      // (expirations + chains) at ~600ms each. Keeps overall pacing
+      // friendly and lets the user keep using the scanner during the pass.
+      setTimeout(_next, 1500);
+    }
+    _next();
+  } catch(e){ console.warn('[gex-followup] schedule threw:', e && e.message); }
+}
+
 function runGexForTicker(t){
   if (!t) return;
   var key = _getTradierKey();
@@ -18073,8 +18149,8 @@ var STRATEGY_MODES = {
   // HIGH CONVICTION ~83%, BREAKOUT/MOMENTUM ~67%, BEST ITM CALLS ~75%.
   highConviction: {
     label: '\u2605 HIGH CONVICTION',
-    desc: 'PROVEN ticker + Score \u2265150 + Analyst Revisions \u2191 + GEX Call Heavy \u2014 rarest, highest-quality setups (\u224863% of max)',
-    filters: {sig:'GO', minScore:150, analyst:true, proven:true, gex:true}
+    desc: 'PROVEN ticker + Score \u2265160 + Analyst Revisions \u2191 + GEX Call Heavy \u2014 rarest, highest-quality setups (\u224867% of max)',
+    filters: {sig:'GO', minScore:160, analyst:true, proven:true, gex:true}
   },
   breakout: {
     label: '\u25b2 BREAKOUT',
@@ -18094,12 +18170,8 @@ var STRATEGY_MODES = {
   },
   preMarket: {
     label: '\u25b2 PRE/POST MARKET',
-    desc: 'Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score \u2265150 + Analyst Revisions \u2191 + GEX Call Heavy), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.',
-    // Per user spec 2026-05-02: pre/post defaults mirror HIGH CONVICTION
-    // exactly so the user gets the same conviction gate during extended
-    // hours. _sortByGap still re-sorts the surviving GOs by |gap%| so the
-    // biggest movers float to the top within the HC subset.
-    filters: {sig:'GO', minScore:150, analyst:true, proven:true, gex:true,
+    desc: 'Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score \u2265160 + Analyst Revisions \u2191 + GEX Call Heavy), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.',
+    filters: {sig:'GO', minScore:160, analyst:true, proven:true, gex:true,
               _sortByGap:true}
   }
 };
@@ -18287,17 +18359,10 @@ function applyStrategyMode(mode, silent){
   applyFilters();
   if(!silent){
     switchTab('sc');
-    var note = (mode === 'preMarket' && !isPreMarketET())
-      ? ' — heads up, it is outside 4:00–9:30am ET so `last` reflects regular-hours data'
-      : '';
-    toast(sm.label + ' mode applied' + note);
-    // PRE-MARKET preset is session-specific: stale cached `changePct` from a
-    // prior regular-hours scan is meaningless here. Kick off a fresh scan
-    // automatically (unless one is already running) so the user actually
-    // sees pre-market gaps instead of yesterday's intraday changes.
-    if(mode === 'preMarket' && !G.scanRunning && typeof runScan === 'function'){
-      try { runScan(); } catch(e) { console.warn('[preMarket] auto-scan failed:', e); }
-    }
+    toast(sm.label + ' mode applied — click SCAN to refresh data');
+    // Auto-scan trigger removed 2026-05-02 per user spec: 'do not scan just
+    // because i opened the scanner page or selected between strategies'.
+    // The user clicks SCAN explicitly to fetch new data.
   }
 }
 
@@ -19681,29 +19746,14 @@ var STALE_REFRESH_FNS = {
   fetchPositions:    function(){ if(typeof fetchPositions   === 'function') fetchPositions(); },
   fetchClosedPositions: function(){ if(typeof fetchClosedPositions === 'function') fetchClosedPositions(); }
 };
-function showStaleBanner(id, msg, refreshFn){
-  var el=document.getElementById(id);
-  if(!el) return;
-  var old=document.getElementById('stale-'+id);
-  if(old) old.remove();
-  var bar=document.createElement('div');
-  bar.id='stale-'+id;
-  bar.style.cssText='background:rgba(255,215,64,0.08);border-bottom:1px solid rgba(255,215,64,0.2);'
-    +'padding:4px 12px;font-size:10px;color:var(--wrn);display:flex;align-items:center;gap:10px;flex-shrink:0;';
-  // Use textContent + addEventListener instead of inline onclick — avoids the
-  // template-injection vector if refreshFn ever comes from untrusted input.
-  var msgSpan = document.createElement('span'); msgSpan.textContent = '⚠ ' + msg;
-  var btn = document.createElement('button');
-  btn.textContent = '↻ REFRESH NOW';
-  btn.style.cssText = 'background:none;border:1px solid rgba(255,215,64,0.3);color:var(--wrn);font-size:9px;padding:1px 8px;border-radius:2px;cursor:pointer;font-family:var(--ff);';
-  if(STALE_REFRESH_FNS[refreshFn]) btn.addEventListener('click', STALE_REFRESH_FNS[refreshFn]);
-  else btn.disabled = true;
-  bar.appendChild(msgSpan); bar.appendChild(btn);
-  el.insertBefore(bar, el.firstChild);
-}
-
+// Stale-data warning banners disabled 2026-05-02 per user spec: 'remove
+// these banners everywhere'. Function kept as a no-op so the dozen-plus
+// call sites scattered through the scanner / positions / closed-trades
+// paths don't throw ReferenceErrors. hideStaleBanner cleans up any banner
+// element that an older cached HTML might have rendered.
+function showStaleBanner(){ /* banners disabled */ }
 function hideStaleBanner(id){
-  var old=document.getElementById('stale-'+id);
+  var old = id && document.getElementById('stale-'+id);
   if(old) old.remove();
 }
 
@@ -21571,7 +21621,13 @@ function init(){
   }
   // Theme overlay — non-blocking. If fetch fails, scoreIt pass-throughs.
   loadThemeOverlay()
-    .then(function(){ try { populateThemeDropdown(); } catch(e){} })
+    .then(function(){
+      try { populateThemeDropdown(); } catch(e){}
+      // User spec 2026-05-02: themes ribbon must always be visible at the
+      // top of the page. Render once theme_scores.json hydrates so the
+      // strip shows daily-score-based theme names even before any scan.
+      try { if (typeof renderTopThemesStrip === 'function') renderTopThemesStrip(); } catch(e){}
+    })
     .catch(function(e){ console.warn('[init] theme overlay failed:', e && e.message); });
   // Adanos sentiment chips removed 2026-04-29 (commit 2a2b3b9). Init line
   // here was leftover boot-call to deleted _startAdanosChips() — removed.
