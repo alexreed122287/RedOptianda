@@ -229,6 +229,58 @@ a{color:var(--blu);text-decoration:none;}
   #nav{flex-wrap:nowrap !important;overflow-x:auto !important;
     -webkit-overflow-scrolling:touch;}
 }
+
+/* ═════════════════════════════════════════════════════════════════════
+   Whole-app mobile polish 2026-05-02 — applied to every tab.
+   ═════════════════════════════════════════════════════════════════════ */
+@media(max-width:480px){
+  /* Stats bars wrap to multiple rows so 6+ boxes don't squish.
+     Each box gets a min-width so values stay readable. Affects
+     Positions header, BS stats bar, Closed Trades stats bar,
+     Industry stats bar. */
+  .stats-bar{flex-wrap:wrap !important;}
+  .stats-bar .stat-box{flex:1 1 33% !important;min-width:104px;
+    border-bottom:1px solid var(--bg3);}
+  .stats-bar .stat-val{font-size:16px !important;}
+  .stats-bar .stat-label{font-size:9px !important;}
+
+  /* Position-tab action button stat-box (REFRESH + CLEAR) — keep its
+     buttons inline, allow the stat-box to span full width below. */
+  #pos-header-row .stat-box[style*="flex:0 0 auto"]{flex:1 1 100% !important;
+    border-left:none !important;border-top:1px solid var(--bg3);}
+
+  /* Watchlist split: chart + table stack with the chart big enough
+     to be readable; table gets the rest. */
+  #tab-wl .split-l{width:100% !important;max-height:50vh !important;}
+  #tab-wl .split-r{width:100% !important;max-height:55vh;}
+
+  /* GEX/Flow header: wrap nicely + give RUN GEX a full-width push */
+  #tab-gex .flt-bar{padding:6px 8px !important;gap:6px !important;}
+
+  /* Order Ticket: action panel stays at top of the column-collapsed
+     2-col body so SUBMIT is reachable without long scroll. */
+  .ord-body-2col{flex-direction:column-reverse !important;}
+  .ord-actions-panel{flex-direction:row !important;flex-wrap:wrap !important;
+    gap:6px !important;padding:8px 10px !important;}
+  .ord-actions-panel button{flex:1 1 auto !important;min-width:90px;}
+
+  /* Industry tab: cards 1-col on iPhone */
+  .ind-grid{grid-template-columns:1fr !important;}
+
+  /* Card body padding: tighter on phone */
+  .card-body{padding:10px 10px !important;}
+
+  /* All tab panes: respect the global no-page-scroll rule by giving
+     each pane its own internal scroll. */
+  .tab-pane.active{overflow-y:auto;-webkit-overflow-scrolling:touch;}
+}
+
+/* iPad portrait: lighter polish — stats bar wraps to 2 rows max */
+@media(min-width:481px) and (max-width:1024px){
+  .stats-bar{flex-wrap:wrap;}
+  .stats-bar .stat-box{flex:1 1 25%;min-width:140px;}
+  .ind-grid{grid-template-columns:1fr 1fr !important;}
+}
 .tab-pane.active{display:flex;flex-direction:column;}
 .stats-bar{display:flex;gap:0;border-bottom:var(--bdr);flex-shrink:0;}
 .stat-box{flex:1;padding:8px 12px;border-right:var(--bdr);text-align:center;}
