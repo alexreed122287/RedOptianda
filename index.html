@@ -189,11 +189,17 @@ a{color:var(--blu);text-decoration:none;}
   #hdr-logo{order:1 !important;flex:0 0 auto !important;font-size:14px !important;
     letter-spacing:1.5px !important;gap:8px !important;}
   #hdr-logo .panda-icon{height:36px !important;}
-  /* Tab nav: horizontal scroll without edge-clipping. Tap targets 44pt. */
-  #nav{flex-wrap:nowrap !important;overflow-x:auto !important;
-    -webkit-overflow-scrolling:touch;scrollbar-width:none;}
-  #nav::-webkit-scrollbar{display:none;}
-  .ntab{flex-shrink:0 !important;min-height:44px !important;font-size:12px !important;}
+  /* Tab nav: WRAP onto multiple rows so all 9 tabs are visible on
+     iPhone. Horizontal-scroll was hiding 5+ tabs unless the user
+     thought to swipe. User spec 2026-05-02: 'I can't see the tabs
+     for order ticket, watchlist, api, etc.' Wrap with tap-target
+     min-height 44pt per iOS HIG. */
+  #nav{flex-wrap:wrap !important;overflow-x:hidden !important;
+    padding:4px 4px !important;gap:2px;}
+  .ntab{flex:1 1 auto !important;min-height:38px !important;
+    font-size:11px !important;padding:8px 10px !important;
+    text-align:center;letter-spacing:1px !important;
+    white-space:nowrap;}
   /* Themes ribbon: keep single line, no mid-word clipping */
   .top-themes-strip{padding:6px 10px !important;}
   /* Scanner: stack vertically — table full-width, detail becomes a sheet */
@@ -249,20 +255,49 @@ a{color:var(--blu);text-decoration:none;}
   #pos-header-row .stat-box[style*="flex:0 0 auto"]{flex:1 1 100% !important;
     border-left:none !important;border-top:1px solid var(--bg3);}
 
-  /* Watchlist split: chart + table stack with the chart big enough
-     to be readable; table gets the rest. */
-  #tab-wl .split-l{width:100% !important;max-height:50vh !important;}
-  #tab-wl .split-r{width:100% !important;max-height:55vh;}
+  /* Watchlist split: table compact at the top, chart gets the bulk
+     of the remaining viewport so it's readable on phone. Was 50vh
+     table + 55vh chart which forced the chart below the fold; user
+     reported they couldn't see the chart after selecting a ticker. */
+  #tab-wl .split-l{width:100% !important;flex:0 0 auto !important;
+    max-height:34vh !important;}
+  #tab-wl .split-r{width:100% !important;flex:1 1 auto !important;
+    min-height:50vh;}
+  #tab-wl #wl-chart-canvas{min-height:280px;}
 
   /* GEX/Flow header: wrap nicely + give RUN GEX a full-width push */
   #tab-gex .flt-bar{padding:6px 8px !important;gap:6px !important;}
 
-  /* Order Ticket: action panel stays at top of the column-collapsed
-     2-col body so SUBMIT is reachable without long scroll. */
-  .ord-body-2col{flex-direction:column-reverse !important;}
-  .ord-actions-panel{flex-direction:row !important;flex-wrap:wrap !important;
-    gap:6px !important;padding:8px 10px !important;}
-  .ord-actions-panel button{flex:1 1 auto !important;min-width:90px;}
+  /* Order Ticket: form on top, action panel pinned to the bottom of
+     the screen so PREVIEW / SUBMIT / CLEAR are always tappable
+     without scrolling all the way down. iOS-native bottom-action-bar
+     pattern. User spec 2026-05-02: 'i can't see all of the needed
+     order options to place order'. */
+  .ord-body-2col{flex-direction:column !important;}
+  /* Bottom action bar pinned to the viewport — PREVIEW / SUBMIT / CLEAR
+     always reachable. align-content:flex-start prevents flex-wrap:wrap
+     from stretching button heights to fill panel; align-items:center
+     stops the buttons growing within their flex line. height:auto on
+     the panel ties its size to its content (~70px). */
+  .ord-actions-panel{position:fixed !important;top:auto !important;
+    left:0 !important;right:0 !important;bottom:0 !important;z-index:6000 !important;
+    flex-direction:row !important;flex-wrap:wrap !important;
+    align-items:center !important;align-content:flex-start !important;
+    gap:6px !important;padding:8px 10px !important;
+    background:var(--bg1);border-top:2px solid var(--amb);
+    box-shadow:0 -4px 14px rgba(0,0,0,0.5);width:100% !important;
+    height:auto !important;max-height:140px !important;
+    overflow:hidden;}
+  .ord-actions-panel button{flex:1 1 0 !important;min-width:0 !important;
+    width:auto !important;height:auto !important;min-height:44px !important;
+    max-height:48px !important;padding:8px 10px !important;
+    font-size:12px !important;white-space:nowrap;}
+  /* Hide the "ACTIONS" label + (empty) result div on mobile so the bar
+     is a tight 3-button row. Toast handles order feedback. */
+  .ord-actions-panel > div:not(.ord-result){display:none !important;}
+  .ord-actions-panel #ord-result{display:none !important;}
+  /* Pad the form bottom so the fixed bar doesn't overlay the last row */
+  #tab-order .page-wrap{padding-bottom:80px !important;}
 
   /* Industry tab: cards 1-col on iPhone */
   .ind-grid{grid-template-columns:1fr !important;}
@@ -818,7 +853,9 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
      on narrow viewports — sticky positioning is also dropped so it doesn't
      hover over the step-fill log. */
   .ord-body-2col{flex-direction:column !important;}
-  .ord-actions-panel{flex:0 0 auto !important;border-left:none !important;border-top:1px solid var(--bg3) !important;position:static !important;width:100%;}
+  .ord-actions-panel{flex:0 0 auto !important;border-left:none !important;border-top:1px solid var(--bg3) !important;width:100%;}
+  /* position:sticky for the action panel is set in the iPhone block at
+     ~line 271 — left out here so the newer rule wins. */
   .ord-field{min-width:0 !important;width:100%;}
   .ord-field input, .ord-field select{width:100% !important;}
   /* Live-quote panel: 3 cols on mobile instead of 5 */
@@ -1258,7 +1295,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
      strip inside FULL SCANNER + BUY SIGNALS; now consolidated into one
      global ribbon. renderTopThemesStrip uses querySelectorAll so this
      single element gets updated without code changes. -->
-<div class="top-themes-strip" style="background:var(--bg1);border-bottom:var(--bdr);padding:5px 10px;font-family:var(--ff-mono);font-size:11px;white-space:nowrap;overflow-x:hidden;letter-spacing:.3px;"></div>
+<div class="top-themes-strip" style="background:var(--bg1);border-bottom:var(--bdr);padding:8px 10px;font-family:var(--ff-mono);font-size:11px;line-height:1.5;white-space:nowrap;overflow-x:hidden;overflow-y:hidden;letter-spacing:.3px;min-height:30px;display:flex;align-items:center;"></div>
 
 <!-- Auto-scan settings panel — collapsed by default; opens below header on click -->
 <div id="autoscan-panel" style="display:none;background:var(--bg1);border-bottom:var(--bdr);padding:10px 16px;font-family:var(--ff-mono);font-size:11px;color:var(--gry);">
@@ -14279,12 +14316,19 @@ function wlSelectTicker(ticker){
   var empty = eid('wl-det-empty'), wrap = eid('wl-chart-wrap');
   if(empty) empty.style.display = 'none';
   if(wrap) wrap.style.display = 'flex';
-  // Highlight the row
   try{
     var rows = document.querySelectorAll('#wl-tbl-wrap tbody tr');
     rows.forEach(function(r){ r.style.outline = r.dataset.ticker===ticker ? '1px solid var(--amb)' : ''; });
   }catch(e){}
   wlRenderChart(ticker);
+  // Mobile: auto-scroll the chart into view since the table sits above
+  // it and the chart is below the fold otherwise. User spec 2026-05-02:
+  // 'i can't see the chart after selecting a ticker on the iphone'.
+  if (window.innerWidth <= 480) {
+    setTimeout(function(){
+      try { wrap && wrap.scrollIntoView({behavior:'smooth', block:'start'}); } catch(_){}
+    }, 100);
+  }
 }
 
 function wlRenderChart(ticker){
