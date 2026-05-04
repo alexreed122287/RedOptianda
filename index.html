@@ -11,12 +11,12 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-04T12:00-iphone-portrait-audit">
+<meta name="op-build" content="2026-05-04T12:30-ios-comprehensive">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
 <!-- Mobile viewport: allow pinch-zoom (accessibility) + cover safe areas on notched iPhones -->
-<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, minimum-scale=1.0, user-scalable=no, viewport-fit=cover">
 <!-- iOS home-screen / PWA -->
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
@@ -562,8 +562,11 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   0%{transform:translateX(0);}
   100%{transform:translateX(-50%);}
 }
-.theme-chip{cursor:pointer;white-space:nowrap;flex-shrink:0;transition:opacity .15s;}
-.theme-chip:hover{opacity:.7;text-decoration:underline;}
+/* User spec 2026-05-04: top themes ribbon is read-only — no filtering on
+   click/hover. cursor:default + pointer-events:none on the chip itself
+   so taps/hovers fall through to the strip background (which is already
+   non-interactive). */
+.theme-chip{cursor:default;white-space:nowrap;flex-shrink:0;pointer-events:none;}
 /* Positions tab visual reorder — panels (Trailing Stop + Smart Exits) live
    AFTER the table even though they appear earlier in the markup. flex.order
    moves them visually without restructuring the DOM (which would break the
@@ -1068,12 +1071,12 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    the smallest devices. Covers every tab.
    ══════════════════════════════════════════════════════════════════════════ */
 @media(max-width:480px){
-  /* ── HEADER: tighter so it doesn't eat 30% of viewport height ── */
-  #hdr{padding:4px 8px !important;gap:3px !important;}
-  #hdr-logo{font-size:13px !important;letter-spacing:1px !important;gap:6px !important;}
-  #hdr-logo .panda-icon{height:28px !important;}
-  #clk-logo{font-size:10px !important;margin-left:6px !important;}
-  #hdr-version{font-size:9px !important;}
+  /* ── HEADER: larger logo + wordmark per user spec 2026-05-04 ── */
+  #hdr{padding:6px 8px !important;gap:4px !important;}
+  #hdr-logo{font-size:18px !important;letter-spacing:1.5px !important;gap:10px !important;}
+  #hdr-logo .panda-icon{height:48px !important;}
+  #clk-logo{font-size:11px !important;margin-left:8px !important;}
+  #hdr-version{font-size:10px !important;}
   #hdr-tickers{padding:4px 0 !important;gap:10px !important;}
   .htick{font-size:11px;}
   /* Header right cluster: theme toggle, notify, OPT BP, mode badge — 32px tall */
@@ -1293,6 +1296,69 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   /* ── REMOVE any horizontal page-level scroll bleed ── */
   html, body{overflow-x:hidden !important;width:100% !important;
     max-width:100vw !important;}
+
+  /* ── WATCHLIST: fit all columns to iPhone width without horizontal scroll.
+     User spec 2026-05-04. Drops min-width override + tightens column padding.
+     Hides COMPANY name column (only shown on desktop) so SYMBOL / CHG% /
+     SIGNAL / BUY / X all fit in ~375px. Chart side gets the remaining
+     viewport height under the table — no fixed 50vh cap that was leaving
+     dead space at the bottom. ── */
+  #tab-wl #wl-tbl-wrap{overflow-x:visible !important;}
+  #tab-wl #wl-tbl-wrap table{min-width:0 !important;table-layout:auto !important;
+    width:100% !important;font-size:11px !important;}
+  #tab-wl #wl-tbl-wrap th, #tab-wl #wl-tbl-wrap td{padding:5px 4px !important;}
+  /* Hide COMPANY column (2nd) on iPhone — symbol + sector tag is enough */
+  #tab-wl #wl-tbl-wrap thead th:nth-child(2),
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(2){display:none !important;}
+  #tab-wl #wl-tbl-wrap thead th:nth-child(1),
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(1){width:auto !important;
+    max-width:80px;}
+  /* Chart side fills the remaining viewport — uses calc + safe-area */
+  #tab-wl .split-l{max-height:30vh !important;}
+  #tab-wl .split-r{flex:1 1 auto !important;
+    min-height:calc(70vh - env(safe-area-inset-bottom, 0)) !important;}
+  #tab-wl #wl-chart-canvas{
+    min-height:calc(60vh - env(safe-area-inset-bottom, 0)) !important;
+    height:calc(60vh - env(safe-area-inset-bottom, 0)) !important;
+  }
+
+  /* ── SECTOR / THEME / DROPDOWN TEXT: fix cutoff. Wider button, full-width
+     options, ≥14px text so iOS doesn't auto-zoom focus. ── */
+  .sect-btn, .theme-btn{width:100% !important;min-height:44px !important;
+    font-size:14px !important;padding:10px 12px !important;
+    text-overflow:ellipsis !important;overflow:hidden !important;
+    white-space:nowrap !important;}
+  .sect-opt, .theme-opt{font-size:14px !important;padding:10px 8px !important;
+    white-space:normal !important;line-height:1.3 !important;}
+  /* Native <select> on iPhone — ensure value text isn't clipped */
+  select{text-overflow:ellipsis !important;padding-right:24px !important;}
+
+  /* ── GEX TAB: auto-settings dropdown (sched select) was clipping its
+     options text. Force explicit width + larger font. ── */
+  #gex-sched-sel{width:auto !important;min-width:140px !important;
+    font-size:13px !important;padding:8px 10px !important;
+    text-overflow:ellipsis !important;}
+
+  /* ── PORTFOLIO COLUMNS WRAP: allow vertical scroll inside the columns
+     container so all positions are reachable on iPhone. ── */
+  #pf-cols-wrap{flex-wrap:nowrap !important;overflow-x:auto !important;
+    overflow-y:visible !important;}
+  #tab-pf .pf-col{min-width:280px;max-width:90vw;}
+  /* Account-positions <details> rows: full visibility */
+  .pf-col-rows{overflow-y:visible !important;}
+
+  /* ── POSITIONS table: inner scroll container so all rows are reachable.
+     User report: table cuts off, can't scroll to see all positions. ── */
+  #pos-tbl-wrap{overflow:auto !important;max-height:calc(70vh - env(safe-area-inset-bottom, 0)) !important;
+    -webkit-overflow-scrolling:touch;}
+  #pos-tbl-wrap table{min-width:600px;}
+
+  /* ── ORDER TICKET bottom action panel: extra padding so the FIND BEST
+     OPTION button (and quote panel above it) aren't covered by the
+     fixed-bottom PREVIEW/SUBMIT/CLEAR row. The fixed panel takes ~80px
+     including safe-area; reserve 100px below the form. ── */
+  #tab-order .page-wrap{padding-bottom:calc(110px + env(safe-area-inset-bottom, 0)) !important;}
+  #tab-order .ord-form{padding-bottom:0 !important;}
 }
 
 /* iPhone SE / smaller phones (≤375px): even tighter */
@@ -1740,7 +1806,6 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   <button class="ntab" style="display:none;" onclick="switchTab('bs')">BUY SIGNALS</button>
   <button class="ntab active" onclick="switchTab('sc')">FULL SCANNER</button>
   <button class="ntab" onclick="switchTab('pos')">POSITIONS</button>
-  <button class="ntab" onclick="switchTab('closed')" title="Trading history — open + close + P&L per round-trip on a single row, plus win-rate / profit-factor / Sortino stats. Pulled from Tradier's filled-orders feed.">HISTORY</button>
   <button class="ntab" onclick="switchTab('order')">ORDER TICKET</button>
   <button class="ntab" onclick="switchTab('api')">API</button>
   <button class="ntab" onclick="switchTab('pf')">PORTFOLIO</button>
@@ -1748,6 +1813,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   <button class="ntab" onclick="switchTab('gex')" title="Gamma exposure / 30DTE options-flow (call vs put OI) for the top 200 enriched tickers. Drives the GEX Call Heavy rule.">GEX / FLOW</button>
   <button class="ntab" onclick="switchTab('wl')">WATCHLIST</button>
   <button class="ntab" onclick="switchTab('al')">ALERTS</button>
+  <button class="ntab" onclick="switchTab('closed')" title="Trading history — open + close + P&L per round-trip on a single row, plus win-rate / profit-factor / Sortino stats.">HISTORY</button>
   <button class="ntab" onclick="switchTab('howto')" title="First-time walkthrough — what every tab does, how to set up API keys, how to read the scanner, how to place + manage trades.">HOW TO</button>
   <!-- OPTIONS WATCHLIST button hidden per user request — underlying tab pane
        (id="tab-cw") + cwRenderTable code path retained in case of re-enable. -->
@@ -3345,14 +3411,39 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       <span style="color:var(--gry);" title="The Tradier account ID being pulled. Set via /v1/user/profile auto-discovery on first PULL TRADIER. Click API tab to verify.">Tradier acct: <b id="pf-acct-display" class="dyn-w" style="color:var(--ambb);font-family:var(--ff-mono);min-width:100px;text-align:left;">--</b></span>
       <span style="color:var(--gry);" title="Cash + cash-equivalents from Tradier balances endpoint. Pulled together with positions when you click PULL TRADIER.">Cash: <b id="pf-cash-display" class="dyn-w" style="color:var(--grn);font-family:var(--ff-mono);min-width:110px;text-align:left;">$--</b></span>
       <span class="dyn-w" style="color:var(--gry);font-size:10px;width:180px;text-align:right;" id="pf-last-update">Not loaded</span>
-      <button class="btn blu" style="font-size:10px;padding:3px 10px;" onclick="pfRefreshAll()">&#8635; REFRESH ALL</button>
-      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--amb);color:var(--amb);" onclick="pfCopyAllTickers()" title="Copy comma-separated unique tickers from all columns">COPY ALL TICKERS</button>
-      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--grn);color:var(--grn);" onclick="pfAddColumn()">+ ADD COLUMN</button>
-      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--wrn);color:var(--wrn);" onclick="pfExportCSV()" title="Long-form CSV — one row per position">&#10515; EXPORT CSV</button>
-      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ambb);color:var(--ambb);" onclick="pfExportMatrix()" title="Wide-form CSV — Ticker, Kind, Type, Strike, Expiry are separate columns; each account = its own column for quantity. Copies CSV to clipboard + downloads .csv (Excel-compatible UTF-8 with BOM).">&#10515; EXPORT MATRIX</button>
-      <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ngo);color:var(--ngo);" onclick="pfResetAll()">RESET</button>
+      <button class="btn blu" style="font-size:10px;padding:3px 10px;" onclick="pfRefreshAllConfirm()" title="Refetch all account positions + balances from Tradier. Confirmation prompt before running.">&#8635; REFRESH ALL</button>
+      <!-- Secondary actions collapsed by default 2026-05-04 per user spec —
+           free up screen space on iPhone. Tap MORE to reveal them. -->
+      <button class="btn" id="pf-more-btn" style="font-size:10px;padding:3px 10px;border-color:var(--gry2);color:var(--gry);" onclick="pfToggleMoreActions()">&#9662; MORE</button>
+      <span id="pf-more-actions" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;">
+        <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--amb);color:var(--amb);" onclick="pfCopyAllTickers()" title="Copy comma-separated unique tickers from all columns">COPY ALL TICKERS</button>
+        <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--grn);color:var(--grn);" onclick="pfAddColumn()">+ ADD COLUMN</button>
+        <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--wrn);color:var(--wrn);" onclick="pfExportCSV()" title="Long-form CSV — one row per position">&#10515; EXPORT CSV</button>
+        <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ambb);color:var(--ambb);" onclick="pfExportMatrix()" title="Wide-form CSV — Ticker, Kind, Type, Strike, Expiry are separate columns; each account = its own column for quantity. Copies CSV to clipboard + downloads .csv (Excel-compatible UTF-8 with BOM).">&#10515; EXPORT MATRIX</button>
+        <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ngo);color:var(--ngo);" onclick="pfResetAll()">RESET</button>
+      </span>
     </div>
   </div>
+  <script>
+  function pfToggleMoreActions(){
+    var m = document.getElementById('pf-more-actions');
+    var b = document.getElementById('pf-more-btn');
+    if (!m) return;
+    var isOpen = m.style.display !== 'none';
+    if (isOpen){
+      m.style.display = 'none';
+      if (b) b.innerHTML = '&#9662; MORE';
+    } else {
+      m.style.display = 'inline-flex';
+      if (b) b.innerHTML = '&#9652; LESS';
+    }
+  }
+  function pfRefreshAllConfirm(){
+    if (confirm('Refetch all positions + balances from Tradier?\n\nThis hits the API for every connected account.')){
+      try { pfRefreshAll(); } catch(e){ console.error('pfRefreshAll', e); }
+    }
+  }
+  </script>
 
   <!-- Columns horizontal scroll (now takes primary space) -->
   <div id="pf-cols-wrap" style="display:flex;gap:10px;padding:8px 10px;overflow-x:auto;align-items:flex-start;">
@@ -3360,18 +3451,24 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   </div>
 
   <!-- Collapsible summary + master charts (minimized by default to give positions more space) -->
-  <details id="pf-summary-details" style="margin:4px 10px 10px 10px;background:var(--bg1);border:var(--bdr);border-radius:4px;">
-    <summary style="cursor:pointer;padding:8px 12px;list-style:none;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--ff-mono);font-size:11px;user-select:none;">
-      <span style="font-family:var(--ff-brand);font-size:11px;color:var(--amb);letter-spacing:2px;">&#9662; SUMMARY &amp; ALLOCATIONS</span>
+  <!-- Replaced <details> with manual <div> + onclick toggle 2026-05-04 —
+       iOS Safari's native <details> tap was flaky inside scrolled flex
+       containers. Now uses an explicit aria-expanded attr + onclick handler
+       so the open/close state is unambiguous and tappable on iPhone. -->
+  <div id="pf-summary-details" style="margin:4px 10px 10px 10px;background:var(--bg1);border:var(--bdr);border-radius:4px;">
+    <div id="pf-summary-toggle" onclick="pfToggleSummary()" role="button" tabindex="0" aria-expanded="false"
+         style="cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--ff-mono);font-size:11px;user-select:none;-webkit-tap-highlight-color:rgba(0,212,255,0.15);min-height:44px;">
+      <span id="pf-summary-arrow" style="font-family:var(--ff-mono);font-size:13px;color:var(--amb);transition:transform 0.15s;display:inline-block;">▶</span>
+      <span style="font-family:var(--ff-brand);font-size:11px;color:var(--amb);letter-spacing:2px;">SUMMARY &amp; ALLOCATIONS</span>
       <span style="color:var(--gry);">TOTAL VALUE <b id="pf-total-val" style="color:var(--ambb);font-size:13px;margin-left:4px;">$0.00</b></span>
       <span style="color:var(--gry);">POSITIONS <b id="pf-pos-count" style="color:var(--wht);font-size:13px;margin-left:4px;">0</b></span>
       <span style="color:var(--gry);">COLUMNS <b id="pf-col-count" style="color:var(--wht);font-size:13px;margin-left:4px;">0</b></span>
       <span style="color:var(--gry);">DEAD <b id="pf-dead-count" style="color:var(--ngo);font-size:13px;margin-left:4px;">0</b></span>
       <span style="color:var(--gry);">TOP SECTOR <b id="pf-top-sector" style="color:var(--amb);font-size:12px;margin-left:4px;">--</b></span>
       <span style="flex:1;"></span>
-      <span style="color:var(--gry);font-size:10px;">click to expand/minimize</span>
-    </summary>
-    <div style="display:flex;gap:10px;padding:8px 10px 10px 10px;flex-wrap:wrap;border-top:var(--bdr);">
+      <span style="color:var(--gry);font-size:10px;">tap to expand</span>
+    </div>
+    <div id="pf-summary-body" style="display:none;gap:10px;padding:8px 10px 10px 10px;flex-wrap:wrap;border-top:var(--bdr);">
       <div style="flex:1;min-width:300px;background:var(--bg1);border:var(--bdr);border-radius:4px;padding:10px;">
         <div style="font-family:var(--ff-brand);font-size:10px;color:var(--amb);letter-spacing:2px;margin-bottom:6px;">MASTER HOLDINGS BY TICKER</div>
         <div style="position:relative;height:240px;"><canvas id="pf-chart-master"></canvas></div>
@@ -3381,7 +3478,28 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
         <div style="position:relative;height:240px;"><canvas id="pf-chart-sector"></canvas></div>
       </div>
     </div>
-  </details>
+  </div>
+  <script>
+  function pfToggleSummary(){
+    var body = document.getElementById('pf-summary-body');
+    var arrow = document.getElementById('pf-summary-arrow');
+    var toggle = document.getElementById('pf-summary-toggle');
+    if (!body) return;
+    var isOpen = body.style.display !== 'none' && body.style.display !== '';
+    if (isOpen){
+      body.style.display = 'none';
+      if (arrow) arrow.style.transform = 'rotate(0deg)';
+      if (toggle) toggle.setAttribute('aria-expanded', 'false');
+    } else {
+      body.style.display = 'flex';
+      if (arrow) arrow.style.transform = 'rotate(90deg)';
+      if (toggle) toggle.setAttribute('aria-expanded', 'true');
+      // Re-render charts now that the canvas containers are visible (Chart.js
+      // requires non-zero dimensions to draw correctly).
+      try { if (typeof renderPortfolio === 'function') renderPortfolio(); } catch(_){}
+    }
+  }
+  </script>
 
   <!-- Robinhood paste modal -->
   <div id="pf-paste-modal" style="display:none;position:fixed;inset:0;z-index:9200;background:rgba(0,0,0,.82);backdrop-filter:blur(3px);align-items:flex-start;justify-content:center;padding-top:60px;">
@@ -3474,10 +3592,13 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 <div class="tab-pane" id="tab-ind">
   <div class="stats-bar">
     <div class="stat-box"><div class="stat-label">AS OF</div><div class="stat-val amb" id="ind-asof">--</div></div>
-    <div class="stat-box"><div class="stat-label">THEMES</div><div class="stat-val amb" id="ind-count">--</div></div>
-    <div class="stat-box" title="Number of themes scoring in the top 10% of the leaderboard. These are the strongest sectors right now and the rotation candidates with the most institutional flow."><div class="stat-label">TOP 10%</div><div class="stat-val amb" id="ind-topdec">--</div></div>
-    <div class="stat-box" title="Percentage of themes whose composite price is currently above its 50-day exponential moving average — broad-tape trend indicator. >70% = uptrend, <30% = downtrend."><div class="stat-label">ABOVE 50EMA</div><div class="stat-val amb" id="ind-trend">--</div></div>
-    <div class="stat-box" title="Average breadth across all themes — what percent of theme MEMBERS are trading above their 50-day moving average. >60% = market is broadly participating in the move, <40% = narrow leadership."><div class="stat-label">AVG % &gt;50DMA</div><div class="stat-val amb" id="ind-b50">--</div></div>
+    <!-- Hidden stat boxes — preserved in markup so existing JS that writes to
+         #ind-count, #ind-topdec, #ind-trend, #ind-b50 doesn't error.
+         User spec 2026-05-04: these stats added clutter without value. -->
+    <div class="stat-box" style="display:none;"><div class="stat-label">THEMES</div><div class="stat-val amb" id="ind-count">--</div></div>
+    <div class="stat-box" style="display:none;"><div class="stat-label">TOP 10%</div><div class="stat-val amb" id="ind-topdec">--</div></div>
+    <div class="stat-box" style="display:none;"><div class="stat-label">ABOVE 50EMA</div><div class="stat-val amb" id="ind-trend">--</div></div>
+    <div class="stat-box" style="display:none;"><div class="stat-label">AVG % &gt;50DMA</div><div class="stat-val amb" id="ind-b50">--</div></div>
     <div class="stat-box" style="flex:0 0 auto;display:flex;align-items:center;padding:6px 10px;border-left:1px solid var(--bg3);">
       <button class="btn blu" style="font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="renderIndustryTab(true)" title="Reload theme_scores.json from disk">&#8635; REFRESH</button>
     </div>
@@ -3491,7 +3612,10 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <div style="padding:6px 12px;font-family:var(--ff-mono);font-size:10px;color:var(--gry2);align-self:center;">benchmark <b style="color:var(--ambb);" id="ind-bench">SPY</b></div>
   </div>
   <div class="ind-scroll" id="ind-scroll">
-    <div class="ind-desc" id="ind-desc">Loading…</div>
+    <!-- Description hidden 2026-05-04 per user spec: removed tf-mode
+         definitions below intraday/daily/weekly/monthly tabs. JS still
+         writes to #ind-desc so the element stays present but display:none. -->
+    <div class="ind-desc" id="ind-desc" style="display:none;">Loading…</div>
     <div class="ind-layout">
       <div class="ind-panel">
         <div class="ind-phead">Theme Rankings <span class="ind-pill" id="ind-rank-count">--</span></div>
@@ -11169,8 +11293,7 @@ function renderTopThemesStrip(){
     var rankBit = rank ? '<b style="color:var(--gry2);">'+rank+'.</b> ' : '';
     var safe = String(r.theme).replace(/"/g,'&quot;').replace(/'/g,"\\'");
     return '<span class="theme-chip" style="color:'+col+';" '
-         + 'onclick="selectOnlyTheme(\''+safe+'\')" '
-         + 'title="'+r.n+' members in current scan — click to filter scanner to this theme">'
+         + 'title="'+r.n+' members in current scan">'
          + rankBit + _esc(r.theme) + ' ' + sign + r.rs.toFixed(1) + '%'
          + '</span>';
   }
@@ -12436,13 +12559,31 @@ function pushNotify(title, body, tag){
   try{
     if(!('Notification' in window)) return;
     if(Notification.permission !== 'granted') return;
-    var n = new Notification(title, {
+    var opts = {
       body: body || '',
       tag: tag || ('opt-panda-'+Date.now()),
       icon: './assets/pandas2.png',
+      badge: './assets/icon-192.png',
       silent: false
-    });
-    setTimeout(function(){ try{ n.close(); }catch(e){} }, 10000);
+    };
+    // iOS 16.4+ requires notifications to fire through a service worker
+    // registration's showNotification() — the bare `new Notification()` API
+    // is unsupported in Safari (returns nothing, no error). Prefer the SW
+    // path everywhere for consistency. Falls back to `new Notification` for
+    // older browsers without service worker support.
+    if ('serviceWorker' in navigator && navigator.serviceWorker.ready){
+      navigator.serviceWorker.ready.then(function(reg){
+        try { reg.showNotification(title, opts); } catch(_){}
+      }).catch(function(){
+        try {
+          var n = new Notification(title, opts);
+          setTimeout(function(){ try{ n.close(); }catch(e){} }, 10000);
+        } catch(_){}
+      });
+    } else {
+      var n = new Notification(title, opts);
+      setTimeout(function(){ try{ n.close(); }catch(e){} }, 10000);
+    }
   }catch(e){ /* no-op */ }
 }
 function _pushPermBtnUpdate(){
@@ -16252,19 +16393,76 @@ function renderPositionsTable(pos,srcLabel){
       var entryAtr = pod.entryAtr14 || 0;
       var isSnapshot = entryUl > 0 && entryAtr > 0;
       var anchorUl = entryUl, anchorAtr = entryAtr;
-      // Fallback: live values if no snapshot is available (legacy positions)
+      // Fallback: live values if no snapshot is available (legacy positions
+      // OR new buys whose underlying hasn't been scanned recently — hist
+      // cache is empty so computeATR returns 0). User report 2026-05-04:
+      // 1/2 ATR / 1 ATR / EMERGENCY EXIT showing -- for new buys today.
       if (!isSnapshot){
-        anchorUl = p.underlyingNow || 0;
+        anchorUl = p.underlyingNow || entryUl || 0;
         try {
           var hist = (typeof loadHistCache === 'function') ? loadHistCache(p.underlying) : null;
           if (hist && hist.length >= 15 && typeof computeATR === 'function'){
             anchorAtr = computeATR(hist, 14) || 0;
           }
         } catch(_){}
+        // Background-fetch ATR if still missing — kicks off one Tradier
+        // /markets/history call per ticker, debounced via _atrFetchInFlight,
+        // then re-renders the positions table when the snapshot lands.
+        // Without this, any ticker bought today that wasn't part of the
+        // last scan stays at "--" forever for the ATR exit prices.
+        if ((!anchorAtr || anchorAtr <= 0) && p.underlying){
+          if (!G._atrFetchInFlight) G._atrFetchInFlight = {};
+          if (!G._atrFetchInFlight[p.underlying]){
+            G._atrFetchInFlight[p.underlying] = true;
+            try {
+              var creds = (typeof getTradierCreds === 'function') ? getTradierCreds() : null;
+              if (creds && typeof tradierFetch === 'function'){
+                var endDate = new Date();
+                var startDate = new Date(endDate.getTime() - 60*86400000);
+                var fmt = function(d){ return d.toISOString().slice(0,10); };
+                tradierFetch(creds.host+'/v1/markets/history?symbol='+encodeURIComponent(p.underlying)+
+                  '&interval=daily&start='+fmt(startDate)+'&end='+fmt(endDate),
+                  { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} },
+                  6*60*60*1000
+                ).then(function(r){return r.json();}).then(function(d){
+                  var days = [];
+                  try {
+                    var arr = d.history && d.history.day;
+                    if (arr) {
+                      arr = Array.isArray(arr) ? arr : [arr];
+                      days = arr.map(function(x){
+                        return { high:+x.high, low:+x.low, close:+x.close, open:+x.open };
+                      });
+                    }
+                  } catch(_){}
+                  if (days.length >= 15 && typeof computeATR === 'function'){
+                    var newAtr = computeATR(days, 14) || 0;
+                    if (newAtr > 0){
+                      if (!G.posOpenData[sym]) G.posOpenData[sym] = {};
+                      G.posOpenData[sym].entryAtr14 = newAtr;
+                      // If we don't have an underlyingAtOpen snapshot either,
+                      // use the most recent close as a reasonable proxy.
+                      if (!G.posOpenData[sym].underlyingAtOpen){
+                        G.posOpenData[sym].underlyingAtOpen = days[days.length-1].close || p.underlyingNow || 0;
+                      }
+                      try { localStorage.setItem('rrjcar_pos_open', JSON.stringify(G.posOpenData)); } catch(_){}
+                      try { if (typeof renderPositionsTable === 'function' && G.positions) renderPositionsTable(G.positions, '[ATR loaded]'); } catch(_){}
+                    }
+                  }
+                  delete G._atrFetchInFlight[p.underlying];
+                }).catch(function(){
+                  delete G._atrFetchInFlight[p.underlying];
+                });
+              }
+            } catch(_){
+              delete G._atrFetchInFlight[p.underlying];
+            }
+          }
+        }
       }
-      function fp(v){ return v > 0 ? '$'+fmt2(v) : '<span style="color:var(--gry2);">--</span>'; }
+      function fp(v){ return v > 0 ? '$'+fmt2(v) : '<span style="color:var(--gry2);font-size:9px;">loading…</span>'; }
       if (!anchorUl || !anchorAtr){
-        return '<td style="color:var(--gry2);">--</td><td style="color:var(--gry2);">--</td><td style="color:var(--gry2);">--</td>';
+        return '<td style="color:var(--gry2);">'+fp(0)+'</td><td style="color:var(--gry2);">'+fp(0)+'</td><td style="color:var(--gry2);">'+fp(0)+'</td>';
       }
       var p05 = anchorUl - 0.5 * anchorAtr;
       var p10 = anchorUl - 1.0 * anchorAtr;
@@ -20294,7 +20492,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '1.3.0-iphone-portrait-audit';
+var APP_VERSION = '1.4.0-ios-comprehensive';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -20502,30 +20700,34 @@ document.addEventListener('click', function(e){
 
 async function fetchAllContracts(ticker){
   var creds = getTradierCreds();
+  var loadingEl = document.getElementById('cp-loading');
   if(!creds){
-    document.getElementById('cp-loading').textContent = 'No Tradier API key — go to API tab';
+    if (loadingEl) loadingEl.textContent = 'No Tradier API key — go to API tab';
     return;
   }
+
+  // Reset rendered state for the new ticker
+  window.CP_DATA = null;
 
   // Get current price
   try{
     var qr = await fetch(creds.host+'/v1/markets/quotes?symbols='+encodeURIComponent(ticker),{
       headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}
     }).then(function(r){return r.json();});
-    var q = qr.quotes.quote;
-    CP_PRICE = parseFloat(q.last||q.prevclose||0);
-    document.getElementById('cp-price').textContent = '$'+fmt2(CP_PRICE);
+    var q = qr && qr.quotes && qr.quotes.quote;
+    CP_PRICE = q ? (parseFloat(q.last||q.prevclose||0) || 0) : 0;
+    document.getElementById('cp-price').textContent = CP_PRICE ? '$'+fmt2(CP_PRICE) : '';
   }catch(e){ CP_PRICE = 0; }
 
   // Get all expirations within 365 days
   var expRes;
   try{
-    // CW-refresh expirations — cached 6h (intraday-stable)
     expRes = await tradierFetch(creds.host+'/v1/markets/options/expirations?symbol='+encodeURIComponent(ticker),{
       headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}
     }, 6*60*60*1000).then(function(r){return r.json();});
   }catch(e){
-    document.getElementById('cp-loading').textContent = 'Error fetching expirations';
+    if (loadingEl) loadingEl.innerHTML = 'Error fetching expirations: '+(e&&e.message||'network')+
+      '<br><button class="btn" style="margin-top:10px;" onclick="fetchAllContracts(\''+ticker+'\')">RETRY</button>';
     return;
   }
 
@@ -20541,14 +20743,18 @@ async function fetchAllContracts(ticker){
   });
 
   if(!dates.length){
-    document.getElementById('cp-loading').textContent = 'No expirations found within 365 days';
+    if (loadingEl) loadingEl.textContent = 'No expirations found within 365 days for '+ticker;
     return;
   }
 
-  document.getElementById('cp-loading').textContent = 'Fetching '+dates.length+' expiry chains...';
+  if (loadingEl) loadingEl.textContent = 'Fetching '+dates.length+' expiry chains for '+ticker+'...';
 
-  // Fetch chains in batches of 4 to avoid rate limiting
+  // Progressive render: show partial results AS each batch completes so the
+  // user gets feedback within ~3-5s instead of waiting 15-30s for the full
+  // 365-day pass. iOS Safari was leaving "FETCHING..." stuck on long fetches.
   var results = [];
+  var totalBatches = Math.ceil(dates.length / 4);
+  var completedBatches = 0;
   for(var i=0; i<dates.length; i+=4){
     var batch = dates.slice(i, i+4);
     var batchPromises = batch.map(function(expDate){
@@ -20558,13 +20764,10 @@ async function fetchAllContracts(ticker){
       .then(function(d){
         var opts = [];
         try{ opts=d.options.option; if(!Array.isArray(opts)) opts=[opts]; }catch(e){}
-        // Filter to calls only
         var calls = opts.filter(function(o){
           return o && o.option_type==='call' && o.greeks && o.greeks.delta > 0.02;
         });
         if(!calls.length) return null;
-
-        // Neutral ranker: liquidity (OI x volume) + tight spread, no delta bias
         var dte = Math.round((new Date(expDate) - today) / 86400000);
         var scored = calls.map(function(o){
           var delta = o.greeks ? Math.abs(o.greeks.delta||0) : 0;
@@ -20576,7 +20779,6 @@ async function fetchAllContracts(ticker){
           var spreadPct = mid > 0 ? (spread/mid*100) : 100;
           var oi = o.open_interest||0;
           var vol = o.volume||0;
-          // Liquidity score: log-scaled OI x vol, capped
           var liquidity = Math.log10(1 + oi*Math.max(vol,1));
           var liqScore = Math.min(liquidity*10, 60);
           var spreadScore = spreadPct < 2 ? 25 : spreadPct < 5 ? 15 : spreadPct < 10 ? 5 : 0;
@@ -20594,13 +20796,33 @@ async function fetchAllContracts(ticker){
 
     var batchResults = await Promise.all(batchPromises);
     batchResults.forEach(function(r){ if(r) results.push(r); });
+    completedBatches++;
 
-    // Small delay between batches
+    // Render incrementally as each batch completes — user sees rows arriving
+    if (results.length){
+      var snapshot = results.slice().sort(function(a,b){ return a.dte - b.dte; });
+      try { renderContractPanel(ticker, snapshot); } catch(_){}
+      if (loadingEl) {
+        loadingEl.style.display = 'none';
+      }
+    }
+    // Update progress in case results is still empty
+    if (loadingEl && !results.length){
+      loadingEl.textContent = 'Fetching '+dates.length+' chains ('+completedBatches+'/'+totalBatches+')...';
+    }
+
     if(i+4 < dates.length) await new Promise(function(res){setTimeout(res,200);});
   }
 
+  // Final render with all results
   results.sort(function(a,b){ return a.dte - b.dte; });
-  renderContractPanel(ticker, results);
+  if (results.length){
+    renderContractPanel(ticker, results);
+  } else if (loadingEl){
+    loadingEl.innerHTML = 'No call contracts with valid greeks for '+ticker+
+      '<br><span style="font-size:10px;color:var(--gry);">Tradier returned chains but no calls had delta &gt; 0.02 — try outside market hours when greeks may stale.</span>'+
+      '<br><button class="btn" style="margin-top:10px;" onclick="fetchAllContracts(\''+ticker+'\')">RETRY</button>';
+  }
 }
 
 function renderContractPanel(ticker, contracts){
@@ -21371,23 +21593,15 @@ function renderPortfolio(){
 
   // Compute totals & render charts from cached values
   pfRecomputeStats(data);
-  // Only render master charts if the details section is open (canvases need non-zero size)
-  var det = eid('pf-summary-details');
-  if(det && det.open) pfRenderCharts(data);
+  // Only render master charts if the summary section is open (canvases need
+  // non-zero size). Was reading <details>.open; now we use the body's
+  // display style since this is a manually-toggled <div>.
+  var body = eid('pf-summary-body');
+  var summaryOpen = body && body.style.display && body.style.display !== 'none';
+  if(summaryOpen) pfRenderCharts(data);
 
   // Init each column chart after DOM is in place
   setTimeout(function(){ pfRenderColumnCharts(data); }, 20);
-
-  // Wire up one-time listener to render master charts when details opens
-  if(det && !det._wired){
-    det._wired = true;
-    det.addEventListener('toggle', function(){
-      if(det.open){
-        var d = pfLoad();
-        pfRenderCharts(d);
-      }
-    });
-  }
 }
 
 function pfRenderColumn(col){
@@ -21946,8 +22160,8 @@ function pfRefreshAll(){
   if(!priceable.length){
     toast('No priceable rows yet — add ticker/exp/strike first');
     pfRecomputeStats(data);
-    var _det = eid('pf-summary-details');
-    if(_det && _det.open) pfRenderCharts(data);
+    var _body = eid('pf-summary-body');
+    if(_body && _body.style.display && _body.style.display !== 'none') pfRenderCharts(data);
     pfRenderColumnCharts(data);
     return;
   }
@@ -23022,6 +23236,19 @@ function loadPortfolio(){ /* no-op loader — data loaded on demand in renderPor
 // ─── END PORTFOLIO BUILDER ENGINE ──────────────────────────────────────
 
 function init(){
+  // Register service worker for iOS push notifications. iOS 16.4+ requires
+  // a service worker registration for notifications to actually fire — the
+  // bare `new Notification()` API is unsupported on Safari mobile. Site
+  // must also be added to the home screen (PWA install) for iOS to grant
+  // notification permission. The forceReloadFresh button intentionally
+  // unregisters this on tap so the user can recover from a stale cache.
+  if ('serviceWorker' in navigator) {
+    try {
+      navigator.serviceWorker.register('./sw.js').catch(function(e){
+        console.warn('[sw] register failed:', e && e.message);
+      });
+    } catch(_){}
+  }
   loadKeys();
   loadWL();
   loadAppSettings();
