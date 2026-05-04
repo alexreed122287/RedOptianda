@@ -169,6 +169,23 @@ a{color:var(--blu);text-decoration:none;}
 /* App container — height accounts for new 56px header + 42px nav */
 #app{flex:1;min-height:0;overflow:hidden;position:relative;}
 .tab-pane{display:none;height:100%;overflow:hidden;}
+/* Floating per-tab HELP button — pinned top-right of the visible tab.
+   Click opens a modal with the relevant HOW TO section. Pure-text label
+   per user spec 'no icons in dashboard requests'. */
+.help-fab{position:fixed;top:auto;right:14px;z-index:7000;background:rgba(0,212,255,.10);border:1px solid var(--amb);color:var(--amb);font-family:var(--ff-mono);font-size:11px;letter-spacing:1px;padding:5px 10px;border-radius:3px;cursor:pointer;text-transform:uppercase;backdrop-filter:blur(2px);}
+.help-fab:hover{background:rgba(0,212,255,.18);}
+/* Help modal overlay */
+#help-modal{display:none;position:fixed;inset:0;z-index:8500;background:rgba(0,0,0,.75);backdrop-filter:blur(3px);align-items:flex-start;justify-content:center;padding:40px 16px 16px;overflow-y:auto;}
+#help-modal.open{display:flex;}
+.help-modal-inner{background:var(--bg1);border:1px solid var(--amb);border-radius:6px;width:min(94vw, 760px);max-height:88vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.6);}
+.help-modal-hdr{display:flex;align-items:center;justify-content:space-between;padding:12px 18px;background:var(--bg2);border-bottom:1px solid var(--bg3);position:sticky;top:0;z-index:1;}
+.help-modal-hdr h3{margin:0;font-family:var(--ff-brand);font-size:14px;color:var(--amb);letter-spacing:2px;}
+.help-modal-hdr button{background:none;border:none;color:var(--gry);font-size:18px;cursor:pointer;padding:4px 10px;}
+.help-modal-hdr button:hover{color:var(--wht);}
+.help-modal-body{padding:14px 20px 20px;font-size:13px;line-height:1.55;color:var(--wht);}
+.help-modal-body ol,.help-modal-body ul{padding-left:22px;}
+.help-modal-body li{margin-bottom:4px;}
+.help-modal-body a{color:var(--blub);}
 /* Hide the mobile filter toggle on desktop \u2014 the CSS that reveals it only applies in @media(max-width:768px) */
 .mobile-filter-toggle{display:none !important;}
 @media(max-width:768px){ .mobile-filter-toggle.show{display:inline-flex !important;} }
@@ -1482,11 +1499,11 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
        with every other filter row in the app. -->
   <div class="flt-bar collapsible" id="sc-bar-strategy" data-default-collapsed style="border-bottom:1px solid var(--bg3);">
     <button type="button" class="sec-toggle" title="Collapse / expand the STRATEGY presets row">STRATEGY</button>
-    <button class="btn blu" onclick="applyStrategyMode('highConviction')" title="PROVEN ticker + Score ≥160 + Analyst Revisions ↑ + GEX Call Heavy — rarest, highest-quality setups (≈67% of max).">&#9733; HIGH CONVICTION</button>
-    <button class="btn" onclick="applyStrategyMode('breakout')" title="Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 — stocks breaking out with market leadership.">&#9650; BREAKOUT</button>
-    <button class="btn" onclick="applyStrategyMode('momentum')" title="MACD + + Above EMA200 + Vol > Avg + RS > SPY — strong trending stocks with volume confirmation.">&#9654; MOMENTUM</button>
-    <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')" title="Score ≥180 + liquid (\$5+, 1M+ avg vol) + in-play today + contract ≤\$8 — deep-ITM (δ 0.70–0.90) calls on bullish momentum names.">&#9670; BEST ITM CALLS</button>
-    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score ≥160 + Analyst Revisions ↑ + GEX Call Heavy), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.">&#9650; PRE/POST MARKET</button>
+    <button class="btn blu" onclick="applyStrategyMode('highConviction')" title="PROVEN ticker + Score ≥145 + Analyst Revisions ↑ + GEX Call Heavy — rarest, highest-quality setups (90th-percentile of GO candidates).">&#9733; HIGH CONVICTION</button>
+    <button class="btn" onclick="applyStrategyMode('breakout')" title="Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 — stocks breaking out with market leadership. Score ≥125.">&#9650; BREAKOUT</button>
+    <button class="btn" onclick="applyStrategyMode('momentum')" title="MACD + + Above EMA200 + RS > SPY + Strong Sector — confirmed trending stocks with sector tailwind. Score ≥120.">&#9654; MOMENTUM</button>
+    <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')" title="Score ≥150 + liquid (\$5+, 1M+ avg vol) + in-play today + contract ≤\$8 — deep-ITM (δ 0.70–0.90) calls on confirmed bullish names.">&#9670; BEST ITM CALLS</button>
+    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score ≥145 + Analyst Revisions ↑ + GEX Call Heavy), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.">&#9650; PRE/POST MARKET</button>
     <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--gry2);color:var(--gry);" onclick="probePreMarketData()" title="One-shot live fetch of SPY/QQQ/NVDA/TSLA/AAPL — surfaces the raw `change_percentage` Tradier is returning right now. Use it to verify pre-market data is flowing.">VERIFY</button>
     <button class="btn" style="border-color:var(--gry2);color:var(--gry);" onclick="applyStrategyMode('clear')">&#10005; CLEAR</button>
     <span id="pre-market-pill" style="display:none;font-family:var(--ff-mono);font-size:9px;font-weight:800;letter-spacing:1.5px;background:var(--ambb);color:var(--bg0);padding:2px 8px;border-radius:2px;animation:today-pulse 2.4s ease-in-out infinite;" title="Pre-market session is active — Tradier `last` reflects extended-hours quotes. Use the PRE-MARKET preset to sort by gap %.">PRE-MARKET LIVE</span>
@@ -1537,7 +1554,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <!-- B-2 default Min Score bumped 89 -> 100. With theme overlay (added 2026-04)
          scores trend ~10 pts higher, so the historical "GO rate" at 89 became
          too permissive. 100 preserves the prior selectivity. Adjust to taste. -->
-    <label>Min Score <input type="number" id="sc-minscore" value="160" style="width:80px;" onchange="reclassifyGoThreshold()" title="Default 160 (≈67% of ~240-pt max). Pulls only the top-of-distribution conviction setups — score histogram peaks 140-160, so 160 keeps the GO list short and high quality."></label>
+    <label>Min Score <input type="number" id="sc-minscore" value="130" style="width:80px;" onchange="reclassifyGoThreshold()" title="Default 130 — empirically calibrated to the observed score distribution (peaks 140-160 on a ~164-pt practical max). 130 surfaces real setups instead of an empty list. Strategy presets override with their own per-strategy thresholds: HC 145, Breakout 125, Momentum 120, Best ITM 150, Pre/Post 145."></label>
     <button class="btn" onclick="applyFilters()">FILTER</button>
     <button class="btn" onclick="clearFilters()" style="border-color:var(--gry2);color:var(--gry);">CLEAR</button>
   </div>
@@ -2594,10 +2611,21 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <div class="card collapsible" id="howto-strategy" data-default-collapsed>
       <div class="card-hdr">▶ STRATEGY PRESETS — RATIONALE BEHIND EACH SETTING</div>
       <div class="card-body" style="font-size:13px;color:var(--wht);">
-        <p>Each preset applies a different combination of filter rules to surface a specific kind of setup. The thresholds are calibrated against the observed score distribution (which peaks 140–160 on a ~240-pt max).</p>
+        <p>Each preset applies a different combination of filter rules to surface a specific kind of setup. <b>Thresholds re-calibrated 2026-05-03</b> against the observed score distribution: practical max is ~164 (cap), median GO scores 100–135, top decile sits ≈145+. Prior values (160 for everything, 180 for Best ITM) were above the 90th percentile of GO candidates which is why most presets returned 0–2 hits.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">Empirical-evidence review of the rule weights</p>
+        <p>Highest-IC (information coefficient) rules in the scoring system, ranked by published swing-trade research:</p>
+        <ol style="padding-left:22px;">
+          <li><b>JT 12-1 Momentum (+20)</b> — Jegadeesh-Titman 1993, 12-month return minus 1-month, top quintile. Strongest replicated edge in the system.</li>
+          <li><b>Minervini Template (+15)</b> — Mark Minervini's 8-criteria growth setup. High specificity for swing breakouts.</li>
+          <li><b>Pocket Pivot (+15)</b> — institutional accumulation signature; high signal-to-noise.</li>
+          <li><b>VCP / Donchian / TF Aligned (+12 each)</b> — volatility contraction, channel breakout, multi-timeframe trend.</li>
+          <li><b>EMA20 &gt; EMA50 / RS &gt; SPY 21d / MFI / BBW (+10 each)</b> — established trend + relative strength + flow.</li>
+        </ol>
+        <p>The current MUST-PASS chips don't expose the high-IC rules (JT 12-1, Minervini, Pocket Pivot, VCP, Donchian) — those only contribute to the SCORE, not to filter gates. So <b>the most direct way to enforce them is via the SCORE threshold itself</b>: scores ≥130 typically require most of the high-weight rules to fire.</p>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">★ HIGH CONVICTION</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥160 + Analyst Revisions ↑ + PROVEN ticker + GEX Call Heavy.</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥145 + Analyst Revisions ↑ + PROVEN ticker + GEX Call Heavy.</p>
         <p><b>Idea:</b> the rarest, highest-quality setups. The combination is intentionally tight — every piece confirms a different dimension:</p>
         <ul style="padding-left:20px;">
           <li><b>Score ≥160</b> — top of the actual score distribution; only ~5–10% of GOs make it.</li>
@@ -2605,10 +2633,10 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
           <li><b>PROVEN ticker</b> — curated whitelist. These are names that have historically responded predictably to this scoring system. Removes survivorship bias against unfamiliar tickers.</li>
           <li><b>GEX Call Heavy</b> — institutional positioning is on the long side. When the score AND fundamentals AND dealer flow all point bullish, you're trading WITH the smart money instead of against it.</li>
         </ul>
-        <p>Expect 0–8 GO candidates per scan. If nothing passes, that's a feature, not a bug — the regime isn't right for high-conviction setups.</p>
+        <p>Expect 0–8 GO candidates per scan at threshold 145. If nothing passes, that's a feature, not a bug — the regime isn't right for high-conviction setups.</p>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▲ BREAKOUT</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥160 + 52Wk Hi within 15% + RS &gt; SPY + MACD + + TF Aligned 2/3.</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥125 + 52Wk Hi within 15% + RS &gt; SPY + MACD + + TF Aligned 2/3.</p>
         <p><b>Idea:</b> stocks pushing fresh highs with momentum + market leadership. The Minervini / O'Neil school of breakout buying:</p>
         <ul style="padding-left:20px;">
           <li><b>52Wk Hi &lt;15%</b> — proximity to 52-week high. The George–Hwang JF 2004 effect concentrates returns within 5%, but the &lt;15% gate stays inclusive enough to catch base-on-base setups.</li>
@@ -2618,19 +2646,19 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
         </ul>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▶ MOMENTUM</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥160 + MACD + + Above EMA200 + Vol &gt; Avg + RS &gt; SPY.</p>
-        <p><b>Idea:</b> strong trending stocks with volume confirmation. Different from BREAKOUT in that you DON'T need 52-week-hi proximity — momentum can come from a mid-base extension or a recovery off a base, not just a fresh high.</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥120 + MACD + + Above EMA200 + RS &gt; SPY + Strong Sector.</p>
+        <p><b>Idea:</b> strong trending stocks with sector tailwind. Different from BREAKOUT in that you DON'T need 52-week-hi proximity — momentum can come from a mid-base extension or a recovery off a base. <b>Updated 2026-05-03:</b> swapped "Vol &gt; Avg" for "Strong Sector" — sector rotation has stronger empirical edge than today-vs-avg volume (which is noise outside major events).</p>
         <ul style="padding-left:20px;">
           <li><b>Above EMA200</b> — primary trend filter. Long bias only above the 200-day EMA.</li>
-          <li><b>Vol &gt; Avg</b> — institutional accumulation. Today's volume above the average means real money is pushing the move.</li>
+          <li><b>Strong Sector</b> — top-quartile theme score. Asness-Moskowitz cross-sectional momentum: sector rotation captures ~30% of single-stock returns. Trading WITH a hot sector adds tailwind that's independent of the stock's own setup.</li>
           <li><b>MACD + + RS &gt; SPY</b> — same momentum + leadership confirmation as BREAKOUT.</li>
         </ul>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">◆ BEST ITM CALLS</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥180 + MACD + + Above EMA200 + RS &gt; SPY + Min Price $5 + Min AvgVol 1M + Today Vol &gt;100% + Max Opt Price $8.</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥150 + MACD + + Above EMA200 + RS &gt; SPY + Min Price $5 + Min AvgVol 1M + Today Vol &gt;100% + Max Opt Price $8.</p>
         <p><b>Idea:</b> deep-ITM (delta 0.70–0.90) call buying on already-confirmed bullish names where the contract premium fits inside a small-account budget.</p>
         <ul style="padding-left:20px;">
-          <li><b>Score ≥180</b> — even tighter than HIGH CONVICTION on score. Only the strongest setups graduate to the deep-ITM bucket because you're paying more premium.</li>
+          <li><b>Score ≥150</b> — top decile of the GO distribution. Tighter than the default 130 because you're paying real premium for deep-ITM contracts; only the strongest setups should graduate. Was 180 (which never fired since cap is 164); 150 is the empirically-right top-decile threshold.</li>
           <li><b>Min Price $5 + Min AvgVol 1M</b> — liquidity floor. Small/cheap stocks have wide option spreads that destroy edge.</li>
           <li><b>Today Vol &gt;100%</b> — the move is happening NOW. Filters out chart-only setups that haven't been confirmed by today's tape.</li>
           <li><b>Max Opt Price $8</b> — keeps single-contract cost ≤$800. Lets you sample multiple names for ~$3–4k notional rather than blow it on one expensive contract.</li>
@@ -3290,6 +3318,20 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   </div>
 </div>
 <div id="toast"></div>
+
+<!-- Per-tab HELP button + modal. Button is fixed top-right; openHelpFor()
+     reads the active tab id and opens the modal with the matching HOW TO
+     section's content (cloned from the existing #tab-howto cards). -->
+<button class="help-fab" id="help-fab-btn" onclick="openHelpFor()" title="Open the HOW TO section for the current tab" style="display:none;">HELP</button>
+<div id="help-modal" onclick="if(event.target===this)closeHelpModal()">
+  <div class="help-modal-inner">
+    <div class="help-modal-hdr">
+      <h3 id="help-modal-title">HELP</h3>
+      <button onclick="closeHelpModal()" title="Close">✕</button>
+    </div>
+    <div class="help-modal-body" id="help-modal-body"></div>
+  </div>
+</div>
 
 <!-- ── CONTRACT PANEL MODAL ── -->
 <div id="contract-panel" style="display:none;position:fixed;inset:0;z-index:8000;background:rgba(0,0,0,.8);backdrop-filter:blur(4px);align-items:flex-start;justify-content:center;padding-top:40px;overflow-y:auto;">
@@ -5798,12 +5840,52 @@ function addAlert(tk,msg,type){
   if(G.alerts.length>50)G.alerts.pop();
   if(eid('tab-al').classList.contains('active'))renderAlerts();
 }
+// Map a tab id (the suffix after 'tab-') to the HOW TO section id that
+// documents it. Used by the floating HELP button to open the modal with
+// the right content for the current tab. Tabs not in this map hide the
+// HELP button (e.g. the HOW TO tab itself — already showing all content).
+var HELP_TAB_MAP = {
+  sc: 'howto-fullscanner', pos: 'howto-positions', order: 'howto-orderticket',
+  api: 'howto-api', pf: 'howto-portfolio', ind: 'howto-industry',
+  gex: 'howto-gex', wl: 'howto-watchlist', al: 'howto-alerts'
+};
+function _updateHelpFab(tabId){
+  var fab = document.getElementById('help-fab-btn');
+  if (!fab) return;
+  var helpId = HELP_TAB_MAP[tabId];
+  if (!helpId) { fab.style.display = 'none'; return; }
+  fab.style.display = '';
+  fab.style.bottom = '20px';
+  fab.dataset.helpId = helpId;
+}
+function openHelpFor(){
+  var fab = document.getElementById('help-fab-btn');
+  var helpId = fab && fab.dataset.helpId;
+  if (!helpId) return;
+  var src = document.getElementById(helpId);
+  if (!src) return;
+  var modalTitle = document.getElementById('help-modal-title');
+  var modalBody  = document.getElementById('help-modal-body');
+  var hdr = src.querySelector('.card-hdr');
+  var body = src.querySelector('.card-body');
+  if (modalTitle) modalTitle.textContent = (hdr ? hdr.textContent.trim().replace(/^▶\s*/,'') : 'HELP');
+  if (modalBody)  modalBody.innerHTML = body ? body.innerHTML : 'No help content available.';
+  document.getElementById('help-modal').classList.add('open');
+}
+function closeHelpModal(){
+  document.getElementById('help-modal').classList.remove('open');
+}
+window.addEventListener('keydown', function(e){
+  if (e.key === 'Escape' && document.getElementById('help-modal').classList.contains('open')) closeHelpModal();
+});
+
 function switchTab(id){
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.ntab').forEach(function(b){b.classList.remove('active');});
   var pane=eid('tab-'+id);if(pane)pane.classList.add('active');
   var btn=document.querySelector('.ntab[onclick="switchTab(\''+id+'\')"]');
   if(btn)btn.classList.add('active');
+  _updateHelpFab(id);
   if(id==='al')renderAlerts();
   if(id==='ind')renderIndustryTab();
   if(id==='closed'){
@@ -13575,7 +13657,7 @@ var SCAN_SETTING_DEFAULTS = {
   'sc-minavgvol':    '500,000',
   'sc-volratio':     '',
   'sc-maxoptprice':  '',
-  'sc-minscore':     '160',
+  'sc-minscore':     '130',
   'sc-sig':          'GO',
   'sc-theme':        '',
   'filt-earn-days':  '1'
@@ -13657,7 +13739,7 @@ function clearFilters(){
   if(eid('sc-sect'))        eid('sc-sect').value = '';
   if(eid('sc-theme'))       eid('sc-theme').value = '';   // 'All themes'
   if(eid('sc-sig'))         eid('sc-sig').value  = '';   // 'All' — shows both GO and NO-GO
-  if(eid('sc-minscore'))    eid('sc-minscore').value = '160';  // calibrated to observed distribution top
+  if(eid('sc-minscore'))    eid('sc-minscore').value = '130';  // calibrated to observed distribution mid-top
   if(eid('sc-maxoptprice')) eid('sc-maxoptprice').value = '';
   // Reset sector multi-select to "all"
   G.selectedSectors = new Set();
@@ -18904,31 +18986,37 @@ var STRATEGY_MODES = {
   // (added 7 evidence-based rules: Minervini Template, Pocket Pivot, U/D Vol,
   // VCP, BBW Squeeze, Donchian, JT 12-1). Approximate %-of-max preserved:
   // HIGH CONVICTION ~83%, BREAKOUT/MOMENTUM ~67%, BEST ITM CALLS ~75%.
+  // Thresholds re-calibrated 2026-05-03 against the OBSERVED score
+  // distribution (peaks 140-160 on a ~164-pt practical max). Prior
+  // values (160/160/160/180) sat ABOVE the 90th percentile of all GO
+  // candidates which is why most presets returned 0-2 hits in normal
+  // markets. New per-strategy thresholds align with the rule weights
+  // each preset already filters for.
   highConviction: {
     label: '\u2605 HIGH CONVICTION',
-    desc: 'PROVEN ticker + Score \u2265160 + Analyst Revisions \u2191 + GEX Call Heavy \u2014 rarest, highest-quality setups (\u224867% of max)',
-    filters: {sig:'GO', minScore:160, analyst:true, proven:true, gex:true}
+    desc: 'PROVEN ticker + Score \u2265145 + Analyst Revisions \u2191 + GEX Call Heavy \u2014 rarest, highest-quality setups (~88% of practical max). 145 is the 90th-percentile of GO candidates; with HC also requiring analyst + proven + GEX, expect 0-8 matches per scan.',
+    filters: {sig:'GO', minScore:145, analyst:true, proven:true, gex:true}
   },
   breakout: {
     label: '\u25b2 BREAKOUT',
-    desc: 'Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 \u2014 stocks breaking out with market leadership (\u226560% of max)',
-    filters: {sig:'GO', minScore:160, hi52:true, rs:true, macd:true, tf:true}
+    desc: 'Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 \u2014 stocks breaking out with market leadership. Score \u2265125 (75% of practical max). The 4 MUST-PASS rules already concentrate on the high-IC setup; threshold doesn\'t need to be punishing.',
+    filters: {sig:'GO', minScore:125, hi52:true, rs:true, macd:true, tf:true}
   },
   momentum: {
     label: '\u25b6 MOMENTUM',
-    desc: 'MACD + + Above EMA200 + Vol > Avg + RS > SPY \u2014 strong trending stocks with volume confirmation (\u226560% of max)',
-    filters: {sig:'GO', minScore:160, macd:true, ema200:true, rs:true}
+    desc: 'MACD + + Above EMA200 + RS > SPY + Strong Sector \u2014 confirmed trending stocks with sector tailwind. Score \u2265120 (73% of practical max). Adds Strong Sector vs prior version since sector rotation is the strongest published swing-edge after JT 12-1.',
+    filters: {sig:'GO', minScore:120, macd:true, ema200:true, rs:true, strongSector:true}
   },
   bestItmCalls: {
     label: '\u25c6 BEST ITM CALLS',
-    desc: 'Score \u2265180 + liquid ($5+, 1M+ avg vol) + in-play today + contract \u2264$8 \u2014 deep-ITM (\u03b4 0.70\u20130.90) calls on bullish momentum names (\u226575% of max)',
-    filters: {sig:'GO', minScore:180, macd:true, ema200:true, rs:true,
+    desc: 'Score \u2265150 + liquid ($5+, 1M+ avg vol) + in-play today + contract \u2264$8 \u2014 deep-ITM (\u03b4 0.70\u20130.90) calls on confirmed bullish names. 150 = top decile; below that, deep-ITM premium isn\'t worth paying.',
+    filters: {sig:'GO', minScore:150, macd:true, ema200:true, rs:true,
               minPrice:5, minAvgVol:1000000, volRatio:100, maxOptPrice:8}
   },
   preMarket: {
     label: '\u25b2 PRE/POST MARKET',
-    desc: 'Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score \u2265160 + Analyst Revisions \u2191 + GEX Call Heavy), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.',
-    filters: {sig:'GO', minScore:160, analyst:true, proven:true, gex:true,
+    desc: 'Extended-hours gappers screened with the SAME filters as HIGH CONVICTION, sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.',
+    filters: {sig:'GO', minScore:145, analyst:true, proven:true, gex:true,
               _sortByGap:true}
   }
 };
@@ -19089,6 +19177,7 @@ function applyStrategyMode(mode, silent){
   if(f.tf       && eid('filt-tf'))       eid('filt-tf').checked       = true;
   if(f.ema200   && eid('filt-ema200'))   eid('filt-ema200').checked   = true;
   if(f.vol      && eid('filt-vol'))      eid('filt-vol').checked      = true;
+  if(f.strongSector && eid('filt-strong-sector')) eid('filt-strong-sector').checked = true;
 
   // Optional screener inputs — only written when the preset specifies them
   if(f.minPrice    !== undefined && eid('sc-minprice'))    eid('sc-minprice').value    = f.minPrice;
