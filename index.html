@@ -7486,8 +7486,23 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
   var startC = _cents(startPrice);
   var limitC = _cents(limitPrice);
   var stepC  = Math.max(1, _cents(stepSize));
-  function _atLimit(c){ return goingUp ? (c >= limitC) : (c <= limitC); }
+  // FREE-STEP MODE: when the user enters Start == Limit they're telling the
+  // system "don't enforce a price floor — step freely until maxAttempts".
+  // Without this special case, the limit check would treat every attempt
+  // as already-at-limit and either exit immediately (old behavior) or
+  // retry at the same price every time (intermediate behavior). The user
+  // wants step-and-resubmit, so we drop the limit and let stepC + maxAttempts
+  // bound the loop. User spec 2026-05-04: "still not stepping down and
+  // resubmitting".
+  var freeStep = (startC === limitC);
+  function _atLimit(c){
+    if (freeStep) return false;
+    return goingUp ? (c >= limitC) : (c <= limitC);
+  }
   function _step(c){ return goingUp ? (c + stepC) : (c - stepC); }
+  if (freeStep){
+    sfLog('Free-step mode (Start == Limit) — stepping by $'+fmt2(stepC/100)+' each retry until '+maxAttempts+' attempts','');
+  }
 
   var currentC = startC;
   var currentPrice = startC / 100;   // hoisted for the post-loop summary
@@ -7579,8 +7594,9 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       if (!wasAtLimit){
         currentC = _step(currentC);
         // Post-step: if the new price overshoots the limit, clamp so the
-        // next iteration retries AT the limit instead of past it.
-        if (goingUp ? (currentC > limitC) : (currentC < limitC)) currentC = limitC;
+        // next iteration retries AT the limit instead of past it. In
+        // freeStep mode there's no limit to clamp against, so step freely.
+        if (!freeStep && (goingUp ? (currentC > limitC) : (currentC < limitC))) currentC = limitC;
       }
       // wasAtLimit==true: leave currentC unchanged so next iteration retries
       // at the same limit price.
@@ -7599,7 +7615,7 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
         break;
       }
       currentC = _step(currentC);
-      if (goingUp ? (currentC > limitC) : (currentC < limitC)) currentC = limitC;
+      if (!freeStep && (goingUp ? (currentC > limitC) : (currentC < limitC))) currentC = limitC;
     }
 
     if(attempt===maxAttempts&&status!=='filled'){
