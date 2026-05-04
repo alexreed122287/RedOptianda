@@ -19172,13 +19172,26 @@ function updateHeaderQuotes(){
       }
       if(container) container.style.display = '';
       var price=parseFloat(q.last||q.prevclose)||0;
-      // Daily % change: prefer Tradier's pre-computed change_percentage,
-      // but fall back to (last - prevclose) / prevclose * 100 when that
-      // field is zero/missing — important during AH when some indices
-      // (VIX, SPX) report a populated `last` but a stale `change_percentage`.
+      // Daily % change — try every available signal in order:
+      //   1) Tradier's pre-computed change_percentage
+      //   2) (last - prevclose) / prevclose * 100 (recompute from raw)
+      //   3) (last - close) / close * 100 (close = today's official close
+      //      during AH; recovers AH delta when change_percentage stale)
+      //   4) ahDelta() — AH-specific helper that accounts for AH session
+      //   5) 0 (always render '(0.00%)' instead of '(--)' when we have a quote)
+      // User report 2026-05-03: '%'s still not showing for indicies'.
       var chgPct = parseFloat(q.change_percentage);
-      if (!chgPct && q.prevclose && +q.prevclose > 0) {
-        chgPct = ((price - +q.prevclose) / +q.prevclose) * 100;
+      if (!chgPct) {
+        var prevC = parseFloat(q.prevclose);
+        if (prevC > 0) chgPct = ((price - prevC) / prevC) * 100;
+      }
+      if (!chgPct) {
+        var todayC = parseFloat(q.close);
+        if (todayC > 0 && todayC !== price) chgPct = ((price - todayC) / todayC) * 100;
+      }
+      if (!chgPct && typeof ahDelta === 'function') {
+        var ahd = ahDelta(q);
+        if (ahd && ahd.pct) chgPct = ahd.pct;
       }
       chgPct = chgPct || 0;
       if(span) span.textContent='$'+fmt2(price);
@@ -19853,7 +19866,7 @@ async function cwRefreshAll(){
 var CACHE_KEYS = {
   positions:   'op_cache_positions',
   posLabel:    'op_cache_pos_label',
-  headerQ:     'op_cache_header_quotes',
+  headerQ:     'op_cache_header_quotes_v2',
   scanResults: 'op_cache_scan_results',
   scanTs:      'op_cache_scan_ts',
   posTs:       'op_cache_pos_ts',
@@ -22061,22 +22074,29 @@ function init(){
         }
       });
     }catch(e){}
-  } else {
-    // No cache yet — fire one header quote fetch after 5s
-    setTimeout(updateHeaderQuotes, 5000);
   }
+  // ALWAYS fire one fresh updateHeaderQuotes on load so the indices
+  // bar shows current % change immediately — regardless of cache state
+  // or session. User report 2026-05-03: '%'s still not showing for
+  // indicies. still don't see afterhours % changes'. Was previously
+  // gated to RTH-only via the setInterval below; outside 9:25-4:05 ET
+  // the indices stayed at their stale cached state forever.
+  setTimeout(function(){ try { updateHeaderQuotes(); } catch(_){} }, 1500);
 
   // 5. Watchlist — no API, just re-render from stored tickers
   refreshWL();
 
   // ── Schedule periodic refreshes ONLY while tab is active ────────────────
-  // Header quotes: refresh every 60s during market hours only
+  // Header quotes: refresh every 60s. Window expanded from 9:25-16:05
+  // (RTH only) to 4:00-20:00 ET (full extended-hours session) so AH /
+  // pre-market change % stays current. Weekends still skip since no
+  // session prints.
   setInterval(function(){
     var now=new Date();
     var et=new Date(now.toLocaleString('en-US',{timeZone:'America/New_York'}));
     var mins=et.getHours()*60+et.getMinutes();
     var day=et.getDay();
-    if(day>=1&&day<=5&&mins>=(9*60+25)&&mins<=(16*60+5)) updateHeaderQuotes();
+    if(day>=1&&day<=5&&mins>=(4*60)&&mins<=(20*60)) updateHeaderQuotes();
   }, 60000);
 
   // Contract watchlist: only refresh when CW tab is active and market is open
