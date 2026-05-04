@@ -1499,11 +1499,11 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
        with every other filter row in the app. -->
   <div class="flt-bar collapsible" id="sc-bar-strategy" data-default-collapsed style="border-bottom:1px solid var(--bg3);">
     <button type="button" class="sec-toggle" title="Collapse / expand the STRATEGY presets row">STRATEGY</button>
-    <button class="btn blu" onclick="applyStrategyMode('highConviction')" title="PROVEN ticker + Score ≥145 + Analyst Revisions ↑ + GEX Call Heavy — rarest, highest-quality setups (90th-percentile of GO candidates).">&#9733; HIGH CONVICTION</button>
-    <button class="btn" onclick="applyStrategyMode('breakout')" title="Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 — stocks breaking out with market leadership. Score ≥125.">&#9650; BREAKOUT</button>
-    <button class="btn" onclick="applyStrategyMode('momentum')" title="MACD + + Above EMA200 + RS > SPY + Strong Sector — confirmed trending stocks with sector tailwind. Score ≥120.">&#9654; MOMENTUM</button>
-    <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')" title="Score ≥150 + liquid (\$5+, 1M+ avg vol) + in-play today + contract ≤\$8 — deep-ITM (δ 0.70–0.90) calls on confirmed bullish names.">&#9670; BEST ITM CALLS</button>
-    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score ≥145 + Analyst Revisions ↑ + GEX Call Heavy), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.">&#9650; PRE/POST MARKET</button>
+    <button class="btn blu" onclick="applyStrategyMode('highConviction')" title="PROVEN + Score ≥140 + Analyst Revisions ↑ + GEX Call Heavy + JT 12-1 Mom + Minervini Trend Template — rarest, highest-quality setups. The 2 highest-IC scoring rules are now MUST-PASS.">&#9733; HIGH CONVICTION</button>
+    <button class="btn" onclick="applyStrategyMode('breakout')" title="Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 + Donchian 20d + VCP — stocks breaking out with market leadership AND a confirmed pattern-based breakout. Score ≥125.">&#9650; BREAKOUT</button>
+    <button class="btn" onclick="applyStrategyMode('momentum')" title="MACD + + Above EMA200 + RS > SPY + Strong Sector + JT 12-1 Mom — confirmed trending stocks with sector tailwind, gated by Jegadeesh-Titman cross-sectional momentum. Score ≥120.">&#9654; MOMENTUM</button>
+    <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')" title="Score ≥145 + liquid (\$5+, 1M+ avg vol) + in-play today + contract ≤\$8 + JT 12-1 + Minervini + Pocket Pivot — deep-ITM (δ 0.70–0.90) calls on names passing all three highest-IC rules.">&#9670; BEST ITM CALLS</button>
+    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score ≥140 + Analyst ↑ + GEX + JT 12-1 + Minervini), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.">&#9650; PRE/POST MARKET</button>
     <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--gry2);color:var(--gry);" onclick="probePreMarketData()" title="One-shot live fetch of SPY/QQQ/NVDA/TSLA/AAPL — surfaces the raw `change_percentage` Tradier is returning right now. Use it to verify pre-market data is flowing.">VERIFY</button>
     <button class="btn" style="border-color:var(--gry2);color:var(--gry);" onclick="applyStrategyMode('clear')">&#10005; CLEAR</button>
     <span id="pre-market-pill" style="display:none;font-family:var(--ff-mono);font-size:9px;font-weight:800;letter-spacing:1.5px;background:var(--ambb);color:var(--bg0);padding:2px 8px;border-radius:2px;animation:today-pulse 2.4s ease-in-out infinite;" title="Pre-market session is active — Tradier `last` reflects extended-hours quotes. Use the PRE-MARKET preset to sort by gap %.">PRE-MARKET LIVE</span>
@@ -1574,6 +1574,11 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-vol" onchange="applyFilters()"> <span>Vol &gt; Avg</span></label>
     <label class="ind-filter-lbl" title="Hide tickers with earnings within N days. Earnings = binary event; even good signals turn into 50/50 coin flips. Default 1 day — bump higher to be more conservative."><input type="checkbox" class="ind-filter" id="filt-no-earn" onchange="applyFilters()"> <span>No Earnings &lt;<input type="number" id="filt-earn-days" value="1" min="1" max="30" style="width:32px;font-size:10px;padding:1px 3px;background:var(--bg2);border:1px solid var(--bg3);color:var(--amb);" onchange="applyFilters()" onclick="event.stopPropagation()">d</span></label>
     <label class="ind-filter-lbl" title="Sector rotation overlay — only show tickers in themes with daily composite score >= 75 (top quartile, prevailing institutional flow)"><input type="checkbox" class="ind-filter" id="filt-strong-sector" onchange="applyFilters()"> <span>Strong Sector</span></label>
+    <label class="ind-filter-lbl" title="Jegadeesh-Titman 12-1 cross-sectional momentum (1993). 12-month return minus 1-month, top quintile (≥25%). Strongest replicated edge in academic finance. Worth +20 score points — most heavily weighted single rule."><input type="checkbox" class="ind-filter" id="filt-jt12" onchange="applyFilters()"> <span>JT 12-1 Mom</span></label>
+    <label class="ind-filter-lbl" title="Mark Minervini's 8-criteria Stage 2 trend template. Price &gt; MA50 &gt; MA150 &gt; MA200, MA200 trending up &gt;1mo, RS rank &gt; 70, near 52wk hi, &gt;25% off 52wk lo. High-specificity swing breakout setup. Worth +15."><input type="checkbox" class="ind-filter" id="filt-minervini" onchange="applyFilters()"> <span>Minervini</span></label>
+    <label class="ind-filter-lbl" title="O'Neil/Morales-Kacher pocket pivot — first up-day with volume &gt; max down-volume of prior 10 days, while above 50DMA. Institutional accumulation signature. Worth +15."><input type="checkbox" class="ind-filter" id="filt-pocket" onchange="applyFilters()"> <span>Pocket Pivot</span></label>
+    <label class="ind-filter-lbl" title="VCP — Volatility Contraction Pattern (Minervini). Successive ATR-based price ranges contracting before breakout. Tight pre-breakout coil. Worth +12."><input type="checkbox" class="ind-filter" id="filt-vcp" onchange="applyFilters()"> <span>VCP</span></label>
+    <label class="ind-filter-lbl" title="20-day Donchian channel breakout with confirming volume — close at or above 20-day high. Classic Turtle/channel breakout. Worth +12."><input type="checkbox" class="ind-filter" id="filt-donchian" onchange="applyFilters()"> <span>Donchian 20d</span></label>
     <input type="text" id="sc-search" placeholder="Search ticker..." oninput="onScSearch()" style="margin-left:auto;font-family:var(--ff-mono);font-size:11px;padding:3px 8px;background:var(--bg1);border:1px solid var(--bg3);border-radius:3px;color:var(--amb);width:160px;">
     <span id="sc-filter-count" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);"></span>
   </div>
@@ -2398,12 +2403,26 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
           <li><b>Sectors</b> — multi-select. Empty = all. Useful for narrowing scans to specific industries.</li>
           <li><b>Themes</b> — multi-select industry themes (e.g. "AI Infrastructure", "Memory & Storage"). Hydrated from theme_scores.json. Click any chip in the scrolling ribbon at the top to filter to just that theme.</li>
           <li><b>Signal</b> — GO / NO-GO / All.</li>
-          <li><b>Min Score</b> — composite score floor. Default 160. Range 0–240.</li>
+          <li><b>Min Score</b> — composite score floor. Default 130 (calibrated to observed distribution mid-top). Range 0–240. When a strategy preset is selected, this gets overwritten with that preset's own threshold (HC=140, BO=125, MO=120, ITM=145).</li>
           <li><b>FILTER / CLEAR</b> — applies / resets the criteria.</li>
         </ul>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">MUST PASS chips</p>
-        <p>Each checkbox forces the corresponding rule to pass for a ticker to appear. Hover any chip for definition (Analyst Revisions ↑, GEX Call Heavy, PROVEN, 52Wk Hi, RS &gt; SPY, MACD +, TF Aligned, Above EMA200, Vol &gt; Avg, No Earnings, Strong Sector). Stack as needed.</p>
+        <p>Each checkbox forces the corresponding rule to pass for a ticker to appear. Stack as needed. The chip set is grouped by tier:</p>
+        <ul style="padding-left:22px;">
+          <li><b>Tier 1 (highest IC, +12 to +20 score points):</b> JT 12-1 Mom, Minervini, Pocket Pivot, VCP, Donchian 20d. These were exposed as MUST-PASS chips on 2026-05-03 — previously they only contributed to the score. Use them to enforce the published-research signals directly instead of relying on a score threshold to be a proxy for them.</li>
+          <li><b>Tier 2 (confirmation, +5 to +10):</b> 52Wk Hi &lt;15%, RS &gt; SPY, MACD +, TF Aligned, &gt; EMA200, Vol &gt; Avg.</li>
+          <li><b>Tier 3 (overlay / fundamental):</b> Analyst Revisions ↑, GEX Call Heavy, PROVEN, Strong Sector.</li>
+          <li><b>Hard filters:</b> No Earnings &lt;Nd (binary-event exclusion).</li>
+        </ul>
+        <p style="color:var(--ambb);font-weight:700;margin-top:10px;">Recommended Tier-1 stacks for hand-rolled (no preset) screens</p>
+        <ul style="padding-left:22px;">
+          <li><b>Pure Trend (academic):</b> JT 12-1 + &gt; EMA200. Adds Asness/Frazzini momentum on top of Minervini's Stage 2 floor.</li>
+          <li><b>Coiled Spring:</b> VCP + Pocket Pivot + Vol &gt; Avg. Tight contraction → institutional accumulation print.</li>
+          <li><b>Channel Breakout:</b> Donchian 20d + Vol &gt; Avg + RS &gt; SPY. Classic Turtle setup with leadership confirmation.</li>
+          <li><b>Wizard Buy:</b> Minervini + 52Wk Hi &lt;15% + RS &gt; SPY. Full SEPA template — Mark Minervini's "Trade Like a Stock Market Wizard" buy criteria.</li>
+          <li><b>Belt-and-suspenders:</b> JT 12-1 + Minervini + Pocket Pivot. All three highest-IC scoring rules required — typically 0-3 names, but every hit has the strongest published edge.</li>
+        </ul>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">SCREENER row</p>
         <ul style="padding-left:20px;">
@@ -2622,51 +2641,65 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
           <li><b>VCP / Donchian / TF Aligned (+12 each)</b> — volatility contraction, channel breakout, multi-timeframe trend.</li>
           <li><b>EMA20 &gt; EMA50 / RS &gt; SPY 21d / MFI / BBW (+10 each)</b> — established trend + relative strength + flow.</li>
         </ol>
-        <p>The current MUST-PASS chips don't expose the high-IC rules (JT 12-1, Minervini, Pocket Pivot, VCP, Donchian) — those only contribute to the SCORE, not to filter gates. So <b>the most direct way to enforce them is via the SCORE threshold itself</b>: scores ≥130 typically require most of the high-weight rules to fire.</p>
+        <p><b>2026-05-03 update:</b> the 5 highest-IC rules (JT 12-1, Minervini, Pocket Pivot, VCP, Donchian) are now exposed as MUST-PASS chips. Each preset below has been upgraded to require a curated subset of these chips in addition to the previous criteria — the score threshold is no longer a proxy for "did the high-weight rules fire", it's an independent confirmation on TOP of the actual rule passes. The GO/NO-GO flag respects the active strategy's <b>own</b> Min Score (e.g. switching to HC reclassifies all GOs at threshold 140; switching to MOMENTUM reclassifies at 120).</p>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">★ HIGH CONVICTION</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥145 + Analyst Revisions ↑ + PROVEN ticker + GEX Call Heavy.</p>
-        <p><b>Idea:</b> the rarest, highest-quality setups. The combination is intentionally tight — every piece confirms a different dimension:</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥140 + Analyst Revisions ↑ + PROVEN ticker + GEX Call Heavy + JT 12-1 Mom + Minervini Trend Template.</p>
+        <p><b>Idea:</b> the rarest, highest-quality setups. Every piece confirms a different dimension:</p>
         <ul style="padding-left:20px;">
-          <li><b>Score ≥160</b> — top of the actual score distribution; only ~5–10% of GOs make it.</li>
+          <li><b>JT 12-1 Mom (NEW)</b> — Jegadeesh-Titman 12-month-minus-1-month return ≥25% (top quintile). Strongest replicated cross-sectional edge in equity markets.</li>
+          <li><b>Minervini Trend Template (NEW)</b> — full Stage 2 SEPA: price &gt; MA50 &gt; MA150 &gt; MA200, MA200 trending up, RS rank ≥70, near 52wk hi. Mark Minervini's complete buy template, not just "above 200".</li>
+          <li><b>Score ≥140</b> — top of the actual score distribution. Was 145 in the prior version; lowered to 140 to compensate for the new rule MUST-PASS gates already eliminating low-quality candidates upstream.</li>
           <li><b>Analyst Revisions ↑</b> — fundamental tailwind. Sell-side estimates being raised is a slow-moving but high-conviction signal that the company's outlook just improved.</li>
-          <li><b>PROVEN ticker</b> — curated whitelist. These are names that have historically responded predictably to this scoring system. Removes survivorship bias against unfamiliar tickers.</li>
-          <li><b>GEX Call Heavy</b> — institutional positioning is on the long side. When the score AND fundamentals AND dealer flow all point bullish, you're trading WITH the smart money instead of against it.</li>
+          <li><b>PROVEN ticker</b> — curated whitelist. Names that have historically responded predictably to this scoring system.</li>
+          <li><b>GEX Call Heavy</b> — institutional positioning is on the long side.</li>
         </ul>
-        <p>Expect 0–8 GO candidates per scan at threshold 145. If nothing passes, that's a feature, not a bug — the regime isn't right for high-conviction setups.</p>
+        <p>Expect 0–5 GO candidates per scan. If nothing passes, the regime isn't right for high-conviction setups.</p>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▲ BREAKOUT</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥125 + 52Wk Hi within 15% + RS &gt; SPY + MACD + + TF Aligned 2/3.</p>
-        <p><b>Idea:</b> stocks pushing fresh highs with momentum + market leadership. The Minervini / O'Neil school of breakout buying:</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥125 + 52Wk Hi within 15% + RS &gt; SPY + MACD + + TF Aligned 2/3 + Donchian 20d + VCP.</p>
+        <p><b>Idea:</b> stocks pushing fresh highs with momentum + market leadership AND a confirmed pattern-based breakout. The Minervini / O'Neil school of breakout buying:</p>
         <ul style="padding-left:20px;">
-          <li><b>52Wk Hi &lt;15%</b> — proximity to 52-week high. The George–Hwang JF 2004 effect concentrates returns within 5%, but the &lt;15% gate stays inclusive enough to catch base-on-base setups.</li>
-          <li><b>RS &gt; SPY</b> — relative strength positive. Stock outperforming the index over the last 5 days = market is voting for it.</li>
-          <li><b>MACD +</b> — short-term momentum confirmed.</li>
-          <li><b>TF Aligned 2/3</b> — daily, hourly, and 15-min trends agree (≥2 of 3). Filters out tickers that look bullish on one timeframe but choppy on others.</li>
+          <li><b>Donchian 20d (NEW)</b> — close at or above 20-day high with confirming volume. Classic Turtle/channel breakout. Filters out names that LOOK extended but haven't actually printed a fresh 20-day high.</li>
+          <li><b>VCP (NEW)</b> — Volatility Contraction Pattern (Minervini). Successive ATR-based price ranges contracting before the breakout. Without this, you'd buy "wide-and-loose" continuation moves that have lower hit rate.</li>
+          <li><b>52Wk Hi &lt;15%</b> — proximity to 52-week high. George–Hwang (JF 2004) effect — return premium concentrated near the high.</li>
+          <li><b>RS &gt; SPY</b> — relative strength positive. Stock outperforming the index = market voting for it.</li>
+          <li><b>MACD + + TF Aligned 2/3</b> — short-term momentum + multi-timeframe agreement.</li>
         </ul>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▶ MOMENTUM</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥120 + MACD + + Above EMA200 + RS &gt; SPY + Strong Sector.</p>
-        <p><b>Idea:</b> strong trending stocks with sector tailwind. Different from BREAKOUT in that you DON'T need 52-week-hi proximity — momentum can come from a mid-base extension or a recovery off a base. <b>Updated 2026-05-03:</b> swapped "Vol &gt; Avg" for "Strong Sector" — sector rotation has stronger empirical edge than today-vs-avg volume (which is noise outside major events).</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥120 + MACD + + Above EMA200 + RS &gt; SPY + Strong Sector + JT 12-1 Mom.</p>
+        <p><b>Idea:</b> strong trending stocks with sector tailwind, gated by the academic gold-standard cross-sectional momentum factor. Different from BREAKOUT in that you DON'T need 52-week-hi proximity — momentum can come from a mid-base extension or recovery off a base.</p>
         <ul style="padding-left:20px;">
+          <li><b>JT 12-1 Mom (NEW)</b> — 12-month-minus-1-month return top quintile. Without this MUST-PASS, "MOMENTUM" was just "MACD + above 200" which is too lenient. Now it's "MACD + above 200 AND in the top fifth by 12-month return", which is the actual definition.</li>
           <li><b>Above EMA200</b> — primary trend filter. Long bias only above the 200-day EMA.</li>
-          <li><b>Strong Sector</b> — top-quartile theme score. Asness-Moskowitz cross-sectional momentum: sector rotation captures ~30% of single-stock returns. Trading WITH a hot sector adds tailwind that's independent of the stock's own setup.</li>
-          <li><b>MACD + + RS &gt; SPY</b> — same momentum + leadership confirmation as BREAKOUT.</li>
+          <li><b>Strong Sector</b> — top-quartile theme score. Asness-Moskowitz cross-sectional momentum at the sector level.</li>
+          <li><b>MACD + + RS &gt; SPY</b> — short-term momentum + leadership confirmation.</li>
         </ul>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">◆ BEST ITM CALLS</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥150 + MACD + + Above EMA200 + RS &gt; SPY + Min Price $5 + Min AvgVol 1M + Today Vol &gt;100% + Max Opt Price $8.</p>
-        <p><b>Idea:</b> deep-ITM (delta 0.70–0.90) call buying on already-confirmed bullish names where the contract premium fits inside a small-account budget.</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥145 + MACD + + Above EMA200 + RS &gt; SPY + JT 12-1 Mom + Minervini + Pocket Pivot + Min Price $5 + Min AvgVol 1M + Today Vol &gt;100% + Max Opt Price $8.</p>
+        <p><b>Idea:</b> deep-ITM (delta 0.70–0.90) call buying on names that pass <i>all three</i> highest-IC scoring rules — JT 12-1 (+20), Minervini (+15), Pocket Pivot (+15). You're paying real premium for deep-ITM contracts, so the candidate has to clear the highest published bar across momentum, trend, and accumulation.</p>
         <ul style="padding-left:20px;">
-          <li><b>Score ≥150</b> — top decile of the GO distribution. Tighter than the default 130 because you're paying real premium for deep-ITM contracts; only the strongest setups should graduate. Was 180 (which never fired since cap is 164); 150 is the empirically-right top-decile threshold.</li>
-          <li><b>Min Price $5 + Min AvgVol 1M</b> — liquidity floor. Small/cheap stocks have wide option spreads that destroy edge.</li>
-          <li><b>Today Vol &gt;100%</b> — the move is happening NOW. Filters out chart-only setups that haven't been confirmed by today's tape.</li>
-          <li><b>Max Opt Price $8</b> — keeps single-contract cost ≤$800. Lets you sample multiple names for ~$3–4k notional rather than blow it on one expensive contract.</li>
+          <li><b>JT 12-1 + Minervini + Pocket Pivot (NEW)</b> — the three rules with the strongest empirical track records, each capturing a different dimension (cross-sectional momentum, Stage 2 trend, institutional accumulation print). All three required.</li>
+          <li><b>Score ≥145</b> — top of the GO distribution. Was 150; lowered slightly because the three new MUST-PASS gates already concentrate quality upstream.</li>
+          <li><b>Min Price $5 + Min AvgVol 1M</b> — liquidity floor. Cheap/illiquid names have wide option spreads that destroy edge.</li>
+          <li><b>Today Vol &gt;100%</b> — the move is happening NOW.</li>
+          <li><b>Max Opt Price $8</b> — keeps single-contract cost ≤$800.</li>
         </ul>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▲ PRE/POST MARKET</p>
-        <p><b>Filters:</b> SAME as HIGH CONVICTION + secondary sort by absolute % gap (largest movers first).</p>
+        <p><b>Filters:</b> SAME as HIGH CONVICTION (PROVEN + Score ≥140 + Analyst ↑ + GEX + JT 12-1 + Minervini) + secondary sort by absolute % gap (largest movers first).</p>
         <p><b>Idea:</b> extended-hours gappers screened with the conviction gate. Tradier's <code>change_percentage</code> reflects extended-hours quotes during 4–9:30am ET (pre) and 4–8pm ET (post); on weekends it shows the most recent extended-hours print. Use this preset to surface big movers <i>that also pass HC criteria</i>, not just any random gapper. The sort flip pushes biggest |gap %| to the top within the HC-passing subset.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">Recommendations for new strategy presets (not yet built — note for future)</p>
+        <ul style="padding-left:22px;">
+          <li><b>★ FACTOR PURE</b> — Score ≥130 + JT 12-1 + Minervini + Strong Sector + RS &gt; SPY. Pure academic-factor stack with no chart-pattern dependence. Best for names where the visible setup is messy but the underlying factor profile is excellent.</li>
+          <li><b>▲ COILED SPRING</b> — Score ≥125 + VCP + Pocket Pivot + 52Wk Hi &lt;15% + Vol &gt; Avg. Tight pre-breakout coil with institutional accumulation print, then volume spike. Highest-conviction pre-breakout entry; alternative to BREAKOUT for "buying the spring" instead of "buying the breakout itself".</li>
+          <li><b>▶ TURTLE</b> — Score ≥125 + Donchian 20d + RS &gt; SPY + Vol &gt; Avg + &gt; EMA200. Classic Dennis-Eckhardt 20d channel breakout, gated by leadership and primary-trend filters. Mechanical entry rule with strong out-of-sample edge.</li>
+          <li><b>◆ BUY-THE-DIP</b> — Score ≥130 + JT 12-1 + Minervini + RS &gt; SPY (no breakout / 52Wk Hi requirement). Buys high-momentum quality names <i>not</i> at the highs — pulls from mid-base or post-correction setups. Pairs well with limit orders below current price.</li>
+          <li><b>▲ ALL FIVE</b> — Score ≥135 + JT 12-1 + Minervini + Pocket Pivot + VCP + Donchian. The "every Tier-1 chip MUST PASS" preset. Will return 0-1 names most days; useful as a daily "is anything truly perfect" probe rather than a working preset.</li>
+        </ul>
       </div>
     </div>
 
@@ -12519,8 +12552,20 @@ function _renderScanDataStatus(stats){
 // completion time persisted to localStorage.
 function _matchesPreset(r, filters){
   if (!r) return false;
-  if (filters.sig === 'GO' && !r.isGo) return false;
-  if (filters.sig === 'NO-GO' && r.isGo) return false;
+  // The per-preset count strip should be INDEPENDENT of which strategy is
+  // currently active. r.isGo reflects the user's active score threshold (set
+  // by whatever preset is selected), so using it here would make every chip's
+  // count change every time you click a preset. Instead, treat sig:'GO' as
+  // "this row's score clears the preset's OWN minScore", which is the
+  // strategy-specific GO definition. avoidBad red-flag check still uses
+  // r.rules so we don't count tickers with a hit on a negative-points rule.
+  var avoidBad = false;
+  if (Array.isArray(r.rules)) r.rules.forEach(function(rl){
+    if (rl.pass && rl.pts && rl.pts < 0) avoidBad = true;
+  });
+  var presetGo = (r.score >= (filters.minScore || 0)) && !avoidBad;
+  if (filters.sig === 'GO' && !presetGo) return false;
+  if (filters.sig === 'NO-GO' && presetGo) return false;
   if (filters.minScore && r.score < filters.minScore) return false;
   // Indicator-rule predicates — each maps to an entry in r.passes (the
   // array of passing-rule names that scoreIt produced for this ticker).
@@ -12537,6 +12582,16 @@ function _matchesPreset(r, filters){
   if (filters.tf && !(has('TF Aligned 2/3') || has('Timeframes Aligned'))) return false;
   if (filters.ema200 && !(has('Above EMA200') || has('Above 200 EMA'))) return false;
   if (filters.vol && !(has('Vol > Avg') || has('Volume > Avg'))) return false;
+  if (filters.strongSector) {
+    var ti = (typeof getThemeStrength === 'function') ? getThemeStrength(r.ticker) : null;
+    if (!ti || (ti.dailyScore || 0) < 75) return false;
+  }
+  // High-IC chips (2026-05-03). Match against the rule names emitted by scoreIt.
+  if (filters.jt12      && !has('JT 12-1 Momentum'))            return false;
+  if (filters.minervini && !has('Minervini Trend Template'))    return false;
+  if (filters.pocket    && !has('Pocket Pivot'))                return false;
+  if (filters.vcp       && !has('VCP — ATR Contraction'))  return false;
+  if (filters.donchian  && !has('20d Donchian Breakout'))       return false;
   if (filters.minPrice    && (r.price || 0)   < filters.minPrice) return false;
   if (filters.minAvgVol   && (r.avgVol || r.volume || 0) < filters.minAvgVol) return false;
   if (filters.maxOptPrice && r.opt && r.opt.optPr > 0 && r.opt.optPr > filters.maxOptPrice) return false;
@@ -13521,6 +13576,14 @@ function applyFilters(){
   var earnDays    = parseInt((eid('filt-earn-days') && eid('filt-earn-days').value) || '7') || 7;
   // Sector rotation: only top-quartile-theme tickers
   var needStrongSector = getIndFilter('filt-strong-sector');
+  // High-IC scoring rules — exposed as MUST PASS chips 2026-05-03 so the
+  // user can require any combination of the 5 highest-information-coefficient
+  // rules without leaning purely on the score threshold.
+  var needJT12      = getIndFilter('filt-jt12');
+  var needMinervini = getIndFilter('filt-minervini');
+  var needPocket    = getIndFilter('filt-pocket');
+  var needVCP       = getIndFilter('filt-vcp');
+  var needDonchian  = getIndFilter('filt-donchian');
   // OB filter checkboxes were removed from the UI; underlying detection JS
   // and cache stay defined so the feature can be reactivated. Hardcoded false
   // here (was 4 per-cycle DOM lookups that always returned false).
@@ -13579,7 +13642,8 @@ function applyFilters(){
 
     // Indicator filters \u2014 check rule scorecards
     if(needAnalyst || needGex || needProven ||
-       need52hi || needRS || needMacd || needTF || needEma200 || needVol){
+       need52hi || needRS || needMacd || needTF || needEma200 || needVol ||
+       needJT12 || needMinervini || needPocket || needVCP || needDonchian){
 
       // Build a quick lookup of which rules passed for this ticker
       var passed = {};
@@ -13597,6 +13661,13 @@ function applyFilters(){
       if(needTF      && !passed['TF Aligned 2/3'])          return false;
       if(needEma200  && !passed['Price > EMA200'])          return false;
       if(needVol     && !passed['Vol > Avg'])               return false;
+      // High-IC rules (2026-05-03). Rule names match the strings emitted by
+      // scoreIt \u2014 see lines 11124, 11153, 11192, 11238, 11257.
+      if(needJT12      && !passed['JT 12-1 Momentum'])           return false;
+      if(needMinervini && !passed['Minervini Trend Template'])   return false;
+      if(needPocket    && !passed['Pocket Pivot'])               return false;
+      if(needVCP       && !passed['VCP \u2014 ATR Contraction']) return false;
+      if(needDonchian  && !passed['20d Donchian Breakout'])      return false;
     }
 
     // Earnings exclusion — hard filter, not a rule. Pass-by-default if
@@ -13622,7 +13693,8 @@ function applyFilters(){
   var activeFilters = [needAnalyst,needGex,needProven,
     need52hi,needRS,needMacd,needTF,needEma200,needVol,
     needOBClear,needOBSup,needInstOBClear,needInstOBSup,
-    needNoEarn,needStrongSector].filter(Boolean).length;
+    needNoEarn,needStrongSector,
+    needJT12,needMinervini,needPocket,needVCP,needDonchian].filter(Boolean).length;
   var countEl = eid('sc-filter-count');
   if(countEl){
     countEl.textContent = shown + ' / ' + total + (activeFilters > 0 ? ' (' + activeFilters + ' filter' + (activeFilters>1?'s':'')+' active)' : '');
@@ -13668,6 +13740,7 @@ var SCAN_SETTING_DEFAULTS = {
 var SCAN_FILTER_CHECKBOXES = [
   'filt-analyst','filt-gex','filt-proven','filt-52hi','filt-rs',
   'filt-macd','filt-tf','filt-ema200','filt-vol','filt-no-earn','filt-strong-sector',
+  'filt-jt12','filt-minervini','filt-pocket','filt-vcp','filt-donchian',
   'filt-obclear','filt-obsupport','filt-inst-obclear','filt-inst-obsupport'
 ];
 
@@ -13755,6 +13828,7 @@ function clearFilters(){
   ['filt-analyst','filt-gex','filt-proven',
    'filt-52hi','filt-rs','filt-macd','filt-tf','filt-ema200','filt-vol',
    'filt-no-earn','filt-strong-sector',
+   'filt-jt12','filt-minervini','filt-pocket','filt-vcp','filt-donchian',
    'filt-obclear','filt-obsupport','filt-inst-obclear','filt-inst-obsupport'].forEach(function(id){
     var el = eid(id); if(el) el.checked = false;
   });
@@ -13967,7 +14041,9 @@ function renderScan(){
         'filt-analyst':'Analyst Revisions','filt-gex':'GEX Call Heavy','filt-proven':'PROVEN',
         'filt-52hi':'52Wk Hi <15%','filt-rs':'RS > SPY','filt-macd':'MACD +',
         'filt-tf':'TF Aligned','filt-ema200':'> EMA200','filt-vol':'Vol > Avg',
-        'filt-no-earn':'No Earnings','filt-strong-sector':'Strong Sector'
+        'filt-no-earn':'No Earnings','filt-strong-sector':'Strong Sector',
+        'filt-jt12':'JT 12-1 Mom','filt-minervini':'Minervini',
+        'filt-pocket':'Pocket Pivot','filt-vcp':'VCP','filt-donchian':'Donchian 20d'
       };
       Object.keys(cbMap).forEach(function(id){ if(getIndFilter(id)) active.push(cbMap[id]); });
       var summary = active.length
@@ -18994,30 +19070,34 @@ var STRATEGY_MODES = {
   // each preset already filters for.
   highConviction: {
     label: '\u2605 HIGH CONVICTION',
-    desc: 'PROVEN ticker + Score \u2265145 + Analyst Revisions \u2191 + GEX Call Heavy \u2014 rarest, highest-quality setups (~88% of practical max). 145 is the 90th-percentile of GO candidates; with HC also requiring analyst + proven + GEX, expect 0-8 matches per scan.',
-    filters: {sig:'GO', minScore:145, analyst:true, proven:true, gex:true}
+    desc: 'PROVEN ticker + Score \u2265140 + Analyst Revisions \u2191 + GEX Call Heavy + JT 12-1 Mom + Minervini \u2014 rarest, highest-quality setups. The two highest-IC scoring rules (JT 12-1 +20, Minervini +15) are now MUST-PASS instead of merely contributing to the score. Expect 0-5 matches per scan.',
+    filters: {sig:'GO', minScore:140, analyst:true, proven:true, gex:true,
+              jt12:true, minervini:true}
   },
   breakout: {
     label: '\u25b2 BREAKOUT',
-    desc: 'Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 \u2014 stocks breaking out with market leadership. Score \u2265125 (75% of practical max). The 4 MUST-PASS rules already concentrate on the high-IC setup; threshold doesn\'t need to be punishing.',
-    filters: {sig:'GO', minScore:125, hi52:true, rs:true, macd:true, tf:true}
+    desc: 'Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 + Donchian 20d + VCP \u2014 chart-pattern-driven breakout buying with momentum + leadership. Donchian + VCP are the two highest-IC pure-pattern breakout rules; requiring them filters out fake-out names that just LOOK extended. Score \u2265125.',
+    filters: {sig:'GO', minScore:125, hi52:true, rs:true, macd:true, tf:true,
+              donchian:true, vcp:true}
   },
   momentum: {
     label: '\u25b6 MOMENTUM',
-    desc: 'MACD + + Above EMA200 + RS > SPY + Strong Sector \u2014 confirmed trending stocks with sector tailwind. Score \u2265120 (73% of practical max). Adds Strong Sector vs prior version since sector rotation is the strongest published swing-edge after JT 12-1.',
-    filters: {sig:'GO', minScore:120, macd:true, ema200:true, rs:true, strongSector:true}
+    desc: 'MACD + + Above EMA200 + RS > SPY + Strong Sector + JT 12-1 Mom \u2014 confirmed trending stocks with sector tailwind, gated by the academic gold-standard 12-1 cross-sectional momentum signal. JT 12-1 is the single strongest replicated edge in equity markets; making it MUST-PASS turns this preset from "trendy" into "trendy AND riding the strongest published factor". Score \u2265120.',
+    filters: {sig:'GO', minScore:120, macd:true, ema200:true, rs:true,
+              strongSector:true, jt12:true}
   },
   bestItmCalls: {
     label: '\u25c6 BEST ITM CALLS',
-    desc: 'Score \u2265150 + liquid ($5+, 1M+ avg vol) + in-play today + contract \u2264$8 \u2014 deep-ITM (\u03b4 0.70\u20130.90) calls on confirmed bullish names. 150 = top decile; below that, deep-ITM premium isn\'t worth paying.',
-    filters: {sig:'GO', minScore:150, macd:true, ema200:true, rs:true,
+    desc: 'Score \u2265145 + liquid ($5+, 1M+ avg vol) + in-play today + contract \u2264$8 + JT 12-1 Mom + Minervini + Pocket Pivot \u2014 deep-ITM (\u03b4 0.70\u20130.90) calls on names that pass ALL THREE highest-IC scoring rules. You\'re paying real premium for deep-ITM contracts; only setups confirmed by 12-month momentum + Stage 2 trend template + institutional accumulation should graduate.',
+    filters: {sig:'GO', minScore:145, macd:true, ema200:true, rs:true,
+              jt12:true, minervini:true, pocket:true,
               minPrice:5, minAvgVol:1000000, volRatio:100, maxOptPrice:8}
   },
   preMarket: {
     label: '\u25b2 PRE/POST MARKET',
-    desc: 'Extended-hours gappers screened with the SAME filters as HIGH CONVICTION, sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.',
-    filters: {sig:'GO', minScore:145, analyst:true, proven:true, gex:true,
-              _sortByGap:true}
+    desc: 'Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Analyst \u2191 + GEX + JT 12-1 + Minervini), sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.',
+    filters: {sig:'GO', minScore:140, analyst:true, proven:true, gex:true,
+              jt12:true, minervini:true, _sortByGap:true}
   }
 };
 
@@ -19162,7 +19242,9 @@ function applyStrategyMode(mode, silent){
 
   // Clear all indicator checkboxes first
   ['filt-analyst','filt-gex','filt-proven',
-   'filt-52hi','filt-rs','filt-macd','filt-tf','filt-ema200','filt-vol'].forEach(function(id){
+   'filt-52hi','filt-rs','filt-macd','filt-tf','filt-ema200','filt-vol',
+   'filt-jt12','filt-minervini','filt-pocket','filt-vcp','filt-donchian',
+   'filt-strong-sector'].forEach(function(id){
     var el = eid(id); if(el) el.checked = false;
   });
 
@@ -19178,6 +19260,12 @@ function applyStrategyMode(mode, silent){
   if(f.ema200   && eid('filt-ema200'))   eid('filt-ema200').checked   = true;
   if(f.vol      && eid('filt-vol'))      eid('filt-vol').checked      = true;
   if(f.strongSector && eid('filt-strong-sector')) eid('filt-strong-sector').checked = true;
+  // High-IC chips (2026-05-03)
+  if(f.jt12      && eid('filt-jt12'))      eid('filt-jt12').checked      = true;
+  if(f.minervini && eid('filt-minervini')) eid('filt-minervini').checked = true;
+  if(f.pocket    && eid('filt-pocket'))    eid('filt-pocket').checked    = true;
+  if(f.vcp       && eid('filt-vcp'))       eid('filt-vcp').checked       = true;
+  if(f.donchian  && eid('filt-donchian'))  eid('filt-donchian').checked  = true;
 
   // Optional screener inputs — only written when the preset specifies them
   if(f.minPrice    !== undefined && eid('sc-minprice'))    eid('sc-minprice').value    = f.minPrice;
