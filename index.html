@@ -640,7 +640,14 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 .sect-btn:hover{border-color:var(--amb);}
 .sect-btn .sect-cnt{color:var(--ambb);font-size:10px;}
 .sect-btn .sect-arr{color:var(--gry);font-size:10px;margin-left:4px;}
-.sect-dd{position:absolute;top:calc(100% + 4px);left:0;z-index:1000;background:var(--bg1);border:1px solid var(--amb3);border-radius:3px;padding:6px;max-height:420px;overflow-y:auto;min-width:260px;box-shadow:0 4px 16px rgba(0,0,0,0.7);}
+/* Sector / Theme dropdowns: position:fixed so they escape the
+   .flt-bar's overflow-x:auto scroll container (which was clipping
+   them on the scanner page — user report 2026-05-03 'drop down
+   list for sector and themes is not visible because it is hiding
+   behind the scanner results'). JS positions them under the
+   trigger button on open via getBoundingClientRect. z-index 9999
+   floats above stat strips, scanner table, and detail panel. */
+.sect-dd{position:fixed;z-index:9999;background:var(--bg1);border:1px solid var(--amb3);border-radius:3px;padding:6px;max-height:420px;overflow-y:auto;min-width:260px;box-shadow:0 4px 16px rgba(0,0,0,0.7);}
 .sect-dd-hdr{display:flex;gap:6px;padding:2px 4px 6px;border-bottom:1px solid var(--bg3);margin-bottom:4px;flex-wrap:wrap;}
 .sect-dd-hdr .btn{font-size:10px;padding:2px 8px;}
 .sect-dd-search{background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 6px;width:100%;margin-bottom:4px;}
@@ -4978,9 +4985,26 @@ function updateSectorLabel(){
     lbl.innerHTML = n+' of '+totalKnown+' <span class="sect-cnt">selected</span>';
   }
 }
+// Position a fixed-position dropdown directly under its trigger button.
+// Used by both toggleSectorDropdown + toggleThemeDropdown so the menu
+// escapes any overflow:auto/hidden parent. Re-snaps on window resize
+// (via _ddOpenedFor tracking — outside-click closes, so resize during
+// an open sweep is rare enough that re-positioning on resize isn't
+// worth the listener cost).
+function _positionFixedDD(dd, btn){
+  if (!dd || !btn) return;
+  var r = btn.getBoundingClientRect();
+  var ddW = dd.offsetWidth || 280;
+  // Right-align if the dropdown would spill past the viewport right edge.
+  var left = r.left;
+  if (left + ddW > window.innerWidth - 8) left = Math.max(8, window.innerWidth - ddW - 8);
+  dd.style.top = (r.bottom + 4) + 'px';
+  dd.style.left = left + 'px';
+}
 function toggleSectorDropdown(ev){
   if(ev){ ev.stopPropagation(); }
   var dd = eid('sc-sect-dd');
+  var btn = eid('sc-sect-btn');
   if(!dd) return;
   var open = dd.style.display !== 'none';
   if(open){
@@ -4988,7 +5012,7 @@ function toggleSectorDropdown(ev){
   } else {
     populateSectorCheckboxes();
     dd.style.display = 'block';
-    // outside-click-to-close
+    _positionFixedDD(dd, btn);
     setTimeout(function(){
       document.addEventListener('click', _sectDDOutsideClick, {once:true});
     }, 0);
@@ -5142,12 +5166,14 @@ function updateThemeLabel(){
 function toggleThemeDropdown(ev){
   if(ev){ ev.stopPropagation(); }
   var dd = eid('sc-theme-dd');
+  var btn = eid('sc-theme-btn');
   if(!dd) return;
   var open = dd.style.display !== 'none';
   if(open){ dd.style.display = 'none'; }
   else {
     populateThemeCheckboxes();
     dd.style.display = 'block';
+    _positionFixedDD(dd, btn);
     setTimeout(function(){ document.addEventListener('click', _themeDDOutsideClick, {once:true}); }, 0);
   }
 }
