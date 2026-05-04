@@ -1409,7 +1409,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 </head>
 <body>
 <div id="hdr">
-  <div id="hdr-logo"><img src="assets/pandas2.png" alt="" class="panda-icon"><span>OPTION PANDA</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span><span id="hdr-version" title="Build version. If this doesn't match the latest commit, hard-refresh (Cmd+Shift+R or close+reopen the tab) to clear cached HTML." style="margin-left:10px;font-family:var(--ff-mono);font-size:9px;color:var(--gry);letter-spacing:.5px;font-weight:400;cursor:help;">v—</span></div>
+  <div id="hdr-logo"><img src="assets/pandas2.png" alt="" class="panda-icon"><span>OPTION PANDA</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span><span id="hdr-version" onclick="forceReloadFresh()" title="Click to force-reload from server (clears stale browser cache). Build version shown — should match the latest commit on GitHub." style="margin-left:10px;font-family:var(--ff-mono);font-size:10px;color:var(--ambb);letter-spacing:.5px;font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">v—</span></div>
   <div id="hdr-tickers">
     <span class="htick"><span class="ts">SPY </span><span class="tv" id="h-spy">--</span> <span class="tc" id="h-spy-c">(--)</span></span>
     <span class="htick"><span class="ts">QQQ </span><span class="tv" id="h-qqq">--</span> <span class="tc" id="h-qqq-c">(--)</span></span>
@@ -22941,9 +22941,8 @@ function init(){
   } catch(_){}
 
   // Surface the build version in the header chip so the user can confirm
-  // they're on fresh code after a deploy. If they ever see an old version
-  // string after a refresh, they have a stale localStorage / Service Worker /
-  // browser cache, and the chip's title attr tells them how to clear it.
+  // they're on fresh code after a deploy. The chip is clickable — tapping
+  // it calls forceReloadFresh() to bust the browser cache.
   try {
     var verEl = document.getElementById('hdr-version');
     if (verEl) verEl.textContent = 'v'+APP_VERSION;
@@ -23575,6 +23574,40 @@ window.addEventListener('DOMContentLoaded', initCollapsibles);
 // Toggle a single .flt-bar.collapsible from its 4-segment header chip.
 // Persists state to localStorage so the section's open/closed sticks
 // across reloads, matching the behavior of the legacy .sec-toggle path.
+// One-tap fresh-reload from the header version chip. Bypasses ALL caches:
+// (1) appends a unique query string to the location URL so the browser HTTP
+//     cache treats it as a never-seen resource, (2) calls reload(true) which
+//     in modern browsers no longer takes the boolean but the cache-busted
+//     URL handles it, (3) wipes any registered Service Workers + their
+//     caches, which is the most common "I refreshed but the old code stuck"
+//     cause on iOS PWAs. User report 2026-05-04: log lines from a prior
+//     version of runStepFill kept appearing after deploy because the cached
+//     HTML was up to 10 minutes stale.
+function forceReloadFresh(){
+  try {
+    if ('serviceWorker' in navigator) {
+      navigator.serviceWorker.getRegistrations().then(function(regs){
+        regs.forEach(function(r){ try { r.unregister(); } catch(_){} });
+      });
+    }
+    if (typeof caches !== 'undefined' && caches.keys) {
+      caches.keys().then(function(keys){
+        keys.forEach(function(k){ try { caches.delete(k); } catch(_){} });
+      });
+    }
+  } catch(_){}
+  try { toast('Reloading from server...'); } catch(_){}
+  setTimeout(function(){
+    try {
+      var url = new URL(window.location.href);
+      url.searchParams.set('_v', Date.now().toString(36));
+      window.location.replace(url.toString());
+    } catch(_){
+      window.location.reload();
+    }
+  }, 200);
+}
+
 function toggleSecSeg(targetId){
   var target = document.getElementById(targetId);
   if (!target) return;
