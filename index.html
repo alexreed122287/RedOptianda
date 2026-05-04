@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-04T13:00-pwa-onesignal">
+<meta name="op-build" content="2026-05-04T14:00-iphone-polish">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -602,9 +602,9 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    so when the first copy translates -50% (one-copy-width), the second
    copy is in view, creating a seamless infinite loop with no jump.
    Each theme entry inside is .theme-chip which is click-to-filter. */
-.top-themes-strip{overflow:hidden !important;}
-.themes-marquee{display:inline-flex;flex-wrap:nowrap;gap:10px;align-items:center;animation:themes-scroll 90s linear infinite;will-change:transform;}
-.themes-marquee:hover{animation-play-state:paused;}
+.top-themes-strip{overflow:hidden !important;pointer-events:none !important;}
+.themes-marquee{display:inline-flex;flex-wrap:nowrap;gap:10px;align-items:center;animation:themes-scroll 90s linear infinite;will-change:transform;pointer-events:none;}
+/* hover-pause removed 2026-05-04 per user spec — ribbon never stops scrolling */
 @keyframes themes-scroll{
   0%{transform:translateX(0);}
   100%{transform:translateX(-50%);}
@@ -1114,6 +1114,12 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     flex:1 1 calc(50% - 4px) !important;min-height:42px !important;}
 }
 
+/* Desktop / wide screens: hide the hamburger, show chips inline */
+@media(min-width:769px){
+  #hdr-menu-btn{display:none !important;}
+  #hdr-chips{display:inline-flex !important;}
+}
+
 /* iPhone-specific: treat very narrow screens as needing extra compression */
 @media(max-width:430px){
   body{font-size:13px;}
@@ -1314,6 +1320,29 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     max-height:calc(92vh - env(safe-area-inset-bottom, 0)) !important;
   }
 
+  /* ── ROLL MODAL on iPhone — was max-width:660px which on a 440px
+     viewport leaves the inner "new contract" block flowing past the
+     screen edge. Cap to viewport width with safe-area + padding. ── */
+  #roll-modal{padding-top:20px !important;padding-left:0 !important;
+    padding-right:0 !important;}
+  #roll-modal > div{
+    width:96vw !important;max-width:96vw !important;
+    margin:0 auto 20px !important;
+    max-height:calc(92vh - env(safe-area-inset-bottom, 0)) !important;
+    overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;
+  }
+  /* Roll modal inner panels: stack vertically, each panel full-width */
+  #roll-modal > div > div > div[style*="flex:1"],
+  #roll-modal > div > div > div[style*="min-width"]{
+    flex:1 1 100% !important;min-width:0 !important;width:100% !important;
+  }
+  #roll-modal #roll-compare{font-size:10px !important;}
+  #roll-modal #roll-compare > div{font-size:10px !important;
+    grid-template-columns:auto 1fr 1fr !important;gap:3px 8px !important;}
+  /* New contract picker — full-width inputs */
+  #roll-modal input, #roll-modal select{width:100% !important;
+    font-size:14px !important;}
+
   /* ── DROPDOWNS (sector multi-select, theme, etc.): full-width, scroll ── */
   .sect-dd, .theme-dd{left:8px !important;right:8px !important;
     width:auto !important;max-width:none !important;
@@ -1353,33 +1382,59 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   .sect-btn{width:100% !important;min-height:42px !important;
     font-size:13px !important;}
 
+  /* ── HEADER CHIPS hamburger toggle behavior on iPhone ── */
+  #hdr-menu-btn{display:inline-flex !important;}
+  /* hdr-chips starts hidden via inline style="display:none";
+     toggleHdrChips() flips it. */
+
   /* ── REMOVE any horizontal page-level scroll bleed ── */
   html, body{overflow-x:hidden !important;width:100% !important;
     max-width:100vw !important;}
 
   /* ── WATCHLIST: fit all columns to iPhone width without horizontal scroll.
-     User spec 2026-05-04. Drops min-width override + tightens column padding.
-     Hides COMPANY name column (only shown on desktop) so SYMBOL / CHG% /
-     SIGNAL / BUY / X all fit in ~375px. Chart side gets the remaining
-     viewport height under the table — no fixed 50vh cap that was leaving
-     dead space at the bottom. ── */
+     2026-05-04 update: keep COMPANY column visible (per user request) but
+     compress every cell so the row fits in 375-440px viewport. Symbol
+     truncates at 60px; company at flex; chg/signal/buy/X all sized to
+     content. font-size 10px gives enough room without being unreadable. ── */
   #tab-wl #wl-tbl-wrap{overflow-x:visible !important;}
-  #tab-wl #wl-tbl-wrap table{min-width:0 !important;table-layout:auto !important;
-    width:100% !important;font-size:11px !important;}
-  #tab-wl #wl-tbl-wrap th, #tab-wl #wl-tbl-wrap td{padding:5px 4px !important;}
-  /* Hide COMPANY column (2nd) on iPhone — symbol + sector tag is enough */
-  #tab-wl #wl-tbl-wrap thead th:nth-child(2),
-  #tab-wl #wl-tbl-wrap tbody td:nth-child(2){display:none !important;}
+  #tab-wl #wl-tbl-wrap table{min-width:0 !important;table-layout:fixed !important;
+    width:100% !important;font-size:10px !important;}
+  #tab-wl #wl-tbl-wrap th, #tab-wl #wl-tbl-wrap td{padding:4px 3px !important;
+    overflow:hidden !important;text-overflow:ellipsis !important;
+    white-space:nowrap !important;}
+  /* Column widths: SYMBOL 50px | COMPANY flex | CHG% 44px | SIGNAL 44px |
+     BUY 44px | X 28px = ~ 210px fixed + flex for company */
   #tab-wl #wl-tbl-wrap thead th:nth-child(1),
-  #tab-wl #wl-tbl-wrap tbody td:nth-child(1){width:auto !important;
-    max-width:80px;}
-  /* Chart side fills the remaining viewport — uses calc + safe-area */
-  #tab-wl .split-l{max-height:30vh !important;}
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(1){width:50px !important;}
+  #tab-wl #wl-tbl-wrap thead th:nth-child(2),
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(2){width:auto !important;
+    font-size:9px !important;color:var(--gry) !important;
+    text-overflow:ellipsis !important;}
+  #tab-wl #wl-tbl-wrap thead th:nth-child(3),
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(3){width:44px !important;text-align:right;}
+  #tab-wl #wl-tbl-wrap thead th:nth-child(4),
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(4){width:44px !important;}
+  #tab-wl #wl-tbl-wrap thead th:nth-child(5),
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(5){width:44px !important;padding:0 !important;}
+  #tab-wl #wl-tbl-wrap thead th:nth-child(6),
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(6){width:28px !important;padding:0 !important;}
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(5) button,
+  #tab-wl #wl-tbl-wrap tbody td:nth-child(6) button{
+    font-size:9px !important;padding:3px 4px !important;min-width:0 !important;}
+  /* Chart sized so the top nav remains visible. Was 60vh chart which
+     pushed the chart above the visible viewport, leaving the user
+     stuck without nav access. Now the table+chart together cap at
+     ~85vh leaving the top nav reachable, and the chart is 50vh max
+     so swiping back up reveals the tabs. */
+  #tab-wl .split-l{max-height:25vh !important;}
   #tab-wl .split-r{flex:1 1 auto !important;
-    min-height:calc(70vh - env(safe-area-inset-bottom, 0)) !important;}
+    min-height:50vh !important;
+    max-height:calc(60vh - env(safe-area-inset-bottom, 0)) !important;
+    overflow:hidden !important;}
   #tab-wl #wl-chart-canvas{
-    min-height:calc(60vh - env(safe-area-inset-bottom, 0)) !important;
-    height:calc(60vh - env(safe-area-inset-bottom, 0)) !important;
+    min-height:42vh !important;
+    height:42vh !important;
+    max-height:calc(50vh - env(safe-area-inset-bottom, 0)) !important;
   }
 
   /* ── SECTOR / THEME / DROPDOWN TEXT: fix cutoff. Wider button, full-width
@@ -1394,18 +1449,40 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   select{text-overflow:ellipsis !important;padding-right:24px !important;}
 
   /* ── GEX TAB: auto-settings dropdown (sched select) was clipping its
-     options text. Force explicit width + larger font. ── */
-  #gex-sched-sel{width:auto !important;min-width:140px !important;
-    font-size:13px !important;padding:8px 10px !important;
+     options text. Force explicit width + larger font. AUTO + RUN GEX
+     now share a single row that fits in 375-440px viewport. ── */
+  #gex-sched-sel{width:auto !important;min-width:120px !important;
+    font-size:12px !important;padding:6px 8px !important;
     text-overflow:ellipsis !important;}
+  /* GEX toolbar: stack the title block above the AUTO+RUN row, then have
+     AUTO + RUN GEX visible in one row. Hide the verbose timestamp + progress
+     spans on iPhone (still in DOM for JS writes; just not space-eating). */
+  #tab-gex .flt-bar{flex-direction:column !important;align-items:stretch !important;
+    gap:6px !important;padding:8px 10px !important;}
+  #tab-gex .flt-bar > div{justify-content:flex-start !important;
+    flex-wrap:wrap !important;gap:6px !important;width:100% !important;}
+  #tab-gex .flt-bar #gex-progress{display:none !important;}
+  #tab-gex .flt-bar #gex-ts{font-size:9px !important;width:auto !important;
+    flex:1 1 100% !important;text-align:left !important;
+    order:99 !important;}
+  #tab-gex .flt-bar label{flex:1 1 auto;min-width:0;}
+  #tab-gex .flt-bar button.btn[onclick="runGex()"]{flex:0 0 auto;
+    font-size:11px !important;padding:8px 14px !important;
+    min-height:38px !important;}
 
-  /* ── PORTFOLIO COLUMNS WRAP: allow vertical scroll inside the columns
-     container so all positions are reachable on iPhone. ── */
+  /* ── PORTFOLIO TAB: full vertical scroll so the bottom Summary &
+     Allocations panel + total balance is reachable. The tab-pane gets
+     its own scroll surface; columns scroll horizontally within it. ── */
+  #tab-pf{overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;
+    height:auto !important;
+    padding-bottom:calc(80px + env(safe-area-inset-bottom, 0)) !important;}
   #pf-cols-wrap{flex-wrap:nowrap !important;overflow-x:auto !important;
-    overflow-y:visible !important;}
-  #tab-pf .pf-col{min-width:280px;max-width:90vw;}
-  /* Account-positions <details> rows: full visibility */
+    overflow-y:visible !important;
+    max-height:50vh !important;}
+  #tab-pf .pf-col{min-width:280px;max-width:90vw;flex-shrink:0;}
   .pf-col-rows{overflow-y:visible !important;}
+  /* Summary & Allocations: ensure visible below the columns */
+  #pf-summary-details{margin-top:10px !important;}
 
   /* ── POSITIONS table: inner scroll container so all rows are reachable.
      User report: table cuts off, can't scroll to see all positions. ── */
@@ -1414,11 +1491,17 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   #pos-tbl-wrap table{min-width:600px;}
 
   /* ── ORDER TICKET bottom action panel: extra padding so the FIND BEST
-     OPTION button (and quote panel above it) aren't covered by the
-     fixed-bottom PREVIEW/SUBMIT/CLEAR row. The fixed panel takes ~80px
-     including safe-area; reserve 100px below the form. ── */
-  #tab-order .page-wrap{padding-bottom:calc(110px + env(safe-area-inset-bottom, 0)) !important;}
+     OPTION / AUTO-SELECT CONTRACT button (and quote panel above it)
+     aren't covered by the fixed-bottom PREVIEW/SUBMIT/CLEAR row. The
+     fixed panel takes ~80-100px including safe-area; reserve 200px below
+     the form so the AUTO-SELECT result panel + buttons are scrollable
+     into view. User report 2026-05-04: auto-select button hidden by
+     default behind the action panel. ── */
+  #tab-order .page-wrap{padding-bottom:calc(220px + env(safe-area-inset-bottom, 0)) !important;}
   #tab-order .ord-form{padding-bottom:0 !important;}
+  /* The fixed action panel itself: cap height + scroll-internal so it
+     doesn't inflate vertically and cover even more content. */
+  .ord-actions-panel{max-height:120px !important;}
 }
 
 /* iPhone SE / smaller phones (≤375px): even tighter */
@@ -1784,7 +1867,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 </head>
 <body>
 <div id="hdr">
-  <div id="hdr-logo"><img src="assets/pandas2.png" alt="" class="panda-icon"><span>OPTION PANDA</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span><span id="hdr-version" onclick="forceReloadFresh()" title="Click to force-reload from server (clears stale browser cache). Build version shown — should match the latest commit on GitHub." style="margin-left:10px;font-family:var(--ff-mono);font-size:10px;color:var(--ambb);letter-spacing:.5px;font-weight:600;cursor:pointer;text-decoration:underline;text-decoration-style:dotted;">v—</span></div>
+  <div id="hdr-logo"><img src="assets/pandas2.png" alt="" class="panda-icon" ondblclick="forceReloadFresh()" title="Double-tap to force-reload (clears stale cache)"><span ondblclick="forceReloadFresh()" title="Double-tap to force-reload">OPTION PANDA</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span><!-- Version chip removed 2026-05-04 per user spec; double-tap the panda icon to force-reload if cache gets stuck --><span id="hdr-version" onclick="forceReloadFresh()" style="display:none;">v—</span></div>
   <div id="hdr-tickers">
     <span class="htick"><span class="ts">SPY </span><span class="tv" id="h-spy">--</span> <span class="tc" id="h-spy-c">(--)</span></span>
     <span class="htick"><span class="ts">QQQ </span><span class="tv" id="h-qqq">--</span> <span class="tc" id="h-qqq-c">(--)</span></span>
@@ -1795,6 +1878,14 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <span class="htick"><span class="ts">SPX </span><span class="tv" id="h-spx">--</span> <span class="tc" id="h-spx-c">(--)</span></span>
   </div>
   <div id="hdr-right">
+    <!-- Hamburger toggle for the LIGHT / TRADE / SCAN / AUTO chips. Per
+         user spec 2026-05-04, these collapse behind a single "⋯" tap on
+         iPhone so they don't crowd the small header. The chip group has
+         id=hdr-chips and starts hidden; tapping #hdr-menu-btn flips it.
+         On wide screens (≥769px) we override with display:flex !important
+         further down so desktops still see the chips inline. -->
+    <button id="hdr-menu-btn" onclick="toggleHdrChips()" title="Show / hide quick controls" style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:4px 10px;font-size:14px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;cursor:pointer;line-height:1;">&#x2630;</button>
+    <div id="hdr-chips" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;">
     <button id="theme-toggle" onclick="toggleLightMode()" title="Toggle light / dark mode" style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:2px 8px;font-size:10px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;cursor:pointer;">&#9788; LIGHT</button>
     <!-- NOTIFY, OPT BP, MARKET STATUS, F&G, MODE BADGE: hidden per user spec.
          Kept in DOM (display:none) so existing JS that updates textContent
@@ -1816,7 +1907,16 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <span id="hdr-scan-status" title="Scan status — click to jump to FULL SCANNER" onclick="switchTab('sc')" style="display:none;cursor:pointer;background:rgba(112,144,200,0.08);border:1px solid rgba(112,144,200,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--gry);letter-spacing:.5px;user-select:none;">SCAN: idle</span>
     <span id="bg-enrich-badge" style="display:none;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--blub);letter-spacing:.5px;user-select:none;">↻ ENRICH 0/0</span>
     <span id="hdr-autoscan" title="Auto-scan settings — click to expand" onclick="toggleAutoScanPanel()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;user-select:none;">AUTO: OFF</span>
+    </div><!-- /#hdr-chips -->
   </div>
+  <script>
+    function toggleHdrChips(){
+      var c = document.getElementById('hdr-chips');
+      if (!c) return;
+      var open = c.style.display && c.style.display !== 'none';
+      c.style.display = open ? 'none' : 'inline-flex';
+    }
+  </script>
 </div>
 <!-- Single themes ribbon, lives directly under the indices header so it's
      visible regardless of which tab is active. Was previously a per-tab
@@ -3528,7 +3628,8 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       <span style="color:var(--gry);" title="The Tradier account ID being pulled. Set via /v1/user/profile auto-discovery on first PULL TRADIER. Click API tab to verify.">Tradier acct: <b id="pf-acct-display" class="dyn-w" style="color:var(--ambb);font-family:var(--ff-mono);min-width:100px;text-align:left;">--</b></span>
       <span style="color:var(--gry);" title="Cash + cash-equivalents from Tradier balances endpoint. Pulled together with positions when you click PULL TRADIER.">Cash: <b id="pf-cash-display" class="dyn-w" style="color:var(--grn);font-family:var(--ff-mono);min-width:110px;text-align:left;">$--</b></span>
       <span class="dyn-w" style="color:var(--gry);font-size:10px;width:180px;text-align:right;" id="pf-last-update">Not loaded</span>
-      <button class="btn blu" style="font-size:10px;padding:3px 10px;" onclick="pfRefreshAllConfirm()" title="Refetch all account positions + balances from Tradier. Confirmation prompt before running.">&#8635; REFRESH ALL</button>
+      <!-- REFRESH ALL button removed 2026-05-04 per user spec. Refresh
+           per-account via the column-level button instead. -->
       <!-- Secondary actions collapsed by default 2026-05-04 per user spec —
            free up screen space on iPhone. Tap MORE to reveal them. -->
       <button class="btn" id="pf-more-btn" style="font-size:10px;padding:3px 10px;border-color:var(--gry2);color:var(--gry);" onclick="pfToggleMoreActions()">&#9662; MORE</button>
@@ -3708,7 +3809,13 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 
 <div class="tab-pane" id="tab-ind">
   <div class="stats-bar">
-    <div class="stat-box"><div class="stat-label">AS OF</div><div class="stat-val amb" id="ind-asof">--</div></div>
+    <div class="stat-box" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
+      <div>
+        <div class="stat-label">AS OF</div>
+        <div class="stat-val amb" id="ind-asof">--</div>
+      </div>
+      <button class="btn blu" style="font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="renderIndustryTab(true)" title="Reload theme_scores.json from disk">&#8635; REFRESH</button>
+    </div>
     <!-- Hidden stat boxes — preserved in markup so existing JS that writes to
          #ind-count, #ind-topdec, #ind-trend, #ind-b50 doesn't error.
          User spec 2026-05-04: these stats added clutter without value. -->
@@ -3716,9 +3823,6 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     <div class="stat-box" style="display:none;"><div class="stat-label">TOP 10%</div><div class="stat-val amb" id="ind-topdec">--</div></div>
     <div class="stat-box" style="display:none;"><div class="stat-label">ABOVE 50EMA</div><div class="stat-val amb" id="ind-trend">--</div></div>
     <div class="stat-box" style="display:none;"><div class="stat-label">AVG % &gt;50DMA</div><div class="stat-val amb" id="ind-b50">--</div></div>
-    <div class="stat-box" style="flex:0 0 auto;display:flex;align-items:center;padding:6px 10px;border-left:1px solid var(--bg3);">
-      <button class="btn blu" style="font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="renderIndustryTab(true)" title="Reload theme_scores.json from disk">&#8635; REFRESH</button>
-    </div>
   </div>
   <div class="chain-tabs">
     <div class="chain-tab" id="ind-tf-intraday" onclick="indSetTF('intraday')" title="Live theme rotation computed from the most recent scan results — no extra API calls">INTRADAY</div>
@@ -12140,7 +12244,7 @@ function buildDetail(r,detId,emptyId){
   // both before innerHTML. sigCls and sigLbl are derived from internal
   // classification (bounded enum: 'go'/'nogo'/'GO'/'NO-GO') and don't need it.
   det.innerHTML=
-    '<div class="det-hdr"><span class="det-tk">'+_esc(r.ticker)+'</span>'
+    '<div class="det-hdr"><button class="det-close-btn" onclick="closeDetailPanel(\''+detId+'\',\''+emptyId+'\')" title="Close detail panel" style="background:none;border:none;color:var(--gry);font-size:22px;cursor:pointer;padding:2px 8px;margin-right:4px;line-height:1;" aria-label="Close">&times;</button><span class="det-tk">'+_esc(r.ticker)+'</span>'
     + (r.companyName
         ? '<span class="det-coname" style="margin-left:10px;color:var(--gry);font-size:12px;font-weight:500;letter-spacing:0;text-transform:none;font-family:var(--ff);" title="Company name (Tradier)">'+_esc(r.companyName)+'</span>'
         : '')
@@ -12593,6 +12697,21 @@ function _setSelDetailWidth(detId, active){
     det.style.width = '0';
     tbl.style.flex = '1 1 100%';
   }
+}
+
+// Close the bottom-sheet detail panel (sc-detail or bs-detail). Required
+// on iPhone where the sheet covers 80vh of the screen — without an X
+// button the user has to find the same row and tap-to-toggle, but the
+// row is hidden behind the sheet.
+function closeDetailPanel(detId, emptyId){
+  var det = eid(detId);
+  var emp = eid(emptyId);
+  if (det) det.style.display = 'none';
+  if (emp) emp.style.display = 'flex';
+  document.querySelectorAll('tr.sel-row').forEach(function(row){row.classList.remove('sel-row');});
+  document.querySelectorAll('.sig-card.sel').forEach(function(c){c.classList.remove('sel');});
+  if (typeof G !== 'undefined') G.selTicker = null;
+  if (typeof _setSelDetailWidth === 'function') _setSelDetailWidth(detId, false);
 }
 
 function viewDetail(ticker,detId,emptyId){
@@ -20748,7 +20867,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '1.5.0-pwa-onesignal';
+var APP_VERSION = '1.6.0-iphone-polish';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -22006,7 +22125,7 @@ function pfRenderRow(col, row){
   html +=   deadBadge;
   html +=   '<div style="flex:1;"></div>';
   html +=   '<button class="btn" style="font-size:9px;padding:2px 6px;" onclick="pfRefreshRow(\''+col.id+'\',\''+rid+'\')" title="Fetch live quote for this row">&#8635;</button>';
-  html +=   '<button class="btn blu" style="font-size:9px;padding:2px 6px;" onclick="pfSaveRow(\''+col.id+'\',\''+rid+'\')" title="Persist to storage">&#128190;</button>';
+  html +=   '<button class="btn blu" style="font-size:9px;padding:2px 6px;" onclick="pfSaveRow(\''+col.id+'\',\''+rid+'\')" title="Persist to storage">SAVE</button>';
   html += '</div>';
 
   html += '</div>';
@@ -24337,12 +24456,11 @@ function initCollapsibles(){
   });
   document.querySelectorAll('.card.collapsible, .flt-bar.collapsible').forEach(function(el){
     if(!el.id) return;
-    var key = 'op_collapse_' + el.id;
-    var stored = null;
-    try { stored = localStorage.getItem(key); } catch(_){}
-    if (stored === '1') el.classList.add('collapsed');
-    else if (stored === '0') el.classList.remove('collapsed');
-    else if (el.hasAttribute('data-default-collapsed')) el.classList.add('collapsed');
+    // 2026-05-04 user spec: ALL collapsible sections start CLOSED on every
+    // page load / refresh. Was reading localStorage so the prior state stuck
+    // — user wanted a clean closed-by-default UX so they can scan the page
+    // structure without scrolling past expanded panels they didn't open.
+    el.classList.add('collapsed');
     var trigger = el.classList.contains('flt-bar')
       ? el.querySelector('.sec-toggle')
       : el.querySelector('.card-hdr');
@@ -24350,7 +24468,7 @@ function initCollapsibles(){
     trigger.addEventListener('click', function(e){
       if (e.target.closest('button:not(.sec-toggle), a, input, select')) return;
       el.classList.toggle('collapsed');
-      try { localStorage.setItem(key, el.classList.contains('collapsed') ? '1' : '0'); } catch(_){}
+      // No-persist: always start closed on next page load (user spec 2026-05-04).
     });
   });
   // Sync the 4-segment header chips (item 8a) to current collapse state.
@@ -24407,8 +24525,7 @@ function toggleSecSeg(targetId){
   // applied it. Without this the chip toggle fights an inherited display:none.
   target.classList.remove('mobile-collapsed');
   target.classList.toggle('collapsed');
-  var key = 'op_collapse_' + targetId;
-  try { localStorage.setItem(key, target.classList.contains('collapsed') ? '1' : '0'); } catch(_){}
+  // No-persist: always start closed on next reload per user spec 2026-05-04.
   var seg = document.querySelector('.sec-seg[data-target="'+targetId+'"]');
   if (seg) seg.classList.toggle('open', !target.classList.contains('collapsed'));
 }
