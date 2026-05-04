@@ -1406,7 +1406,7 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   <button class="ntab" onclick="switchTab('gex')" title="Gamma exposure / 30DTE options-flow (call vs put OI) for the top 200 enriched tickers. Drives the GEX Call Heavy rule.">GEX / FLOW</button>
   <button class="ntab" onclick="switchTab('wl')">WATCHLIST</button>
   <button class="ntab" onclick="switchTab('al')">ALERTS</button>
-  <button class="ntab" onclick="switchTab('howto')" title="First-time walkthrough — what every tab does, how to set up API keys, how to read the scanner, how to place + manage trades.">&#10067; HOW TO</button>
+  <button class="ntab" onclick="switchTab('howto')" title="First-time walkthrough — what every tab does, how to set up API keys, how to read the scanner, how to place + manage trades.">HOW TO</button>
   <!-- OPTIONS WATCHLIST button hidden per user request — underlying tab pane
        (id="tab-cw") + cwRenderTable code path retained in case of re-enable. -->
   <button class="ntab" style="display:none;" onclick="switchTab('cw')">&#9734; OPTIONS WATCHLIST</button>
@@ -2504,13 +2504,141 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
       <div class="card-hdr">▶ GEX / FLOW TAB</div>
       <div class="card-body" style="font-size:13px;color:var(--wht);">
         <p><b>Purpose:</b> Gamma exposure (dealer positioning) and 30DTE call vs put OI flow for the top-200 ranked scan tickers. Drives the GEX Call Heavy scoring rule.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">NET GEX — what it actually means for entries</p>
+        <p>"NET GEX" is a proxy for net dealer gamma exposure: <code>(call OI − put OI) × price / 1,000,000</code> at the chosen 30DTE expiration. The SIGN tells you which way dealer hedging flows are leaning, which is the biggest single intraday volatility driver in heavily-optioned names:</p>
         <ul style="padding-left:20px;">
-          <li><b>↻ RUN GEX</b> — fetches 30-day options chain for top-200 tickers (~4 min, paced by Tradier rate limit). Auto-fires 20s after every scan.</li>
-          <li><b>AUTO schedule</b> — Off / 1x at open (9:35 ET) / 3x daily (9:35, 12:00, 15:00 ET). Recommended: 3x.</li>
-          <li><b>Table</b> — only bullish (call-heavy, ≥50% call OI) tickers shown, sorted most-bullish first by Call OI %, with |NET GEX| as tiebreaker. PUT HEAVY tickers are kept in the data (rule scorecard still uses them) but suppressed from this view.</li>
-          <li><b>NET GEX</b> — call OI − put OI, normalized by price (millions). Positive = dealers net long gamma → suppresses volatility above flip strike. Negative = amplifies moves.</li>
-          <li><b>GAMMA FLIP</b> — strike with max combined OI within ±10% of spot. Dealer hedging often reverses through this strike.</li>
+          <li><b>POSITIVE NET GEX (call-heavy, dealers net LONG gamma):</b> dealers SELL into rallies and BUY dips to stay neutral. This <i>suppresses</i> volatility — the stock pins to / oscillates around max-OI strikes. Long calls work best when the underlying is pushing through strong resistance with momentum (the suppression breaks). Short-premium / debit-spread setups can work too.</li>
+          <li><b>NEGATIVE NET GEX (put-heavy, dealers net SHORT gamma):</b> dealers BUY into rallies and SELL into weakness. This <i>amplifies</i> volatility — moves accelerate in whichever direction price is heading. Long calls work best when you're catching a directional move just starting to unfold (a gamma squeeze). This is also where downside surprises get violent — useful to know before sizing.</li>
+          <li><b>Practical takeaway for long calls:</b> you generally want to be LONG when (a) NET GEX is positive AND price is above the gamma flip strike (suppressed-vol regime → trend continuation favored), OR (b) NET GEX is strongly negative AND you have a clear directional catalyst (gamma squeeze acceleration). Avoid long calls in negative-GEX, no-catalyst chop — moves whipsaw.</li>
         </ul>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">GAMMA FLIP STRIKE — the level that matters</p>
+        <p>The gamma flip is the strike (within ±10% of spot) where the highest combined call+put OI sits. It's the price level where dealer net gamma typically <i>flips sign</i>. The mechanics:</p>
+        <ul style="padding-left:20px;">
+          <li><b>ABOVE the flip strike:</b> dealers tend to be net LONG gamma → suppress volatility → mean-revert. This is a "calm-bull" zone.</li>
+          <li><b>BELOW the flip strike:</b> dealers tend to be net SHORT gamma → amplify moves → momentum. Acceleration zone.</li>
+          <li><b>AT the flip strike:</b> highest pin risk. OI density there pulls price toward it as expiry approaches.</li>
+          <li><b>Long-call rule of thumb:</b>
+            <ul style="padding-left:20px;margin-top:4px;">
+              <li>Best long-call setups: price <i>just crossed UP through the flip</i> with positive NET GEX — you've moved into the suppressed regime with momentum still pushing.</li>
+              <li>Riskier: price BELOW the flip with negative NET GEX — directional moves are large but you're fighting downside acceleration risk on any pullback.</li>
+              <li>Avoid: price pinned AT the flip with high OI — calls bleed theta while price oscillates around max-OI strike.</li>
+            </ul>
+          </li>
+        </ul>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">UI controls</p>
+        <ul style="padding-left:20px;">
+          <li><b>RUN GEX</b> — fetches 30-day options chain for top-200 tickers (~4 min, paced by Tradier rate limit). Auto-fires 20s after every scan.</li>
+          <li><b>AUTO schedule</b> — Off / 1x at open (9:35 ET) / 3x daily (9:35, 12:00, 15:00 ET). Recommended: 3x — captures morning, lunch, and close-positioning shifts.</li>
+          <li><b>Table</b> — only bullish (call-heavy, ≥50% call OI) tickers shown, sorted most-bullish first by Call OI %, with |NET GEX| as tiebreaker (higher |GEX| = more conviction in the directional bias). PUT HEAVY tickers stay in G.gexData (rule scorecard still uses them) but suppressed from this display.</li>
+          <li><b>RUN pill on scanner rows</b> — for tickers outside the top-200 batch. Click to fetch single-ticker GEX (~3s) so the GEX Call Heavy rule can score them.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card collapsible" id="howto-buyscoring" data-default-collapsed>
+      <div class="card-hdr">▶ CONTRACT SCORE — BUY POPUP ON SCANNER PAGE</div>
+      <div class="card-body" style="font-size:13px;color:var(--wht);">
+        <p><b>Purpose:</b> When you click <b>BUY</b> on a scanner row, a popup lists every ATM-ish call across multiple expiries with a 0–100 SCORE. The score is a composite of three liquidity/quality signals — all unified through the internal <code>_optScore(opt)</code> helper:</p>
+
+        <ol style="padding-left:20px;line-height:1.8;">
+          <li><b>Delta score (40%):</b> measures how directional the contract is. Targets the 0.65–0.85 delta band for the FIND BEST flow (deep-ITM enough to track underlying ~80%, with limited extrinsic decay). Outside that band the score drops sharply — a 0.20-delta lottery ticket and a 0.99-delta deep-ITM both score low for different reasons (too cheap/too leveraged vs. too expensive/too little leverage).</li>
+          <li><b>Open interest score (35%):</b> raw OI on a log scale. Higher OI = tighter spread, faster fills, better mid prices. 1,000+ OI gets full marks; under 100 docks the score significantly because spreads will eat your edge on entry and exit.</li>
+          <li><b>Spread score (25%):</b> (ask − bid) / mid. Tighter is better; anything wider than 5% of mid drops the score steeply. A 0.10-wide $5 contract scores great; a 0.30-wide $5 contract scores poorly because you'll give up real money on every round-trip.</li>
+        </ol>
+
+        <p style="margin-top:12px;">The composite is rendered as a 0–100 number with color: green ≥65 (clean liquid contract), amber 45–64 (acceptable, watch the spread), red &lt;45 (illiquid or off-target delta — hard to fill at fair value).</p>
+        <p>The popup also tags the ★ symbol next to the highest-scoring contract on each side so you can see which one the scanner would pick if you ran FIND BEST.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">How to use the score</p>
+        <ul style="padding-left:20px;">
+          <li><b>Sort by SCORE descending</b> when comparing across expiries. The top row is your "least-friction" contract on a delta + liquidity basis.</li>
+          <li>Don't pick the absolute highest score blindly — also check the EXPIRY (a 7-day contract has high theta even with great score) and PREMIUM (within your budget).</li>
+          <li>Monthly expirations (3rd Friday) are highlighted with a ◆ glow because they're typically the most liquid; weekly contracts at the same delta/OI tier often score lower due to wider spreads.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card collapsible" id="howto-findbest" data-default-collapsed>
+      <div class="card-hdr">▶ FIND BEST — ORDER TICKET AUTO-SELECT</div>
+      <div class="card-body" style="font-size:13px;color:var(--wht);">
+        <p><b>What it does:</b> The FIND BEST button (in the Order Ticket's AUTO-SELECT CONTRACT box) walks every available call expiry within your chosen window, pulls the chain for each, scores every contract via <code>_optScore</code> (same scoring as the BUY popup), and fills your form with the single highest-scoring contract.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">How it picks</p>
+        <p>The selector targets a <b>0.70–0.85 delta range</b>, a <b>10–35 calendar-day-to-expiry window</b> (or whatever you set in the month dropdown), and the highest blended liquidity (OI × tightness of spread). Specifically:</p>
+        <ul style="padding-left:20px;">
+          <li><b>Delta band:</b> 0.70–0.85 is the "directional but not deep-ITM-decayed" sweet spot for swing-style long calls. At 0.75 delta the contract moves ~75¢ for every $1 in the underlying, so you get most of the upside with about 3–5× the leverage of shares, while ~10–25% of the premium is extrinsic (acceptable theta drag for 2–4 week holds).</li>
+          <li><b>DTE window:</b> 10–35 days. Avoids the brutal final-week theta bleed under 7 DTE while staying short enough that movement-per-week is tradeable. The default "Any (10–35 DTE)" lets the picker try multiple expiries; pinning a specific month forces a single sweep.</li>
+          <li><b>Liquidity tiebreaker:</b> when multiple contracts score similarly on delta, OI × (1 / spread%) wins. Tight spread + high OI matters more than a marginally better delta because fill quality determines real PnL.</li>
+        </ul>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">When it's beneficial for long calls (vs not)</p>
+        <ul style="padding-left:20px;">
+          <li><b>Use it when:</b> you've already decided you want to go long the underlying. FIND BEST removes the "which strike do I pick?" friction and surfaces a contract that's deep enough to track the move and liquid enough to enter/exit cleanly.</li>
+          <li><b>Override when:</b> you want a SPECIFIC strike (e.g. you're aiming at a known resistance level), a SPECIFIC expiry (catalyst-anchored — earnings, FOMC, scheduled event), or you want to size differently (e.g. 0.30-delta lottery for asymmetric upside, or 0.95-delta synthetic-stock equivalent).</li>
+          <li><b>Don't over-trust it for small-cap names:</b> the "best" contract by score on an illiquid ticker can still have a $0.20 spread on a $1.50 mid. The score is RELATIVE within that ticker's chain. Read the BID/ASK after auto-fill.</li>
+        </ul>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">FIND BEST result panel fields</p>
+        <ul style="padding-left:20px;">
+          <li><b>Selected Strike / Expiry / Market Days</b> — the picked contract.</li>
+          <li><b>GEX Signal</b> — whether the underlying's call-vs-put OI flow is bullish (call-heavy) or bearish (put-heavy) — independent confirmation that institutional positioning is on your side.</li>
+          <li><b>Volume / Open Interest / Delta / Score</b> — the same 0–100 composite explained in the BUY popup section above.</li>
+          <li><b>Candidates list</b> — the next 2–3 runner-up contracts so you can see what was beat. Click any to swap.</li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="card collapsible" id="howto-strategy" data-default-collapsed>
+      <div class="card-hdr">▶ STRATEGY PRESETS — RATIONALE BEHIND EACH SETTING</div>
+      <div class="card-body" style="font-size:13px;color:var(--wht);">
+        <p>Each preset applies a different combination of filter rules to surface a specific kind of setup. The thresholds are calibrated against the observed score distribution (which peaks 140–160 on a ~240-pt max).</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">★ HIGH CONVICTION</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥160 + Analyst Revisions ↑ + PROVEN ticker + GEX Call Heavy.</p>
+        <p><b>Idea:</b> the rarest, highest-quality setups. The combination is intentionally tight — every piece confirms a different dimension:</p>
+        <ul style="padding-left:20px;">
+          <li><b>Score ≥160</b> — top of the actual score distribution; only ~5–10% of GOs make it.</li>
+          <li><b>Analyst Revisions ↑</b> — fundamental tailwind. Sell-side estimates being raised is a slow-moving but high-conviction signal that the company's outlook just improved.</li>
+          <li><b>PROVEN ticker</b> — curated whitelist. These are names that have historically responded predictably to this scoring system. Removes survivorship bias against unfamiliar tickers.</li>
+          <li><b>GEX Call Heavy</b> — institutional positioning is on the long side. When the score AND fundamentals AND dealer flow all point bullish, you're trading WITH the smart money instead of against it.</li>
+        </ul>
+        <p>Expect 0–8 GO candidates per scan. If nothing passes, that's a feature, not a bug — the regime isn't right for high-conviction setups.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▲ BREAKOUT</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥160 + 52Wk Hi within 15% + RS &gt; SPY + MACD + + TF Aligned 2/3.</p>
+        <p><b>Idea:</b> stocks pushing fresh highs with momentum + market leadership. The Minervini / O'Neil school of breakout buying:</p>
+        <ul style="padding-left:20px;">
+          <li><b>52Wk Hi &lt;15%</b> — proximity to 52-week high. The George–Hwang JF 2004 effect concentrates returns within 5%, but the &lt;15% gate stays inclusive enough to catch base-on-base setups.</li>
+          <li><b>RS &gt; SPY</b> — relative strength positive. Stock outperforming the index over the last 5 days = market is voting for it.</li>
+          <li><b>MACD +</b> — short-term momentum confirmed.</li>
+          <li><b>TF Aligned 2/3</b> — daily, hourly, and 15-min trends agree (≥2 of 3). Filters out tickers that look bullish on one timeframe but choppy on others.</li>
+        </ul>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▶ MOMENTUM</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥160 + MACD + + Above EMA200 + Vol &gt; Avg + RS &gt; SPY.</p>
+        <p><b>Idea:</b> strong trending stocks with volume confirmation. Different from BREAKOUT in that you DON'T need 52-week-hi proximity — momentum can come from a mid-base extension or a recovery off a base, not just a fresh high.</p>
+        <ul style="padding-left:20px;">
+          <li><b>Above EMA200</b> — primary trend filter. Long bias only above the 200-day EMA.</li>
+          <li><b>Vol &gt; Avg</b> — institutional accumulation. Today's volume above the average means real money is pushing the move.</li>
+          <li><b>MACD + + RS &gt; SPY</b> — same momentum + leadership confirmation as BREAKOUT.</li>
+        </ul>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">◆ BEST ITM CALLS</p>
+        <p><b>Filters:</b> Signal=GO + Min Score ≥180 + MACD + + Above EMA200 + RS &gt; SPY + Min Price $5 + Min AvgVol 1M + Today Vol &gt;100% + Max Opt Price $8.</p>
+        <p><b>Idea:</b> deep-ITM (delta 0.70–0.90) call buying on already-confirmed bullish names where the contract premium fits inside a small-account budget.</p>
+        <ul style="padding-left:20px;">
+          <li><b>Score ≥180</b> — even tighter than HIGH CONVICTION on score. Only the strongest setups graduate to the deep-ITM bucket because you're paying more premium.</li>
+          <li><b>Min Price $5 + Min AvgVol 1M</b> — liquidity floor. Small/cheap stocks have wide option spreads that destroy edge.</li>
+          <li><b>Today Vol &gt;100%</b> — the move is happening NOW. Filters out chart-only setups that haven't been confirmed by today's tape.</li>
+          <li><b>Max Opt Price $8</b> — keeps single-contract cost ≤$800. Lets you sample multiple names for ~$3–4k notional rather than blow it on one expensive contract.</li>
+        </ul>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▲ PRE/POST MARKET</p>
+        <p><b>Filters:</b> SAME as HIGH CONVICTION + secondary sort by absolute % gap (largest movers first).</p>
+        <p><b>Idea:</b> extended-hours gappers screened with the conviction gate. Tradier's <code>change_percentage</code> reflects extended-hours quotes during 4–9:30am ET (pre) and 4–8pm ET (post); on weekends it shows the most recent extended-hours print. Use this preset to surface big movers <i>that also pass HC criteria</i>, not just any random gapper. The sort flip pushes biggest |gap %| to the top within the HC-passing subset.</p>
       </div>
     </div>
 
