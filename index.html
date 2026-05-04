@@ -10445,6 +10445,13 @@ function _resultRankCompare(a, b){
 //   '= tied'      — every tiebreaker was equal (rare but possible)
 function _whyRankedBelow(r, prev){
   if (!r || !prev) return '';
+  // Pre/Post preset overrides the comparator with |changePct| DESC,
+  // so the ranking has nothing to do with score/tech/RS in that mode.
+  // Surface the actual deciding factor so the label doesn't lie.
+  if (G.activePreset === 'preMarket') {
+    if (Math.abs(r.changePct||0) < Math.abs(prev.changePct||0)) return '↓ |gap %|';
+    return '= tied';
+  }
   if ((r.score||0) < (prev.score||0)) return '↓ score';
   if ((r.techScore||0) < (prev.techScore||0)) return '↓ tech';
   var aRs = (r.ind && typeof r.ind.relStr5d === 'number') ? r.ind.relStr5d : 0;
@@ -13530,14 +13537,24 @@ function renderScan(){
       return;
     }
     if(c.k === '_rank'){
-      th+='<th style="cursor:default;width:36px;color:var(--gry);font-size:10px;letter-spacing:1px;" title="Rank by tiebreaker: score \u2192 techScore \u2192 RS 5D \u2192 theme dailyScore \u2192 volume">#</th>';
+      // Clarify the rank's actual sort key \u2014 the Pre/Post preset
+      // overrides the default score-tiebreaker chain with |gap %|.
+      var _rankTip = (G.activePreset === 'preMarket')
+        ? 'PRE/POST MARKET preset active \u2014 ranking is by absolute % change (largest gappers first), NOT by score. Click \u2715 CLEAR in the STRATEGY row to restore the score-tiebreaker default.'
+        : 'Rank by tiebreaker: score \u2192 techScore \u2192 RS 5D \u2192 theme dailyScore \u2192 volume';
+      th+='<th style="cursor:default;width:36px;color:var(--gry);font-size:10px;letter-spacing:1px;" title="'+_rankTip+'">#</th>';
       return;
     }
     if(c.k === '_relStr5d'){
       th+='<th style="cursor:default;color:var(--amb);font-size:10px;letter-spacing:1px;" title="5-day relative strength vs SPY. Tiebreaker after score+tech+fund \u2014 when those are equal, higher RS ranks above.">RS 5D</th>';
       return;
     }
-    var arr=G.sortCol===c.k?(G.sortDir>0?' \u25b2':' \u25bc'):'';
+    // Suppress the SCORE column's \u25bc/\u25b2 arrow when Pre/Post preset is
+    // active \u2014 that preset overrides sortCol with |gap %|, so the score
+    // arrow would otherwise lie about the actual sort. The CHG % column
+    // still gets an info tip below.
+    var _suppressArr = (G.activePreset === 'preMarket' && c.k === 'score');
+    var arr=(G.sortCol===c.k && !_suppressArr)?(G.sortDir>0?' \u25b2':' \u25bc'):'';
     var thAttrs = '';
     if(c.k === 'changePct'){
       var sess = _currentETSession();
