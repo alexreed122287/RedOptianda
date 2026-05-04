@@ -864,12 +864,25 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    ══════════════════════════════════════════════════════════════════════════ */
 @media(max-width:768px){
   /* ── Safe areas (Dynamic Island, home indicator) ──
-     Apply to BODY only — applying to both html and body double-pads on iOS. */
+     Apply to BODY only — applying to both html and body double-pads on iOS.
+     2026-05-04 fix: was `env(safe-area-inset-top, 0)` which falls back to 0
+     when env() isn't reporting (PWAs on some iOS versions). Use max() with
+     a hard 50px floor so the panda + OPTION PANDA wordmark always clear
+     the status bar / Dynamic Island even if env() returns 0. iPhone Pro
+     Max actual safe-area-inset-top is 59pt. */
   body{
-    padding-top: env(safe-area-inset-top, 0);
-    padding-bottom: env(safe-area-inset-bottom, 0);
+    padding-top: max(env(safe-area-inset-top, 50px), 50px);
+    padding-bottom: max(env(safe-area-inset-bottom, 0px), 0px);
     padding-left: env(safe-area-inset-left, 0);
     padding-right: env(safe-area-inset-right, 0);
+  }
+  /* Belt-and-suspenders: the header itself reserves additional top padding
+     in standalone PWA mode where the OS chrome overlays the page. The
+     display-mode media query targets the home-screen install (NOT regular
+     Safari, which has the URL bar and doesn't need the extra room). */
+  @media (display-mode: standalone), (display-mode: fullscreen){
+    body{ padding-top: max(env(safe-area-inset-top, 60px), 60px); }
+    #hdr{ padding-top: 4px !important; }
   }
 
   /* ── HORIZONTAL-BLEED FIX 2026-04-29 ──
