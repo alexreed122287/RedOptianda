@@ -7414,6 +7414,22 @@ function pollOrderStatus(creds,acct,orderId){
   }).catch(function(){return 'unknown';});
 }
 
+// Fetch the FULL order object so the step-fill loop can surface the
+// rejection reason. Tradier returns reason_description (or sometimes
+// just description) on rejected orders — without it, the user sees 10
+// "REJECTED" lines with no clue why. Returns {status, reason, raw}.
+function pollOrderDetails(creds,acct,orderId){
+  return fetch(creds.host+'/v1/accounts/'+acct+'/orders/'+orderId,{
+    headers:{Authorization:'Bearer '+creds.key,Accept:'application/json'}
+  }).then(function(r){return r.json();})
+  .then(function(d){
+    if(!d || !d.order) return {status:'unknown', reason:'', raw:null};
+    var o = d.order;
+    var reason = o.reason_description || o.description || o.reason || '';
+    return {status: o.status || 'unknown', reason: reason, raw: o};
+  }).catch(function(){return {status:'unknown', reason:'', raw:null};});
+}
+
 // Cancel an open order
 function cancelOrder(creds,acct,orderId){
   return fetch(creds.host+'/v1/accounts/'+acct+'/orders/'+orderId,{
@@ -7462,15 +7478,33 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
   sfLog((goingUp?'\u25b2':'\u25bc')+' Step Fill started ['+dirLabel+'] \u2014 '+side+' x'+qty+' '+occSym,'sent');
   sfLog('Start: $'+fmt2(startPrice)+' | Limit: $'+fmt2(limitPrice)+' | Step: $'+fmt2(stepSize)+' | Max: '+maxAttempts+' attempts','');
 
-  var currentPrice=startPrice;
+  // Round to integer cents to dodge JS float-precision bugs in limit
+  // comparisons (0.16 - 0.01 prints as 0.15 but stores as
+  // 0.15000000000000002, which made `0.15 < 0.15` evaluate true and
+  // killed the loop after attempt 1 when start==limit).
+  function _cents(p){ return Math.round(p * 100); }
+  var startC = _cents(startPrice);
+  var limitC = _cents(limitPrice);
+  var stepC  = Math.max(1, _cents(stepSize));
+  function _atLimit(c){ return goingUp ? (c >= limitC) : (c <= limitC); }
+  function _step(c){ return goingUp ? (c + stepC) : (c - stepC); }
+
+  var currentC = startC;
+  var currentPrice = startC / 100;   // hoisted for the post-loop summary
   var filledOrderId=null;
+  // Abort after 3 consecutive REJECTED-status orders. Stepping the price
+  // doesn't recover from non-price rejections (insufficient buying power,
+  // PDT lock, position not held, account permission, halted symbol). User
+  // report 2026-05-04: 10 consecutive REJECTED attempts that never cleared.
+  var consecutiveRejected = 0;
+  var REJECT_ABORT_THRESHOLD = 3;
 
   for(var attempt=1;attempt<=maxAttempts;attempt++){
     if(G.stepFillCancel){sfLog('Cancelled at attempt '+attempt+'.','cancelled');break;}
 
-    // Clamp price at the far limit \u2014 don't overshoot
-    if(goingUp&&currentPrice>limitPrice){currentPrice=limitPrice;}
-    if(!goingUp&&currentPrice<limitPrice){currentPrice=limitPrice;}
+    // Clamp price at the far limit \u2014 don't overshoot in cents space
+    if(_atLimit(currentC)) currentC = limitC;
+    currentPrice = currentC / 100;
 
     var pct=Math.round((attempt/maxAttempts)*100);
     bar.style.width=pct+'%';
@@ -7485,9 +7519,16 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       sfLog('Order #'+orderId+' placed (status: '+res.status+')','sent');
     }catch(e){
       sfLog('Order rejected: '+e.message,'rejected');
-      var atLimit=(goingUp&&currentPrice>=limitPrice)||(!goingUp&&currentPrice<=limitPrice);
-      if(atLimit){sfLog('Reached price limit \u2014 stopping.','rejected');break;}
-      currentPrice=goingUp?+(currentPrice+stepSize).toFixed(2):+(currentPrice-stepSize).toFixed(2);
+      consecutiveRejected++;
+      if (consecutiveRejected >= REJECT_ABORT_THRESHOLD){
+        sfLog('Aborting \u2014 '+REJECT_ABORT_THRESHOLD+' rejections in a row. Price-stepping cannot fix this; check buying power, position, or account state.','rejected');
+        break;
+      }
+      if (_atLimit(currentC)){
+        sfLog('Reached price limit \u2014 stopping.','rejected');
+        break;
+      }
+      currentC = _step(currentC);
       await sleep(delaySec*1000);
       continue;
     }
@@ -7500,8 +7541,12 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       break;
     }
 
-    var status=await pollOrderStatus(creds,acct,orderId);
-    sfLog('Order #'+orderId+' status: '+status.toUpperCase(),'sent');
+    // Pull full order details so we can surface the broker's rejection
+    // reason on REJECTED status (Tradier returns reason_description /
+    // description). Without this the user sees opaque "REJECTED" lines.
+    var det = await pollOrderDetails(creds,acct,orderId);
+    var status = det.status;
+    sfLog('Order #'+orderId+' status: '+status.toUpperCase()+(det.reason ? ' \u2014 '+det.reason : ''),'sent');
 
     if(status==='filled'){
       sfLog('\u2713 FILLED at $'+fmt2(currentPrice)+' on attempt '+attempt+'!','filled');
@@ -7516,16 +7561,41 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       setTimeout(function(){ try{ resetOrderForm({keepResult:true}); }catch(e){} }, 3500);
       break;
     } else if(status==='pending'||status==='open'||status==='partially_filled'){
+      consecutiveRejected = 0;     // healthy lifecycle resets the abort counter
       var stepDir=goingUp?'stepping up':'stepping down';
-      sfLog('Not filled \u2014 cancelling #'+orderId+' and '+stepDir+'...','sent');
+      // Was already at limit BEFORE this attempt? Then there's nowhere
+      // further to step \u2014 cancel and exit cleanly. Otherwise: cancel and
+      // step. The pre-step at-limit check (instead of post-step) is what
+      // fixes the user-reported "Exceeded price limit \u2014 stopping." after
+      // attempt 1 when start==limit. We tried at the limit; that's the
+      // last legitimate attempt at this price band, so stop.
+      var wasAtLimit = _atLimit(currentC);
+      sfLog('Not filled \u2014 cancelling #'+orderId+(wasAtLimit?' (already at limit price)':' and '+stepDir+'...'),'sent');
       await cancelOrder(creds,acct,orderId);
-      currentPrice=goingUp?+(currentPrice+stepSize).toFixed(2):+(currentPrice-stepSize).toFixed(2);
-      var beyondLimit=(goingUp&&currentPrice>limitPrice+stepSize)||(!goingUp&&currentPrice<limitPrice-stepSize);
-      if(beyondLimit){sfLog('Exceeded price limit \u2014 stopping.','cancelled');break;}
+      if (wasAtLimit){
+        sfLog('Already at price limit '+(goingUp?'(ask)':'(bid)')+' \u2014 stopping.','cancelled');
+        break;
+      }
+      currentC = _step(currentC);
+      // Post-step: if the new price overshoots the limit, clamp instead
+      // of breaking \u2014 gives the loop one more retry AT the limit.
+      if (goingUp ? (currentC > limitC) : (currentC < limitC)) currentC = limitC;
     } else {
+      // status === 'rejected' | 'expired' | 'error' | 'unknown' | etc.
+      consecutiveRejected++;
       var stepDir2=goingUp?'stepping up':'stepping down';
-      sfLog('Order ended with status: '+status+' \u2014 '+stepDir2+'...','rejected');
-      currentPrice=goingUp?+(currentPrice+stepSize).toFixed(2):+(currentPrice-stepSize).toFixed(2);
+      var reasonTag = det.reason ? (' ['+det.reason+']') : '';
+      sfLog('Order ended with status: '+status+reasonTag+' \u2014 '+(consecutiveRejected >= REJECT_ABORT_THRESHOLD ? 'aborting' : stepDir2+'...'),'rejected');
+      if (consecutiveRejected >= REJECT_ABORT_THRESHOLD){
+        sfLog('Aborting \u2014 '+REJECT_ABORT_THRESHOLD+' rejections in a row. Price-stepping cannot fix this; check buying power, position size, or account permissions.','rejected');
+        break;
+      }
+      if (_atLimit(currentC)){
+        sfLog('Reached price limit \u2014 stopping.','rejected');
+        break;
+      }
+      currentC = _step(currentC);
+      if (goingUp ? (currentC > limitC) : (currentC < limitC)) currentC = limitC;
     }
 
     if(attempt===maxAttempts&&status!=='filled'){
