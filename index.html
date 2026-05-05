@@ -1340,9 +1340,34 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 
   @keyframes fadeIn{from{opacity:0;}to{opacity:1;}}
 
-  /* On iPhone: show the drag-to-confirm track, hide the click button */
-  #ord-dtc{display:block !important;}
+  /* On iPhone: hide the drag-to-confirm track INSIDE the action panel
+     (it's covering the form fields). The DTC track is moved into a
+     fixed position bar that sits above the bottom-nav so it never
+     covers content while scrolling. */
+  #ord-dtc{display:none !important;}
   #ord-submit-btn{display:none !important;}
+  /* Replacement: a fixed slide-to-submit bar that sits ABOVE the
+     bottom nav. Stays out of the way while user scrolls the form. */
+  #ord-dtc-fixed{
+    display:flex;
+    position:fixed !important;
+    left:8px;right:8px;
+    bottom:calc(82px + env(safe-area-inset-bottom, 0));
+    z-index:9450;
+    background:rgba(8,15,22,0.96);
+    backdrop-filter:blur(20px);
+    -webkit-backdrop-filter:blur(20px);
+    border-radius:30px;
+    padding:3px;
+    box-shadow:0 4px 20px rgba(0,0,0,0.5);
+  }
+  /* Hide the original action panel on iPhone — Preview/Clear/etc move
+     inline into the form, the fixed slide-to-submit handles SUBMIT. */
+  .ord-actions-panel{display:none !important;}
+  /* Order ticket form: bottom padding clears the fixed DTC bar + nav */
+  #tab-order .page-wrap{padding-bottom:calc(170px + env(safe-area-inset-bottom, 0)) !important;}
+  /* Show inline iPhone action row inside the form */
+  .iphone-only-actions{display:flex !important;}
 
   /* DRAG-TO-CONFIRM — replaces SUBMIT button. Track + thumb that drags */
   .dtc-track{
@@ -2959,8 +2984,9 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <div class="ord-actions-panel" style="flex:0 0 240px;padding:16px 14px;border-left:1px solid var(--bg3);align-self:stretch;display:flex;flex-direction:column;gap:10px;position:sticky;top:8px;">
       <div style="font-family:var(--ff-mono);font-size:10px;color:var(--amb);letter-spacing:1px;text-transform:uppercase;margin-bottom:4px;">ACTIONS</div>
       <button class="btn blu" style="width:100%;padding:10px;font-weight:700;" onclick="previewOrder()">PREVIEW ORDER</button>
-      <!-- iPhone-only drag-to-confirm SUBMIT track. Hidden on desktop;
-           desktop keeps the regular click-to-submit button below. -->
+      <!-- Original drag-to-confirm — kept here for desktop/tablet only.
+           iPhone hides this entire panel via @media and uses the fixed
+           bar below the form instead. -->
       <div id="ord-dtc" class="dtc-track" style="display:none;margin:4px 0;">
         <div class="dtc-track-fill"></div>
         <div class="dtc-track-label">→ SLIDE TO SUBMIT</div>
@@ -2970,6 +2996,15 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <button class="btn" style="width:100%;padding:8px;" onclick="clearOrder()">CLEAR</button>
       <div class="ord-result" id="ord-result" style="margin-top:8px;font-size:11px;"></div>
     </div>
+
+    <!-- iPhone inline action row inside the form — Preview + Clear stay
+         visible while scrolling. Submit is the fixed slide-track below.
+         Hidden on desktop (≥769px) via the iphone-only-actions class. -->
+    <div class="iphone-only-actions" style="display:none;gap:8px;margin-top:14px;padding:0 8px;">
+      <button class="btn blu" style="flex:1;padding:12px;font-weight:700;font-size:13px;min-height:44px;" onclick="previewOrder()">PREVIEW</button>
+      <button class="btn" style="flex:0 0 100px;padding:12px;font-weight:700;font-size:13px;min-height:44px;" onclick="clearOrder()">CLEAR</button>
+    </div>
+    <div id="ord-result-iphone" class="iphone-only-actions ord-result" style="display:none;font-size:11px;margin:10px 8px;"></div>
     </div><!-- /.ord-body-2col --></div>
 
     <!-- ── P&L PAYOFF CHART ── -->
@@ -4204,6 +4239,14 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
      User spec 2026-05-04: "copy the mobile functionality of executing
      trades or rolling like how robinhood mobile does it".
      ═══════════════════════════════════════════════════════════════════════ -->
+<!-- Fixed slide-to-submit bar — only shown on iPhone when ORDER tab active.
+     Sits above the bottom nav so it's always reachable while scrolling. -->
+<div id="ord-dtc-fixed" class="dtc-track" style="display:none;">
+  <div class="dtc-track-fill"></div>
+  <div class="dtc-track-label">→ SLIDE TO SUBMIT</div>
+  <div class="dtc-thumb">&#9654;</div>
+</div>
+
 <nav id="bot-nav" aria-label="Primary">
   <button class="bot-tab active" data-tab="sc" onclick="bnGo('sc')">
     <span class="bot-tab-icon">&#9776;</span><span class="bot-tab-lbl">SCAN</span>
@@ -15460,10 +15503,25 @@ function renderScan(){
     var techCls=tech>=60?'pnl-pos':tech>=40?'':'pnl-neg';
     var fundCls=fund>=15?'pnl-pos':fund>=8?'':'pnl-neg';
 
-    // THEME cell — strongest industry theme containing this ticker (from IND.tickerAllThemes,
-    // populated by indDraw which is pre-fetched on boot). Color reflects that theme's
-    // current daily score. Tooltip lists all themes the ticker belongs to.
-    var themesForTk = (IND.tickerAllThemes && IND.tickerAllThemes[tk]) || [];
+    // THEME cell — strongest industry theme containing this ticker. Tries
+    // IND.tickerAllThemes first (richest data, populated by indDraw); if
+    // that's empty (user hasn't opened the INDUSTRY tab yet, so indDraw
+    // hasn't run), falls back to G_THEME_OVERLAY.ticker2theme which is
+    // hydrated on boot via loadThemeOverlay() and has theme + dailyScore
+    // for every mapped ticker. User report 2026-05-04: "theme not showing
+    // on scanner page for symbols" — was always showing "—" until the
+    // user navigated to INDUSTRY first.
+    var themesForTk = (typeof IND !== 'undefined' && IND.tickerAllThemes && IND.tickerAllThemes[tk]) || [];
+    if (!themesForTk.length){
+      var fallbackTi = (typeof G_THEME_OVERLAY !== 'undefined' && G_THEME_OVERLAY && G_THEME_OVERLAY.ticker2theme && G_THEME_OVERLAY.ticker2theme[tk]) || null;
+      if (fallbackTi && fallbackTi.theme){
+        themesForTk = [{
+          themeDisplay: fallbackTi.theme,
+          score: fallbackTi.dailyScore || 50,
+          isCurated: true
+        }];
+      }
+    }
     var themeCell;
     if(themesForTk.length){
       var top = themesForTk[0];
@@ -21215,7 +21273,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.0.0-mobile-app';
+var APP_VERSION = '2.0.1-fix-swipe-theme-order';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -25145,43 +25203,13 @@ window.addEventListener('DOMContentLoaded',init);
   }
   window.attachSwipeActions = attachSwipeActions;
 
-  // Auto-attach swipe actions to position rows whenever the table re-renders
-  function autoWirePositionSwipes(){
-    document.querySelectorAll('#pos-tbl-wrap tr[data-tk]').forEach(function(tr){
-      if (tr._swActionsWired) return;
-      var sym = tr.dataset.sym || tr.dataset.tk;
-      attachSwipeActions(tr, {
-        right: [
-          { label:'CLOSE', cls:'close', onClick: function(){
-            var btn = tr.querySelector('.cbtn'); if (btn) btn.click();
-          }},
-          { label:'ROLL', cls:'roll', onClick: function(){
-            // Find the inline ROLL button in this row
-            var btn = tr.querySelector('button[onclick*="openRollModal"], button[onclick*="doRoll"]');
-            if (btn) btn.click();
-            else if (typeof openRollModal === 'function' && sym) openRollModal(sym);
-          }},
-          { label:'TRAIL', cls:'edit', onClick: function(){
-            if (typeof toggleTsRow === 'function' && sym) toggleTsRow(sym);
-          }}
-        ],
-        left: [
-          { label:'WATCH', cls:'watch', onClick: function(){
-            var tk = tr.dataset.tk; if (tk && typeof addWLItem === 'function') addWLItem(tk);
-            else if (tk) { try { var inp = document.getElementById('wl-add'); if (inp){ inp.value = tk; if (typeof addWL === 'function') addWL(); } } catch(_){} }
-          }}
-        ]
-      });
-    });
-  }
-  // Hook the position render — observe the wrap for new rows
-  window.addEventListener('load', function(){
-    var wrap = document.getElementById('pos-tbl-wrap');
-    if (!wrap) return;
-    var obs = new MutationObserver(function(){ autoWirePositionSwipes(); });
-    obs.observe(wrap, {childList:true, subtree:true});
-    autoWirePositionSwipes();
-  });
+  // Auto-wire swipe-to-action on table rows DISABLED 2026-05-04. Wrapping
+  // <td> cells in a <div class="sw-content"> is invalid HTML — browsers
+  // render the wrapper outside the table flow, exposing the action overlays
+  // at all times (red/orange/blue bands plastered across the screen
+  // independently of any user gesture). Re-enable only when positions are
+  // re-rendered as <div> cards instead of <tr> rows. Inline CLOSE / ROLL
+  // / EDIT TRAIL buttons in each row remain functional.
 
   // ── DRAG-TO-CONFIRM helper ──────────────────────────────────────────────
   // Replaces a SUBMIT button with a slide-to-confirm track. Caller wires
@@ -25303,22 +25331,45 @@ window.addEventListener('DOMContentLoaded',init);
   }
   window.playFillSound = playFillSound;
 
-  // Wire the order-ticket drag-to-confirm to submitOrder. Done after the
-  // DOM is mounted so the track + thumb exist. Resets after submission so
-  // the user can drag again for a follow-up order.
+  // Wire the FIXED iPhone slide-to-submit bar (#ord-dtc-fixed). Bar is
+  // hidden by default; shown only when the ORDER tab is active on a
+  // ≤768px viewport. Tab-change observer toggles visibility.
   window.addEventListener('load', function(){
     setTimeout(function(){
-      var track = document.getElementById('ord-dtc');
+      var track = document.getElementById('ord-dtc-fixed');
       if (!track || typeof submitOrder !== 'function') return;
       function onConfirm(){
         try { submitOrder(); } catch(e){ console.error(e); }
-        // Reset track after a moment so subsequent orders can be dragged again
         setTimeout(function(){
           dtcReset(track);
           dtcArm(track, onConfirm);
         }, 1500);
       }
       dtcArm(track, onConfirm);
+      // Also wire the desktop in-panel track if present
+      var deskTrack = document.getElementById('ord-dtc');
+      if (deskTrack){
+        function onDeskConfirm(){
+          try { submitOrder(); } catch(e){ console.error(e); }
+          setTimeout(function(){ dtcReset(deskTrack); dtcArm(deskTrack, onDeskConfirm); }, 1500);
+        }
+        dtcArm(deskTrack, onDeskConfirm);
+      }
+      // Show / hide the fixed bar based on which tab is active. Polled
+      // because tab switches happen in many code paths and a centralized
+      // observer catches all of them.
+      function syncDtcVisibility(){
+        var orderActive = !!document.querySelector('#tab-order.active');
+        var isMobile = window.matchMedia && window.matchMedia('(max-width:768px)').matches;
+        track.style.display = (orderActive && isMobile) ? 'flex' : 'none';
+      }
+      syncDtcVisibility();
+      // Observe class changes on tab-order
+      var tabOrder = document.getElementById('tab-order');
+      if (tabOrder){
+        new MutationObserver(syncDtcVisibility).observe(tabOrder, {attributes:true, attributeFilter:['class']});
+      }
+      window.addEventListener('resize', syncDtcVisibility);
     }, 800);
   });
 
