@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-04T16:00-news">
+<meta name="op-build" content="2026-05-04T17:00-scroll-roll-news-tab">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -941,7 +941,23 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   /* ── Header + layout containers ── */
   #hdr{height:auto;padding:6px 8px;flex-wrap:wrap;gap:4px;}
   #app{height:auto;overflow:visible;}
-  .tab-pane.active{height:auto;overflow:visible;}
+  /* tab-pane on iPhone: own its scroll surface. Was `height:auto;overflow:visible`
+     which fought against the parent #app overflow:hidden — content past the
+     viewport got clipped instead of scrolled. User report 2026-05-04:
+     "cannot scroll far enough to see the full page at the bottom on any
+     tab." Now: tab pane fills #app, scrolls internally, with enough
+     bottom padding to clear the fixed bottom-nav. */
+  .tab-pane.active{
+    height:100% !important;
+    overflow-y:auto !important;
+    overflow-x:hidden !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding-bottom:calc(110px + env(safe-area-inset-bottom, 0)) !important;
+  }
+  /* #app needs to be the bounded flex container the panes scroll inside */
+  #app{flex:1 1 auto !important;min-height:0 !important;
+    height:auto !important;overflow:hidden !important;
+    display:flex !important;flex-direction:column !important;}
   .page-wrap{padding:8px;}
 
   /* ── Horizontal-scrolling tab bar (instead of wrapping into 3+ rows) ── */
@@ -1730,16 +1746,31 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     max-height:calc(92vh - env(safe-area-inset-bottom, 0)) !important;
   }
 
-  /* ── ROLL MODAL on iPhone — was max-width:660px which on a 440px
-     viewport leaves the inner "new contract" block flowing past the
-     screen edge. Cap to viewport width with safe-area + padding. ── */
-  #roll-modal{padding-top:20px !important;padding-left:0 !important;
-    padding-right:0 !important;}
+  /* ── ROLL MODAL on iPhone — fully constrained to viewport with
+     internal scroll. The shell div uses height:100vh-padding so the
+     EXECUTE ROLL action row at the bottom stays reachable; everything
+     above scrolls inside. Plus padding-bottom for safe-area + bottom-nav. */
+  #roll-modal{
+    padding:0 !important;
+    align-items:stretch !important;
+    overflow:hidden !important;
+  }
   #roll-modal > div{
-    width:96vw !important;max-width:96vw !important;
-    margin:0 auto 20px !important;
-    max-height:calc(92vh - env(safe-area-inset-bottom, 0)) !important;
-    overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;
+    width:100vw !important;max-width:100vw !important;
+    height:100vh !important;max-height:100vh !important;
+    margin:0 !important;border-radius:0 !important;
+    display:flex !important;flex-direction:column !important;
+    overflow:hidden !important;
+    padding-top:env(safe-area-inset-top, 0) !important;
+  }
+  /* Header (title + close) stays at top, body scrolls, action row sticks
+     at the bottom above safe area. */
+  #roll-modal > div > div:first-child{flex:0 0 auto !important;}
+  #roll-modal > div > div:nth-child(2){
+    flex:1 1 auto !important;
+    overflow-y:auto !important;
+    -webkit-overflow-scrolling:touch !important;
+    padding-bottom:calc(20px + env(safe-area-inset-bottom, 0)) !important;
   }
   /* Roll modal inner panels: stack vertically, each panel full-width */
   #roll-modal > div > div > div[style*="flex:1"],
@@ -1752,6 +1783,17 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
   /* New contract picker — full-width inputs */
   #roll-modal input, #roll-modal select{width:100% !important;
     font-size:14px !important;}
+  /* Contracts table inside roll modal — horizontal scroll if too wide */
+  #roll-modal table{
+    width:100% !important;table-layout:auto !important;font-size:10px !important;
+  }
+  #roll-modal table th, #roll-modal table td{
+    padding:4px 5px !important;white-space:nowrap !important;
+  }
+  /* Wrap any contract table in a scrollable container by default */
+  #roll-modal .roll-chain-wrap, #roll-modal [id^="roll-chain"], #roll-modal [id*="contracts"]{
+    overflow-x:auto !important;-webkit-overflow-scrolling:touch !important;
+  }
 
   /* ── DROPDOWNS (sector multi-select, theme, etc.): full-width, scroll ── */
   .sect-dd, .theme-dd{left:8px !important;right:8px !important;
@@ -1855,8 +1897,38 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     white-space:nowrap !important;}
   .sect-opt, .theme-opt{font-size:14px !important;padding:10px 8px !important;
     white-space:normal !important;line-height:1.3 !important;}
-  /* Native <select> on iPhone — ensure value text isn't clipped */
-  select{text-overflow:ellipsis !important;padding-right:24px !important;}
+  /* Native <select> on iPhone — ensure value text isn't clipped. Force
+     a minimum width so short visual hints like "Last 7 days" / "Winners"
+     don't truncate to "Last 7 da…". Auto-grow with min-width. The
+     appearance:none + custom chevron lets us own the right-edge padding
+     so the value text doesn't run under the iOS native chevron. */
+  select{
+    text-overflow:ellipsis !important;
+    padding-right:30px !important;
+    min-width:130px !important;
+    background-image:linear-gradient(45deg, transparent 50%, var(--amb) 50%),
+                     linear-gradient(135deg, var(--amb) 50%, transparent 50%) !important;
+    background-position:calc(100% - 16px) center, calc(100% - 11px) center !important;
+    background-size:5px 5px, 5px 5px !important;
+    background-repeat:no-repeat !important;
+    -webkit-appearance:none !important;
+    appearance:none !important;
+  }
+  /* Wider for narrow context — Period / Filter dropdowns on the History
+     tab were the worst offenders. Apply to any select inside a flt-bar
+     label or stat area so values like "Last 7 days" fit comfortably. */
+  .flt-bar select, label select, .stat-box select{
+    min-width:140px !important;
+  }
+  /* Form-field wrapper labels: stack label-on-top so the input gets
+     full row width on iPhone (was inline label + input which crammed
+     both into a narrow flex line). */
+  .flt-bar label{
+    display:flex !important;flex-direction:column !important;
+    align-items:flex-start !important;
+    gap:3px !important;font-size:10px !important;
+    flex:0 0 auto !important;
+  }
 
   /* ── GEX TAB: auto-settings dropdown (sched select) was clipping its
      options text. Force explicit width + larger font. AUTO + RUN GEX
@@ -1885,14 +1957,41 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
      its own scroll surface; columns scroll horizontally within it. ── */
   #tab-pf{overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;
     height:auto !important;
-    padding-bottom:calc(80px + env(safe-area-inset-bottom, 0)) !important;}
+    padding-bottom:calc(120px + env(safe-area-inset-bottom, 0)) !important;}
   #pf-cols-wrap{flex-wrap:nowrap !important;overflow-x:auto !important;
     overflow-y:visible !important;
-    max-height:50vh !important;}
+    max-height:40vh !important;}
   #tab-pf .pf-col{min-width:280px;max-width:90vw;flex-shrink:0;}
   .pf-col-rows{overflow-y:visible !important;}
-  /* Summary & Allocations: ensure visible below the columns */
+  /* Summary & Allocations: ensure visible + scrollable below the columns.
+     When the body opens, force column layout so two charts stack and
+     are reachable by scrolling. The flex container display:flex from
+     the toggle JS combined with row direction was leaving the second
+     chart off-screen. */
   #pf-summary-details{margin-top:10px !important;}
+  #pf-summary-body{
+    flex-direction:column !important;
+    gap:12px !important;
+  }
+  #pf-summary-body > div{
+    flex:1 1 auto !important;width:100% !important;min-width:0 !important;
+  }
+  #pf-summary-body canvas{height:220px !important;max-height:220px !important;}
+
+  /* ── API TAB: full vertical scroll so the proxy-token field + sync
+     card + below are all reachable. ── */
+  #tab-api{overflow-y:auto !important;-webkit-overflow-scrolling:touch !important;
+    height:auto !important;
+    padding-bottom:calc(140px + env(safe-area-inset-bottom, 0)) !important;}
+  #tab-api .page-wrap{padding-bottom:0 !important;}
+
+  /* Generic: any tab-pane that has its own internal page-wrap should NOT
+     double-pad. Ensure the wrap stretches and the pane scrolls. */
+  .tab-pane.active > .page-wrap{padding-bottom:0 !important;
+    min-height:auto !important;}
+  /* But the page-wrap itself can be a scroll container too — ensure it
+     reflects the parent constraint. */
+  .tab-pane.active > .page-wrap{overflow-y:visible !important;height:auto !important;}
 
   /* ── POSITIONS table: inner scroll container so all rows are reachable.
      User report: table cuts off, can't scroll to see all positions. ── */
@@ -2338,7 +2437,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 <!-- Auto-scan settings panel — collapsed by default; opens below header on click -->
 <div id="autoscan-panel" style="display:none;background:var(--bg1);border-bottom:var(--bdr);padding:10px 16px;font-family:var(--ff-mono);font-size:11px;color:var(--gry);">
   <div style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;max-width:1400px;margin:0 auto;">
-    <span style="color:var(--ngo);font-family:var(--ff-brand);font-size:11px;letter-spacing:2px;font-weight:700;">⚡ AUTO-SCAN</span>
+    <span style="color:var(--ngo);font-family:var(--ff-brand);font-size:11px;letter-spacing:2px;font-weight:700;">AUTO-SCAN</span>
     <label style="display:flex;align-items:center;gap:6px;cursor:pointer;color:var(--wht);">
       <input type="checkbox" id="auto-scan-on" onchange="saveAutoScan()"> ENABLED
     </label>
@@ -3154,7 +3253,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <!-- Step 3: Subscribe -->
       <div class="api-row" style="align-items:center;flex-wrap:wrap;gap:8px;">
         <button class="btn grn" style="font-size:11px;padding:8px 14px;" onclick="pushSubscribe()" title="Prompt the user for notification permission and register this device with OneSignal">&#128276; ENABLE PUSH ON THIS DEVICE</button>
-        <button class="btn" style="font-size:11px;padding:8px 14px;border-color:var(--ambb);color:var(--ambb);" onclick="pushSendTest()" title="Trigger a test push to verify everything works">&#9889; SEND TEST PUSH</button>
+        <button class="btn" style="font-size:11px;padding:8px 14px;border-color:var(--ambb);color:var(--ambb);" onclick="pushSendTest()" title="Trigger a test push to verify everything works">SEND TEST PUSH</button>
         <button class="btn" style="font-size:11px;padding:8px 14px;border-color:var(--wrn);color:var(--wrn);" onclick="pushUnsubscribe()" title="Disable push on this device — your subscription is removed from OneSignal">&#10005; UNSUBSCRIBE</button>
       </div>
       <div id="push-status" style="font-size:11px;font-family:var(--ff-mono);color:var(--gry);margin-top:10px;line-height:1.6;"></div>
@@ -3283,7 +3382,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <!-- ── AUTO-TRADER ── -->
     <div class="card collapsible" id="at-card" data-default-collapsed>
       <div class="card-hdr" style="display:flex;align-items:center;justify-content:space-between;">
-        <span>&#9889; AUTO-TRADER — FULLY AUTOMATED EXECUTION</span>
+        <span>AUTO-TRADER — FULLY AUTOMATED EXECUTION</span>
         <span id="at-status-badge" style="font-family:var(--ff-mono);font-size:10px;padding:2px 10px;border-radius:2px;background:var(--redd);color:var(--red);">OFF</span>
       </div>
       <div class="card-body api-form">
@@ -3780,7 +3879,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         <p><b>Purpose:</b> High-conviction signal notifications + auto-trader configuration + system event log.</p>
         <ul style="padding-left:20px;">
           <li><b>★ HIGH-CONVICTION ALERT SETTINGS</b> (collapsed by default) — browser notifications, email via EmailJS (free 200/mo), min score threshold, cooldown, auto-fill order ticket, auto-submit countdown. Notifications fire after the bulk pass + stragglers cleanup completes (so no false signals on partial data).</li>
-          <li><b>⚡ AUTO-TRADER</b> (collapsed by default) — fully automated execution. Master toggle, position size, daily loss limit, min score threshold, market-hours gate, max-open cap, market-order fallback. Designed for unattended scanning.</li>
+          <li><b>AUTO-TRADER</b> (collapsed by default) — fully automated execution. Master toggle, position size, daily loss limit, min score threshold, market-hours gate, max-open cap, market-order fallback. Designed for unattended scanning.</li>
           <li><b>▲ STRATEGY MODE</b> — same presets as the FULL SCANNER tab, accessible here for one-click filter switching.</li>
           <li><b>SYSTEM ALERTS LOG</b> — running log of every notable event (scan complete, signal fired, order submitted, fills, errors). Click CLEAR to reset.</li>
         </ul>
@@ -4364,8 +4463,8 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
   <button class="bot-tab bot-tab-trade" data-tab="order" onclick="bnGo('order')">
     <span class="bot-tab-icon">&#9650;</span><span class="bot-tab-lbl">TRADE</span>
   </button>
-  <button class="bot-tab" data-tab="closed" onclick="bnGo('closed')">
-    <span class="bot-tab-icon">&#9711;</span><span class="bot-tab-lbl">HISTORY</span>
+  <button class="bot-tab" data-tab="news" onclick="bnGo('news')">
+    <span class="bot-tab-icon">&#9432;</span><span class="bot-tab-lbl">NEWS</span>
   </button>
   <button class="bot-tab" onclick="bnOpenMore()" id="bot-tab-more">
     <span class="bot-tab-icon">&#x2026;</span><span class="bot-tab-lbl">MORE</span>
@@ -4380,7 +4479,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <button class="bot-more-btn" onclick="bnGo('ind')"><span>INDUSTRY</span></button>
     <button class="bot-more-btn" onclick="bnGo('pf')"><span>PORTFOLIO</span></button>
     <button class="bot-more-btn" onclick="bnGo('al')"><span>ALERTS</span></button>
-    <button class="bot-more-btn" onclick="bnGo('news')"><span>NEWS</span></button>
+    <button class="bot-more-btn" onclick="bnGo('closed')"><span>HISTORY</span></button>
     <button class="bot-more-btn" onclick="bnGo('api')"><span>API</span></button>
     <button class="bot-more-btn" onclick="bnGo('howto')"><span>HOW TO</span></button>
   </div>
@@ -12615,10 +12714,10 @@ function scoreIt(ticker, ind, opt){
       score += 8; fundScore += 8;
       sectorOk = true;
       // ⚡ marker when the bonus is intraday-driven (cached daily wouldn't have triggered)
-      sectorVal += themeLive.dominant === 'intraday' ? ' ⚡↑↑ (rotating in)' : ' ↑↑';
+      sectorVal += themeLive.dominant === 'intraday' ? ' ↑↑↑ (rotating in)' : ' ↑↑';
     } else if (combo <= 25) {
       score -= 8; fundScore -= 8;
-      sectorVal += themeLive.dominant === 'intraday' ? ' ⚡↓↓ (rotating out)' : ' ↓↓ (weak sector — demoted)';
+      sectorVal += themeLive.dominant === 'intraday' ? ' ↓↓↓ (rotating out)' : ' ↓↓ (weak sector — demoted)';
     }
   }
   res.push({n:'Strong Sector', pass:sectorOk, val:sectorVal, filter:false, pts:8, isTheme:true});
@@ -12764,10 +12863,10 @@ function buildDetail(r,detId,emptyId){
             if (!ti) return '';
             var combo = ti.combinedScore || 0;
             var col = combo >= 75 ? 'var(--grn)' : combo >= 50 ? 'var(--amb)' : combo >= 25 ? 'var(--gry)' : 'var(--ngo)';
-            var arrow = combo >= 75 ? (ti.dominant === 'intraday' ? '⚡↑↑' : '↑↑')
+            var arrow = combo >= 75 ? (ti.dominant === 'intraday' ? '↑↑↑' : '↑↑')
                       : combo >= 50 ? '↑'
                       : combo >= 25 ? '·'
-                      :              (ti.dominant === 'intraday' ? '⚡↓' : '↓');
+                      :              (ti.dominant === 'intraday' ? '↓↓' : '↓');
             var tip = 'Sector overlay: ' + ti.theme + '\n'
                     + 'Daily score: ' + ti.dailyScore.toFixed(1) + ' (from yesterday\'s 22:00 UTC cron)\n'
                     + (ti.intradayRs != null
@@ -12775,7 +12874,7 @@ function buildDetail(r,detId,emptyId){
                        + 'Intraday score: ' + (ti.intradayScore || 0).toFixed(1) + '\n'
                        : 'Intraday RS: not yet computed\n')
                     + 'Combined (max): ' + combo.toFixed(1) + ' — driven by ' + ti.dominant + ' source\n'
-                    + '⚡ marker = intraday data is overriding stale cached daily score';
+                    + 'triple arrow = intraday data is overriding stale cached daily score';
             return ' | <span style="color:'+col+';font-weight:700;" title="'+tip.replace(/"/g,'&quot;')+'">'
                     + ti.theme + ' ' + combo.toFixed(0) + ' ' + arrow + '</span>';
           } catch(e){ return ''; }
@@ -21381,7 +21480,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.1.0-news';
+var APP_VERSION = '2.1.1-scroll-roll-news-tab';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -24872,7 +24971,7 @@ function decorateIndustry(){
     var lines = hits.slice(0, 6).map(function(h){
       // Use themeDisplay (stripped of legacy [TV] prefix) so the hover
       // tooltip on the ⚡ badge shows clean theme names.
-      return '⚡ ' + (h.themeDisplay || h.theme) + '  ' + h.score.toFixed(1) + (h.isCurated ? '' : '  (auto)');
+      return '★ ' + (h.themeDisplay || h.theme) + '  ' + h.score.toFixed(1) + (h.isCurated ? '' : '  (auto)');
     });
     if(hits.length > 6) lines.push('… +' + (hits.length - 6) + ' more');
     var badge = document.createElement('span');
@@ -24880,7 +24979,7 @@ function decorateIndustry(){
     badge.style.cssText = 'margin-left:4px;font-size:9px;color:' + color +
       ';vertical-align:middle;cursor:default;text-shadow:0 0 6px ' + color + ';';
     badge.title = 'Strong industry themes (score ≥ ' + IND_STRONG_THRESHOLD + '):\n' + lines.join('\n');
-    badge.textContent = '⚡';   // ⚡
+    badge.textContent = '★';   // strong-theme indicator
     anchor.appendChild(badge);
   });
 }
