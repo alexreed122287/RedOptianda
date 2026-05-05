@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-05T10:00-indices-zero-fix">
+<meta name="op-build" content="2026-05-05T10:30-summary-toggle-fix">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -631,6 +631,10 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    so we can target it with order:99 here. */
 #tab-pos.tab-pane.active{display:flex;flex-direction:column;}
 #tab-pos #pos-bottom-panels{order:99;}
+/* Positions stats bar — collapsible via .collapsed class. The class
+   has !important so it beats the iPhone .stats-bar{display:grid
+   !important} rule that would otherwise force the bar visible. */
+.stats-bar.collapsed{display:none !important;}
 /* Inside pos-bottom-panels — TRAILING STOP and SMART EXITS configs render
    side-by-side per user spec 2026-05-05. Each takes 50% with internal
    wrap for narrow viewports. */
@@ -2789,8 +2793,12 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <button class="btn wrn" style="font-size:11px;padding:6px 10px;white-space:nowrap;min-height:36px;" onclick="clearPositions()">&#10005; CLEAR</button>
     <span class="pos-src" id="pos-src" style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);margin-left:auto;"></span>
   </div>
-  <!-- Stats bar collapsed by default. Click SUMMARY to expand. -->
-  <div class="stats-bar" id="pos-header-row" style="display:none;border-top:none;align-items:stretch;">
+  <!-- Stats bar collapsed by default. Click SUMMARY to expand.
+       Uses .collapsed class instead of inline display:none because the
+       iPhone CSS .stats-bar{display:grid !important} overrides inline
+       styles (CSS !important > inline non-!important). The class-based
+       rule below has its own !important and matches specificity. -->
+  <div class="stats-bar collapsed" id="pos-header-row" style="border-top:none;align-items:stretch;">
     <div class="stat-box"><div class="stat-label">TOTAL P&amp;L <span onclick="resetTotalPnl()" title="Reset Total P&amp;L counter to $0. Clears the local closed-trades history and snapshots the current broker realized P&amp;L as the new baseline. Open-position unrealized P&amp;L is not affected." style="cursor:pointer;font-size:9px;color:var(--gry);margin-left:6px;text-decoration:underline;letter-spacing:.5px;">RESET</span></div><div class="stat-val" id="pos-pnl" title="Lifetime: realized (closed trades) + unrealized (open positions)">$0.00</div></div>
     <div class="stat-box"><div class="stat-label">DAY P&amp;L</div><div class="stat-val" id="pos-daypnl" title="Today's change in total account equity">$0.00</div></div>
     <div class="stat-box"><div class="stat-label">OPEN POSITIONS</div><div class="stat-val amb" id="pos-count">0</div></div>
@@ -2803,9 +2811,8 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       var bar = document.getElementById('pos-header-row');
       var arrow = document.getElementById('pos-summary-arrow');
       if (!bar) return;
-      var open = bar.style.display && bar.style.display !== 'none';
-      bar.style.display = open ? 'none' : '';
-      if (arrow) arrow.style.transform = open ? 'rotate(0deg)' : 'rotate(90deg)';
+      var open = !bar.classList.toggle('collapsed');
+      if (arrow) arrow.style.transform = open ? 'rotate(90deg)' : 'rotate(0deg)';
       try { if (typeof hap === 'function') hap(8); } catch(_){}
     }
   </script>
@@ -21667,7 +21674,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.2.2-indices-zero-fix';
+var APP_VERSION = '2.2.3-summary-toggle-fix';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
