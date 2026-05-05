@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-04T17:00-scroll-roll-news-tab">
+<meta name="op-build" content="2026-05-04T18:00-news-multi-panda">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -602,7 +602,16 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    so when the first copy translates -50% (one-copy-width), the second
    copy is in view, creating a seamless infinite loop with no jump.
    Each theme entry inside is .theme-chip which is click-to-filter. */
-.top-themes-strip{overflow:hidden !important;pointer-events:none !important;}
+.top-themes-strip{overflow:hidden !important;pointer-events:none !important;
+  /* User report 2026-05-04: indices ribbon and themes were visually
+     overlapping. Hard borders + opaque background + explicit margin
+     stack them cleanly. */
+  border-top:1px solid var(--bg3) !important;
+  background:var(--bg1) !important;
+  position:relative !important;
+  z-index:5 !important;
+  margin-top:0 !important;
+}
 .themes-marquee{display:inline-flex;flex-wrap:nowrap;gap:10px;align-items:center;animation:themes-scroll 90s linear infinite;will-change:transform;pointer-events:none;}
 /* hover-pause removed 2026-05-04 per user spec — ribbon never stops scrolling */
 @keyframes themes-scroll{
@@ -1385,56 +1394,72 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   /* Show inline iPhone action row inside the form */
   .iphone-only-actions{display:flex !important;}
 
-  /* DRAG-TO-CONFIRM — replaces SUBMIT button. Track + thumb that drags */
+  /* DRAG-TO-CONFIRM — Option Panda branded. Amber/cyan gradient track,
+     panda image inside the thumb (same panda used by the header logo). */
   .dtc-track{
     position:relative;
     width:100%;
     height:54px;
-    background:linear-gradient(90deg, rgba(34,197,94,0.05), rgba(34,197,94,0.15));
-    border:1px solid #22c55e;
+    background:linear-gradient(90deg, rgba(0,212,255,0.06), rgba(0,212,255,0.18));
+    border:1px solid var(--amb);
     border-radius:27px;
     overflow:hidden;
     user-select:none;
     -webkit-user-select:none;
     touch-action:none;
+    box-shadow:inset 0 0 12px rgba(0,212,255,0.15);
   }
   .dtc-track-fill{
     position:absolute;left:0;top:0;bottom:0;width:0;
-    background:#22c55e;
+    background:linear-gradient(90deg, var(--amb), var(--ambb));
     transition:width .15s ease;
     will-change:width;
   }
   .dtc-track-label{
     position:absolute;inset:0;
     display:flex;align-items:center;justify-content:center;
-    color:#22c55e;
+    color:var(--amb);
     font-family:var(--ff);font-size:13px;font-weight:700;letter-spacing:1.5px;
     pointer-events:none;
     z-index:2;
+    text-shadow:0 0 8px rgba(0,212,255,0.4);
   }
-  .dtc-track.armed .dtc-track-label{color:var(--bg0);}
+  .dtc-track.armed .dtc-track-label{color:var(--bg0);text-shadow:none;}
   .dtc-thumb{
     position:absolute;left:4px;top:4px;
     width:46px;height:46px;
-    background:#22c55e;
+    background:var(--bg1);
+    border:2px solid var(--amb);
     border-radius:50%;
     display:flex;align-items:center;justify-content:center;
-    color:var(--bg0);
-    font-size:20px;font-weight:700;
     cursor:grab;
     z-index:3;
-    transition:left .15s ease, transform .15s ease;
+    transition:left .15s ease, transform .15s ease, box-shadow .15s ease;
     will-change:left;
+    box-shadow:0 0 12px rgba(0,212,255,0.6);
+    overflow:hidden;
+    padding:2px;
+    /* Hide the text content (▶ glyph) inside the thumb — replaced by the
+       background panda image. font-size:0 collapses any text node. */
+    font-size:0;
   }
-  .dtc-thumb:active{cursor:grabbing;transform:scale(1.05);}
+  .dtc-thumb::before{
+    content:'';
+    display:block;
+    width:100%;height:100%;
+    background:url('assets/pandas2.png') center/contain no-repeat;
+    filter:drop-shadow(0 0 4px rgba(0,212,255,0.5));
+  }
+  .dtc-thumb:active{cursor:grabbing;transform:scale(1.08);box-shadow:0 0 18px rgba(0,212,255,0.9);}
   .dtc-track.dragging .dtc-thumb, .dtc-track.dragging .dtc-track-fill{transition:none;}
   .dtc-track.disabled{opacity:.5;pointer-events:none;}
   .dtc-track.confirmed{
-    background:#22c55e !important;
+    background:linear-gradient(90deg, var(--amb), var(--ambb)) !important;
   }
   .dtc-track.confirmed .dtc-track-label{color:var(--bg0);}
   .dtc-track.confirmed .dtc-thumb{
-    background:var(--bg0);color:#22c55e;left:calc(100% - 50px) !important;
+    left:calc(100% - 50px) !important;
+    background:var(--bg0);
   }
 }
 
@@ -1993,11 +2018,16 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
      reflects the parent constraint. */
   .tab-pane.active > .page-wrap{overflow-y:visible !important;height:auto !important;}
 
-  /* ── POSITIONS table: inner scroll container so all rows are reachable.
-     User report: table cuts off, can't scroll to see all positions. ── */
-  #pos-tbl-wrap{overflow:auto !important;max-height:calc(70vh - env(safe-area-inset-bottom, 0)) !important;
-    -webkit-overflow-scrolling:touch;}
+  /* ── POSITIONS table: scrollable directly within the tab pane. The
+     pane itself owns the scroll (set above as overflow-y:auto), and
+     the wrap stays unbounded so all rows render. Was previously capped
+     at 70vh which truncated long position lists. ── */
+  #pos-tbl-wrap{overflow-x:auto !important;overflow-y:visible !important;
+    max-height:none !important;-webkit-overflow-scrolling:touch;}
   #pos-tbl-wrap table{min-width:600px;}
+  /* Positions tab pane: explicit padding-bottom so the last row clears
+     the bottom-nav AND the smart-exits/trailing-stop config panels. */
+  #tab-pos.active{padding-bottom:calc(140px + env(safe-area-inset-bottom, 0)) !important;}
 
   /* ── ORDER TICKET bottom action panel: extra padding so the FIND BEST
      OPTION / AUTO-SELECT CONTRACT button (and quote panel above it)
@@ -2710,9 +2740,10 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <div class="det-wrap" style="display:flex;flex-direction:column;height:100%;">
         <div class="empty-det" id="wl-det-empty"><img src="assets/panda-transparent.png?v=3" alt="" class="empty-det-panda"><p>Select a ticker to view chart</p></div>
         <div id="wl-chart-wrap" style="display:none;flex-direction:column;height:100%;">
-          <div style="padding:6px 10px;border-bottom:var(--bdr);font-family:var(--ff-mono);font-size:11px;letter-spacing:1.5px;color:var(--amb);display:flex;justify-content:space-between;align-items:center;">
+          <div style="padding:6px 10px;border-bottom:var(--bdr);font-family:var(--ff-mono);font-size:11px;letter-spacing:1.5px;color:var(--amb);display:flex;justify-content:space-between;align-items:center;gap:8px;">
             <span id="wl-chart-title">--</span>
-            <span id="wl-chart-sub" style="color:var(--gry);font-size:10px;">--</span>
+            <span id="wl-chart-sub" style="color:var(--gry);font-size:10px;flex:1;text-align:right;">--</span>
+            <button onclick="wlCollapseChart()" title="Close chart" aria-label="Close chart" style="background:none;border:none;color:var(--gry);font-size:18px;cursor:pointer;padding:2px 8px;line-height:1;-webkit-tap-highlight-color:rgba(0,212,255,0.15);min-height:32px;">&times;</button>
           </div>
           <div id="wl-chart-canvas" style="flex:1;position:relative;background:var(--bg0);min-height:300px;padding-bottom:8px;">
             <div id="wl-chart-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--gry);font-size:11px;font-family:var(--ff-mono);letter-spacing:1px;">\u2014 select a ticker \u2014</div>
@@ -2747,13 +2778,21 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
        they're scanning constantly. Wrapping them in this container lets us
        move them as a single block. -->
   <div id="pos-bottom-panels" style="display:none;">
-  <!-- ── TRAILING STOP PANEL ── -->
-  <div class="ts-panel">
-    <div class="ts-panel-hdr">
-      <input type="checkbox" id="ts-toggle" onchange="toggleTrailingStop()">
-      <label for="ts-toggle">&#9652; TRAILING STOP</label>
-      <span style="color:var(--gry);font-size:10px;">Enable per-position trailing stops — auto-armed on position load</span>
-      <span id="ts-poll-status" style="color:var(--gry2);font-size:10px;margin-left:auto;"></span>
+  <!-- ── TRAILING STOP + SMART EXITS combined header row ──
+       User spec 2026-05-04: same row for both checkboxes, no
+       explanations. Each checkbox toggles its own config panel below. -->
+  <div class="ts-panel" style="padding:6px 10px;">
+    <div class="ts-panel-hdr" style="display:flex;flex-wrap:wrap;align-items:center;gap:14px;">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="ts-toggle" onchange="toggleTrailingStop()">
+        <span style="font-weight:700;letter-spacing:.5px;">TRAILING STOP</span>
+      </label>
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="se-toggle" onchange="toggleSmartExits()">
+        <span style="font-weight:700;letter-spacing:.5px;color:var(--ngo);">SMART EXITS</span>
+      </label>
+      <span id="ts-poll-status" style="color:var(--gry2);font-size:10px;"></span>
+      <span id="se-status" style="color:var(--gry2);font-size:10px;margin-left:auto;">OFF</span>
     </div>
     <div id="ts-cfg" style="display:none;">
       <div class="ts-cfg">
@@ -2814,19 +2853,9 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     </div>
   </div>
 
-  <!-- ── SMART EXITS PANEL ──
-       ATR + EMA-cross auto-close for option positions. Three independently
-       toggleable rules. All OFF by default; opt-in via the master toggle.
-       Settings persist to localStorage. Order placement uses the proxy's
-       X-Trade-Token gate (must be armed in header).
-  -->
-  <div class="ts-panel" style="border-color:rgba(255,0,230,0.30);">
-    <div class="ts-panel-hdr">
-      <input type="checkbox" id="se-toggle" onchange="toggleSmartExits()">
-      <label for="se-toggle" style="color:var(--ngo);">&#9888; SMART EXITS</label>
-      <span style="color:var(--gry);font-size:10px;">ATR + EMA-cross auto-close for option positions (requires TRADE: armed)</span>
-      <span id="se-status" style="color:var(--gry2);font-size:10px;margin-left:auto;">OFF</span>
-    </div>
+  <!-- SMART EXITS PANEL — header merged into the unified ts-panel above
+       2026-05-04 per user spec; this wrapper just holds the config body. -->
+  <div class="ts-panel" style="border-color:rgba(255,0,230,0.30);padding:6px 10px;">
     <div id="se-cfg" style="display:none;">
       <div class="ts-cfg" style="border-bottom:1px solid var(--bg3);padding-bottom:10px;margin-bottom:10px;">
         <span style="color:var(--ngo);font-size:10px;font-weight:700;letter-spacing:.5px;align-self:center;">RULE 1 &mdash; INTRADAY EMERGENCY</span>
@@ -3174,7 +3203,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <div id="ord-dtc" class="dtc-track" style="display:none;margin:4px 0;">
         <div class="dtc-track-fill"></div>
         <div class="dtc-track-label">→ SLIDE TO SUBMIT</div>
-        <div class="dtc-thumb">&#9654;</div>
+        <div class="dtc-thumb" aria-hidden="true"></div>
       </div>
       <button id="ord-submit-btn" class="btn grn" style="width:100%;padding:10px;font-weight:700;font-size:13px;" onclick="submitOrder()">&#9650; SUBMIT ORDER</button>
       <button class="btn" style="width:100%;padding:8px;" onclick="clearOrder()">CLEAR</button>
@@ -4007,6 +4036,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <div class="card collapsible" id="api-card"><div class="card-hdr">API CONFIGURATION</div>
     <div class="card-body api-form">
       <div class="api-row"><label>FMP API KEY (financialmodelingprep.com)</label><input id="api-fmp" type="password" placeholder="Enter FMP key..."><div class="api-status" id="fmp-status"></div></div>
+      <div class="api-row"><label title="Marketaux is a free news API (100 requests/day on the free tier). Used as a fallback when FMP's news endpoints are paid-tier.">MARKETAUX KEY (news fallback) <span style="color:var(--gry);font-weight:400;font-size:10px;">(optional — sign up free at marketaux.com)</span></label><input id="api-marketaux" type="password" placeholder="Enter Marketaux key..."><div class="api-status" id="ma-status"></div></div>
       <div class="api-row"><label>TRADIER API KEY</label><input id="api-tr" type="password" placeholder="Enter Tradier key..."><div class="api-status" id="tr-status"></div></div>
       <div class="api-row"><label>TRADIER MODE</label>
         <select id="api-mode" style="background:var(--bg2);border:var(--bdr);color:var(--wht);font-family:var(--ff);font-size:12px;padding:5px 8px;border-radius:3px;width:100%;">
@@ -4450,7 +4480,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 <div id="ord-dtc-fixed" class="dtc-track" style="display:none;">
   <div class="dtc-track-fill"></div>
   <div class="dtc-track-label">→ SLIDE TO SUBMIT</div>
-  <div class="dtc-thumb">&#9654;</div>
+  <div class="dtc-thumb" aria-hidden="true"></div>
 </div>
 
 <nav id="bot-nav" aria-label="Primary">
@@ -16597,6 +16627,17 @@ function wlSetTimeframe(tf){
   if(mBtn) mBtn.className = 'btn ' + (tf==='1m' ? 'blu' : '');
   if(G._wlChartTicker) wlRenderChart(G._wlChartTicker);
 }
+// Collapse the watchlist chart back to the empty-state placeholder.
+// Called from the X close button on the chart header. Clears any
+// selected-row highlighting too.
+function wlCollapseChart(){
+  var empty = eid('wl-det-empty'), wrap = eid('wl-chart-wrap');
+  if (wrap)  wrap.style.display = 'none';
+  if (empty) empty.style.display = 'flex';
+  document.querySelectorAll('#wl-tbl-wrap tr.sel-row').forEach(function(row){ row.classList.remove('sel-row'); });
+  if (typeof G !== 'undefined') G.wlSelected = null;
+}
+
 function wlSelectTicker(ticker){
   G._wlChartTicker = ticker;
   var empty = eid('wl-det-empty'), wrap = eid('wl-chart-wrap');
@@ -20944,6 +20985,15 @@ function saveKeys(){
   // Paste from iOS / email / docs often sneaks these in and Safari rejects them in headers.
   function _cleanKey(s){ return (s||'').replace(/[^\x20-\x7E]/g,'').trim(); }
   var fmp=_cleanKey(eid('api-fmp').value),tr=_cleanKey(eid('api-tr').value),mode=eid('api-mode').value,acct=_cleanKey(eid('api-acct').value);
+  // Marketaux fallback news key (optional, for users whose FMP plan
+  // doesn't include news endpoints).
+  var ma = _cleanKey((eid('api-marketaux') && eid('api-marketaux').value) || '');
+  if (ma) localStorage.setItem('rrjcar_marketaux', ma);
+  else    localStorage.removeItem('rrjcar_marketaux');
+  if (eid('ma-status')){
+    eid('ma-status').textContent = ma ? 'Saved (' + ma.length + ' chars)' : '';
+    eid('ma-status').className = 'api-status ' + (ma ? 'ok' : '');
+  }
   // Optional Tradier proxy URL — when set, all api.tradier.com / sandbox.tradier.com
   // requests get rewritten to go through it (and the local key gets ignored — worker
   // injects its own from a Cloudflare secret). See worker/tradier-proxy/README.md.
@@ -21271,6 +21321,15 @@ function loadKeys(){
   if(fmp&&!_hasBadFmp){eid('api-fmp').value='';eid('fmp-status').textContent='Key saved (hidden)';eid('fmp-status').className='api-status ok';}
   else if(_hasBadFmp){eid('fmp-status').textContent='Key corrupted - re-enter';eid('fmp-status').className='api-status miss';}
   else{eid('fmp-status').textContent='Not set';eid('fmp-status').className='api-status miss';}
+  // Marketaux fallback news key
+  try {
+    var ma = localStorage.getItem('rrjcar_marketaux') || '';
+    if (eid('api-marketaux')) eid('api-marketaux').value = '';
+    if (eid('ma-status')){
+      eid('ma-status').textContent = ma ? 'Key saved (hidden)' : 'Optional — only needed if FMP news fails';
+      eid('ma-status').className = 'api-status ' + (ma ? 'ok' : '');
+    }
+  } catch(_){}
   if(!tr && typeof TRADIER_KEY_DEFAULT !== 'undefined' && TRADIER_KEY_DEFAULT){
     tr = TRADIER_KEY_DEFAULT;
     try{ localStorage.setItem('rrjcar_tradier', tr); }catch(e){}
@@ -21480,7 +21539,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.1.1-scroll-roll-news-tab';
+var APP_VERSION = '2.2.0-news-multi-panda';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -25668,10 +25727,81 @@ window.addEventListener('DOMContentLoaded',init);
     return t.sort().join(',');
   }
 
+  function _marketauxKey(){
+    try { return (localStorage.getItem('rrjcar_marketaux') || '').trim(); } catch(_) { return ''; }
+  }
+
+  // Normalize FMP / Marketaux response shapes into a single article record:
+  //   { symbol, image, title, text, site, publishedDate, url }
+  function _normFmpV3(arr){
+    return (Array.isArray(arr) ? arr : []).map(function(n){
+      return {
+        symbol: n.symbol || '', image: n.image || '',
+        title: n.title || '', text: n.text || '',
+        site: n.site || n.publisher || '',
+        publishedDate: n.publishedDate || n.date || '',
+        url: n.url || ''
+      };
+    });
+  }
+  function _normMarketaux(json){
+    var data = (json && json.data) || [];
+    return data.map(function(n){
+      var sym = (n.entities && n.entities[0] && n.entities[0].symbol) || '';
+      return {
+        symbol: sym,
+        image: n.image_url || '',
+        title: n.title || '',
+        text: n.snippet || n.description || '',
+        site: (n.source || '').replace(/\.com$|\.net$/i,''),
+        publishedDate: n.published_at || '',
+        url: n.url || ''
+      };
+    });
+  }
+
+  async function _tryFmpStable(key, tickers){
+    var path;
+    if (tickers === null) path = '/stable/news/general-latest?limit='+NEWS_LIMIT;
+    else                  path = '/stable/news/stock-latest?symbols='+encodeURIComponent(tickers.join(','))+'&limit='+NEWS_LIMIT;
+    var res = await fetch('https://financialmodelingprep.com'+path+'&apikey='+encodeURIComponent(key));
+    var json = await res.json();
+    if (!Array.isArray(json)) throw new Error((json && (json['Error Message']||json.message)) || ('HTTP '+res.status));
+    return _normFmpV3(json);
+  }
+  async function _tryFmpV4(key, tickers){
+    var path;
+    if (tickers === null) path = '/api/v4/general_news?page=0';
+    else                  path = '/api/v4/stock_news?tickers='+encodeURIComponent(tickers.join(','))+'&limit='+NEWS_LIMIT;
+    var res = await fetch('https://financialmodelingprep.com'+path+'&apikey='+encodeURIComponent(key));
+    var json = await res.json();
+    if (!Array.isArray(json)) throw new Error((json && (json['Error Message']||json.message)) || ('HTTP '+res.status));
+    return _normFmpV3(json);
+  }
+  async function _tryFmpV3(key, tickers){
+    var url;
+    if (tickers === null) url = 'https://financialmodelingprep.com/api/v3/stock_news?limit='+NEWS_LIMIT+'&apikey='+encodeURIComponent(key);
+    else                  url = 'https://financialmodelingprep.com/api/v3/stock_news?tickers='+encodeURIComponent(tickers.join(','))+'&limit='+NEWS_LIMIT+'&apikey='+encodeURIComponent(key);
+    var res = await fetch(url);
+    var json = await res.json();
+    if (!Array.isArray(json)) throw new Error((json && (json['Error Message']||json.message)) || ('HTTP '+res.status));
+    return _normFmpV3(json);
+  }
+  async function _tryMarketaux(key, tickers){
+    var p = 'https://api.marketaux.com/v1/news/all?language=en&filter_entities=true&limit='+NEWS_LIMIT+'&api_token='+encodeURIComponent(key);
+    if (tickers === null) p += '&countries=us';
+    else                  p += '&symbols='+encodeURIComponent(tickers.join(','));
+    var res = await fetch(p);
+    var json = await res.json();
+    if (json && json.error) throw new Error(json.error.message || 'Marketaux error');
+    return _normMarketaux(json);
+  }
+
   async function newsFetch(forceFresh){
-    var key = _fmpKey();
-    if (!key){
-      _setStatus('No FMP API key — set one in the API tab to load news.', 'var(--wrn)');
+    var fmpKey = _fmpKey();
+    var maKey  = _marketauxKey();
+    if (!fmpKey && !maKey){
+      _setStatus('No news API key. Add an FMP key (API tab) or a Marketaux key (Alerts → Push Setup → MARKETAUX KEY input below) to load news.', 'var(--wrn)');
       return [];
     }
     var cacheKey = _cacheKey();
@@ -25683,31 +25813,32 @@ window.addEventListener('DOMContentLoaded',init);
       }
     }
     var tickers = _activeTickers();
-    var url;
-    if (tickers === null){
-      url = 'https://financialmodelingprep.com/api/v3/stock_news?limit=' + NEWS_LIMIT + '&apikey=' + encodeURIComponent(key);
-    } else if (!tickers.length){
+    if (tickers !== null && !tickers.length){
       _setStatus('No tickers to filter on — switch to MARKET or add tickers to your watchlist/positions.', 'var(--gry)');
       return [];
-    } else {
-      url = 'https://financialmodelingprep.com/api/v3/stock_news?tickers=' + encodeURIComponent(tickers.join(',')) + '&limit=' + NEWS_LIMIT + '&apikey=' + encodeURIComponent(key);
     }
     _setStatus('Fetching news…', 'var(--gry)');
-    try {
-      var res = await fetch(url);
-      var json = await res.json();
-      if (!Array.isArray(json)){
-        var errMsg = (json && (json['Error Message'] || json.message)) || ('HTTP ' + res.status);
-        _setStatus('FMP error: ' + errMsg, 'var(--wrn)');
-        return [];
+    // Try FMP stable → v4 → v3, then Marketaux. First success wins.
+    var attempts = [];
+    if (fmpKey) attempts.push({label:'FMP stable', run:function(){ return _tryFmpStable(fmpKey, tickers); }});
+    if (fmpKey) attempts.push({label:'FMP v4',     run:function(){ return _tryFmpV4(fmpKey, tickers); }});
+    if (fmpKey) attempts.push({label:'FMP v3',     run:function(){ return _tryFmpV3(fmpKey, tickers); }});
+    if (maKey)  attempts.push({label:'Marketaux',  run:function(){ return _tryMarketaux(maKey, tickers); }});
+    var lastErr = '';
+    for (var i = 0; i < attempts.length; i++){
+      try {
+        var items = await attempts[i].run();
+        cache[cacheKey] = { ts: Date.now(), items: items, source: attempts[i].label };
+        _saveCache(cache);
+        _setStatus(items.length + ' articles · source: ' + attempts[i].label, 'var(--gry)');
+        return items;
+      } catch(e){
+        lastErr = (attempts[i].label) + ': ' + (e && e.message || 'unknown');
+        console.warn('[news] '+lastErr);
       }
-      cache[cacheKey] = { ts: Date.now(), items: json };
-      _saveCache(cache);
-      return json;
-    } catch(e){
-      _setStatus('Network error: ' + (e && e.message || 'unknown'), 'var(--wrn)');
-      return [];
     }
+    _setStatus('All news sources failed. Last error: ' + lastErr + '. Try adding a Marketaux key (free 100/day) at marketaux.com → Account → API Tokens, then paste it in the API tab.', 'var(--wrn)');
+    return [];
   }
 
   function newsRender(items){
