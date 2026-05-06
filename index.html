@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-05T10:30-summary-toggle-fix">
+<meta name="op-build" content="2026-05-05T11:30-trail-shares-industry-score">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -3314,9 +3314,9 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         </div>
         <div class="ord-field" id="ord-trail-wrap" style="display:none;">
           <label>TRAIL OFFSET <span style="color:var(--gry);font-size:9px;">(from high-water)</span></label>
-          <div style="display:flex;gap:4px;">
-            <input id="ord-trail-val" type="number" step="0.01" min="0" placeholder="0.50" style="flex:1;">
-            <select id="ord-trail-unit" style="width:60px;">
+          <div style="display:flex;gap:6px;">
+            <input id="ord-trail-val" type="number" step="0.01" min="0" placeholder="0.50" style="flex:1 1 auto;min-width:120px;font-size:14px;padding:8px 10px;">
+            <select id="ord-trail-unit" style="flex:0 0 auto;width:80px;font-size:14px;padding:8px 6px;">
               <option value="pct" selected>%</option>
               <option value="dol">$</option>
             </select>
@@ -3324,8 +3324,8 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         </div>
         <div class="ord-field" id="ord-trail-lmt-wrap" style="display:none;">
           <label>LIMIT OFFSET <span style="color:var(--gry);font-size:9px;">(below stop)</span></label>
-          <div style="display:flex;gap:4px;">
-            <input id="ord-trail-lmt-val" type="number" step="0.01" min="0" placeholder="0.10" style="flex:1;">
+          <div style="display:flex;gap:6px;">
+            <input id="ord-trail-lmt-val" type="number" step="0.01" min="0" placeholder="0.10" style="flex:1 1 auto;min-width:120px;font-size:14px;padding:8px 10px;">
             <select id="ord-trail-lmt-unit" style="width:60px;">
               <option value="pct" selected>%</option>
               <option value="dol">$</option>
@@ -4590,7 +4590,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
             </p>
             <textarea id="pf-paste-text" style="width:100%;height:140px;background:var(--bg0);border:var(--bdr);color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:8px;border-radius:3px;" placeholder="Paste positions here..."></textarea>
             <div style="display:flex;gap:8px;justify-content:flex-end;margin-top:6px;">
-              <button class="btn" style="font-size:11px;padding:5px 12px;" onclick="pfParsePreview()">&#128270; PREVIEW PARSE</button>
+              <button class="btn" style="font-size:11px;padding:5px 12px;" onclick="pfParsePreview()">PREVIEW PARSE</button>
             </div>
           </div>
         </details>
@@ -10023,7 +10023,25 @@ function onOrderOtypeChange(){
   var trailLmtWrap = eid('ord-trail-lmt-wrap');
   var hintRow = eid('ord-trail-hint-row');
   var isTrail = (otype === 'trailing_stop' || otype === 'trailing_stop_limit');
+  var isPureTrail = (otype === 'trailing_stop');
   var needsStop = (otype === 'stop' || otype === 'stop_limit');
+  // The LIMIT PRICE field is meaningless for MARKET / pure TRAILING STOP
+  // (trailing stop converts to a server-side stop; no limit). Hide it +
+  // the SET BID/MID/ASK helpers so the user isn't confused by a blank
+  // "limit price" field next to the trail offset. STOP_LIMIT and
+  // TRAILING_STOP_LIMIT keep the LIMIT field visible since they use one.
+  var lmtField = (eid('ord-lmt') && eid('ord-lmt').closest('.ord-field')) || null;
+  var hideLmt = (otype === 'market' || isPureTrail);
+  if (lmtField) lmtField.style.display = hideLmt ? 'none' : '';
+  var lmtRow = lmtField ? lmtField.parentNode : null;
+  if (lmtRow){
+    Array.prototype.slice.call(lmtRow.children).forEach(function(child){
+      var btn = child && child.querySelector && child.querySelector('button');
+      if (btn && /^SET (BID|MID|ASK)$/.test(btn.textContent || '')){
+        child.style.display = hideLmt ? 'none' : '';
+      }
+    });
+  }
 
   if(stopWrap) stopWrap.style.display = needsStop ? '' : 'none';
   if(trailWrap) trailWrap.style.display = isTrail ? '' : 'none';
@@ -19016,9 +19034,13 @@ function closePosition(symbol,type,strike,exp,qty){
     eid('ord-type').value = isStock ? 'STOCK' : (type==='PUT' ? 'PUT' : 'CALL');
     eid('ord-strike').value = isStock ? '' : strike;
     eid('ord-exp').value = isStock ? '' : exp;
+    // Rebuild ACTION dropdown for the current instrument BEFORE setting
+    // its value — without this the dropdown still has the stale option-
+    // style choices (BUY_TO_OPEN/SELL_TO_OPEN/etc) when closing shares,
+    // which made the user see option-only labels in the picker.
+    if (typeof onOrderTypeChange === 'function') { try { onOrderTypeChange(); } catch(_){} }
     eid('ord-action').value = action;
     eid('ord-qty').value = absQty;
-    // Stocks/ETFs use SELL not SELL_TO_CLOSE — make sure mode-stock UI class is applied
     var ordForm = document.querySelector('.ord-form');
     if(ordForm){
       if(isStock) ordForm.classList.add('mode-stock');
@@ -22155,7 +22177,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.2.3-summary-toggle-fix';
+var APP_VERSION = '2.3.0-trail-shares-industry-score';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -25492,6 +25514,18 @@ function indDraw(){
       var curated = (t.curated_members || (t.members||[]).filter(function(m){return !autoSet[m];})).slice().sort(byPerf);
       var auto    = (t.auto_members    || []).slice().sort(byPerf);
       var members = curated.concat(auto);
+      // Build a quick lookup of scanner scores so we can surface them
+      // next to each member's % change. User spec 2026-05-05: "want the
+      // score from the scanner next to or under or on top of the
+      // tickers underneath each theme."
+      var scoreByTk = {};
+      try {
+        if (typeof G !== 'undefined' && G.results){
+          G.results.forEach(function(r){
+            if (r && r.ticker && r.score != null) scoreByTk[r.ticker] = {score: r.score, isGo: !!r.isGo};
+          });
+        }
+      } catch(_){}
       var renderTag = function(m, isAuto){
         var p = memberPerf[m];
         var perfHTML;
@@ -25502,9 +25536,18 @@ function indDraw(){
         } else {
           perfHTML = '<span class="perf flat">—</span>';
         }
+        // Scanner-score chip — only rendered when ticker was in the
+        // most recent scan. Color matches scanner GO/NO-GO threshold.
+        var sc = scoreByTk[m];
+        var scoreHTML = '';
+        if (sc){
+          var scClr = sc.isGo ? 'var(--grn)' : (sc.score >= 100 ? 'var(--ambb)' : 'var(--gry2)');
+          var scLabel = Math.round(sc.score);
+          scoreHTML = '<span class="ind-mscore" style="color:'+scClr+';font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.5px;margin-left:5px;padding:1px 4px;border:1px solid '+scClr+';border-radius:2px;" title="Scanner composite score (latest scan)">'+scLabel+'</span>';
+        }
         var cls = 'ind-mtag' + (isAuto ? ' auto' : '');
         var title = isAuto ? 'Auto-assigned via industry tag — not in curated basket' : 'Curated theme member';
-        return '<div class="'+cls+'" title="'+title+'"><span class="sym">'+indEsc(m)+'</span>'+perfHTML+'</div>';
+        return '<div class="'+cls+'" title="'+title+'"><span class="sym">'+indEsc(m)+'</span>'+perfHTML+scoreHTML+'</div>';
       };
       var memberHTML = curated.map(function(m){return renderTag(m,false);}).join('')
                      + auto.map(function(m){return renderTag(m,true);}).join('');
