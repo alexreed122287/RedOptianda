@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-05T12:00-industry-score-spacing">
+<meta name="op-build" content="2026-05-05T13:00-pos-redesign-eod-log">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -635,6 +635,29 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    has !important so it beats the iPhone .stats-bar{display:grid
    !important} rule that would otherwise force the bar visible. */
 .stats-bar.collapsed{display:none !important;}
+
+/* Highlighted EQUITY column — bright cyan + bold so the user can scan
+   position values in one glance. User spec 2026-05-05: "change the
+   equity column to a more highlighted of color noticeable font". */
+#pos-tbl-wrap th.col-equity, #pos-tbl-wrap td.col-equity{
+  color:var(--ambb) !important;
+  font-weight:800 !important;
+  font-family:var(--ff-mono);
+  letter-spacing:.3px;
+  text-shadow:0 0 6px rgba(0,212,255,0.18);
+}
+#pos-tbl-wrap th.col-equity{
+  background:rgba(0,212,255,0.06);
+}
+
+/* Positions table sortable headers — chevron + hover affordance */
+#pos-tbl-wrap th[data-sort]{
+  position:relative;user-select:none;
+  -webkit-tap-highlight-color:rgba(0,212,255,0.15);
+}
+#pos-tbl-wrap th[data-sort]:hover{color:var(--amb);}
+#pos-tbl-wrap th[data-sort].sorted-asc::after{content:' ▲';font-size:9px;opacity:.85;}
+#pos-tbl-wrap th[data-sort].sorted-desc::after{content:' ▼';font-size:9px;opacity:.85;}
 /* Inside pos-bottom-panels — TRAILING STOP and SMART EXITS configs render
    side-by-side per user spec 2026-05-05. Each takes 50% with internal
    wrap for narrow viewports. */
@@ -3167,7 +3190,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <!-- SYMBOL + TYPE row -->
       <div class="ord-row">
         <div class="ord-field">
-          <label>SYMBOL</label>
+          <label>SYMBOL <span id="ord-sym-px" style="color:var(--ambb);font-family:var(--ff-mono);font-size:11px;font-weight:700;margin-left:6px;letter-spacing:.3px;" title="Current underlying stock price"></span></label>
           <input id="ord-sym" placeholder="e.g. AAPL" onchange="populateAsrMonths(this.value.trim().toUpperCase())"
             oninput="this.value=this.value.toUpperCase()"
             onchange="onSymbolChange()"
@@ -7858,6 +7881,8 @@ function resetQuotePanel(){
   ['qp-bid-sz','qp-ask-sz','qp-spread','qp-chg','qp-iv'].forEach(function(id){eid(id).textContent='';});
   eid('qp-ts').textContent='';
   eid('lmt-hint').textContent='';
+  // Clear the SYMBOL price chip so we don't show stale data after a reset.
+  try { var sx = document.getElementById('ord-sym-px'); if (sx) sx.innerHTML = ''; } catch(_){}
   G.liveQuote=null;
   // Drop any active streaming subscription when the panel is cleared
   if (typeof _wsDetachFromTicket === 'function') _wsDetachFromTicket();
@@ -8349,6 +8374,15 @@ function fetchStockQuote(creds,sym){
     var last=parseFloat(q.last)||parseFloat(q.prevclose)||0;
     var chg=parseFloat(q.change)||0;
     var chgPct=parseFloat(q.change_percentage)||0;
+    // Update SYMBOL price chip — underlying IS the symbol when type=STOCK
+    try {
+      var sx = document.getElementById('ord-sym-px');
+      if (sx && last > 0){
+        var sign = chgPct >= 0 ? '+' : '';
+        var chgStr = ' <span style="color:'+(chgPct>=0?'var(--grn)':'var(--ngo)')+';font-size:10px;font-weight:600;">'+sign+chgPct.toFixed(2)+'%</span>';
+        sx.innerHTML = '$' + last.toFixed(2) + chgStr;
+      }
+    } catch(_){}
     renderQuotePanel({
       bid:bid,ask:ask,mid:mid,last:last,mark:mid||last,
       bidSz:q.bidsize||0,askSz:q.asksize||0,
@@ -8360,22 +8394,46 @@ function fetchStockQuote(creds,sym){
 }
 
 function fetchOptionQuote(creds,underlying,occSym){
-  fetch(creds.host+'/v1/markets/quotes?symbols='+encodeURIComponent(occSym)+'&greeks=true',{
+  // Fetch BOTH the option contract (for greeks/bid/ask/etc) AND the
+  // underlying stock (for the SYMBOL price chip). Both calls are paced
+  // by the same Tradier rate limit but are batched into one symbols=
+  // request so it's still a single API hit.
+  var symList = occSym + (underlying ? ',' + underlying : '');
+  fetch(creds.host+'/v1/markets/quotes?symbols='+encodeURIComponent(symList)+'&greeks=true',{
     headers:{Authorization:'Bearer '+creds.key,Accept:'application/json'}
   }).then(function(r){return r.json();})
   .then(function(d){
-    var q=d.quotes.quote;
-    if(!q||!q.bid)throw new Error('No option quote');
-    var bid=parseFloat(q.bid)||0,ask=parseFloat(q.ask)||0;
+    var arr = d && d.quotes && d.quotes.quote;
+    if (arr && !Array.isArray(arr)) arr = [arr];
+    arr = arr || [];
+    var optQ = arr.find(function(x){ return x && x.symbol === occSym; });
+    var ulQ  = arr.find(function(x){ return x && x.symbol === underlying; });
+    if(!optQ||!optQ.bid)throw new Error('No option quote');
+    // Update the SYMBOL price chip with the underlying's last price.
+    try {
+      var sx = document.getElementById('ord-sym-px');
+      if (sx){
+        var ulPx = ulQ ? parseFloat(ulQ.last||ulQ.prevclose||0) : 0;
+        var ulChg = ulQ ? parseFloat(ulQ.change_percentage) : null;
+        if (ulPx > 0){
+          var sign = (ulChg != null && ulChg >= 0) ? '+' : '';
+          var chgStr = (ulChg != null && !isNaN(ulChg)) ? ' <span style="color:'+(ulChg>=0?'var(--grn)':'var(--ngo)')+';font-size:10px;font-weight:600;">'+sign+ulChg.toFixed(2)+'%</span>' : '';
+          sx.innerHTML = '$' + ulPx.toFixed(2) + chgStr;
+        }
+      }
+    } catch(_){}
+    var bid=parseFloat(optQ.bid)||0,ask=parseFloat(optQ.ask)||0;
     var mid=bid&&ask?+((bid+ask)/2).toFixed(2):0;
-    var last=parseFloat(q.last)||mid;
+    var last=parseFloat(optQ.last)||mid;
     var mark=mid||last;
-    var iv=q.greeks?q.greeks.smv_vol:null;
+    var iv=optQ.greeks?optQ.greeks.smv_vol:null;
     var spread=+(ask-bid).toFixed(2);
     renderQuotePanel({
       bid:bid,ask:ask,mid:mid,last:last,mark:mark,
-      bidSz:q.bidsize||0,askSz:q.asksize||0,
-      spread:spread,iv:iv,chg:0,chgPct:0,isOption:true,sym:occSym
+      bidSz:optQ.bidsize||0,askSz:optQ.asksize||0,
+      spread:spread,iv:iv,chg:0,chgPct:0,isOption:true,sym:occSym,
+      greeks: optQ.greeks || null,
+      underlyingPrice: ulQ ? parseFloat(ulQ.last||ulQ.prevclose||0) : 0
     });
   }).catch(function(){
     // Fallback: just quote the underlying
@@ -17543,6 +17601,19 @@ function fetchPositionsDirect(key,mode,host,acct){
           if(q){
             var mid=q.bid&&q.ask?(q.bid+q.ask)/2:(q.last||0);
             p.last=mid;p.bid=q.bid||0;p.ask=q.ask||0;
+            // Capture delta from greeks for the positions DELTA column.
+            // Greeks come back on the same /quotes call (greeks=true).
+            // For STOCK rows delta is implicitly 1.0 per share; we set
+            // null so the column renders "—" rather than a misleading
+            // 0 in those rows.
+            if (p.type !== 'STOCK' && q.greeks && q.greeks.delta != null){
+              p.delta = parseFloat(q.greeks.delta);
+            } else {
+              p.delta = null;
+            }
+            // Also expose underlyingNow on p so the moved STOCK PRICE
+            // column and delta lookup paths share the same data.
+            p.underlyingNow = uQuotes[p.underlying] || p.underlyingNow || 0;
             // Multiplier: stocks/ETFs settle 1:1 per share; options are 100x per contract
             var mult = (p.type === 'STOCK') ? 1 : 100;
             var contractVal=mid*Math.abs(p.qty)*mult;
@@ -17851,34 +17922,39 @@ function renderPositionsTable(pos,srcLabel){
     return _dte(a) - _dte(b);
   });
 
-  // Column order (per user spec, 2026-05-02):
-  //   QTY → MID (price) → EQUITY come together as the "size + price + value"
-  //   triplet so the user can read the full size of the position in one
-  //   horizontal sweep. TRAIL is moved to the far right because it's
-  //   configuration, not data — the user looks at it occasionally rather
-  //   than scanning it across rows.
-  var html='<table><thead><tr>'
-    +'<th>TICKER</th>'
-    +'<th class="col-opened">OPENED</th>'
+  // Column order (rev 2026-05-05 per user spec):
+  //   STOCK PRICE moved to right of ROLL so the user sees the underlying's
+  //   current quote first, before sizing data. New DELTA column right
+  //   after STOCK PRICE so the contract's directional sensitivity is
+  //   visible alongside the underlying price. EQUITY now uses the
+  //   col-equity class for stronger highlighting.
+  // Every <th> has a data-sort key — click any header to sort the table
+  // by that field. Sort direction toggles on repeat clicks. TICKER /
+  // STRIKE / EXP keys sort the data attribute on each <tr>; numeric
+  // columns sort the data-sort-* numeric attribute on each <td>.
+  var html='<table id="pos-table"><thead><tr>'
+    +'<th data-sort="ticker" style="cursor:pointer;">TICKER</th>'
+    +'<th class="col-opened" data-sort="opened" style="cursor:pointer;">OPENED</th>'
     +'<th>CLOSE</th>'
     +'<th>ROLL</th>'
-    +'<th>QTY</th>'
-    +'<th title="Current contract mid price (bid+ask)/2 — what one contract is worth right now">PRICE</th>'
-    +'<th title="Current value of your position (mark x qty x multiplier)">EQUITY</th>'
-    +'<th>P/L $</th>'
-    +'<th>P/L %</th>'
-    +'<th>STRIKE</th>'
-    +'<th>EXP</th>'
-    +'<th>DTE</th>'
-    +'<th title="Current underlying stock price">STOCK PRICE</th>'
-    +'<th title="Underlying stock price at the time you bought this position">ENTRY PRICE</th>'
-    +'<th title="Underlying price needed for the contract to break even at expiration">B/E</th>'
+    +'<th data-sort="ulpx" style="cursor:pointer;" title="Current underlying stock price">STOCK PRICE</th>'
+    +'<th data-sort="delta" style="cursor:pointer;" title="Current contract delta — sensitivity of contract price per $1 underlying move (0.50 = mid; 1.00 = deep ITM)">DELTA</th>'
+    +'<th data-sort="qty" style="cursor:pointer;">QTY</th>'
+    +'<th data-sort="mid" style="cursor:pointer;" title="Current contract mid price (bid+ask)/2 — what one contract is worth right now">PRICE</th>'
+    +'<th data-sort="equity" class="col-equity" style="cursor:pointer;" title="Current value of your position (mark x qty x multiplier)">EQUITY</th>'
+    +'<th data-sort="pnl" style="cursor:pointer;">P/L $</th>'
+    +'<th data-sort="pnlPct" style="cursor:pointer;">P/L %</th>'
+    +'<th data-sort="strike" style="cursor:pointer;">STRIKE</th>'
+    +'<th data-sort="exp" style="cursor:pointer;">EXP</th>'
+    +'<th data-sort="dte" style="cursor:pointer;">DTE</th>'
+    +'<th data-sort="entry" style="cursor:pointer;" title="Underlying stock price at the time you bought this position">ENTRY PRICE</th>'
+    +'<th data-sort="be" style="cursor:pointer;" title="Underlying price needed for the contract to break even at expiration">B/E</th>'
     +'<th title="Stock price after a 0.5 × ATR(14) drop from current — soft exit signal">1/2 ATR</th>'
     +'<th title="Stock price after a 1 × ATR(14) drop from current — typical stop">1 ATR</th>'
     +'<th title="Stock price after a 2 × ATR(14) drop from current — emergency exit. If price reaches this, close immediately regardless of P&L.">EMERGENCY EXIT</th>'
     +'<th title="Trailing-stop status + per-position config. Click to expand.">TRAIL</th>'
     +'</tr></thead><tbody>';
-  colCount = 19; // total columns (used by inline config row)
+  colCount = 20; // total columns (used by inline config row)
 
   var todayCount = 0;
   pos.forEach(function(p){
@@ -18134,22 +18210,45 @@ function renderPositionsTable(pos,srcLabel){
       if(!(mid > 0)) return '<td style="color:var(--gry2);">—</td>';
       return '<td title="bid '+fmt2(bb)+' / ask '+fmt2(aa)+'" style="color:var(--ambb);font-weight:600;">$'+fmt2(mid)+'</td>';
     })();
+    // DELTA cell — colored by magnitude. Stocks (no greeks) show "—".
+    var deltaCell = (function(){
+      if (p.type === 'STOCK' || p.delta == null){
+        return '<td data-sort-delta="-1" style="color:var(--gry2);font-size:10px;">—</td>';
+      }
+      var d = p.delta, ad = Math.abs(d);
+      var clr = ad >= 0.7 ? 'var(--grn)' : ad >= 0.45 ? 'var(--ambb)' : ad >= 0.2 ? 'var(--amb)' : 'var(--gry)';
+      return '<td data-sort-delta="'+d.toFixed(4)+'" style="color:'+clr+';font-family:var(--ff-mono);font-weight:600;">'+d.toFixed(2)+'</td>';
+    })();
+    // Highlighted EQUITY cell — bright cyan + bold so the user can scan
+    // position values in one glance. We re-wrap the existing equityCell
+    // markup so the color override survives. equityCell already has the
+    // dollar amount inside a <td>; the .col-equity class on this cell
+    // (and matching CSS) bumps font-weight + color.
+    var equityCellHL = equityCell.replace(/<td/, '<td class="col-equity" data-sort-equity="'+(p.last*Math.abs(p.qty)*((p.type==='STOCK')?1:100))+'"');
+    var ulPxNum = (p.type === 'STOCK') ? -1 : (p.underlyingNow || 0);
+    var stockPxCellHL = (p.type === 'STOCK')
+      ? '<td data-sort-ulpx="-1" style="color:var(--gry2);">—</td>'
+      : '<td data-sort-ulpx="'+ulPxNum+'" style="color:var(--ambb);font-family:var(--ff-mono);">'+(ulCell.replace(/^<td[^>]*>|<\/td>$/g, ''))+'</td>';
     html += '<tr data-tk="'+tk+'" data-tp="'+tp+'" data-st="'+st+'" data-ex="'+ex+'" data-qty="'+qty+'" data-sym="'+sym+'"'
+      + ' data-sort-mid="'+(p.last||0)+'" data-sort-pnl="'+(p.pnl||0)+'" data-sort-pnlpct="'+(p.pnlPct||0)+'"'
+      + ' data-sort-strike="'+(st||0)+'" data-sort-exp="'+(ex||'')+'" data-sort-dte="'+(p.dte||0)+'"'
+      + ' data-sort-opened="'+(p.openTs||p.dateAcquired||'')+'"'
       + (openedToday ? ' class="pos-row-today" title="Opened or rolled today — closing intraday triggers a PDT day-trade"' : '')
       + '>'
       +'<td><b>'+tk+'</b>'+(isStock?' <span style="color:var(--gry);font-size:10px;">EQ</span>':'')+'</td>'  // TICKER
       +formatOpenedDateTime(p, openedToday)                                                                  // OPENED
       +'<td style="white-space:nowrap;"><button class="cbtn" onclick="doClose(this)">CLOSE</button></td>'    // CLOSE
       +rollCell                                                                                               // ROLL
+      +stockPxCellHL                                                                                          // STOCK PRICE (now right of ROLL)
+      +deltaCell                                                                                              // DELTA (new)
       +'<td>'+qty+(isStock?' <span style="color:var(--gry2);font-size:9px;">sh</span>':'')+'</td>'           // QTY
       +priceCell                                                                                              // PRICE (contract/share mid)
-      +equityCell                                                                                             // EQUITY (qty x price x mult)
+      +equityCellHL                                                                                           // EQUITY (highlighted)
       +'<td class="'+pnlCls+'">'+(p.pnl>=0?'+':'')+fmtD(p.pnl)+'</td>'                                       // P/L $
       +'<td class="'+pnlCls+'">'+(p.pnlPct>=0?'+':'')+fmtP(p.pnlPct)+'</td>'                                 // P/L %
       +strikeCell                                                                                             // STRIKE
       +expCell                                                                                                // EXP (MM/DD/YY)
       +dteCell                                                                                                // DTE
-      +'<td style="color:var(--gry3)">'+(isStock?'—':ulCell)+'</td>'                                    // STOCK PRICE (current UL)
       +ulEntryCell                                                                                            // ENTRY PRICE (UL when opened)
       +beCell                                                                                                 // B/E
       +atrCells                                                                                               // 1/2 ATR | 1 ATR | EMERGENCY EXIT
@@ -18989,10 +19088,15 @@ function resetOrderForm(opts){
   if(eid('ord-otype')) eid('ord-otype').value = 'limit';
   if(eid('ord-qty')) eid('ord-qty').value = 1;
   if(eid('ord-duration')) eid('ord-duration').value = 'day';
-  // Step-fill controls back to default (start at BID for opens)
+  // Step-fill controls back to default (start at BID for opens). User
+  // spec 2026-05-05: keep STEP FILL MODE checked across order submissions.
+  // The toggle stays ON regardless — only the start side flips back to
+  // 'bid' for the next OPEN order.
   var sfStart = eid('sf-start'); if(sfStart) sfStart.value = 'bid';
   var sfToggle = eid('step-fill-toggle');
-  if(sfToggle && sfToggle.checked){ sfToggle.checked = false; toggleStepFill(); }
+  if (sfToggle && !sfToggle.checked){ sfToggle.checked = true; toggleStepFill(); }
+  // Clear sym price chip
+  try { var sx = document.getElementById('ord-sym-px'); if (sx) sx.innerHTML = ''; } catch(_){}
   // Clear stale liveQuote so next order doesn't use the previous symbol's prices
   G.liveQuote = null;
   // Clear quote-panel display
@@ -22184,7 +22288,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.3.1-industry-score-spacing';
+var APP_VERSION = '2.4.0-pos-redesign-eod-log';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -22254,7 +22358,11 @@ function loadAppSettings(){
       if(eid('sf-delay')    && sf.delay)    eid('sf-delay').value    = sf.delay;
       if(eid('sf-start')    && sf.startFrom)eid('sf-start').value    = sf.startFrom;
       if(eid('sf-fallback') && sf.fallback) eid('sf-fallback').value = sf.fallback;
-      if(eid('step-fill-toggle') && sf.enabled){
+      // Step fill is ALWAYS ON by default 2026-05-05 per user spec —
+      // we ignore the stored "enabled" flag and force ON. The other
+      // sub-settings (coverage / max / delay / start / fallback) still
+      // hydrate from the persisted snapshot.
+      if(eid('step-fill-toggle') && !eid('step-fill-toggle').checked){
         eid('step-fill-toggle').checked = true;
         toggleStepFill();
       }
@@ -26715,6 +26823,310 @@ window.addEventListener('DOMContentLoaded',init);
   });
 
   console.log('[news] ready');
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  POSITIONS TABLE — sortable columns + end-of-day equity log
+//  User spec 2026-05-05: clickable column headers + EOD account-balance
+//  tracker including cash + buying power.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  // ── SORTABLE COLUMNS ─────────────────────────────────────────────────────
+  // Each <th data-sort="key"> is clickable. We extract the per-row sort
+  // value from data-sort-<key> attributes (set by renderPositionsTable),
+  // sort the rows, and put them back. Direction toggles on repeat clicks
+  // of the same header.
+  var posSort = { key: null, dir: 1 };
+
+  function _val(tr, key){
+    if (key === 'ticker') return (tr.dataset.tk || '').toLowerCase();
+    if (key === 'opened') return tr.dataset.sortOpened || '';
+    if (key === 'ulpx'){
+      var c = tr.querySelector('td[data-sort-ulpx]');
+      return parseFloat(c && c.dataset.sortUlpx) || -Infinity;
+    }
+    if (key === 'delta'){
+      var c = tr.querySelector('td[data-sort-delta]');
+      return parseFloat(c && c.dataset.sortDelta) || -Infinity;
+    }
+    if (key === 'equity'){
+      var c = tr.querySelector('td[data-sort-equity]');
+      return parseFloat(c && c.dataset.sortEquity) || -Infinity;
+    }
+    if (key === 'qty')    return Math.abs(parseFloat(tr.dataset.qty)||0);
+    if (key === 'mid')    return parseFloat(tr.dataset.sortMid)||0;
+    if (key === 'pnl')    return parseFloat(tr.dataset.sortPnl)||0;
+    if (key === 'pnlPct') return parseFloat(tr.dataset.sortPnlpct)||0;
+    if (key === 'strike') return parseFloat(tr.dataset.sortStrike||tr.dataset.st||0)||0;
+    if (key === 'exp')    return tr.dataset.sortExp || tr.dataset.ex || '';
+    if (key === 'dte')    return parseFloat(tr.dataset.sortDte)||0;
+    if (key === 'entry'){
+      var sym = tr.dataset.sym;
+      var pod = (window.G && G.posOpenData && G.posOpenData[sym]) || {};
+      return pod.underlyingAtOpen || 0;
+    }
+    if (key === 'be'){
+      var sym2 = tr.dataset.sym;
+      var st = parseFloat(tr.dataset.st)||0;
+      // Pull cost basis per share — break-even = strike + (cost / qty / 100)
+      var pod2 = (window.G && G.posOpenData && G.posOpenData[sym2]) || {};
+      var cb = pod2.costBasis || 0;
+      var q = Math.abs(parseFloat(tr.dataset.qty)||0);
+      if (st && cb && q) return st + (cb / q / 100);
+      return st || 0;
+    }
+    return 0;
+  }
+
+  function applyPosSort(){
+    var table = document.getElementById('pos-table');
+    if (!table || !posSort.key) return;
+    var tbody = table.tBodies && table.tBodies[0];
+    if (!tbody) return;
+    // Pair each data row with its inline trail-config row that sits
+    // immediately after it (id="tscfg-<sym>"); keep them together.
+    var rows = Array.prototype.slice.call(tbody.children);
+    var pairs = [];
+    for (var i = 0; i < rows.length; i++){
+      var r = rows[i];
+      if (r.classList && r.classList.contains('ts-row-cfg')) continue;
+      var cfg = r.nextElementSibling && r.nextElementSibling.classList.contains('ts-row-cfg')
+        ? r.nextElementSibling : null;
+      pairs.push({ data:r, cfg:cfg });
+    }
+    var k = posSort.key, d = posSort.dir;
+    pairs.sort(function(a, b){
+      var av = _val(a.data, k), bv = _val(b.data, k);
+      if (typeof av === 'string' && typeof bv === 'string'){
+        return d * av.localeCompare(bv);
+      }
+      if (av < bv) return -1 * d;
+      if (av > bv) return 1 * d;
+      return 0;
+    });
+    var frag = document.createDocumentFragment();
+    pairs.forEach(function(p){
+      frag.appendChild(p.data);
+      if (p.cfg) frag.appendChild(p.cfg);
+    });
+    tbody.appendChild(frag);
+    // Update header arrows
+    table.querySelectorAll('th[data-sort]').forEach(function(th){
+      th.classList.remove('sorted-asc','sorted-desc');
+      if (th.dataset.sort === k){
+        th.classList.add(d > 0 ? 'sorted-asc' : 'sorted-desc');
+      }
+    });
+  }
+
+  function _hookSortHeaders(){
+    var table = document.getElementById('pos-table');
+    if (!table || table._sortWired) return;
+    table._sortWired = true;
+    table.addEventListener('click', function(e){
+      var th = e.target.closest('th[data-sort]');
+      if (!th) return;
+      var k = th.dataset.sort;
+      if (posSort.key === k){
+        posSort.dir = -posSort.dir;
+      } else {
+        posSort.key = k;
+        // Default direction per column type — numeric desc (biggest first),
+        // text asc.
+        var numericKeys = {qty:1,mid:1,equity:1,pnl:1,pnlPct:1,strike:1,dte:1,
+                           ulpx:1,delta:1,entry:1,be:1};
+        posSort.dir = numericKeys[k] ? -1 : 1;
+      }
+      applyPosSort();
+      try { if (typeof hap === 'function') hap(5); } catch(_){}
+    });
+  }
+
+  // Re-wire after every renderPositionsTable since it rebuilds the table
+  if (typeof renderPositionsTable === 'function' && !renderPositionsTable._sortHooked){
+    var _origRPT = window.renderPositionsTable;
+    window.renderPositionsTable = function(){
+      var r = _origRPT.apply(this, arguments);
+      try { _hookSortHeaders(); if (posSort.key) applyPosSort(); } catch(_){}
+      return r;
+    };
+    window.renderPositionsTable._sortHooked = true;
+  }
+  // Also hook on first load in case the table is rendered before this
+  // module's IIFE runs.
+  window.addEventListener('load', function(){
+    setTimeout(function(){ try { _hookSortHeaders(); } catch(_){} }, 800);
+  });
+
+  // ── END-OF-DAY EQUITY LOG ────────────────────────────────────────────────
+  // Snapshots {date, equity, cash, positionsValue} once per ET trading day,
+  // shortly after market close (~16:05 ET on weekdays). Persists to
+  // localStorage. Renders as a compact card on the Positions tab below the
+  // existing position bottom panels.
+  var EOD_KEY = 'rrjcar_eod_equity_log_v1';
+
+  function _todayKeyET(){
+    try {
+      return new Date().toLocaleDateString('en-US', {timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit'}).replace(/\//g,'-');
+    } catch(_) { return new Date().toISOString().slice(0,10); }
+  }
+  function _loadLog(){
+    try { return JSON.parse(localStorage.getItem(EOD_KEY) || '[]'); }
+    catch(_){ return []; }
+  }
+  function _saveLog(arr){
+    try { localStorage.setItem(EOD_KEY, JSON.stringify(arr.slice(-365))); } catch(_){}
+  }
+
+  // Snapshot logic — pulls cash + positions market value from G.balances
+  // and G.positions if they're hydrated. Fires on demand or via the 16:05
+  // ET cron below. De-dupes within the same ET trading day.
+  function snapshotEodEquity(force){
+    try {
+      var arr = _loadLog();
+      var today = _todayKeyET();
+      if (!force && arr.length && arr[arr.length-1].date === today) return arr;
+      // Total equity sources:
+      //   G.balances (Tradier balances payload):
+      //     total_cash, total_equity, option_buying_power, market_value
+      //   Fallback: sum positionsValue from G.positions
+      var bal = (typeof G !== 'undefined' && G.balances) || null;
+      var cash = bal ? (parseFloat(bal.total_cash) || parseFloat(bal.cash && bal.cash.cash_available) || 0) : 0;
+      var totalEq = bal ? (parseFloat(bal.total_equity) || parseFloat(bal.account_value) || 0) : 0;
+      var optBp = bal ? (parseFloat(bal.option_buying_power) || 0) : 0;
+      var posVal = 0;
+      if (typeof G !== 'undefined' && G.positions){
+        G.positions.forEach(function(p){
+          var mult = (p.type === 'STOCK') ? 1 : 100;
+          posVal += (p.last || 0) * Math.abs(p.qty || 0) * mult;
+        });
+      }
+      if (!totalEq) totalEq = cash + posVal;
+      // Skip empty snapshots (no creds / no data) so we don't pollute the log
+      if (!totalEq && !cash && !posVal) return arr;
+      arr.push({
+        date: today,
+        ts: Date.now(),
+        equity: +totalEq.toFixed(2),
+        cash: +cash.toFixed(2),
+        positionsValue: +posVal.toFixed(2),
+        optionBP: +optBp.toFixed(2)
+      });
+      _saveLog(arr);
+      return arr;
+    } catch(e){ console.warn('[eod] snapshot failed', e); return _loadLog(); }
+  }
+  window.snapshotEodEquity = snapshotEodEquity;
+
+  // EOD card renderer — appears on the Positions tab. Compact: last 7
+  // days table + total equity sparkline. Click EXPORT for CSV.
+  function renderEodCard(){
+    var card = document.getElementById('eod-equity-card');
+    if (!card) return;
+    var arr = _loadLog();
+    if (!arr.length){
+      card.innerHTML = '<div style="padding:10px 14px;color:var(--gry);font-size:11px;font-family:var(--ff-mono);">EOD equity log — no snapshots yet. Auto-captures daily after market close, or click <button class="btn" style="font-size:10px;padding:3px 8px;margin-left:4px;" onclick="snapshotEodEquity(true);renderEodCard();">SNAPSHOT NOW</button></div>';
+      return;
+    }
+    var recent = arr.slice(-30);
+    var firstEq = recent[0].equity;
+    var lastEq = recent[recent.length-1].equity;
+    var totalDelta = lastEq - firstEq;
+    var totalPct = firstEq ? (totalDelta / firstEq) * 100 : 0;
+    var deltaCls = totalDelta >= 0 ? 'pnl-pos' : 'pnl-neg';
+    var deltaSign = totalDelta >= 0 ? '+' : '';
+    var rowsHTML = recent.slice(-7).reverse().map(function(r, i, all){
+      var prev = i < all.length - 1 ? all[i+1] : null;
+      var dlt = prev ? r.equity - prev.equity : 0;
+      var dltCls = dlt >= 0 ? 'pnl-pos' : 'pnl-neg';
+      var sgn = dlt >= 0 ? '+' : '';
+      return '<tr><td style="font-family:var(--ff-mono);">'+r.date+'</td>'
+        + '<td style="text-align:right;font-family:var(--ff-mono);color:var(--ambb);font-weight:700;">$'+(r.equity.toLocaleString('en-US', {minimumFractionDigits:2}))+'</td>'
+        + '<td style="text-align:right;font-family:var(--ff-mono);color:var(--gry);font-size:10px;">$'+(r.cash.toLocaleString('en-US', {minimumFractionDigits:0}))+'</td>'
+        + '<td style="text-align:right;font-family:var(--ff-mono);color:var(--gry);font-size:10px;">$'+(r.positionsValue.toLocaleString('en-US', {minimumFractionDigits:0}))+'</td>'
+        + '<td class="'+dltCls+'" style="text-align:right;font-family:var(--ff-mono);font-size:10px;">'+(prev ? sgn + '$' + dlt.toFixed(2) : '—')+'</td></tr>';
+    }).join('');
+    card.innerHTML =
+      '<div style="padding:8px 14px;border-bottom:1px solid var(--bg3);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
+      +   '<span style="font-family:var(--ff-brand);font-size:11px;color:var(--amb);letter-spacing:1.5px;">EOD EQUITY LOG</span>'
+      +   '<span style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);">'+arr.length+' snapshot'+(arr.length===1?'':'s')+' · last 7 days shown</span>'
+      +   '<span style="margin-left:auto;color:var(--gry);font-size:10px;">30d Δ: <b class="'+deltaCls+'">'+deltaSign+'$'+totalDelta.toFixed(2)+' ('+deltaSign+totalPct.toFixed(2)+'%)</b></span>'
+      +   '<button class="btn" style="font-size:10px;padding:4px 10px;" onclick="snapshotEodEquity(true);renderEodCard();" title="Capture a new snapshot now">+ SNAPSHOT</button>'
+      +   '<button class="btn" style="font-size:10px;padding:4px 10px;" onclick="exportEodCsv()" title="Download all snapshots as CSV">CSV</button>'
+      + '</div>'
+      + '<table style="width:100%;font-size:11px;border-collapse:collapse;">'
+      +   '<thead><tr style="background:var(--bg2);"><th style="padding:5px 10px;text-align:left;color:var(--gry);font-size:10px;">DATE</th><th style="padding:5px 10px;text-align:right;color:var(--gry);font-size:10px;">EQUITY</th><th style="padding:5px 10px;text-align:right;color:var(--gry);font-size:10px;">CASH</th><th style="padding:5px 10px;text-align:right;color:var(--gry);font-size:10px;">POS VAL</th><th style="padding:5px 10px;text-align:right;color:var(--gry);font-size:10px;">DAY Δ</th></tr></thead>'
+      +   '<tbody>'+rowsHTML+'</tbody></table>';
+  }
+  window.renderEodCard = renderEodCard;
+
+  // Export CSV — useful for dropping into a spreadsheet for tax prep
+  // or year-over-year analysis.
+  function exportEodCsv(){
+    var arr = _loadLog();
+    if (!arr.length){ if(typeof toast==='function') toast('No snapshots to export'); return; }
+    var hdr = ['date','equity','cash','positionsValue','optionBP'];
+    var rows = [hdr.join(',')];
+    arr.forEach(function(r){
+      rows.push([r.date, r.equity, r.cash, r.positionsValue, r.optionBP || 0].join(','));
+    });
+    var blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8'});
+    var a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = 'eod_equity_'+new Date().toISOString().slice(0,10)+'.csv';
+    document.body.appendChild(a); a.click(); document.body.removeChild(a);
+    if(typeof toast==='function') toast(arr.length+' snapshots exported');
+  }
+  window.exportEodCsv = exportEodCsv;
+
+  // Inject the EOD card under the position bottom panels on first load.
+  function _ensureEodCard(){
+    if (document.getElementById('eod-equity-card')) return;
+    var anchor = document.getElementById('pos-bottom-panels');
+    if (!anchor) return;
+    var card = document.createElement('div');
+    card.id = 'eod-equity-card';
+    card.style.cssText = 'background:var(--bg1);border:1px solid var(--bg3);border-radius:4px;margin:8px 8px 12px;overflow-x:auto;';
+    anchor.parentNode.insertBefore(card, anchor.nextSibling);
+    renderEodCard();
+  }
+
+  // Auto-snapshot scheduler. Fires:
+  //   1. Once on app init (so the user sees data immediately)
+  //   2. Every minute, gated to only fire AFTER 16:00 ET on weekdays
+  //      AND only if today's snapshot doesn't already exist.
+  function _maybeAutoSnapshot(){
+    try {
+      var now = new Date();
+      var nyParts = now.toLocaleString('en-US', {timeZone:'America/New_York', weekday:'short', hour:'2-digit', minute:'2-digit', hour12:false});
+      var m = nyParts.match(/^(\w{3}),?\s+(\d{2}):(\d{2})/);
+      if (!m) return;
+      var dow = m[1];
+      if (dow === 'Sat' || dow === 'Sun') return;
+      var hh = parseInt(m[2],10), mm = parseInt(m[3],10);
+      // After 4:00pm ET (market close)
+      if (hh < 16 || (hh === 16 && mm < 5)) return;
+      var arr = _loadLog();
+      var today = _todayKeyET();
+      if (arr.length && arr[arr.length-1].date === today) return;
+      snapshotEodEquity(false);
+      try { renderEodCard(); } catch(_){}
+    } catch(_){}
+  }
+
+  window.addEventListener('load', function(){
+    setTimeout(function(){
+      try { _ensureEodCard(); } catch(_){}
+      // Capture an initial snapshot if one doesn't exist for today AND we
+      // have balances/positions data hydrated. Safe to call repeatedly —
+      // snapshotEodEquity de-dupes within the trading day.
+      setTimeout(function(){ snapshotEodEquity(false); renderEodCard(); }, 4000);
+      // Auto-snapshot scheduler
+      setInterval(_maybeAutoSnapshot, 60000);
+    }, 1500);
+  });
+
+  console.log('[positions-sort + EOD log] ready');
 })();
 </script>
 </body>
