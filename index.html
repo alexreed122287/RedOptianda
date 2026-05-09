@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-09T18:00-iphone-five-pack">
+<meta name="op-build" content="2026-05-09T18:30-revert-swipe-keep-inline-alert">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -19416,8 +19416,9 @@ function renderPositionsTable(pos,srcLabel){
     +'<th>CLOSE</th>'
     +'<th>ROLL</th>'
     +'<th title="Trailing-stop status + per-position config. Click to expand.">TRAIL</th>'
+    +'<th title="Per-position price + contract-value alerts. Tap to set thresholds.">ALERT</th>'
     +'</tr></thead><tbody>';
-  colCount = 21; // total columns (used by inline config row) — +1 for DAY P/L $ added 2026-05-08
+  colCount = 22; // total columns (used by inline config row) — +1 for ALERT 2026-05-09
 
   var todayCount = 0;
   pos.forEach(function(p){
@@ -19741,6 +19742,7 @@ function renderPositionsTable(pos,srcLabel){
       +'<td style="white-space:nowrap;"><button class="cbtn" onclick="doClose(this)">CLOSE</button></td>'    // CLOSE
       +rollCell                                                                                               // ROLL
       +trailCell                                                                                              // TRAIL
+      +'<td style="white-space:nowrap;text-align:center;"><button class="cbtn" title="Set price / contract-value alerts for this position" onclick="(function(b){var tr=b.closest(\'tr\');if(tr&&typeof openPosAlertSheet===\'function\')openPosAlertSheet(tr);})(this)" style="border-color:var(--amb);color:var(--amb);">&#128276; ALERT</button></td>'  // ALERT
       +'</tr>';
 
     // Inline trailing stop config row
@@ -23864,7 +23866,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.10.0-iphone-five-pack';
+var APP_VERSION = '2.10.1-revert-swipe-keep-inline-alert';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -29021,147 +29023,6 @@ window.addEventListener('DOMContentLoaded',init);
   console.log('[positions-sort] ready');
 })();
 
-// ═══════════════════════════════════════════════════════════════════════════
-//  RH-1 — POSITION ROW SWIPE-TO-ACTION (iPhone-only)
-//  User spec 2026-05-09: Robinhood-style swipe-left on a position row to
-//  reveal CLOSE / ROLL / ALERT actions as a floating overlay. Event
-//  delegation on document so we don't have to wire per-row listeners on
-//  every renderPositionsTable. Threshold: 60px left-swipe. Overlay tracks
-//  the swiped row's vertical position via getBoundingClientRect.
-//  Desktop unaffected (touch events are no-ops; existing inline buttons
-//  remain primary).
-// ═══════════════════════════════════════════════════════════════════════════
-(function(){
-  var SWIPE_THRESHOLD = 60;     // px of left-swipe required to reveal
-  var swipeState = null;        // { tr, startX, startY, currentX, t0 }
-  var overlay = null;
-
-  function _ensureOverlay(){
-    if (overlay) return overlay;
-    overlay = document.createElement('div');
-    overlay.id = 'pos-swipe-overlay';
-    overlay.style.cssText = 'position:fixed;display:none;z-index:8800;background:linear-gradient(90deg,transparent 0%,rgba(0,0,0,0.55) 30%);padding:0 12px 0 0;align-items:center;justify-content:flex-end;gap:6px;pointer-events:none;';
-    document.body.appendChild(overlay);
-    return overlay;
-  }
-
-  function _showOverlayForRow(tr){
-    var ov = _ensureOverlay();
-    var rect = tr.getBoundingClientRect();
-    ov.style.left = '0';
-    ov.style.right = '0';
-    ov.style.top = rect.top + 'px';
-    ov.style.height = rect.height + 'px';
-    ov.style.display = 'flex';
-    ov.style.pointerEvents = 'auto';
-    var sym = tr.dataset.sym || '';
-    var tk  = tr.dataset.tk  || '';
-    // The buttons need to call into the existing closure-bound handlers
-    // (doClose, openRollModal, openPosAlertSheet). We pass the tr via a
-    // global handle so the buttons can find it on click.
-    ov._activeTr = tr;
-    ov.innerHTML =
-        '<button class="osw-btn osw-alert" style="background:var(--bg2);border:1px solid var(--amb);color:var(--amb);font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:10px 14px;border-radius:6px;min-height:38px;box-shadow:0 4px 12px rgba(0,0,0,.5);" onclick="_swipePosAlert(this)">ALERT</button>'
-      + '<button class="osw-btn osw-roll" style="background:#ffa726;border:1px solid #ffa726;color:#000;font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:10px 14px;border-radius:6px;min-height:38px;box-shadow:0 4px 12px rgba(0,0,0,.5);" onclick="_swipePosRoll(this)">ROLL</button>'
-      + '<button class="osw-btn osw-close" style="background:#ef5350;border:1px solid #ef5350;color:#fff;font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:1px;padding:10px 14px;border-radius:6px;min-height:38px;box-shadow:0 4px 12px rgba(0,0,0,.5);" onclick="_swipePosClose(this)">CLOSE</button>';
-    // Auto-dismiss after 4 seconds of no interaction.
-    if (overlay._dismissTimer) clearTimeout(overlay._dismissTimer);
-    overlay._dismissTimer = setTimeout(_hideOverlay, 4000);
-  }
-
-  function _hideOverlay(){
-    if (overlay){
-      overlay.style.display = 'none';
-      overlay.style.pointerEvents = 'none';
-      overlay._activeTr = null;
-    }
-  }
-
-  // Public hook for the buttons in the overlay HTML.
-  window._swipePosClose = function(){
-    var tr = overlay && overlay._activeTr; if (!tr) return;
-    _hideOverlay();
-    // doClose expects a button element; synthesize a fake target whose
-    // closest('tr') returns the row. The real doClose reads tr.dataset.
-    var fakeBtn = { closest: function(s){ return s === 'tr' ? tr : null; } };
-    try { if (typeof doClose === 'function') doClose(fakeBtn); } catch(e){ console.error('[swipe-close]', e); }
-  };
-  window._swipePosRoll = function(){
-    var tr = overlay && overlay._activeTr; if (!tr) return;
-    _hideOverlay();
-    var sym = tr.dataset.sym;
-    try { if (typeof openRollModal === 'function') openRollModal(sym); } catch(e){ console.error('[swipe-roll]', e); }
-  };
-  window._swipePosAlert = function(){
-    var tr = overlay && overlay._activeTr; if (!tr) return;
-    _hideOverlay();
-    try { if (typeof openPosAlertSheet === 'function') openPosAlertSheet(tr); } catch(e){ console.error('[swipe-alert]', e); }
-  };
-
-  // Touch wiring — event delegation on document so it works after every
-  // re-render. Only activates inside #pos-tbl-wrap.
-  document.addEventListener('touchstart', function(e){
-    if (window.innerWidth > 768) return;     // mobile only
-    var t = e.target.closest && e.target.closest('#pos-tbl-wrap tr[data-sym]');
-    if (!t) return;
-    if (e.target.closest('button')) return;  // tap on inline buttons → ignore swipe
-    var touch = e.touches[0];
-    swipeState = { tr: t, startX: touch.clientX, startY: touch.clientY, currentX: touch.clientX, t0: Date.now() };
-  }, {passive:true});
-
-  document.addEventListener('touchmove', function(e){
-    if (!swipeState) return;
-    var touch = e.touches[0];
-    swipeState.currentX = touch.clientX;
-    // Cancel swipe if vertical movement dominates (user is scrolling).
-    var dy = Math.abs(touch.clientY - swipeState.startY);
-    var dx = Math.abs(touch.clientX - swipeState.startX);
-    if (dy > dx && dy > 12){ swipeState = null; return; }
-    var leftDist = swipeState.startX - swipeState.currentX;
-    if (leftDist > 8){
-      // Visual feedback: translate the row left as the user swipes.
-      swipeState.tr.style.transform = 'translateX(-' + Math.min(leftDist, 220) + 'px)';
-      swipeState.tr.style.transition = 'none';
-    } else {
-      swipeState.tr.style.transform = '';
-    }
-  }, {passive:true});
-
-  document.addEventListener('touchend', function(e){
-    if (!swipeState) return;
-    var leftDist = swipeState.startX - swipeState.currentX;
-    var tr = swipeState.tr;
-    // Snap row back to home position with animation.
-    tr.style.transition = 'transform .2s ease';
-    tr.style.transform = '';
-    if (leftDist >= SWIPE_THRESHOLD){
-      _showOverlayForRow(tr);
-      try { if (typeof hap === 'function') hap(15); } catch(_){}
-    } else {
-      _hideOverlay();
-    }
-    swipeState = null;
-  }, {passive:true});
-
-  // Click anywhere outside the overlay → dismiss.
-  document.addEventListener('click', function(e){
-    if (!overlay || overlay.style.display === 'none') return;
-    if (e.target.closest && e.target.closest('#pos-swipe-overlay')) return;
-    _hideOverlay();
-  }, true);
-
-  // Reposition overlay on scroll/resize while it's open — otherwise it
-  // floats away from the swiped row when user scrolls.
-  document.addEventListener('scroll', function(){
-    if (!overlay || overlay.style.display === 'none') return;
-    if (!overlay._activeTr) return;
-    var rect = overlay._activeTr.getBoundingClientRect();
-    overlay.style.top = rect.top + 'px';
-    overlay.style.height = rect.height + 'px';
-  }, true);
-
-  console.log('[pos-swipe] ready');
-})();
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  FEAT-2 — PER-POSITION PRICE + CONTRACT-VALUE ALERTS
