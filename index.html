@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-08T23:00-modal-minimize-chip-banner-and-chain-exp-default">
+<meta name="op-build" content="2026-05-09T11:00-audit-fixes-and-mm-dd-yyyy-display">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -5573,7 +5573,7 @@ window.showApiBreakdown = function(){
   var modal = document.getElementById('api-breakdown-modal');
   var total = log.calls ? log.calls.length : 0;
 
-  document.getElementById('api-modal-total').textContent = total+' calls today ('+( log.date||'--')+')';
+  document.getElementById('api-modal-total').textContent = total+' calls today ('+fmtDateUS(log.date)+')';
 
   // Summary row — counts per endpoint type
   var sumEl = document.getElementById('api-summary-row');
@@ -6989,6 +6989,16 @@ function _esc(s){
   });
 }
 function fmt2(n){return isNaN(n)?'--':(+n).toFixed(2);}
+// US-format date helper. Converts a YYYY-MM-DD (the wire/storage format
+// used internally by HTML date inputs, Tradier API, ISO strings, and
+// localStorage keys) into MM-DD-YYYY for user-visible display. Pass-through
+// for null/undefined and for any string that isn't YYYY-MM-DD prefixed.
+// User spec 2026-05-09: all visible dates use MM-DD-YYYY.
+function fmtDateUS(s){
+  if (s == null) return '--';
+  var m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
+  return m ? (m[2] + '-' + m[3] + '-' + m[1]) : String(s);
+}
 function fmtP(n){return isNaN(n)?'--':(+n).toFixed(2)+'%';}
 function fmtD(n){if(isNaN(n))return'--';var v=+n;return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
 function fmtK(n){if(!n||isNaN(n))return'0';if(Math.abs(n)>=1e6)return(n/1e6).toFixed(1)+'M';if(Math.abs(n)>=1e3)return(n/1e3).toFixed(1)+'K';return''+Math.round(n);}
@@ -7782,7 +7792,7 @@ function autoSelectContract(){
 
     // Update result panel summary
     eid('asr-strike').textContent  = DS+fmt2(best.strike);
-    eid('asr-exp').textContent     = best.exp;
+    eid('asr-exp').textContent     = fmtDateUS(best.exp);
     eid('asr-dte').textContent     = best.dte+'d';
     eid('asr-dte').className       = 'asr-val '+(best.dte>10&&best.dte<35?'good':'warn');
     eid('asr-vol').textContent     = fmtK(best.vol);
@@ -7790,12 +7800,25 @@ function autoSelectContract(){
     eid('asr-delta').textContent   = fmt2(best.delta);
     eid('asr-score').textContent   = '--';
 
-    // GEX from cache
-    var gexScore=(G.gexData||[]).reduce(function(f,g){ return (g.ticker===sym&&f===null)?(g.score||0):f; },null);
-    if(gexScore!==null){
-      var gL=gexScore>=2?'STRONG BULL':gexScore===1?'BULLISH':gexScore===0?'NEUTRAL':'BEARISH';
-      eid('asr-gex').textContent=gL; eid('asr-gex').className='asr-val '+(gexScore>=1?'good':'warn');
-    } else { eid('asr-gex').textContent='N/A'; eid('asr-gex').className='asr-val'; }
+    // GEX from cache. G.gexData rows use shape {t, gex, flip, callOI, putOI, flow, ...} —
+    // there's no `ticker` or `score` field. Map the stored fields to a
+    // BEARISH/NEUTRAL/BULLISH/STRONG-BULL bucket so the panel reflects
+    // real data instead of always showing N/A. (BUG-4 fix 2026-05-09)
+    var gexRow = (G.gexData||[]).find(function(g){ return g.t === sym; }) || null;
+    if (gexRow){
+      var callPct = +gexRow.flow || 0;
+      var netGex  = +gexRow.gex  || 0;
+      var label, cls;
+      if (callPct >= 70 && netGex > 0)      { label='STRONG BULL'; cls='good'; }
+      else if (callPct >= 55)                { label='BULLISH';     cls='good'; }
+      else if (callPct >= 45)                { label='NEUTRAL';     cls='warn'; }
+      else                                    { label='BEARISH';     cls='warn'; }
+      eid('asr-gex').textContent = label;
+      eid('asr-gex').className   = 'asr-val '+cls;
+    } else {
+      eid('asr-gex').textContent = 'N/A';
+      eid('asr-gex').className   = 'asr-val';
+    }
 
     // Best-per-expiry candidates list \u2014 now shows up to 3 contracts per
     // expiration (highest volume) AND guarantees at least one deep-ITM option
@@ -7890,14 +7913,14 @@ function autoSelectContract(){
         if(lastExp !== null) candHtml += '<div style="border-top:1px solid var(--bg3);margin:3px 0;"></div>';
         lastExp = c.expDate;
       }
-      candHtml+='<div class="asr-cand"'+(isSel?' style="background:rgba(59,130,246,0.07);"':'')+' onclick="applyCandidate('+o.strike+',\''+c.expDate+'\')">'        +'<span class="asr-cand-rank">'+(idx+1)+'.</span>'        +'<span style="color:'+(isSel?'var(--wht)':'var(--gry2)')+';font-weight:700;font-size:11px;width:60px;">'+DS+fmt2(o.strike)+atmTag+'</span>'        +'<span style="color:var(--gry);font-size:10px;width:90px;">'+c.expDate+'</span>'        +'<span style="color:'+(c.dte<=20?'var(--grn)':'var(--gry)')+';font-size:10px;width:42px;">'+c.dte+'d</span>'        +'<span class="asr-cand-detail">vol:<b style="color:var(--grn);">'+fmtK(c.vol)+'</b> oi:'+fmtK(o.open_interest||0)+' \u03b4'+fmt2(dlt)+deepBadge+' mid:'+DS+fmt2(mid2)+'</span>'        +(isSel?'<span style="font-size:9px;color:var(--blub);font-weight:700;">\u2713</span>':'<button class="btn" style="font-size:9px;padding:1px 6px;border-color:var(--gry2);color:var(--gry);" onclick="event.stopPropagation();applyCandidate('+o.strike+',\''+c.expDate+'\')">USE</button>')        +'</div>';
+      candHtml+='<div class="asr-cand"'+(isSel?' style="background:rgba(59,130,246,0.07);"':'')+' onclick="applyCandidate('+o.strike+',\''+c.expDate+'\')">'        +'<span class="asr-cand-rank">'+(idx+1)+'.</span>'        +'<span style="color:'+(isSel?'var(--wht)':'var(--gry2)')+';font-weight:700;font-size:11px;width:60px;">'+DS+fmt2(o.strike)+atmTag+'</span>'        +'<span style="color:var(--gry);font-size:10px;width:100px;">'+fmtDateUS(c.expDate)+'</span>'        +'<span style="color:'+(c.dte<=20?'var(--grn)':'var(--gry)')+';font-size:10px;width:42px;">'+c.dte+'d</span>'        +'<span class="asr-cand-detail">vol:<b style="color:var(--grn);">'+fmtK(c.vol)+'</b> oi:'+fmtK(o.open_interest||0)+' \u03b4'+fmt2(dlt)+deepBadge+' mid:'+DS+fmt2(mid2)+'</span>'        +(isSel?'<span style="font-size:9px;color:var(--blub);font-weight:700;">\u2713</span>':'<button class="btn" style="font-size:9px;padding:1px 6px;border-color:var(--gry2);color:var(--gry);" onclick="event.stopPropagation();applyCandidate('+o.strike+',\''+c.expDate+'\')">USE</button>')        +'</div>';
     });
     eid('asr-candidates').innerHTML=candHtml;
     resultBox.classList.add('show');
 
     var mfNote=best.monthFilter?' | month:'+best.monthFilter:'';
-    statusEl.textContent='Selected: '+DS+best.strike+' '+type+' '+best.exp+' ('+best.dte+'d) vol:'+fmtK(best.vol)+' oi:'+fmtK(best.oi)+mfNote;
-    toast('Auto-selected: '+DS+best.strike+' '+type+' exp '+best.exp);
+    statusEl.textContent='Selected: '+DS+best.strike+' '+type+' '+fmtDateUS(best.exp)+' ('+best.dte+'d) vol:'+fmtK(best.vol)+' oi:'+fmtK(best.oi)+mfNote;
+    toast('Auto-selected: '+DS+best.strike+' '+type+' exp '+fmtDateUS(best.exp));
   }, monthFilter || undefined);
 }
 
@@ -7906,7 +7929,7 @@ function applyCandidate(strike, exp){
   eid('ord-exp').value    = exp;
   updateOrdChart();
   fetchLiveQuote();
-  toast('Applied: $'+strike+' exp '+exp);
+  toast('Applied: $'+strike+' exp '+fmtDateUS(exp));
 }
 
 function autoSelectSimulated(sym, type){
@@ -7951,7 +7974,7 @@ function autoSelectSimulated(sym, type){
   fetchLiveQuote();
 
   eid('asr-strike').textContent  = '$'+strike;
-  eid('asr-exp').textContent     = best.date;
+  eid('asr-exp').textContent     = fmtDateUS(best.date);
   eid('asr-dte').textContent     = best.mdays+'d';
   eid('asr-dte').className       = 'asr-val good';
   var gexLbl = best.gexScore>=2?'STRONG BULL':best.gexScore===1?'BULLISH':'NEUTRAL';
@@ -7963,8 +7986,8 @@ function autoSelectSimulated(sym, type){
   eid('asr-score').textContent   = '~'+(Math.floor(Math.random()*30)+60);
   eid('asr-candidates').innerHTML= '<div style="color:var(--gry2);font-size:10px;padding:4px;">Simulated \u2014 add Tradier API key for real chain data</div>';
   eid('asr-result').classList.add('show');
-  eid('asr-status').textContent  = '[SIM] $'+strike+' '+type+' '+best.date+' ('+best.mdays+'d)';
-  toast('[SIM] Auto-selected: $'+strike+' '+type+' '+best.date);
+  eid('asr-status').textContent  = '[SIM] $'+strike+' '+type+' '+fmtDateUS(best.date)+' ('+best.mdays+'d)';
+  toast('[SIM] Auto-selected: $'+strike+' '+type+' '+fmtDateUS(best.date));
 }
 
 function resetQuotePanel(){
@@ -8859,7 +8882,7 @@ function openOrderStatusModal(ctx){
 
   var modal = document.createElement('div');
   modal.id = 'ord-status-modal';
-  modal.style.cssText = 'position:fixed;inset:0;z-index:9750;background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:60px 12px 24px;overflow-y:auto;';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9750;background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:max(env(safe-area-inset-top,60px),60px) 12px max(env(safe-area-inset-bottom,24px),24px);overflow-y:auto;';
   // Click outside the panel → minimize to a side chip (don't close fully).
   // The chip persists for the duration of the order and is clickable to
   // re-expand. Terminal states while minimized fire a notification banner.
@@ -9059,24 +9082,27 @@ function minimizeOrderStatusModal(){
 function restoreOrderStatusModal(){
   if (!G.orderStatus.ctx) return;
   G.orderStatus.isMinimized = false;
-  // Recreate the modal from the saved ctx. Mark a flag so openOrderStatusModal
-  // doesn't reset t0 (we want elapsed-time to keep ticking from the original
-  // submission, not restart on restore).
+  // Recreate the modal from the saved ctx. Capture terminal state BEFORE
+  // calling openOrderStatusModal — that function clears terminalState/terminalText
+  // for fresh-open semantics, which would otherwise erase the very state
+  // we want to render after restore. (BUG-5 fix 2026-05-09)
   var savedCtx = G.orderStatus.ctx;
   var savedT0 = savedCtx.t0;
-  // openOrderStatusModal calls closeOrderStatusModal({silent}) first which
-  // clears the chip, so call it directly then patch t0 back.
+  var savedTerminalState = G.orderStatus.terminalState;
+  var savedTerminalText  = G.orderStatus.terminalText;
   openOrderStatusModal(savedCtx);
   if (G.orderStatus.ctx) G.orderStatus.ctx.t0 = savedT0;
-  _removeOrderStatusChip();
-  // If the order already reached a terminal state while minimized, restore
-  // the chip's last-known state into the modal so the user sees the latest.
-  if (G.orderStatus.terminalState){
+  // Re-apply the terminal state we captured pre-open so the modal shows
+  // the last-known outcome (e.g. "FILLED @ $2.45") instead of the original
+  // SUBMITTING… state.
+  if (savedTerminalState){
+    G.orderStatus.terminalState = savedTerminalState;
+    G.orderStatus.terminalText  = savedTerminalText;
     updateOrderStatusModal({
-      state: G.orderStatus.terminalState,
-      stateText: G.orderStatus.terminalText || null,
-      logLine: 'Restored from minimized — last status: ' + (G.orderStatus.terminalText || G.orderStatus.terminalState),
-      logKind: G.orderStatus.terminalState === 'filled' ? 'filled' : 'cancelled'
+      state: savedTerminalState,
+      stateText: savedTerminalText || null,
+      logLine: 'Restored from minimized — last status: ' + (savedTerminalText || savedTerminalState),
+      logKind: savedTerminalState === 'filled' ? 'filled' : 'cancelled'
     });
   }
 }
@@ -9086,7 +9112,7 @@ function _showOrderStatusChip(){
   var c = G.orderStatus.ctx || {};
   var chip = document.createElement('div');
   chip.id = 'ord-status-chip';
-  chip.style.cssText = 'position:fixed;right:12px;top:96px;z-index:9740;background:var(--bg1);border:1px solid var(--amb);border-left:3px solid var(--amb);border-radius:6px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;box-shadow:0 0 18px rgba(0,212,255,.4);min-width:140px;max-width:200px;font-family:var(--ff-mono);font-size:10px;animation:osm-chip-in .25s ease-out;';
+  chip.style.cssText = 'position:fixed;right:12px;top:calc(max(env(safe-area-inset-top,40px),40px) + 56px);z-index:9740;background:var(--bg1);border:1px solid var(--amb);border-left:3px solid var(--amb);border-radius:6px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;box-shadow:0 0 18px rgba(0,212,255,.4);min-width:140px;max-width:200px;font-family:var(--ff-mono);font-size:10px;animation:osm-chip-in .25s ease-out;';
   var labelOcc = _esc(c.occSym || c.sym || '--');
   var labelMode = c.mode === 'step' ? 'STEP FILL' : 'ORDER';
   var stateText = G.orderStatus.terminalText || 'WORKING';
@@ -9142,7 +9168,7 @@ function showOrderTerminalBanner(state, ctx){
   var s = states[state] || states.cancelled;
   var occ = _esc(ctx.occSym || ctx.sym || '');
   var priceTxt = ctx.fillPrice ? ' @ $' + Number(ctx.fillPrice).toFixed(2) : (ctx.lastPrice ? ' last $' + Number(ctx.lastPrice).toFixed(2) : '');
-  banner.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9760;background:var(--bg1);border:2px solid '+s.col+';border-radius:10px;padding:14px 22px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 32px rgba(0,0,0,.6),0 0 28px '+s.bg+';font-family:var(--ff-brand);min-width:280px;max-width:92vw;animation:osm-banner-in .3s ease-out;cursor:pointer;';
+  banner.style.cssText = 'position:fixed;top:calc(max(env(safe-area-inset-top,24px),24px) + 8px);left:50%;transform:translateX(-50%);z-index:9760;background:var(--bg1);border:2px solid '+s.col+';border-radius:10px;padding:14px 22px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 32px rgba(0,0,0,.6),0 0 28px '+s.bg+';font-family:var(--ff-brand);min-width:280px;max-width:92vw;animation:osm-banner-in .3s ease-out;cursor:pointer;';
   banner.innerHTML =
       '<div style="font-size:32px;line-height:1;color:'+s.col+';">'+s.glyph+'</div>'
     + '<div style="flex:1;display:flex;flex-direction:column;gap:2px;">'
@@ -9153,7 +9179,7 @@ function showOrderTerminalBanner(state, ctx){
   // Click banner body → restore the modal so user can see details.
   banner.addEventListener('click', function(){
     if (G.orderStatus.ctx) restoreOrderStatusModal();
-    else { try { switchTab('positions'); } catch(_){} }
+    else { try { switchTab('pos'); } catch(_){} }
     var b = document.getElementById('ord-status-banner');
     if (b) b.remove();
   });
@@ -10170,6 +10196,19 @@ function previewOrder(){
 
 function submitOrder(){
   if(G.stepFillActive){toast('Step fill already running');return;}
+  // Refuse a 2nd submission while the previous order's status modal is
+  // minimized to a chip and still working. Submitting now would clobber
+  // the prior order's tracking (poller killed, ctx replaced) so the
+  // user would lose visibility into the in-flight order at Tradier.
+  // The user can click the chip to expand and finish/cancel the prior
+  // order, then submit again. (BUG-2 fix 2026-05-09)
+  if (G.orderStatus && G.orderStatus.isMinimized && G.orderStatus.ctx && !G.orderStatus.terminalState){
+    toast('A prior order is still tracking — expand the side chip first');
+    if (typeof restoreOrderStatusModal === 'function'){
+      try { restoreOrderStatusModal(); } catch(_){}
+    }
+    return;
+  }
   var sym=eid('ord-sym').value.trim().toUpperCase();
   if(!sym){toast('Enter a symbol first');return;}
   var key=_getTradierKey();
@@ -10554,7 +10593,11 @@ function submitOrder(){
           var POLL_EVERY_MS = 2000;
           if (G.orderStatus.oneshotPoller) clearInterval(G.orderStatus.oneshotPoller);
           G.orderStatus.oneshotPoller = setInterval(function(){
-            if (!G.orderStatus.modalEl){ clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null; return; }
+            // Keep polling while the order context is alive — even if the
+            // user minimized the modal (modalEl becomes null on minimize).
+            // Stops only when ctx is cleared (closeOrderStatusModal) or the
+            // order reaches a terminal state.
+            if (!G.orderStatus.ctx || G.orderStatus.terminalState){ clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null; return; }
             if (Date.now() - pollStart > POLL_BUDGET_MS){
               clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
               updateOrderStatusModal({state:'not-filled', stateText:'STILL WORKING', logLine:'Stopped polling after 5 min — order may still fill at the broker.', logKind:'rejected'});
@@ -14126,7 +14169,7 @@ function buildDetail(r,detId,emptyId){
     +'<div class="og-cell"><div class="og-lbl">Spread %</div><div class="og-val '+(opt.spreadPct<2?'ok':'warn')+'">'+fmtP(opt.spreadPct)+(opt.spreadPct<2?' \u2713':' \u2717')+'</div></div>'
     +'<div class="og-cell"><div class="og-lbl">DTE</div><div class="og-val '+((opt.dte>=25&&opt.dte<=50)?'ok':'warn')+'">'+opt.dte+'d'+((opt.dte>=25&&opt.dte<=50)?' \u2713':' \u2717')+'</div></div>'
     +'<div class="og-cell"><div class="og-lbl">Strike</div><div class="og-val">$'+fmt2(opt.strike)+'</div></div>'
-    +'<div class="og-cell"><div class="og-lbl">Expiry</div><div class="og-val">'+opt.exp+'</div></div>'
+    +'<div class="og-cell"><div class="og-lbl">Expiry</div><div class="og-val">'+fmtDateUS(opt.exp)+'</div></div>'
     +'<div class="og-cell"><div class="og-lbl">Opt Price</div><div class="og-val">$'+fmt2(opt.optPr)+'</div></div>'
     +'<div class="og-cell"><div class="og-lbl">OI / Vol</div><div class="og-val">'+fmtK(opt.oi)+' / '+fmtK(opt.vol)+'</div></div>'
     +'</div>'
@@ -14135,7 +14178,7 @@ function buildDetail(r,detId,emptyId){
     /* BUY PUT button hidden \u2014 long-calls-only strategy. doBuyPut() function
        still exists below so it can be called from console / re-enabled if
        direction-neutral trading ever returns. */
-    +'<span style="color:var(--gry);font-size:10px;">Strike: $'+fmt2(opt.strike)+'  |  Exp: '+opt.exp+'</span>'
+    +'<span style="color:var(--gry);font-size:10px;">Strike: $'+fmt2(opt.strike)+'  |  Exp: '+fmtDateUS(opt.exp)+'</span>'
     +'</div>'
     +'<div class="s-hdr">RULE SCORECARD v4.0 <span style="font-size:10px;color:var(--gry);font-weight:400;">Tech '+techScore+' + Fund '+fundScore+' = '+r.score+'/240</span></div>'
     +'<div class="rules-grid">'+rulesHtml+'</div>'
@@ -14238,7 +14281,7 @@ async function loadOptionChain(ticker){
     var dte   = Math.round((expMs - _today.getTime()) / 86400000);
     var sel = (d === defaultExp) ? ' selected' : '';
     var monthlyTag = _isMonthlyExp(d) ? ' M' : '';
-    return '<option value="'+d+'"'+sel+'>'+d+' ('+dte+'d)'+monthlyTag+'</option>';
+    return '<option value="'+d+'"'+sel+'>'+fmtDateUS(d)+' ('+dte+'d)'+monthlyTag+'</option>';
   }).join('');
 
   chainDiv.innerHTML =
@@ -14281,7 +14324,7 @@ async function renderChainForExp(ticker, expDate, underlyingPrice){
   var showType    = typeEl    ? typeEl.value    : 'both';
   var strikeLimit = strikesEl ? parseInt(strikesEl.value) : 20;
   if(!wrap) return;
-  wrap.innerHTML = '<div class="chain-loading">Loading '+expDate+'...</div>';
+  wrap.innerHTML = '<div class="chain-loading">Loading '+_esc(fmtDateUS(expDate))+'...</div>';
   if(status) status.textContent = 'Fetching...';
 
   var chainData;
@@ -14294,7 +14337,7 @@ async function renderChainForExp(ticker, expDate, underlyingPrice){
 
   var options = [];
   try{ options = chainData.options.option; if(!Array.isArray(options)) options=[options]; }catch(e){}
-  if(!options.length){ wrap.innerHTML='<div class="chain-loading">No options data for '+expDate+'</div>'; return; }
+  if(!options.length){ wrap.innerHTML='<div class="chain-loading">No options data for '+_esc(fmtDateUS(expDate))+'</div>'; return; }
 
   var calls = {}, puts = {};
   options.forEach(function(o){
@@ -14475,7 +14518,7 @@ function chainRowClick(ticker, strike, expDate){
     if(eid('ord-action')) eid('ord-action').value = 'BUY_TO_OPEN';
     if(eid('ord-qty'))    eid('ord-qty').value    = 1;
     fetchLiveQuote();
-    toast(ticker+' '+DS+strike+' '+optType+' '+expDate+' pre-filled in Order Ticket');
+    toast(ticker+' '+DS+strike+' '+optType+' '+fmtDateUS(expDate)+' pre-filled in Order Ticket');
   }, 120);
 }
 
@@ -14534,7 +14577,7 @@ async function loadOrdChain(forcedSym){
     var expSel = eid('ord-chain-exp');
     expSel.innerHTML = dates.map(function(d){
       var dte = Math.round((new Date(d+'T16:00:00').getTime() - nowMs) / (24*3600*1000));
-      return '<option value="'+_esc(d)+'"'+(d===picked?' selected':'')+'>'+_esc(d)+' ('+dte+'d)</option>';
+      return '<option value="'+_esc(d)+'"'+(d===picked?' selected':'')+'>'+_esc(fmtDateUS(d))+' ('+dte+'d)</option>';
     }).join('');
     expSel.onchange = function(){ renderOrdChain(sym, this.value); };
     var rangeSel = eid('ord-chain-range');
@@ -14552,7 +14595,7 @@ async function renderOrdChain(sym, expDate){
   var wrap = eid('ord-chain-tbl-wrap');
   if (!wrap) return;
   if (status) status.textContent = 'loading chain…';
-  var creds = (typeof getCreds === 'function') ? getCreds() : null;
+  var creds = (typeof getTradierCreds === 'function') ? getTradierCreds() : null;
   if (!creds || !creds.key){ if (status) status.textContent = ''; return; }
   try {
     var url = creds.host + '/v1/markets/options/chains?symbol=' + encodeURIComponent(sym) + '&expiration=' + encodeURIComponent(expDate) + '&greeks=true';
@@ -14565,7 +14608,7 @@ async function renderOrdChain(sym, expDate){
     opts.forEach(function(o){ if (o && o.option_type === 'call') calls[o.strike] = o; });
     var allStrikes = Object.keys(calls).map(parseFloat).sort(function(a,b){return a-b;});
     if (!allStrikes.length){
-      wrap.innerHTML = '<div style="color:var(--wrn);font-size:11px;text-align:center;padding:14px;">No call contracts found for '+_esc(sym)+' '+_esc(expDate)+'.</div>';
+      wrap.innerHTML = '<div style="color:var(--wrn);font-size:11px;text-align:center;padding:14px;">No call contracts found for '+_esc(sym)+' '+_esc(fmtDateUS(expDate))+'.</div>';
       if (status) status.textContent = '';
       return;
     }
@@ -14659,7 +14702,7 @@ function ordChainRowClick(sym, strike, expDate){
   if (eid('ord-action')) eid('ord-action').value = 'BUY_TO_OPEN';
   if (eid('ord-qty') && !eid('ord-qty').value)    eid('ord-qty').value = 1;
   if (typeof fetchLiveQuote === 'function') fetchLiveQuote();
-  toast('CALL $'+Number(strike).toFixed(2)+' '+expDate+' pre-filled');
+  toast('CALL $'+Number(strike).toFixed(2)+' '+fmtDateUS(expDate)+' pre-filled');
 }
 
 // Lazy-load when user opens the card (saves an API call until needed).
@@ -17907,7 +17950,7 @@ function renderGex(){
     var simBadge=r.sim?'<span style="font-size:9px;color:var(--gry);margin-left:4px;">[SIM]</span>':'';
     var emptyBadge=isEmpty?'<span style="font-size:9px;color:var(--ngo);margin-left:4px;" title="Tradier returned no options chain for this ticker - illiquid, expired, or out-of-hours.">[NO DATA]</span>':'';
     var primeBadge=prime?'<span style="font-size:9px;color:var(--grn);margin-left:4px;font-weight:700;letter-spacing:.5px;" title="Prime bullish entry - meets ALL criteria: net gex >0, call% >=90, callOI >1K, spot > flip, DTE 30-45.">&#9733; PRIME</span>':'';
-    var expCell = r.exp ? r.exp.split('-').slice(1).join('/') : '--';
+    var expCell = fmtDateUS(r.exp);
     var flipNum = parseFloat(r.flip);
     var strikeCell = (isFinite(flipNum) && flipNum > 0) ? ('$' + fmt2(flipNum)) : '--';
     var spot = spotByTk[r.t] || 0;
@@ -19375,7 +19418,16 @@ function updatePosStats(){
              ? G.lastBalances.total_equity : null;
   var dayPnl = 0;
   if(equity != null){
-    var todayKey = new Date().toISOString().slice(0,10);
+    // ET-anchored day key. Using toISOString() (UTC) caused the day to flip
+    // around 8 PM ET — making "today" become "tomorrow" while the trading
+    // day was still active, so the day P/L summary read its own entry as a
+    // prior-day baseline and showed ~$0. (BUG-7 fix 2026-05-09)
+    var todayKey = (function(){
+      try {
+        var p = new Date().toLocaleDateString('en-US', { timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).split('/');
+        return p[2] + '-' + p[0] + '-' + p[1];   // YYYY-MM-DD storage format preserved
+      } catch(_) { return new Date().toISOString().slice(0,10); }
+    })();
     var hist = [];
     try { hist = JSON.parse(localStorage.getItem('rrjcar_eq_hist') || '[]'); }
     catch(_) { hist = []; }
@@ -20060,7 +20112,7 @@ function buyOrder(ticker,type,strike,exp){
     eid('ord-strike').value=strike;eid('ord-exp').value=exp||'';
     eid('ord-action').value='BUY_TO_OPEN';eid('ord-qty').value=1;eid('ord-otype').value='limit';
     var res=eid('ord-result');
-    res.innerHTML='Order pre-filled: '+_esc(ticker)+' '+_esc(type)+' strike:'+_esc(strike)+' exp:'+_esc(exp);
+    res.innerHTML='Order pre-filled: '+_esc(ticker)+' '+_esc(type)+' strike:'+_esc(strike)+' exp:'+_esc(fmtDateUS(exp));
     res.className='ord-result show';res.style.borderColor='var(--blu)';
     toast('Buy pre-filled: '+ticker+' '+type);
     // Auto-fetch quote after pre-fill
@@ -20169,7 +20221,7 @@ function closePosition(symbol,type,strike,exp,qty){
     var lmtEl = eid('ord-lmt');
     if(lmtEl) lmtEl.value = '';
     var res = eid('ord-result');
-    res.innerHTML = '\u26a0 Close order pre-filled for <b>'+symbol+'</b> ('+absQty+(isStock?' shares':' contracts')+') \u2014 fetching fresh quote...';
+    res.innerHTML = '\u26a0 Close order pre-filled for <b>'+_esc(symbol)+'</b> ('+absQty+(isStock?' shares':' contracts')+') \u2014 fetching fresh quote...';
     res.className = 'ord-result show';
     res.style.borderColor = 'var(--wrn)';
     toast('Close order pre-filled for '+symbol+' ('+absQty+(isStock?' shares':' contracts')+')');
@@ -20193,10 +20245,10 @@ function closePosition(symbol,type,strike,exp,qty){
           var hint = eid('lmt-hint');
           if(hint) hint.textContent = 'ASK $'+fmt2(q.ask)+' (pre-filled for close \u2014 step fill will start here)';
         }
-        res.innerHTML = '\u26a0 Close order pre-filled for <b>'+symbol+'</b> \u2014 step fill will start at ASK $'+fmt2(q.ask)+' and walk down toward BID $'+fmt2(q.bid||0)+'.';
+        res.innerHTML = '\u26a0 Close order pre-filled for <b>'+_esc(symbol)+'</b> \u2014 step fill will start at ASK $'+fmt2(q.ask)+' and walk down toward BID $'+fmt2(q.bid||0)+'.';
       } else if(tries > 24){ // 6 seconds total
         clearInterval(G._closePollTimer); G._closePollTimer = null;
-        res.innerHTML = '\u26a0 Close order pre-filled for <b>'+symbol+'</b> \u2014 quote did not arrive. Click REFRESH on the quote panel before submitting.';
+        res.innerHTML = '\u26a0 Close order pre-filled for <b>'+_esc(symbol)+'</b> \u2014 quote did not arrive. Click REFRESH on the quote panel before submitting.';
       }
     }, 250);
   }, 120);
@@ -20284,8 +20336,8 @@ function doRoll(btn){
 
   // Prefill current position info
   var info = eid('roll-current-info');
-  info.innerHTML = '<b style="color:var(--wht)">'+G_roll.occSym+'</b>'
-    +' &nbsp;|&nbsp; '+G_roll.type+' $'+G_roll.strike+' exp '+G_roll.exp
+  info.innerHTML = '<b style="color:var(--wht)">'+_esc(G_roll.occSym)+'</b>'
+    +' &nbsp;|&nbsp; '+_esc(G_roll.type)+' $'+G_roll.strike+' exp '+fmtDateUS(G_roll.exp)
     +' &nbsp;|&nbsp; Qty: '+G_roll.qty;
   eid('roll-leg1-info').textContent = G_roll.occSym;
   eid('roll-leg2-info').textContent = '-- click FIND BEST --';
@@ -20449,7 +20501,7 @@ function rollLoadExpirations(){
       var dte=Math.round((new Date(d+'T00:00:00')-today)/86400000);
       var opt=document.createElement('option');
       opt.value=d;
-      opt.textContent=d+' ('+dte+'d)';
+      opt.textContent=fmtDateUS(d)+' ('+dte+'d)';
       expSel.appendChild(opt);
     });
     // Auto-select first expiry >= 21 DTE
@@ -20570,8 +20622,8 @@ function rollSelectContract(sym, byUser){
     var dte2 = newExp ? Math.round((new Date(newExp+'T00:00:00')-today)/86400000) : '--';
     eid('roll-cmp-s1').textContent = '$'+fmt2(G_roll.strike);
     eid('roll-cmp-s2').textContent = '$'+fmt2(+o.strike);
-    eid('roll-cmp-e1').textContent = G_roll.exp||'--';
-    eid('roll-cmp-e2').textContent = newExp||'--';
+    eid('roll-cmp-e1').textContent = fmtDateUS(G_roll.exp);
+    eid('roll-cmp-e2').textContent = fmtDateUS(newExp);
     eid('roll-cmp-d1').textContent = dte1+'d';
     eid('roll-cmp-d2').textContent = dte2+'d';
     var l1d = G_roll.leg1Quote && G_roll.leg1Quote._delta ? fmt2(Math.abs(G_roll.leg1Quote._delta)) : '--';
@@ -20652,7 +20704,7 @@ function rollSelectBest(fromUser){
           // Add it
           var opt = document.createElement('option');
           opt.value = best.exp;
-          opt.textContent = best.exp + ' ('+best.dte+'d)';
+          opt.textContent = fmtDateUS(best.exp) + ' ('+best.dte+'d)';
           expSel.appendChild(opt);
           expSel.value = best.exp;
         }
@@ -20690,7 +20742,7 @@ function rollSelectBest(fromUser){
         if(target){
           rollRenderChainTable(chain2);
           rollSelectContract(target.symbol);
-          eid('roll-status').textContent = 'Best found: $'+fmt2(best.strike)+' '+best.exp+' ('+best.dte+'d) vol:'+fmtK(best.vol)+' oi:'+fmtK(best.oi);
+          eid('roll-status').textContent = 'Best found: $'+fmt2(best.strike)+' '+fmtDateUS(best.exp)+' ('+best.dte+'d) vol:'+fmtK(best.vol)+' oi:'+fmtK(best.oi);
         }
       });
     });
@@ -21378,7 +21430,7 @@ function fetchClosedPositions(){
         G_closed.raw = [];
         G_closed.trades = cachedTrades;
         G_closed.openFilled = [];
-        src.textContent = '[CACHED] '+cachedTrades.length+' closed trade'+(cachedTrades.length!==1?'s':'')+' | '+startDate+' \u2192 '+endDate+' | Updated: '+new Date().toLocaleTimeString();
+        src.textContent = '[CACHED] '+cachedTrades.length+' closed trade'+(cachedTrades.length!==1?'s':'')+' | '+fmtDateUS(startDate)+' \u2192 '+fmtDateUS(endDate)+' | Updated: '+new Date().toLocaleTimeString();
         renderClosedTable();
         return;
       }
@@ -21465,7 +21517,7 @@ function fetchClosedPositions(){
     src.textContent='['+creds.mode.toUpperCase()+'] '
       +allTrades.length+' closed trade'+(allTrades.length!==1?'s':'')
       +(openFilled.length?' | '+openFilled.length+' open position'+(openFilled.length!==1?'s':''):'')
-      +' | '+startDate+' \u2192 '+endDate
+      +' | '+fmtDateUS(startDate)+' \u2192 '+fmtDateUS(endDate)
       +' | Updated: '+new Date().toLocaleTimeString();
     renderClosedTable();
   })
@@ -21536,10 +21588,10 @@ function renderClosedTable(){
       +'<td><b>'+t.underlying+'</b></td>'
       +'<td>'+t.type+'</td>'
       +'<td>'+(t.isOption?'$'+fmt2(t.strike):'--')+'</td>'
-      +'<td>'+(t.isOption?t.exp:'--')+'</td>'
+      +'<td>'+(t.isOption?fmtDateUS(t.exp):'--')+'</td>'
       +'<td>'+t.qty+'</td>'
-      +'<td style="color:var(--gry);">'+t.openDate+'</td>'
-      +'<td style="color:var(--gry);">'+t.closeDate+'</td>'
+      +'<td style="color:var(--gry);">'+fmtDateUS(t.openDate)+'</td>'
+      +'<td style="color:var(--gry);">'+fmtDateUS(t.closeDate)+'</td>'
       +'<td style="color:var(--gry);">'+t.holdDays+'d</td>'
       +'<td>$'+fmt2(t.openPrice)+'</td>'
       +'<td>$'+fmt2(t.closePrice)+'</td>'
@@ -21589,7 +21641,7 @@ function renderClosedTable(){
         +'<td>'+(parsed.type||'--')+'</td>'
         +'<td style="color:var(--grn);">'+(o.side||'').replace(/_/g,' ').toUpperCase()+'</td>'
         +'<td>'+o.exec_quantity+'</td>'
-        +'<td style="color:var(--gry);">'+(o.create_date||'').slice(0,10)+'</td>'
+        +'<td style="color:var(--gry);">'+fmtDateUS((o.create_date||'').slice(0,10))+'</td>'
         +'<td>$'+fmt2(o.avg_fill_price)+'</td>'
         +'<td><span class="badge go">OPEN</span></td>'
         +'</tr>';
@@ -21924,10 +21976,10 @@ function autoFillHighConviction(r, optData){
     var res = eid('ord-result');
     if(res){
       res.innerHTML = '<span style="color:var(--grn);font-size:13px;">&#9733; HIGH CONVICTION AUTO-FILL</span><br>'
-        + '<b>' + r.ticker + ' CALL</b>'
+        + '<b>' + _esc(r.ticker) + ' CALL</b>'
         + (optData && optData.strike ? ' &nbsp;$' + fmt2(optData.strike) : '')
-        + (optData && optData.exp    ? ' &nbsp;Exp: ' + optData.exp : '')
-        + '<br>Score: <b>' + r.score + '/240</b> | ' + r.sector + ' | $' + fmt2(r.price)
+        + (optData && optData.exp    ? ' &nbsp;Exp: ' + _esc(fmtDateUS(optData.exp)) : '')
+        + '<br>Score: <b>' + r.score + '/240</b> | ' + _esc(r.sector) + ' | $' + fmt2(r.price)
         + '<br><span style="color:var(--gry);font-size:10px;">Review fields then click SUBMIT ORDER</span>';
       res.className = 'ord-result show';
       res.style.borderColor = 'var(--grn)';
@@ -21946,13 +21998,13 @@ function showAutoSubmitModal(r, optData){
   if(tickerEl) tickerEl.textContent = r.ticker + ' \u2605 HIGH CONVICTION';
   if(detailEl) detailEl.innerHTML =
     'Score: <b style="color:var(--grn);">' + r.score + '/240</b>'
-    + ' &nbsp;|&nbsp; Sector: ' + r.sector
+    + ' &nbsp;|&nbsp; Sector: ' + _esc(r.sector)
     + ' &nbsp;|&nbsp; Price: $' + fmt2(r.price) + '<br>'
     + 'PROVEN \u2713 &nbsp; Analyst Revisions \u2191 \u2713 &nbsp; GEX Call Heavy \u2713';
   if(orderEl) orderEl.innerHTML =
     'Action: <b>BUY TO OPEN</b> &nbsp;|&nbsp; Type: <b>CALL</b><br>'
     + (optData && optData.strike ? 'Strike: <b>$' + fmt2(optData.strike) + '</b> &nbsp;|&nbsp; ' : '')
-    + (optData && optData.exp    ? 'Expiry: <b>' + optData.exp + '</b> &nbsp;|&nbsp; ' : '')
+    + (optData && optData.exp    ? 'Expiry: <b>' + _esc(fmtDateUS(optData.exp)) + '</b> &nbsp;|&nbsp; ' : '')
     + 'Qty: <b>' + qty + '</b>'
     + (optData && (optData.mid||optData.optPr) ? ' &nbsp;|&nbsp; Limit: <b>$' + fmt2(optData.mid||optData.optPr) + '</b>' : '');
   var modal = eid('hc-modal');
@@ -22605,12 +22657,12 @@ function probePreMarketData(){
       var sign = cp > 0 ? '+' : '';
       var stale = (parseFloat(q.last) === parseFloat(q.prevclose)) ? ' <span style="color:var(--gry2);font-size:9px;">(no extended-hours trade)</span>' : '';
       return '<tr>'
-        + '<td style="font-weight:700;">'+q.symbol+'</td>'
+        + '<td style="font-weight:700;">'+_esc(q.symbol)+'</td>'
         + '<td>$'+(parseFloat(q.last)||0).toFixed(2)+'</td>'
         + '<td style="color:var(--gry);">$'+(parseFloat(q.prevclose)||0).toFixed(2)+'</td>'
         + '<td class="'+cls+'">'+sign+cp.toFixed(2)+'%'+stale+'</td>'
-        + '<td style="color:var(--gry);">'+(q.last_volume||0)+'</td>'
-        + '<td style="color:var(--gry2);font-size:10px;">'+(q.trade_date||'--')+'</td>'
+        + '<td style="color:var(--gry);">'+(parseInt(q.last_volume)||0)+'</td>'
+        + '<td style="color:var(--gry2);font-size:10px;">'+_esc(q.trade_date||'--')+'</td>'
         + '</tr>';
     }).join('');
     var html = '<div style="font-family:var(--ff-mono);font-size:11px;line-height:1.5;">'
@@ -22623,7 +22675,7 @@ function probePreMarketData(){
     _renderProbePanel(html);
   }).catch(function(e){
     console.error('[pre-market probe] failed:', e);
-    _renderProbePanel('<span style="color:var(--ngo);">Probe failed: '+(e && e.message || e)+'</span>');
+    _renderProbePanel('<span style="color:var(--ngo);">Probe failed: '+_esc(e && e.message || e)+'</span>');
   });
 }
 function _renderProbePanel(innerHtml){
@@ -22722,7 +22774,7 @@ function applyStrategyMode(mode, silent){
 function renderAlerts(){
   var list=eid('alerts-list');
   if(!G.alerts.length){list.innerHTML='<div style="padding:12px;color:var(--gry);font-size:11px;">No alerts yet</div>';return;}
-  var html='';G.alerts.forEach(function(a){html+='<div class="alert-item"><div class="alert-dot '+a.type+'"></div><div class="alert-tk">'+a.tk+'</div><div class="alert-msg">'+a.msg+'</div><div class="alert-ts">'+a.ts+'</div></div>';});
+  var html='';G.alerts.forEach(function(a){html+='<div class="alert-item"><div class="alert-dot '+_esc(a.type)+'"></div><div class="alert-tk">'+_esc(a.tk)+'</div><div class="alert-msg">'+_esc(a.msg)+'</div><div class="alert-ts">'+_esc(a.ts)+'</div></div>';});
   list.innerHTML=html;
 }
 
@@ -23307,7 +23359,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.8.1-modal-minimize-chip-banner-and-chain-exp-default';
+var APP_VERSION = '2.9.0-audit-fixes-and-mm-dd-yyyy-display';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -23708,7 +23760,7 @@ function renderContractPanel(ticker, contracts){
 
     var monthly = isMonthlyExp(c.expDate);
     var rowStyle = 'border-bottom:var(--bdr);transition:background .15s;' + (monthly ? 'background:rgba(0,212,255,0.07);box-shadow:inset 3px 0 0 var(--amb),inset 0 0 25px rgba(0,212,255,0.1);' : '');
-    var expCell = monthly ? '<span style="color:var(--amb);text-shadow:0 0 10px var(--amb);font-weight:700;">\u25c6 '+c.expDate+'</span>' : c.expDate;
+    var expCell = monthly ? '<span style="color:var(--amb);text-shadow:0 0 10px var(--amb);font-weight:700;">\u25c6 '+fmtDateUS(c.expDate)+'</span>' : fmtDateUS(c.expDate);
     return '<tr style="'+rowStyle+'">'+
       '<td style="padding:8px 14px;'+dteCls+'">'+expCell+'</td>'+
       '<td style="padding:8px 14px;'+dteCls+'">'+c.dte+'d</td>'+
@@ -23763,7 +23815,7 @@ function cpBuyNow(ticker, strike, expDate, mid){
     if(eid('ord-qty'))    eid('ord-qty').value     = 1;
     fetchLiveQuote();
     updateOrdChart();
-    toast('Order pre-filled: '+ticker+' $'+strike+' CALL '+expDate);
+    toast('Order pre-filled: '+ticker+' $'+strike+' CALL '+fmtDateUS(expDate));
   }, 150);
 }
 
@@ -23793,7 +23845,7 @@ function cwToggleWatch(ticker, strike, expDate, mid, delta, score){
       btn.style.color = 'var(--gry)';
       btn.style.background = '';
     }
-    toast('Removed from watchlist: '+ticker+' $'+strike+' '+expDate);
+    toast('Removed from watchlist: '+ticker+' $'+strike+' '+fmtDateUS(expDate));
   } else {
     data[watchKey] = {
       ticker:ticker, strike:strike, expDate:expDate,
@@ -23808,7 +23860,7 @@ function cwToggleWatch(ticker, strike, expDate, mid, delta, score){
       btn.style.color = 'var(--amb)';
       btn.style.background = 'rgba(0,212,255,.2)';
     }
-    toast('Added to watchlist: '+ticker+' $'+strike+' CALL '+expDate);
+    toast('Added to watchlist: '+ticker+' $'+strike+' CALL '+fmtDateUS(expDate));
   }
 }
 
@@ -23859,9 +23911,9 @@ function cwRenderTable(){
       '<td><b style="color:var(--amb);">'+c.ticker+'</b></td>'+
       '<td>'+c.type+'</td>'+
       '<td>'+DS+fmt2(c.strike)+'</td>'+
-      '<td style="'+dteCls+'">'+c.expDate+'</td>'+
+      '<td style="'+dteCls+'">'+fmtDateUS(c.expDate)+'</td>'+
       '<td style="'+dteCls+'">'+dte+'d</td>'+
-      '<td style="color:var(--gry);font-size:10px;">'+new Date(c.addedAt).toLocaleDateString()+'</td>'+
+      '<td style="color:var(--gry);font-size:10px;">'+fmtDateUS(new Date(c.addedAt).toISOString().slice(0,10))+'</td>'+
       '<td style="color:var(--ambb);font-weight:700;" id="cw-mid-'+k+'">'+DS+fmt2(c.currentMid)+'</td>'+
       '<td style="'+changeCls+';">'+(midChange>=0?'+':'')+DS+fmt2(midChange)+' ('+(midChange>=0?'+':'')+midChangePct+'%)</td>'+
       '<td>'+fmt2(c.delta)+'</td>'+
@@ -25960,7 +26012,7 @@ function pfExportCSV(){
         r.ticker||'',
         kind==='shares' ? '' : (r.type||'CALL'),
         kind==='shares' ? '' : (r.strike||''),
-        kind==='shares' ? '' : (r.exp||''),
+        kind==='shares' ? '' : (r.exp ? fmtDateUS(r.exp) : ''),
         r.qty||1,
         r.avgPrice!=null ? r.avgPrice : '',
         r.mid!=null?r.mid.toFixed(4):'',
@@ -26036,7 +26088,7 @@ function pfExportMatrix(){
   rows.forEach(function(r){
     var typeCell = r.kind === 'shares' ? '' : (r.type || 'CALL');
     var strikeCell = r.kind === 'shares' ? '' : (r.strike != null ? r.strike : '');
-    var expCell = r.kind === 'shares' ? '' : (r.exp || '');
+    var expCell = r.kind === 'shares' ? '' : fmtDateUS(r.exp);
     var rowFields = [r.ticker, r.kind, typeCell, strikeCell, expCell];
     cols.forEach(function(c){
       var qty = r.cells[c.id];
@@ -26259,8 +26311,8 @@ function pfExportRollTracker(){
     }
     var typeChar = (r.type === 'PUT') ? 'P' : 'C';
     var strikeStr = (r.strike != null) ? '$' + (+r.strike).toFixed(2) + typeChar : '';
-    var expStr = r.exp || '';
-    return qty + '× ' + strikeStr + (expStr ? ' ' + expStr : '') + ' [ ]';
+    var expStr = fmtDateUS(r.exp);
+    return qty + '× ' + strikeStr + (expStr && expStr !== '--' ? ' ' + expStr : '') + ' [ ]';
   }
   function buildCell(tk, col){
     var lines = (col.rows || [])
@@ -28249,179 +28301,8 @@ window.addEventListener('DOMContentLoaded',init);
 })();
 /* EOD EQUITY LOG removed 2026-05-05 per user spec — module deleted in
    v2.4.1. localStorage key `rrjcar_eod_equity_log_v1` will simply
-   stop being written; existing data lingers harmlessly. */
-(function(){ /* placeholder to keep the trailing IIFE balanced — */
-  return;
-  // ── END-OF-DAY EQUITY LOG ────────────────────────────────────────────────
-  // Snapshots {date, equity, cash, positionsValue} once per ET trading day,
-  // shortly after market close (~16:05 ET on weekdays). Persists to
-  // localStorage. Renders as a compact card on the Positions tab below the
-  // existing position bottom panels.
-  var EOD_KEY = 'rrjcar_eod_equity_log_v1';
-
-  function _todayKeyET(){
-    try {
-      return new Date().toLocaleDateString('en-US', {timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit'}).replace(/\//g,'-');
-    } catch(_) { return new Date().toISOString().slice(0,10); }
-  }
-  function _loadLog(){
-    try { return JSON.parse(localStorage.getItem(EOD_KEY) || '[]'); }
-    catch(_){ return []; }
-  }
-  function _saveLog(arr){
-    try { localStorage.setItem(EOD_KEY, JSON.stringify(arr.slice(-365))); } catch(_){}
-  }
-
-  // Snapshot logic — pulls cash + positions market value from G.balances
-  // and G.positions if they're hydrated. Fires on demand or via the 16:05
-  // ET cron below. De-dupes within the same ET trading day.
-  function snapshotEodEquity(force){
-    try {
-      var arr = _loadLog();
-      var today = _todayKeyET();
-      if (!force && arr.length && arr[arr.length-1].date === today) return arr;
-      // Total equity sources:
-      //   G.balances (Tradier balances payload):
-      //     total_cash, total_equity, option_buying_power, market_value
-      //   Fallback: sum positionsValue from G.positions
-      var bal = (typeof G !== 'undefined' && G.balances) || null;
-      var cash = bal ? (parseFloat(bal.total_cash) || parseFloat(bal.cash && bal.cash.cash_available) || 0) : 0;
-      var totalEq = bal ? (parseFloat(bal.total_equity) || parseFloat(bal.account_value) || 0) : 0;
-      var optBp = bal ? (parseFloat(bal.option_buying_power) || 0) : 0;
-      var posVal = 0;
-      if (typeof G !== 'undefined' && G.positions){
-        G.positions.forEach(function(p){
-          var mult = (p.type === 'STOCK') ? 1 : 100;
-          posVal += (p.last || 0) * Math.abs(p.qty || 0) * mult;
-        });
-      }
-      if (!totalEq) totalEq = cash + posVal;
-      // Skip empty snapshots (no creds / no data) so we don't pollute the log
-      if (!totalEq && !cash && !posVal) return arr;
-      arr.push({
-        date: today,
-        ts: Date.now(),
-        equity: +totalEq.toFixed(2),
-        cash: +cash.toFixed(2),
-        positionsValue: +posVal.toFixed(2),
-        optionBP: +optBp.toFixed(2)
-      });
-      _saveLog(arr);
-      return arr;
-    } catch(e){ console.warn('[eod] snapshot failed', e); return _loadLog(); }
-  }
-  window.snapshotEodEquity = snapshotEodEquity;
-
-  // EOD card renderer — appears on the Positions tab. Compact: last 7
-  // days table + total equity sparkline. Click EXPORT for CSV.
-  function renderEodCard(){
-    var card = document.getElementById('eod-equity-card');
-    if (!card) return;
-    var arr = _loadLog();
-    if (!arr.length){
-      card.innerHTML = '<div style="padding:10px 14px;color:var(--gry);font-size:11px;font-family:var(--ff-mono);">EOD equity log — no snapshots yet. Auto-captures daily after market close, or click <button class="btn" style="font-size:10px;padding:3px 8px;margin-left:4px;" onclick="snapshotEodEquity(true);renderEodCard();">SNAPSHOT NOW</button></div>';
-      return;
-    }
-    var recent = arr.slice(-30);
-    var firstEq = recent[0].equity;
-    var lastEq = recent[recent.length-1].equity;
-    var totalDelta = lastEq - firstEq;
-    var totalPct = firstEq ? (totalDelta / firstEq) * 100 : 0;
-    var deltaCls = totalDelta >= 0 ? 'pnl-pos' : 'pnl-neg';
-    var deltaSign = totalDelta >= 0 ? '+' : '';
-    var rowsHTML = recent.slice(-7).reverse().map(function(r, i, all){
-      var prev = i < all.length - 1 ? all[i+1] : null;
-      var dlt = prev ? r.equity - prev.equity : 0;
-      var dltCls = dlt >= 0 ? 'pnl-pos' : 'pnl-neg';
-      var sgn = dlt >= 0 ? '+' : '';
-      return '<tr><td style="font-family:var(--ff-mono);">'+r.date+'</td>'
-        + '<td style="text-align:right;font-family:var(--ff-mono);color:var(--ambb);font-weight:700;">$'+(r.equity.toLocaleString('en-US', {minimumFractionDigits:2}))+'</td>'
-        + '<td style="text-align:right;font-family:var(--ff-mono);color:var(--gry);font-size:10px;">$'+(r.cash.toLocaleString('en-US', {minimumFractionDigits:0}))+'</td>'
-        + '<td style="text-align:right;font-family:var(--ff-mono);color:var(--gry);font-size:10px;">$'+(r.positionsValue.toLocaleString('en-US', {minimumFractionDigits:0}))+'</td>'
-        + '<td class="'+dltCls+'" style="text-align:right;font-family:var(--ff-mono);font-size:10px;">'+(prev ? sgn + '$' + dlt.toFixed(2) : '—')+'</td></tr>';
-    }).join('');
-    card.innerHTML =
-      '<div style="padding:8px 14px;border-bottom:1px solid var(--bg3);display:flex;align-items:center;gap:10px;flex-wrap:wrap;">'
-      +   '<span style="font-family:var(--ff-brand);font-size:11px;color:var(--amb);letter-spacing:1.5px;">EOD EQUITY LOG</span>'
-      +   '<span style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);">'+arr.length+' snapshot'+(arr.length===1?'':'s')+' · last 7 days shown</span>'
-      +   '<span style="margin-left:auto;color:var(--gry);font-size:10px;">30d Δ: <b class="'+deltaCls+'">'+deltaSign+'$'+totalDelta.toFixed(2)+' ('+deltaSign+totalPct.toFixed(2)+'%)</b></span>'
-      +   '<button class="btn" style="font-size:10px;padding:4px 10px;" onclick="snapshotEodEquity(true);renderEodCard();" title="Capture a new snapshot now">+ SNAPSHOT</button>'
-      +   '<button class="btn" style="font-size:10px;padding:4px 10px;" onclick="exportEodCsv()" title="Download all snapshots as CSV">CSV</button>'
-      + '</div>'
-      + '<table style="width:100%;font-size:11px;border-collapse:collapse;">'
-      +   '<thead><tr style="background:var(--bg2);"><th style="padding:5px 10px;text-align:left;color:var(--gry);font-size:10px;">DATE</th><th style="padding:5px 10px;text-align:right;color:var(--gry);font-size:10px;">EQUITY</th><th style="padding:5px 10px;text-align:right;color:var(--gry);font-size:10px;">CASH</th><th style="padding:5px 10px;text-align:right;color:var(--gry);font-size:10px;">POS VAL</th><th style="padding:5px 10px;text-align:right;color:var(--gry);font-size:10px;">DAY Δ</th></tr></thead>'
-      +   '<tbody>'+rowsHTML+'</tbody></table>';
-  }
-  window.renderEodCard = renderEodCard;
-
-  // Export CSV — useful for dropping into a spreadsheet for tax prep
-  // or year-over-year analysis.
-  function exportEodCsv(){
-    var arr = _loadLog();
-    if (!arr.length){ if(typeof toast==='function') toast('No snapshots to export'); return; }
-    var hdr = ['date','equity','cash','positionsValue','optionBP'];
-    var rows = [hdr.join(',')];
-    arr.forEach(function(r){
-      rows.push([r.date, r.equity, r.cash, r.positionsValue, r.optionBP || 0].join(','));
-    });
-    var blob = new Blob([rows.join('\n')], {type:'text/csv;charset=utf-8'});
-    var a = document.createElement('a');
-    a.href = URL.createObjectURL(blob);
-    a.download = 'eod_equity_'+new Date().toISOString().slice(0,10)+'.csv';
-    document.body.appendChild(a); a.click(); document.body.removeChild(a);
-    if(typeof toast==='function') toast(arr.length+' snapshots exported');
-  }
-  window.exportEodCsv = exportEodCsv;
-
-  // Inject the EOD card under the position bottom panels on first load.
-  function _ensureEodCard(){
-    if (document.getElementById('eod-equity-card')) return;
-    var anchor = document.getElementById('pos-bottom-panels');
-    if (!anchor) return;
-    var card = document.createElement('div');
-    card.id = 'eod-equity-card';
-    card.style.cssText = 'background:var(--bg1);border:1px solid var(--bg3);border-radius:4px;margin:8px 8px 12px;overflow-x:auto;';
-    anchor.parentNode.insertBefore(card, anchor.nextSibling);
-    renderEodCard();
-  }
-
-  // Auto-snapshot scheduler. Fires:
-  //   1. Once on app init (so the user sees data immediately)
-  //   2. Every minute, gated to only fire AFTER 16:00 ET on weekdays
-  //      AND only if today's snapshot doesn't already exist.
-  function _maybeAutoSnapshot(){
-    try {
-      var now = new Date();
-      var nyParts = now.toLocaleString('en-US', {timeZone:'America/New_York', weekday:'short', hour:'2-digit', minute:'2-digit', hour12:false});
-      var m = nyParts.match(/^(\w{3}),?\s+(\d{2}):(\d{2})/);
-      if (!m) return;
-      var dow = m[1];
-      if (dow === 'Sat' || dow === 'Sun') return;
-      var hh = parseInt(m[2],10), mm = parseInt(m[3],10);
-      // After 4:00pm ET (market close)
-      if (hh < 16 || (hh === 16 && mm < 5)) return;
-      var arr = _loadLog();
-      var today = _todayKeyET();
-      if (arr.length && arr[arr.length-1].date === today) return;
-      snapshotEodEquity(false);
-      try { renderEodCard(); } catch(_){}
-    } catch(_){}
-  }
-
-  window.addEventListener('load', function(){
-    setTimeout(function(){
-      try { _ensureEodCard(); } catch(_){}
-      // Capture an initial snapshot if one doesn't exist for today AND we
-      // have balances/positions data hydrated. Safe to call repeatedly —
-      // snapshotEodEquity de-dupes within the trading day.
-      setTimeout(function(){ snapshotEodEquity(false); renderEodCard(); }, 4000);
-      // Auto-snapshot scheduler
-      setInterval(_maybeAutoSnapshot, 60000);
-    }, 1500);
-  });
-
-  console.log('[positions-sort + EOD log] ready');
-})();
+   stop being written; existing data lingers harmlessly.
+   Full dead-code body removed 2026-05-09 per audit CODE-1. */
 </script>
 </body>
 
