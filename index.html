@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-05T15:30-pos-reorder-atr-cst">
+<meta name="op-build" content="2026-05-05T16:00-fix-mode-stock-leak">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -13973,6 +13973,11 @@ function chainRowClick(ticker, strike, expDate){
   setTimeout(function(){
     if(eid('ord-sym'))    eid('ord-sym').value    = ticker;
     if(eid('ord-type'))   eid('ord-type').value   = optType;
+    // 2026-05-05 fix (companion to cpBuyNow): if the form was left in
+    // mode-stock from a prior stock close, the STRIKE + EXP row stays
+    // hidden via .ord-opt-only{display:none}. Force the type-change
+    // handler so the form mode + class match the new instrument.
+    if (typeof onOrderTypeChange === 'function') { try { onOrderTypeChange(); } catch(_){} }
     if(eid('ord-strike')) eid('ord-strike').value = strike;
     if(eid('ord-exp'))    eid('ord-exp').value    = expDate;
     if(eid('ord-action')) eid('ord-action').value = 'BUY_TO_OPEN';
@@ -21112,6 +21117,9 @@ function autoFillHighConviction(r, optData){
   setTimeout(function(){
     eid('ord-sym').value    = r.ticker;
     eid('ord-type').value   = 'CALL';
+    // Force onOrderTypeChange so the .mode-stock class drops + STRIKE/EXP
+    // row reveals if the form was previously used for a stock close.
+    if (typeof onOrderTypeChange === 'function') { try { onOrderTypeChange(); } catch(_){} }
     eid('ord-action').value = 'BUY_TO_OPEN';
     eid('ord-otype').value  = 'limit';
     eid('ord-qty').value    = qty;
@@ -21638,6 +21646,10 @@ function atExecuteTrade(signal, budget){
     // Pre-fill order ticket for reference
     if(eid('ord-sym'))    eid('ord-sym').value    = signal.ticker;
     if(eid('ord-type'))   eid('ord-type').value   = 'CALL';
+    // Force onOrderTypeChange so the form drops .mode-stock if it was set
+    // by a prior stock close — without this the STRIKE / EXP row stays
+    // hidden via .ord-opt-only{display:none} CSS.
+    if (typeof onOrderTypeChange === 'function') { try { onOrderTypeChange(); } catch(_){} }
     if(eid('ord-action')) eid('ord-action').value = 'BUY_TO_OPEN';
     if(eid('ord-otype'))  eid('ord-otype').value  = 'limit';
     if(eid('ord-strike')) eid('ord-strike').value = optData.strike;
@@ -22507,7 +22519,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.6.1-pos-reorder-atr-cst';
+var APP_VERSION = '2.6.2-fix-mode-stock-leak';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -22944,8 +22956,19 @@ function cpBuyNow(ticker, strike, expDate, mid){
   setTimeout(function(){
     if(eid('ord-sym'))    eid('ord-sym').value    = ticker;
     if(eid('ord-type'))   eid('ord-type').value   = 'CALL';
+    // 2026-05-05 fix: when the order ticket was previously used to close
+    // a STOCK position, closePosition() added .mode-stock to .ord-form,
+    // which hides the STRIKE + EXPIRY row via the
+    // `.ord-form.mode-stock .ord-opt-only{display:none!important}` rule.
+    // Setting ord-type='CALL' alone doesn't drop that class — the form
+    // stays in stock-mode and the strike/exp/auto-select fields stay
+    // hidden, so the user's pre-filled contract appears to "vanish".
+    // Firing onOrderTypeChange() rebuilds the action dropdown AND
+    // toggles the .mode-stock class to match the new instrument.
+    if (typeof onOrderTypeChange === 'function') { try { onOrderTypeChange(); } catch(_){} }
     if(eid('ord-action')) eid('ord-action').value = 'BUY_TO_OPEN';
     if(eid('ord-otype'))  eid('ord-otype').value  = 'limit';
+    if (typeof onOrderOtypeChange === 'function') { try { onOrderOtypeChange(); } catch(_){} }
     if(eid('ord-strike')) eid('ord-strike').value = strike;
     if(eid('ord-exp'))    eid('ord-exp').value     = expDate;
     if(eid('ord-lmt'))    eid('ord-lmt').value     = fmt2(mid);
