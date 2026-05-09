@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-09T23:00-deploy1-quickwins">
+<meta name="op-build" content="2026-05-09T23:30-deploy2-medium">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -230,6 +230,13 @@ a{color:var(--blu);text-decoration:none;}
    Click opens a modal with the relevant HOW TO section. Pure-text label
    per user spec 'no icons in dashboard requests'. */
 .help-fab{position:fixed;top:auto;bottom:20px;right:14px;z-index:7000;background:rgba(0,212,255,.10);border:1px solid var(--amb);color:var(--amb);font-family:var(--ff-mono);font-size:11px;letter-spacing:1px;padding:5px 10px;border-radius:3px;cursor:pointer;text-transform:uppercase;backdrop-filter:blur(2px);}
+/* GAP-1 fix 2026-05-09: BID/MID/ASK picker visible on every viewport,
+   not just iPhone. Desktop SET BID/MID/ASK button trio hidden so the
+   picker replaces them everywhere. */
+.rh-picker{display:flex !important;flex-direction:column;gap:6px;width:100%;}
+.ord-field:has(button[onclick*="setLimitToBid"]),
+.ord-field:has(button[onclick*="setLimitToMid"]),
+.ord-field:has(button[onclick*="setLimitToAsk"]){display:none !important;}
 /* Skeleton loader bars + shimmer keyframe — global so they animate on
    every viewport (REG-3 fix 2026-05-09). */
 .skel{
@@ -1150,13 +1157,10 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     background:linear-gradient(90deg, transparent, var(--bg1));
     pointer-events:none;
   }
-  /* RH-3 fix 2026-05-09: show big BID/MID/ASK picker on iPhone, hide
-     the small desktop SET BID/MID/ASK button trio. The LIMIT PRICE
-     input remains visible (now optional — picker writes into it). */
-  .rh-picker{display:flex !important;}
-  .ord-field:has(button[onclick*="setLimitToBid"]),
-  .ord-field:has(button[onclick*="setLimitToMid"]),
-  .ord-field:has(button[onclick*="setLimitToAsk"]){display:none !important;}
+  /* RH-3 fix 2026-05-09 + GAP-1 follow-up 2026-05-09: BID/MID/ASK picker
+     visibility moved OUT of @media so it shows on desktop too. The
+     placeholder rules below stay in this block as no-ops to preserve
+     existing block structure. */
   /* Active state for the selected picker card. Adds a colored border
      ring + subtle glow matching the cell's price color. */
   .rh-px-card.active[data-which="bid"]{border-color:var(--ngo) !important;box-shadow:0 0 0 2px var(--ngo) inset, 0 0 12px rgba(255,0,230,.3);}
@@ -3110,6 +3114,19 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
        without bouncing to tradier.com. Collapses by default once the
        panel is empty — the toggle stays visible so the user can confirm
        there are no working orders. -->
+  <!-- IDEA-5 fix 2026-05-09: portfolio allocation donut. Visible only when
+       there are 2+ option positions across distinct sectors (otherwise
+       the chart is degenerate). Updated on every renderPositionsTable. -->
+  <details id="pos-allocation-card" style="border-bottom:var(--bdr);background:var(--bg1);" open>
+    <summary style="cursor:pointer;padding:9px 14px;font-family:var(--ff-mono);font-size:11px;color:var(--ambb);letter-spacing:1.5px;user-select:none;list-style:none;display:flex;align-items:center;justify-content:space-between;">
+      <span>&#9662; ALLOCATION</span>
+      <span id="pos-alloc-status" style="color:var(--gry);font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;">--</span>
+    </summary>
+    <div id="pos-alloc-body" style="padding:10px 14px 14px;display:flex;align-items:center;gap:18px;justify-content:center;">
+      <svg id="pos-alloc-svg" viewBox="0 0 200 200" width="160" height="160" style="flex-shrink:0;"></svg>
+      <div id="pos-alloc-legend" style="font-family:var(--ff-mono);font-size:11px;color:var(--gry);display:flex;flex-direction:column;gap:4px;flex:1;max-width:280px;"></div>
+    </div>
+  </details>
   <div id="pos-pending-orders-wrap" style="border-bottom:var(--bdr);background:var(--bg1);">
     <div id="pos-pending-orders-hdr" onclick="posTogglePending()" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 12px;font-family:var(--ff-mono);font-size:10px;letter-spacing:1.5px;color:var(--ambb);user-select:none;-webkit-tap-highlight-color:rgba(0,212,255,0.15);min-height:36px;">
       <span id="pos-pending-arrow" style="display:inline-block;transition:transform .15s;color:var(--amb);font-size:13px;">&#9656;</span>
@@ -24210,7 +24227,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.11.5-deploy1-quickwins';
+var APP_VERSION = '2.11.6-deploy2-medium';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -30195,6 +30212,264 @@ window.addEventListener('DOMContentLoaded',init);
   // Tick every 5s while order tab is active.
   setInterval(_renderStaleHint, 5000);
   console.log('[stale-quote-watchdog] ready');
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  IDEA-5 — PORTFOLIO ALLOCATION DONUT
+//  Renders a donut chart on the Positions tab showing equity allocation
+//  by sector. Updates after every renderPositionsTable. Hidden when
+//  there's only one position (chart is degenerate).
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  // Sector palette — picks distinct colors per sector. Cycles if more
+  // sectors than colors.
+  var PALETTE = ['#00d4ff','#22c55e','#f59e0b','#ef5350','#a855f7','#06b6d4','#84cc16','#ec4899','#f97316','#14b8a6','#6366f1','#eab308'];
+
+  function _renderAllocationDonut(){
+    var card = document.getElementById('pos-allocation-card');
+    var svg  = document.getElementById('pos-alloc-svg');
+    var legend = document.getElementById('pos-alloc-legend');
+    var status = document.getElementById('pos-alloc-status');
+    if (!card || !svg || !legend) return;
+    var positions = G.positions || [];
+    if (positions.length < 2){
+      card.style.display = 'none';
+      return;
+    }
+    // Sum equity by sector. Look up sector from UNIVERSE for each
+    // position's underlying ticker. Default 'OTHER' for unknowns.
+    var bySector = {};
+    var totalEq = 0;
+    positions.forEach(function(p){
+      var mult = (p.type === 'STOCK') ? 1 : 100;
+      var eq = (+p.last || 0) * Math.abs(+p.qty || 0) * mult;
+      if (eq <= 0) return;
+      var sector = 'OTHER';
+      if (typeof UNIVERSE !== 'undefined'){
+        for (var i = 0; i < UNIVERSE.length; i++){
+          if (UNIVERSE[i].t === p.underlying){ sector = UNIVERSE[i].s || 'OTHER'; break; }
+        }
+      }
+      bySector[sector] = (bySector[sector] || 0) + eq;
+      totalEq += eq;
+    });
+    if (totalEq <= 0 || Object.keys(bySector).length < 1){
+      card.style.display = 'none';
+      return;
+    }
+    card.style.display = '';
+    // Build slices sorted by size desc.
+    var slices = Object.keys(bySector).map(function(k){ return { sector:k, eq:bySector[k], pct:(bySector[k]/totalEq)*100 }; });
+    slices.sort(function(a,b){ return b.eq - a.eq; });
+
+    // Build SVG donut. Center 100,100; outer r=88; inner r=58.
+    var cx = 100, cy = 100, rOuter = 88, rInner = 58;
+    var startAngle = -Math.PI / 2;     // start at 12 o'clock
+    var paths = '';
+    slices.forEach(function(s, idx){
+      var pct = s.pct / 100;
+      var endAngle = startAngle + pct * Math.PI * 2;
+      var largeArc = pct > 0.5 ? 1 : 0;
+      var x1 = cx + rOuter * Math.cos(startAngle);
+      var y1 = cy + rOuter * Math.sin(startAngle);
+      var x2 = cx + rOuter * Math.cos(endAngle);
+      var y2 = cy + rOuter * Math.sin(endAngle);
+      var x3 = cx + rInner * Math.cos(endAngle);
+      var y3 = cy + rInner * Math.sin(endAngle);
+      var x4 = cx + rInner * Math.cos(startAngle);
+      var y4 = cy + rInner * Math.sin(startAngle);
+      var color = PALETTE[idx % PALETTE.length];
+      s.color = color;
+      var d = 'M '+x1.toFixed(2)+' '+y1.toFixed(2)
+            + ' A '+rOuter+' '+rOuter+' 0 '+largeArc+' 1 '+x2.toFixed(2)+' '+y2.toFixed(2)
+            + ' L '+x3.toFixed(2)+' '+y3.toFixed(2)
+            + ' A '+rInner+' '+rInner+' 0 '+largeArc+' 0 '+x4.toFixed(2)+' '+y4.toFixed(2)
+            + ' Z';
+      paths += '<path d="'+d+'" fill="'+color+'" stroke="var(--bg1)" stroke-width="1.5"><title>'+_esc(s.sector)+': $'+(s.eq).toFixed(0)+' ('+s.pct.toFixed(1)+'%)</title></path>';
+      startAngle = endAngle;
+    });
+    // Center label: total equity.
+    paths += '<text x="100" y="98" text-anchor="middle" fill="var(--gry)" font-family="var(--ff-mono)" font-size="10">EQUITY</text>';
+    paths += '<text x="100" y="116" text-anchor="middle" fill="var(--wht)" font-family="var(--ff-brand)" font-size="14" font-weight="800">$'+totalEq.toFixed(0)+'</text>';
+    svg.innerHTML = paths;
+
+    // Legend.
+    var legendHtml = slices.map(function(s){
+      return '<div style="display:flex;align-items:center;gap:6px;">'
+        +    '<span style="display:inline-block;width:10px;height:10px;background:'+s.color+';border-radius:2px;flex-shrink:0;"></span>'
+        +    '<span style="color:var(--wht);flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;">'+_esc(s.sector)+'</span>'
+        +    '<span style="color:var(--gry);">'+s.pct.toFixed(0)+'%</span>'
+        +    '<span style="color:var(--gry2);">$'+s.eq.toFixed(0)+'</span>'
+        + '</div>';
+    }).join('');
+    legend.innerHTML = legendHtml;
+    if (status) status.textContent = positions.length + ' positions · ' + Object.keys(bySector).length + ' sectors';
+  }
+  window._renderAllocationDonut = _renderAllocationDonut;
+
+  // Hook into renderPositionsTable.
+  if (typeof renderPositionsTable === 'function' && !renderPositionsTable._allocHooked){
+    var _orig = window.renderPositionsTable;
+    window.renderPositionsTable = function(){
+      var r = _orig.apply(this, arguments);
+      try { _renderAllocationDonut(); } catch(_){}
+      return r;
+    };
+    window.renderPositionsTable._allocHooked = true;
+  }
+
+  console.log('[pos-allocation-donut] ready');
+})();
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  IDEA-4 — END-OF-DAY JOURNAL PROMPT
+//  At ~16:01 ET on weekdays, fires a one-shot toast + opens a journal
+//  modal listing today's filled+closed positions for the user to log
+//  brief notes per ticker. Saves to localStorage 'rrjcar_journal' keyed
+//  by date. De-duped per-day so it only fires once per session.
+// ═══════════════════════════════════════════════════════════════════════════
+(function(){
+  var JOURNAL_KEY = 'rrjcar_journal';
+  var FIRED_KEY  = 'rrjcar_journal_fired';
+
+  function _todayET(){
+    try {
+      var p = new Date().toLocaleDateString('en-US', { timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).split('/');
+      return p[2] + '-' + p[0] + '-' + p[1];
+    } catch(_){ return new Date().toISOString().slice(0,10); }
+  }
+
+  function _shouldPromptNow(){
+    try {
+      var et = new Date(new Date().toLocaleString('en-US', { timeZone:'America/New_York' }));
+      var dow = et.getDay();
+      if (dow === 0 || dow === 6) return false;
+      var hr = et.getHours(), mi = et.getMinutes();
+      var min = hr * 60 + mi;
+      // Window 16:01 - 16:30 ET.
+      if (min < 16*60 + 1 || min > 16*60 + 30) return false;
+      var todayK = _todayET();
+      return localStorage.getItem(FIRED_KEY) !== todayK;
+    } catch(_){ return false; }
+  }
+
+  function _markFired(){
+    try { localStorage.setItem(FIRED_KEY, _todayET()); } catch(_){}
+  }
+
+  function _todayActivity(){
+    var todayK = _todayET();
+    var rows = [];
+    // Open positions opened today.
+    if (Array.isArray(G.positions)){
+      G.positions.forEach(function(p){
+        var pod = (G.posOpenData && G.posOpenData[p.symbol]) || {};
+        if (!pod.openTs) return;
+        var openK;
+        try {
+          var et = new Date(new Date(pod.openTs).toLocaleString('en-US', { timeZone:'America/New_York' }));
+          openK = et.getFullYear() + '-' + String(et.getMonth()+1).padStart(2,'0') + '-' + String(et.getDate()).padStart(2,'0');
+        } catch(_){ openK = pod.openTs.slice(0,10); }
+        if (openK === todayK){
+          rows.push({ kind: 'open', symbol: p.symbol, ticker: p.underlying, type: p.type, strike: p.strike, exp: p.exp });
+        }
+      });
+    }
+    // Closed trades from today.
+    if (typeof G_closed !== 'undefined' && Array.isArray(G_closed.trades)){
+      G_closed.trades.forEach(function(t){
+        if (t.closeDate === todayK){
+          rows.push({ kind: 'close', symbol: t.symbol, ticker: t.underlying || t.symbol, type: t.type, strike: t.strike, exp: t.exp, pnl: t.pnl });
+        }
+      });
+    }
+    return rows;
+  }
+
+  function openJournalModal(forceOpen){
+    var rows = _todayActivity();
+    if (!rows.length && !forceOpen){
+      try { toast('No filled/closed positions today — journal skipped'); } catch(_){}
+      return;
+    }
+    _markFired();
+    var existing = document.getElementById('eod-journal-sheet');
+    if (existing) existing.remove();
+    var sheet = document.createElement('div');
+    sheet.id = 'eod-journal-sheet';
+    sheet.style.cssText = 'position:fixed;inset:0;z-index:9320;background:rgba(0,0,0,0.78);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;';
+    sheet.onclick = function(e){ if (e.target === sheet) sheet.remove(); };
+    var inner = document.createElement('div');
+    inner.style.cssText = 'background:var(--bg1);border-top:2px solid var(--ambb);border-radius:14px 14px 0 0;width:100%;max-width:560px;padding:18px 16px calc(max(env(safe-area-inset-bottom,18px),18px)) 16px;display:flex;flex-direction:column;gap:10px;animation:osm-banner-in .25s ease-out;max-height:90vh;overflow-y:auto;';
+    var todayK = _todayET();
+    var rowsHtml = rows.length
+      ? rows.map(function(r, idx){
+          var lbl = r.kind === 'open' ? '+ OPENED' : (r.pnl >= 0 ? '✓ CLOSED' : '✗ CLOSED');
+          var sub = (r.type !== 'STOCK')
+            ? ('$'+(+r.strike).toFixed(2)+' '+r.type+' exp '+(typeof fmtDateUS==='function'?fmtDateUS(r.exp):r.exp))
+            : 'STOCK';
+          var pnlChip = (r.kind === 'close' && typeof r.pnl === 'number')
+            ? ' <span style="color:'+(r.pnl>=0?'var(--grn)':'var(--wrn)')+';font-weight:700;">'+(r.pnl>=0?'+':'')+'$'+(+r.pnl).toFixed(0)+'</span>'
+            : '';
+          return '<div style="border-bottom:var(--bdr);padding:10px 0;display:flex;flex-direction:column;gap:6px;">'
+            +    '<div style="display:flex;align-items:center;gap:8px;font-family:var(--ff-mono);font-size:11px;">'
+            +      '<span style="color:'+(r.kind==='open'?'var(--ambb)':'var(--gry)')+';font-weight:700;">'+lbl+'</span>'
+            +      '<span style="color:var(--wht);font-weight:700;">'+_esc(r.ticker)+'</span>'
+            +      '<span style="color:var(--gry);">'+_esc(sub)+'</span>'
+            +      pnlChip
+            +    '</div>'
+            +    '<input type="text" id="ej-row-'+idx+'" data-occ="'+_esc(r.symbol)+'" placeholder="Notes (optional) — e.g. earnings beat, gap fill, IV crush…" style="font-size:14px;padding:8px 10px;background:var(--bg0);border:var(--bdr);border-radius:5px;color:var(--wht);font-family:var(--ff);">'
+            + '</div>';
+        }).join('')
+      : '<div style="color:var(--gry2);padding:14px 0;text-align:center;">No positions opened or closed today.</div>';
+    inner.innerHTML =
+        '<div style="display:flex;justify-content:space-between;align-items:center;">'
+      +   '<div style="font-family:var(--ff-brand);font-size:14px;color:var(--ambb);letter-spacing:2px;font-weight:700;">JOURNAL — '+todayK+'</div>'
+      +   '<button class="btn" style="font-size:14px;padding:6px 12px;min-width:36px;min-height:36px;" onclick="document.getElementById(\'eod-journal-sheet\').remove()" title="Close">&#10005;</button>'
+      + '</div>'
+      + '<div style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);">Note one thing about each trade. Entries persist locally for review.</div>'
+      + rowsHtml
+      + '<div style="display:flex;gap:8px;margin-top:6px;">'
+      +   '<button class="btn" style="flex:1;padding:11px;font-weight:700;font-size:12px;border-color:var(--gry2);color:var(--gry);" onclick="document.getElementById(\'eod-journal-sheet\').remove()">SKIP</button>'
+      +   '<button class="btn blu" style="flex:2;padding:11px;font-weight:700;font-size:12px;" onclick="_journalSave()">SAVE JOURNAL</button>'
+      + '</div>';
+    sheet.appendChild(inner);
+    document.body.appendChild(sheet);
+  }
+  window.openJournalModal = openJournalModal;
+
+  window._journalSave = function(){
+    try {
+      var todayK = _todayET();
+      var entries = JSON.parse(localStorage.getItem(JOURNAL_KEY) || '{}');
+      entries[todayK] = entries[todayK] || [];
+      var rows = document.querySelectorAll('#eod-journal-sheet input[id^="ej-row-"]');
+      rows.forEach(function(inp){
+        var occ = inp.dataset.occ;
+        var note = (inp.value || '').trim();
+        if (note){
+          entries[todayK].push({ occ: occ, note: note, ts: Date.now() });
+        }
+      });
+      localStorage.setItem(JOURNAL_KEY, JSON.stringify(entries));
+      var sheet = document.getElementById('eod-journal-sheet'); if (sheet) sheet.remove();
+      try { toast('Journal saved for '+todayK); } catch(_){}
+    } catch(e){ console.error('[journal]', e); }
+  };
+
+  // Auto-fire check every minute. Works whether tab-pos is active or not.
+  setInterval(function(){
+    if (_shouldPromptNow()){
+      try {
+        toast('🕓 Markets closed — log today\'s journal?');
+        try { if (typeof hap === 'function') hap([20, 60, 20]); } catch(_){}
+      } catch(_){}
+      // Show the modal after the toast settles.
+      setTimeout(function(){ try { openJournalModal(false); } catch(_){} }, 1500);
+    }
+  }, 60 * 1000);
+
+  console.log('[eod-journal] ready');
 })();
 
 /* EOD EQUITY LOG removed 2026-05-05 per user spec — module deleted in
