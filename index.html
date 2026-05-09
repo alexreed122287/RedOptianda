@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-09T23:30-deploy2-medium">
+<meta name="op-build" content="2026-05-10T00:30-deploy3-pivots">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -87,7 +87,13 @@ if (window.OP_ONESIGNAL_APP_ID) {
   --blu:#00d4ff;--blub:#40e8ff;--blu3:rgba(0,212,255,.12);
   --ngo:#ff00e6;--wrn:#ffd740;--wrn3:rgba(255,215,64,.12);
   --wht:#c8daf8;--gry:#7090c8;--gry2:#3d5580;
-  --lvb:#050d14;--grn:#00e676;--grn3:rgba(0,230,118,.1);
+  --lvb:#050d14;--grn:#22c55e;--grn3:rgba(34,197,94,.12);
+  /* RH-7 fix 2026-05-09: saturated direction tokens. --grn upgraded
+     from #00e676 to #22c55e (Robinhood-style buying-green). Added
+     --red as the canonical loss-direction color (separate from
+     --wrn which is amber and used for warnings). pnl-neg now points
+     to --red so losing positions read more clearly. */
+  --red:#ef5350;--red3:rgba(239,83,80,.12);
   --bdr:1px solid #0e1826;--rad:6px;--ff:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   --ff-brand:'Orbitron',sans-serif;
   --ff-mono:'JetBrains Mono','SF Mono',Consolas,Menlo,monospace;
@@ -102,6 +108,7 @@ body.light-mode{
   --ngo:#cc79a7;--wrn:#d55e00;--wrn3:rgba(213,94,0,.15);
   --wht:#111111;--gry:#555555;--gry2:#888888;
   --lvb:#ffffff;--grn:#117733;--grn3:rgba(17,119,51,.12);
+  --red:#cc1f1f;--red3:rgba(204,31,31,.10);
   --bdr:1px solid #cccccc;
   --glow-cyan:0 0 0 transparent;--glow-pink:0 0 0 transparent;
 }
@@ -811,8 +818,12 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 .ts-enable-btn{font-size:10px;padding:3px 8px;white-space:nowrap;}
 .ts-armed-indicator{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:middle;}
 .pos-src{color:var(--gry);font-size:10px;margin-left:auto;}
-.pnl-pos{color:var(--blu);}
-.pnl-neg{color:var(--wrn);}
+/* RH-7 fix 2026-05-09: saturated direction colors for P&L. Was cyan
+   (--blu) for positive — now uses saturated --grn for "buy / up". Was
+   amber (--wrn) for negative — now uses --red for "down / loss".
+   Improves at-a-glance scanning of position rows. */
+.pnl-pos{color:var(--grn);}
+.pnl-neg{color:var(--red);}
 .ord-form{max-width:620px;padding:12px 14px 8px;}
 /* Compact spacing on the order-ticket form so all critical controls are
    visible without scrolling. Was 16px padding + 10px row margin = a lot
@@ -3374,6 +3385,54 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 <div class="tab-pane" id="tab-order">
   <div class="page-wrap">
     <div class="card"><div class="card-hdr">ORDER TICKET</div>
+
+    <!-- FEAT-1 mini fix 2026-05-09: sticky quick-action bar at the top of
+         the order tab. STRIKE chips nudge ord-strike by ±1 / ±2 strikes
+         from current. EXP chips switch ord-exp to nearest weekly /
+         monthly / 30d+. Visible on every viewport (collapses tightly on
+         iPhone). -->
+    <div id="ord-quick-bar" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:var(--bg2);border-bottom:var(--bdr);align-items:center;">
+      <span style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);letter-spacing:1px;flex-basis:100%;margin-bottom:2px;">QUICK PICKS</span>
+      <span style="font-family:var(--ff-mono);font-size:9px;color:var(--gry);letter-spacing:1px;">STRIKE</span>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(-2)" title="2 strikes ITM">−2</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(-1)" title="1 strike ITM">−1</button>
+      <button class="btn blu" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(0)" title="Snap to ATM">ATM</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(1)" title="1 strike OTM">+1</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(2)" title="2 strikes OTM">+2</button>
+      <span style="flex-basis:14px;"></span>
+      <span style="font-family:var(--ff-mono);font-size:9px;color:var(--gry);letter-spacing:1px;">EXP</span>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpExp('weekly')" title="Nearest weekly expiry">WEEKLY</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpExp('monthly')" title="Nearest standard monthly (3rd Friday)">MONTHLY</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpExp('30d')" title="Closest expiry to 30 DTE">30D</button>
+      <span style="flex:1 1 auto;"></span>
+      <!-- IDEA-1 mini fix 2026-05-09: spread-mode toggle. When ON, exposes
+           a 2-leg config (long lower-strike + short higher-strike call) and
+           submits as a multileg vertical spread. -->
+      <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--gry);cursor:pointer;">
+        <input type="checkbox" id="ord-spread-toggle" onchange="_toggleSpreadMode()" style="width:auto;margin:0;cursor:pointer;">
+        <span>SPREAD</span>
+      </label>
+    </div>
+    <!-- Spread config row — visible only when SPREAD checkbox is on. -->
+    <div id="ord-spread-config" style="display:none;padding:10px 12px;background:rgba(0,212,255,0.05);border-bottom:var(--bdr);">
+      <div style="font-family:var(--ff-mono);font-size:10px;color:var(--ambb);letter-spacing:1px;margin-bottom:6px;">
+        ▲ BULL CALL VERTICAL SPREAD — long lower strike + short higher strike (same expiry)
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap;align-items:flex-end;">
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--gry);">
+          <span>LONG STRIKE (buy)</span>
+          <input type="number" inputmode="decimal" id="ord-spread-long" step="0.01" placeholder="e.g. 150"
+            style="font-size:14px;padding:6px 9px;background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);width:120px;">
+        </label>
+        <label style="display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--gry);">
+          <span>SHORT STRIKE (sell)</span>
+          <input type="number" inputmode="decimal" id="ord-spread-short" step="0.01" placeholder="e.g. 155"
+            style="font-size:14px;padding:6px 9px;background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);width:120px;">
+        </label>
+        <span id="ord-spread-hint" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry2);align-self:flex-end;padding-bottom:7px;">enter both strikes to enable</span>
+      </div>
+    </div>
+
     <!-- Two-column layout: input form on the left (narrow, focused), actions
          docked on the right as a sticky panel so SUBMIT/PREVIEW/CLEAR are
          always reachable without scrolling past the step-fill log. The form
@@ -9224,6 +9283,186 @@ function _rhPickPrice(which){
   var hint = document.getElementById('lmt-hint');
   if (hint) hint.textContent = which.toUpperCase() + ' selected';
 }
+// FEAT-1 mini quick-pick handlers 2026-05-09. STRIKE chips nudge
+// ord-strike by ±N strikes from current; ATM snaps to underlying spot.
+// EXP chips switch ord-exp to weekly/monthly/30d targets — uses the
+// existing chain expirations endpoint to pick.
+function _qpStrike(delta){
+  var symEl = eid('ord-sym');
+  var stEl  = eid('ord-strike');
+  if (!symEl || !stEl){ return; }
+  var sym = (symEl.value || '').trim().toUpperCase();
+  if (!sym){ try { toast('Enter a symbol first'); } catch(_){}; return; }
+  // Estimate one-strike width from current chain or default ~$1 for stocks <$100, $5 for >$100.
+  var spot = (G.liveQuote && G.liveQuote.last) || (G.liveQuote && G.liveQuote.mid) || 0;
+  // Snap to ATM if delta == 0.
+  if (delta === 0){
+    if (!spot){ try { toast('No live quote — refresh first'); } catch(_){}; return; }
+    var atmStrike = Math.round(spot);
+    // Round to nearest .50 for stocks <$50, nearest $1 for $50-200, $5 for >$200.
+    if (spot < 50) atmStrike = Math.round(spot * 2) / 2;
+    else if (spot < 200) atmStrike = Math.round(spot);
+    else atmStrike = Math.round(spot / 5) * 5;
+    stEl.value = atmStrike.toFixed(2);
+  } else {
+    var cur = parseFloat(stEl.value) || spot || 0;
+    var stepW = spot < 50 ? 0.5 : (spot < 200 ? 1 : 5);
+    stEl.value = (cur + delta * stepW).toFixed(2);
+  }
+  try { if (typeof updateOrdChart === 'function') updateOrdChart(); } catch(_){}
+  try { if (typeof fetchLiveQuote === 'function') fetchLiveQuote(); } catch(_){}
+  try { if (typeof hap === 'function') hap(5); } catch(_){}
+}
+async function _qpExp(mode){
+  var symEl = eid('ord-sym');
+  var expEl = eid('ord-exp');
+  if (!symEl || !expEl) return;
+  var sym = (symEl.value || '').trim().toUpperCase();
+  if (!sym){ try { toast('Enter a symbol first'); } catch(_){}; return; }
+  var creds = (typeof getTradierCreds === 'function') ? getTradierCreds() : null;
+  if (!creds || !creds.key){ try { toast('No Tradier key'); } catch(_){}; return; }
+  try {
+    var url = creds.host + '/v1/markets/options/expirations?symbol='+encodeURIComponent(sym)+'&includeAllRoots=true';
+    var data = await (typeof tradierFetch === 'function'
+      ? tradierFetch(url, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }, 6*60*60*1000)
+      : fetch(url, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }).then(function(r){return r.json();}));
+    var dates = (data && data.expirations && data.expirations.date) || [];
+    if (typeof dates === 'string') dates = [dates];
+    if (!dates.length){ try { toast('No expirations for '+sym); } catch(_){}; return; }
+    var now = Date.now();
+    function dteFor(d){ return Math.round((new Date(d+'T20:30:00Z').getTime() - now) / 86400000); }
+    var picked = null;
+    if (mode === 'weekly'){
+      // Nearest expiry > 0 DTE (weekly = soonest non-expired).
+      picked = dates.find(function(d){ return dteFor(d) >= 1; });
+    } else if (mode === 'monthly'){
+      // Nearest 3rd-Friday-of-month expiry.
+      picked = dates.find(function(d){
+        var p = d.split('-');
+        var dy = parseInt(p[2],10);
+        var dt = new Date(d+'T00:00:00');
+        return dy >= 15 && dy <= 21 && dt.getUTCDay() === 5 && dteFor(d) >= 1;
+      });
+    } else { // '30d'
+      var best = null, bestDelta = Infinity;
+      dates.forEach(function(d){
+        var dte = dteFor(d);
+        if (dte < 1) return;
+        var diff = Math.abs(dte - 30);
+        if (diff < bestDelta){ bestDelta = diff; best = d; }
+      });
+      picked = best;
+    }
+    if (!picked){ try { toast('No '+mode+' expiry available'); } catch(_){}; return; }
+    expEl.value = picked;
+    try { if (typeof updateOrdChart === 'function') updateOrdChart(); } catch(_){}
+    try { if (typeof fetchLiveQuote === 'function') fetchLiveQuote(); } catch(_){}
+    try { if (typeof toast === 'function') toast('EXP → '+(typeof fmtDateUS==='function'?fmtDateUS(picked):picked)+' ('+dteFor(picked)+'d)'); } catch(_){}
+    try { if (typeof hap === 'function') hap(8); } catch(_){}
+  } catch(e){ console.warn('[_qpExp]', e.message); }
+}
+
+// IDEA-1 mini spread-mode toggle 2026-05-09. When ON, expose the long
+// + short strike inputs and override submitOrder to fire a Tradier
+// class=multileg vertical-spread order.
+function _toggleSpreadMode(){
+  var on = eid('ord-spread-toggle') && eid('ord-spread-toggle').checked;
+  var cfg = eid('ord-spread-config');
+  if (cfg) cfg.style.display = on ? '' : 'none';
+  // Store flag on G for submitOrder to read.
+  G.spreadModeOn = !!on;
+  try { if (typeof toast === 'function') toast(on ? 'Spread mode ON — long+short call vertical' : 'Spread mode OFF — single contract'); } catch(_){}
+  try { if (typeof hap === 'function') hap(8); } catch(_){}
+}
+window._qpStrike = _qpStrike;
+window._qpExp = _qpExp;
+window._toggleSpreadMode = _toggleSpreadMode;
+
+// IDEA-1 mini submit handler: builds two OCC symbols from the spread
+// strikes, fires Tradier class=multileg with side[0]=buy_to_open
+// (long lower strike) + side[1]=sell_to_open (short higher strike).
+// Type=limit at the user's net debit (uses LIMIT field).
+function _submitVerticalSpread(){
+  var sym = (eid('ord-sym') && eid('ord-sym').value || '').trim().toUpperCase();
+  var exp = (eid('ord-exp') && eid('ord-exp').value || '').trim();
+  var lowS = parseFloat(eid('ord-spread-long') && eid('ord-spread-long').value);
+  var highS = parseFloat(eid('ord-spread-short') && eid('ord-spread-short').value);
+  var qty = parseInt((eid('ord-qty') && eid('ord-qty').value)||1) || 1;
+  var debit = parseFloat(eid('ord-lmt') && eid('ord-lmt').value) || 0;
+  if (!sym || !exp){ toast('Symbol + expiry required'); return; }
+  if (!lowS || !highS){ toast('Set BOTH long-strike AND short-strike'); return; }
+  if (lowS >= highS){ toast('Long strike must be below short strike (bull call vertical)'); return; }
+  if (debit <= 0){ toast('Net debit must be > 0 (use LIMIT field)'); return; }
+  var creds = (typeof getTradierCreds === 'function') ? getTradierCreds() : null;
+  if (!creds || !creds.key){ toast('No Tradier key'); return; }
+  var acct = (eid('ord-acct') && eid('ord-acct').value.trim()) || G.acctId || (function(){try{return localStorage.getItem('rrjcar_acct')||'';}catch(_){return '';}})();
+  if (!acct){ toast('No account ID'); return; }
+  var occLong  = (typeof buildOccSym === 'function') ? buildOccSym(sym, 'CALL', lowS,  exp) : null;
+  var occShort = (typeof buildOccSym === 'function') ? buildOccSym(sym, 'CALL', highS, exp) : null;
+  if (!occLong || !occShort){ toast('OCC symbol build failed'); return; }
+  // Confirm before sending — multileg orders are non-trivial.
+  var confirmMsg = 'BULL CALL VERTICAL SPREAD\n'
+    + sym + ' ' + (typeof fmtDateUS==='function'?fmtDateUS(exp):exp) + '\n'
+    + 'BUY  +' + qty + ' ' + lowS  + 'C\n'
+    + 'SELL -' + qty + ' ' + highS + 'C\n'
+    + 'NET DEBIT: $' + debit.toFixed(2) + '/contract\n'
+    + 'MAX LOSS:  $' + (debit * qty * 100).toFixed(2) + '\n'
+    + 'MAX GAIN:  $' + ((highS - lowS - debit) * qty * 100).toFixed(2) + '\n\n'
+    + 'Submit?';
+  if (!confirm(confirmMsg)) return;
+  var body = 'class=multileg'
+    + '&symbol=' + encodeURIComponent(sym)
+    + '&type=debit'
+    + '&duration=day'
+    + '&price=' + debit.toFixed(2)
+    + '&side[0]=buy_to_open'
+    + '&option_symbol[0]=' + encodeURIComponent(occLong)
+    + '&quantity[0]=' + qty
+    + '&side[1]=sell_to_open'
+    + '&option_symbol[1]=' + encodeURIComponent(occShort)
+    + '&quantity[1]=' + qty;
+  var res = eid('ord-result');
+  if (res){ res.innerHTML = 'Submitting vertical spread...'; res.className = 'ord-result show'; res.style.borderColor = 'var(--amb)'; }
+  try {
+    openOrderStatusModal({
+      mode:'oneshot', creds: { host: creds.host, key: creds.key }, acct: acct,
+      occSym: 'VERT '+sym+' '+lowS+'/'+highS+'C',
+      sym: sym, side: 'buy_to_open', qty: qty,
+      limitPrice: debit, maxAttempts: 1, delaySec: 0
+    });
+    updateOrderStatusModal({state:'working', stateText:'SUBMITTING SPREAD…', logLine:'Multileg vertical: '+lowS+'/'+highS+'C @ $'+debit.toFixed(2)+' debit', logKind:'sent'});
+  } catch(_){}
+  fetch(creds.host + '/v1/accounts/' + acct + '/orders', {
+    method: 'POST',
+    headers: { Authorization: 'Bearer ' + creds.key, Accept: 'application/json', 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: body
+  }).then(function(r){ var s=r.status; return r.text().then(function(t){return{s:s,t:t};}); })
+    .then(function(resp){
+      try {
+        var data = JSON.parse(resp.t);
+        if (data.order && data.order.id){
+          if (res){ res.innerHTML = '<span style="color:var(--blub)">Spread submitted — order #'+_esc(data.order.id)+'</span>'; res.style.borderColor='var(--blu)'; }
+          try { addAlert(sym, 'VERTICAL SPREAD '+lowS+'/'+highS+'C qty '+qty+' debit $'+debit.toFixed(2)+' — order #'+data.order.id, 'go'); } catch(_){}
+          try { toast('Spread submitted: '+data.order.id); } catch(_){}
+          try { updateOrderStatusModal({state:'working', stateText:'SUBMITTED — WORKING', subLine:'Order #'+data.order.id, logLine:'Order #'+data.order.id+' submitted', logKind:'sent'}); } catch(_){}
+          setTimeout(function(){ if(G.acctId) fetchPositions(); }, 3000);
+        } else {
+          var errs = (data.errors && data.errors.error) || 'unknown';
+          if (Array.isArray(errs)) errs = errs.join(' | ');
+          if (res){ res.innerHTML = '<span style="color:var(--wrn)">Error: '+_esc(errs)+'</span>'; res.style.borderColor='var(--wrn)'; }
+          try { updateOrderStatusModal({state:'rejected', stateText:'REJECTED', logLine:errs, logKind:'rejected'}); } catch(_){}
+        }
+      } catch(e){
+        if (res){ res.innerHTML = '<span style="color:var(--wrn)">Error (HTTP '+_esc(resp.s)+'): '+_esc((resp.t||'').slice(0,200))+'</span>'; res.style.borderColor='var(--wrn)'; }
+      }
+    })
+    .catch(function(e){
+      if (res){ res.innerHTML = '<span style="color:var(--wrn)">Error: '+_esc(e.message)+'</span>'; res.style.borderColor='var(--wrn)'; }
+      try { updateOrderStatusModal({state:'rejected', stateText:'NETWORK ERROR', logLine:e.message, logKind:'rejected'}); } catch(_){}
+    });
+}
+window._submitVerticalSpread = _submitVerticalSpread;
+
 function _rhStepLimit(delta){
   var lmtEl = eid('ord-lmt');
   if (!lmtEl) return;
@@ -10764,6 +11003,13 @@ function previewOrder(){
 
 function submitOrder(){
   if(G.stepFillActive){toast('Step fill already running');return;}
+  // IDEA-1 mini fix 2026-05-09: route to the multileg submit path when
+  // SPREAD toggle is ON. Bypasses the normal step-fill / single-contract
+  // flow entirely.
+  if (G.spreadModeOn){
+    try { _submitVerticalSpread(); } catch(e){ console.error('[spread]', e); toast('Spread submit failed: '+e.message); }
+    return;
+  }
   // Refuse a 2nd submission while the previous order's status modal is
   // minimized to a chip and still working. Submitting now would clobber
   // the prior order's tracking (poller killed, ctx replaced) so the
@@ -24227,7 +24473,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.11.6-deploy2-medium';
+var APP_VERSION = '2.12.0-deploy3-pivots';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
