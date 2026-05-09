@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-08T22:15-headless-gex-cron-and-cst-display">
+<meta name="op-build" content="2026-05-08T23:00-modal-minimize-chip-banner-and-chain-exp-default">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -3285,7 +3285,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <!-- STRIKE + EXPIRY (options only) -->
       <div class="ord-row ord-opt-only">
         <div class="ord-field"><label>STRIKE</label><input id="ord-strike" type="number" placeholder="150.00" onchange="updateOrdChart();fetchLiveQuote()" oninput="updateOrdChart()"></div>
-        <div class="ord-field"><label>EXPIRATION DATE</label><input id="ord-exp" type="date" onchange="updateOrdChart();fetchLiveQuote()"></div>
+        <div class="ord-field"><label>EXPIRATION DATE</label><input id="ord-exp" type="date" onchange="updateOrdChart();fetchLiveQuote();(function(){var c=document.getElementById('ord-chain-card');if(c&&c.open&&typeof loadOrdChain==='function')loadOrdChain();})()"></div>
       </div>
 
       <!-- ── AUTO-SELECT CONTRACT — options only ── -->
@@ -3516,7 +3516,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       </summary>
       <div style="padding:10px 12px;">
         <div id="ord-chain-bar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;font-family:var(--ff-mono);font-size:11px;color:var(--gry);">
-          <label>EXPIRY <select id="ord-chain-exp" style="background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:4px 7px;margin-left:6px;"></select></label>
+          <label>EXPIRY <select id="ord-chain-exp" style="background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:4px 8px;margin-left:6px;min-width:170px;"></select></label>
           <label>RANGE <select id="ord-chain-range" style="background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:4px 7px;margin-left:6px;"><option value="10">±10 strikes</option><option value="20">±20 strikes</option><option value="all">all strikes</option></select></label>
           <span id="ord-chain-gex-info" style="margin-left:auto;color:var(--ambb);"></span>
           <button class="btn" style="font-size:10px;padding:3px 9px;" onclick="loadOrdChain()">&#8635; REFRESH</button>
@@ -8826,9 +8826,13 @@ function cancelStepFill(){
 // Module-level state for the active modal session.
 G.orderStatus = G.orderStatus || {
   modalEl: null,
-  ctx: null,           // { mode:'step'|'oneshot', creds, acct, orderId, sym, occSym, side, qty, startPrice, limitPrice, stepSize, maxAttempts, delaySec, t0 }
-  pollHandle: null,    // setInterval handle for elapsed-time tick
-  oneshotPoller: null  // for one-shot limit polling
+  chipEl: null,         // floating side-chip when modal is minimized
+  ctx: null,            // { mode:'step'|'oneshot', creds, acct, orderId, sym, occSym, side, qty, startPrice, limitPrice, stepSize, maxAttempts, delaySec, t0, lastPrice, fillPrice }
+  pollHandle: null,     // setInterval handle for elapsed-time tick
+  oneshotPoller: null,  // for one-shot limit polling
+  isMinimized: false,   // true when chip is showing in place of modal
+  terminalState: null,  // 'filled' | 'cancelled' | 'not-filled' | 'rejected' | null
+  terminalText: null    // human-readable terminal label, e.g. "FILLED @ $2.45"
 };
 
 function _osmFmtElapsed(ms){
@@ -8839,8 +8843,13 @@ function _osmFmtElapsed(ms){
 
 function openOrderStatusModal(ctx){
   // Tear down any prior modal cleanly so reopens don't leak DOM/timers.
+  // Use silent close so the saved ctx (used for restore) doesn't get wiped.
   closeOrderStatusModal({silent:true});
   G.orderStatus.ctx = Object.assign({ t0: Date.now() }, ctx || {});
+  // Fresh open = fresh terminal tracking.
+  G.orderStatus.terminalState = null;
+  G.orderStatus.terminalText = null;
+  G.orderStatus.isMinimized = false;
 
   var c = G.orderStatus.ctx;
   var labelOcc = _esc(c.occSym || c.sym || '--');
@@ -8851,7 +8860,10 @@ function openOrderStatusModal(ctx){
   var modal = document.createElement('div');
   modal.id = 'ord-status-modal';
   modal.style.cssText = 'position:fixed;inset:0;z-index:9750;background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:60px 12px 24px;overflow-y:auto;';
-  modal.onclick = function(e){ if (e.target === modal) closeOrderStatusModal(); };
+  // Click outside the panel → minimize to a side chip (don't close fully).
+  // The chip persists for the duration of the order and is clickable to
+  // re-expand. Terminal states while minimized fire a notification banner.
+  modal.onclick = function(e){ if (e.target === modal) minimizeOrderStatusModal(); };
 
   modal.innerHTML =
       '<div id="osm-panel" style="background:var(--bg1);border:1px solid var(--amb);border-radius:10px;width:480px;max-width:96vw;padding:0;box-shadow:0 0 28px rgba(0,212,255,.25);">'
@@ -8916,8 +8928,45 @@ function openOrderStatusModal(ctx){
 }
 
 function updateOrderStatusModal(patch){
-  if (!G.orderStatus.modalEl || !document.getElementById('ord-status-modal')) return;
   patch = patch || {};
+  // Track the latest known state on G.orderStatus so the chip + banner
+  // can render correctly even when the modal DOM doesn't currently exist
+  // (i.e. user has minimized it).
+  if (patch.price != null && G.orderStatus.ctx){
+    G.orderStatus.ctx.lastPrice = patch.price;
+  }
+  var terminal = (patch.state === 'filled' || patch.state === 'cancelled' || patch.state === 'not-filled' || patch.state === 'rejected');
+  if (terminal){
+    G.orderStatus.terminalState = patch.state;
+    G.orderStatus.terminalText = patch.stateText || patch.state.toUpperCase();
+    if (patch.state === 'filled' && patch.price != null && G.orderStatus.ctx){
+      G.orderStatus.ctx.fillPrice = patch.price;
+    }
+  }
+
+  // If the modal is minimized (or never opened), still drive the chip + banner.
+  var modalIsOpen = !!(G.orderStatus.modalEl && document.getElementById('ord-status-modal'));
+  if (!modalIsOpen){
+    if (G.orderStatus.isMinimized){
+      // Refresh the chip's state label so it reflects the latest update.
+      _showOrderStatusChip();
+      // Terminal while minimized → fire the prominent banner. Schedule a
+      // chip auto-cleanup so the user can still click for ~30s but it
+      // doesn't linger forever.
+      if (terminal){
+        try { showOrderTerminalBanner(patch.state, G.orderStatus.ctx); } catch(_){}
+        setTimeout(function(){
+          // Only auto-cleanup if the user hasn't reopened by clicking the chip.
+          if (G.orderStatus.isMinimized && G.orderStatus.terminalState){
+            closeOrderStatusModal();
+          }
+        }, 30000);
+      }
+    }
+    return;
+  }
+
+  // ── Modal is visible; update the live DOM. ──
   var stateGlyph = eid('osm-state-glyph');
   var stateLine  = eid('osm-state-line');
   var subLine    = eid('osm-sub-line');
@@ -8962,7 +9011,6 @@ function updateOrderStatusModal(patch){
     if (card){ card.style.borderColor = s.border; }
     if (patch.subLine && subLine) subLine.textContent = patch.subLine;
 
-    var terminal = (patch.state === 'filled' || patch.state === 'cancelled' || patch.state === 'not-filled' || patch.state === 'rejected');
     if (terminal){
       if (cancelRow) cancelRow.style.display = 'none';
       // Show resubmit panel for non-filled terminal states.
@@ -8988,7 +9036,136 @@ function closeOrderStatusModal(opts){
   var el = document.getElementById('ord-status-modal');
   if (el) el.remove();
   G.orderStatus.modalEl = null;
+  G.orderStatus.isMinimized = false;
+  // Also clear any side-chip that was tracking this order.
+  _removeOrderStatusChip();
   if (!opts.silent) G.orderStatus.ctx = null;
+}
+
+// ─── MINIMIZE / RESTORE / NOTIFICATION-BANNER ────────────────────────────────
+// Click-off behavior: hide the modal, drop a small floating chip on the
+// right edge of the page that stays visible for the duration of the order.
+// Click the chip → re-expand. Terminal states (filled/cancelled/etc) while
+// minimized fire a prominent banner so the user notices even while looking
+// at another tab/page.
+function minimizeOrderStatusModal(){
+  var el = document.getElementById('ord-status-modal');
+  if (el) el.remove();
+  G.orderStatus.modalEl = null;
+  G.orderStatus.isMinimized = true;
+  _showOrderStatusChip();
+}
+
+function restoreOrderStatusModal(){
+  if (!G.orderStatus.ctx) return;
+  G.orderStatus.isMinimized = false;
+  // Recreate the modal from the saved ctx. Mark a flag so openOrderStatusModal
+  // doesn't reset t0 (we want elapsed-time to keep ticking from the original
+  // submission, not restart on restore).
+  var savedCtx = G.orderStatus.ctx;
+  var savedT0 = savedCtx.t0;
+  // openOrderStatusModal calls closeOrderStatusModal({silent}) first which
+  // clears the chip, so call it directly then patch t0 back.
+  openOrderStatusModal(savedCtx);
+  if (G.orderStatus.ctx) G.orderStatus.ctx.t0 = savedT0;
+  _removeOrderStatusChip();
+  // If the order already reached a terminal state while minimized, restore
+  // the chip's last-known state into the modal so the user sees the latest.
+  if (G.orderStatus.terminalState){
+    updateOrderStatusModal({
+      state: G.orderStatus.terminalState,
+      stateText: G.orderStatus.terminalText || null,
+      logLine: 'Restored from minimized — last status: ' + (G.orderStatus.terminalText || G.orderStatus.terminalState),
+      logKind: G.orderStatus.terminalState === 'filled' ? 'filled' : 'cancelled'
+    });
+  }
+}
+
+function _showOrderStatusChip(){
+  _removeOrderStatusChip();
+  var c = G.orderStatus.ctx || {};
+  var chip = document.createElement('div');
+  chip.id = 'ord-status-chip';
+  chip.style.cssText = 'position:fixed;right:12px;top:96px;z-index:9740;background:var(--bg1);border:1px solid var(--amb);border-left:3px solid var(--amb);border-radius:6px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;box-shadow:0 0 18px rgba(0,212,255,.4);min-width:140px;max-width:200px;font-family:var(--ff-mono);font-size:10px;animation:osm-chip-in .25s ease-out;';
+  var labelOcc = _esc(c.occSym || c.sym || '--');
+  var labelMode = c.mode === 'step' ? 'STEP FILL' : 'ORDER';
+  var stateText = G.orderStatus.terminalText || 'WORKING';
+  var stateCol = !G.orderStatus.terminalState ? 'var(--amb)'
+              : G.orderStatus.terminalState === 'filled' ? 'var(--grn)'
+              : G.orderStatus.terminalState === 'cancelled' ? 'var(--gry)'
+              : 'var(--wrn)';
+  chip.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;gap:6px;">'
+    +   '<span style="color:'+stateCol+';font-weight:700;letter-spacing:1px;font-size:9px;">'+_esc(stateText)+'</span>'
+    +   '<span style="color:var(--gry2);font-size:9px;cursor:pointer;padding:0 4px;" onclick="event.stopPropagation();closeOrderStatusModal()" title="Dismiss permanently">&#10005;</span>'
+    + '</div>'
+    + '<div style="color:var(--wht);font-size:11px;font-weight:600;">'+labelOcc+'</div>'
+    + '<div style="color:var(--gry);font-size:9px;letter-spacing:.5px;">'+labelMode+' · click to expand</div>';
+  // Click the chip body (anywhere except the X) → restore the modal.
+  chip.addEventListener('click', function(e){
+    if (e.target.tagName === 'SPAN' && e.target.textContent === '✕') return;
+    restoreOrderStatusModal();
+  });
+  // Inject keyframes once for the chip slide-in.
+  if (!document.getElementById('osm-chip-style')){
+    var st = document.createElement('style');
+    st.id = 'osm-chip-style';
+    st.textContent = '@keyframes osm-chip-in{from{transform:translateX(40px);opacity:0;}to{transform:translateX(0);opacity:1;}}'
+                   + '@keyframes osm-banner-in{from{transform:translate(-50%,-30px);opacity:0;}to{transform:translate(-50%,0);opacity:1;}}';
+    document.head.appendChild(st);
+  }
+  document.body.appendChild(chip);
+  G.orderStatus.chipEl = chip;
+}
+
+function _removeOrderStatusChip(){
+  var existing = document.getElementById('ord-status-chip');
+  if (existing) existing.remove();
+  G.orderStatus.chipEl = null;
+}
+
+// Prominent in-page banner shown when a terminal state hits while the
+// modal is minimized (or absent). Auto-dismisses after 5s. Distinct from
+// the regular toast() so it's harder to miss.
+function showOrderTerminalBanner(state, ctx){
+  var banner = document.getElementById('ord-status-banner');
+  if (banner) banner.remove();
+  ctx = ctx || G.orderStatus.ctx || {};
+  banner = document.createElement('div');
+  banner.id = 'ord-status-banner';
+  var states = {
+    filled:     { glyph:'&#10003;', text:'FILLED',     col:'var(--grn)',  bg:'rgba(0,200,80,.18)'  },
+    cancelled:  { glyph:'&#9632;',  text:'CANCELLED',  col:'var(--gry)',  bg:'rgba(120,120,120,.2)' },
+    'not-filled':{glyph:'&#9888;',  text:'NOT FILLED', col:'var(--wrn)',  bg:'rgba(255,160,30,.18)' },
+    rejected:   { glyph:'&#10005;', text:'REJECTED',   col:'var(--wrn)',  bg:'rgba(255,80,80,.18)'  }
+  };
+  var s = states[state] || states.cancelled;
+  var occ = _esc(ctx.occSym || ctx.sym || '');
+  var priceTxt = ctx.fillPrice ? ' @ $' + Number(ctx.fillPrice).toFixed(2) : (ctx.lastPrice ? ' last $' + Number(ctx.lastPrice).toFixed(2) : '');
+  banner.style.cssText = 'position:fixed;top:24px;left:50%;transform:translateX(-50%);z-index:9760;background:var(--bg1);border:2px solid '+s.col+';border-radius:10px;padding:14px 22px;display:flex;align-items:center;gap:14px;box-shadow:0 6px 32px rgba(0,0,0,.6),0 0 28px '+s.bg+';font-family:var(--ff-brand);min-width:280px;max-width:92vw;animation:osm-banner-in .3s ease-out;cursor:pointer;';
+  banner.innerHTML =
+      '<div style="font-size:32px;line-height:1;color:'+s.col+';">'+s.glyph+'</div>'
+    + '<div style="flex:1;display:flex;flex-direction:column;gap:2px;">'
+    +   '<div style="font-size:14px;color:'+s.col+';letter-spacing:2px;font-weight:700;">'+s.text+priceTxt+'</div>'
+    +   '<div style="font-size:11px;color:var(--gry);font-family:var(--ff-mono);">'+occ+'</div>'
+    + '</div>'
+    + '<button class="btn" style="font-size:10px;padding:4px 10px;" onclick="event.stopPropagation();document.getElementById(\'ord-status-banner\').remove();">DISMISS</button>';
+  // Click banner body → restore the modal so user can see details.
+  banner.addEventListener('click', function(){
+    if (G.orderStatus.ctx) restoreOrderStatusModal();
+    else { try { switchTab('positions'); } catch(_){} }
+    var b = document.getElementById('ord-status-banner');
+    if (b) b.remove();
+  });
+  document.body.appendChild(banner);
+  // Haptic + fill sound piggyback (already fired by runStepFill but harmless if doubled).
+  try { if (state === 'filled' && typeof playFillSound === 'function') playFillSound(); } catch(_){}
+  try { if (typeof hap === 'function') hap(state === 'filled' ? [40,80,40] : [80]); } catch(_){}
+  // Auto-dismiss after 5s.
+  setTimeout(function(){
+    var b = document.getElementById('ord-status-banner');
+    if (b) b.remove();
+  }, 5000);
 }
 
 function cancelOrderFromModal(){
@@ -23130,7 +23307,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.8.0-headless-gex-cron-and-cst-display';
+var APP_VERSION = '2.8.1-modal-minimize-chip-banner-and-chain-exp-default';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
