@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-09T13:00-medium-low-audit-fixes">
+<meta name="op-build" content="2026-05-09T14:00-rescan-tier1-critical-fixes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -10137,13 +10137,28 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       var fallback=fallbackEl?fallbackEl.value:'none';
       if(fallback==='market'){
         sfLog('Fallback: submitting MARKET order...','sent');
-        var mktBody='class=option'
-          +'&symbol='+encodeURIComponent(sym)
-          +'&option_symbol='+encodeURIComponent(occSym)
-          +'&side='+encodeURIComponent(side)
-          +'&quantity='+qty
-          +'&type=market'
-          +'&duration=day';
+        // BUG-9 fix 2026-05-09: branch on assetClass so a stock step-fill
+        // that exhausts maxAttempts can fall back to a stock market order
+        // instead of a malformed option body. Pre-fix this always emitted
+        // class=option + option_symbol=<bare ticker>, which Tradier
+        // rejected with "undefined symbol" for any equity step-fill.
+        var mktBody;
+        if (assetClass === 'stock'){
+          mktBody='class=equity'
+            +'&symbol='+encodeURIComponent(sym)
+            +'&side='+encodeURIComponent(side)
+            +'&quantity='+qty
+            +'&type=market'
+            +'&duration='+encodeURIComponent(duration === 'pre' || duration === 'post' ? 'day' : duration);
+        } else {
+          mktBody='class=option'
+            +'&symbol='+encodeURIComponent(sym)
+            +'&option_symbol='+encodeURIComponent(occSym)
+            +'&side='+encodeURIComponent(side)
+            +'&quantity='+qty
+            +'&type=market'
+            +'&duration=day';
+        }
         try{
           var mktRes=await fetch(creds.host+'/v1/accounts/'+acct+'/orders',{
             method:'POST',
@@ -14112,7 +14127,10 @@ function scoreIt(ticker, ind, opt){
     isGo:       isGo,
     filtersPass:true, // no hard filters in v3.5 \u2014 options evaluated downstream
     rules:      res,
-    passes:     res.filter(function(r){ return r.pass; }).length
+    // BUG-2 fix 2026-05-09: was emitting `.length` (a number), but
+    // _matchesPreset reads this as an array of rule names. Emit names.
+    // Display sites must use `.length`.
+    passes:     res.filter(function(r){ return r.pass; }).map(function(r){ return r.n; })
   };
 }
 
@@ -14196,7 +14214,7 @@ function buildDetail(r,detId,emptyId){
         : '')
     +'<span class="det-pr">$'+fmt2(r.price)+'</span>'
     +'<span class="det-sig '+sigCls+'">'+sigLbl+'</span>'
-    +'<span class="det-meta">'+_esc(r.sector)+' | Score: <b>'+Math.round(r.score)+'</b>/240 | Tech: '+techScore+' Fund: '+fundScore+' | Passes: '+r.passes+'/'+(Array.isArray(r.rules)?r.rules.length:14)
+    +'<span class="det-meta">'+_esc(r.sector)+' | Score: <b>'+Math.round(r.score)+'</b>/240 | Tech: '+techScore+' Fund: '+fundScore+' | Passes: '+(Array.isArray(r.passes)?r.passes.length:(r.passes||0))+'/'+(Array.isArray(r.rules)?r.rules.length:14)
       + (function(){
           var dte = (typeof getDaysToEarnings === 'function') ? getDaysToEarnings(r.ticker) : null;
           if (dte === null) return '';
@@ -15754,15 +15772,17 @@ function _matchesPreset(r, filters){
   // NOT pass — better to under-count than over-count for the strip.
   var passes = Array.isArray(r.passes) ? r.passes : [];
   function has(name){ return passes.indexOf(name) >= 0; }
-  if (filters.analyst && !(has('Analyst Revisions Up') || has('Analyst Revisions ↑') || has('Analyst Up'))) return false;
-  if (filters.gex && !(has('GEX Call Heavy') || has('Call Heavy GEX'))) return false;
-  if (filters.proven && !(has('PROVEN') || has('PROVEN Ticker'))) return false;
-  if (filters.hi52 && !(has('Near 52Wk Hi') || has('52Wk Hi'))) return false;
-  if (filters.rs && !has('RS > SPY')) return false;
-  if (filters.macd && !(has('MACD +') || has('MACD Bullish'))) return false;
+  // Names must match scoreIt's res.push n: values. Multi-OR for legacy
+  // cached entries that may carry older rule labels. (BUG-2/3/4/5 fix.)
+  if (filters.analyst && !(has('Analyst Revisions ↑') || has('Analyst Revisions Up'))) return false;
+  if (filters.gex && !(has('GEX Call Flow') || has('GEX Call Heavy'))) return false;
+  if (filters.proven && !(has('PROVEN ticker') || has('PROVEN'))) return false;
+  if (filters.hi52 && !(has('52Wk Hi Prox <15%') || has('52Wk Hi Prox <5% (G-H)'))) return false;
+  if (filters.rs && !(has('RS > SPY (21d)') || has('RS > SPY (5d)') || has('RS > SPY'))) return false;
+  if (filters.macd && !(has('MACD Hist +') || has('MACD +'))) return false;
   if (filters.tf && !(has('TF Aligned 2/3') || has('Timeframes Aligned'))) return false;
-  if (filters.ema200 && !(has('Above EMA200') || has('Above 200 EMA'))) return false;
-  if (filters.vol && !(has('Vol > Avg') || has('Volume > Avg'))) return false;
+  if (filters.ema200 && !(has('Price > EMA200') || has('Above EMA200'))) return false;
+  if (filters.vol && !(has('U/D Volume Ratio (50d)') || has('Vol > Avg'))) return false;
   if (filters.strongSector) {
     var ti = (typeof getThemeStrength === 'function') ? getThemeStrength(r.ticker) : null;
     if (!ti || (ti.dailyScore || 0) < 75) return false;
@@ -16832,16 +16852,20 @@ function applyFilters(){
         r.rules.forEach(function(rule){ if(rule.pass) passed[rule.n] = true; });
       }
 
-      // Check each active filter against the rule scorecard
+      // Check each active filter against the rule scorecard. Rule names
+      // MUST match what scoreIt emits \u2014 see scoreIt res.push() calls.
+      // BUG-3/4/5 fix 2026-05-09: 'GEX Call Heavy' \u2192 'GEX Call Flow'
+      // (current scoreIt name); 'RS > SPY (5d)' \u2192 either 5d or 21d label;
+      // 'Vol > Avg' \u2192 'U/D Volume Ratio (50d)' (rule renamed).
       if(needAnalyst && !passed['Analyst Revisions \u2191']) return false;
-      if(needGex     && !passed['GEX Call Heavy'])          return false;
+      if(needGex     && !passed['GEX Call Flow'])           return false;
       if(needProven  && !passed['PROVEN ticker'])           return false;
       if(need52hi    && !passed['52Wk Hi Prox <15%'])       return false;
-      if(needRS      && !passed['RS > SPY (5d)'])           return false;
+      if(needRS      && !(passed['RS > SPY (21d)'] || passed['RS > SPY (5d)'])) return false;
       if(needMacd    && !passed['MACD Hist +'])             return false;
       if(needTF      && !passed['TF Aligned 2/3'])          return false;
       if(needEma200  && !passed['Price > EMA200'])          return false;
-      if(needVol     && !passed['Vol > Avg'])               return false;
+      if(needVol     && !passed['U/D Volume Ratio (50d)'])  return false;
       // High-IC rules (2026-05-03). Rule names match the strings emitted by
       // scoreIt \u2014 see lines 11124, 11153, 11192, 11238, 11257.
       if(needJT12      && !passed['JT 12-1 Momentum'])           return false;
@@ -17788,8 +17812,19 @@ function setGexSchedule(value){
 
 function runGex(){
   // RACE-1 fix: set the inflight token so hydrateGexFromCron skips while
-  // we're scanning. Cleared at all completion paths via _gexClearInflight().
+  // we're scanning. Cleared at all completion paths via saveGexCache().
+  // BUG-8 fix 2026-05-09: also arm a 10-min watchdog so any error path
+  // that bypasses saveGexCache (no-key sim, fetch failure, sync exception)
+  // doesn't leave the token stuck — without this, hydrateGexFromCron
+  // would early-return for the rest of the session.
   G._gexInflight = true;
+  if (G._gexWatchdog) clearTimeout(G._gexWatchdog);
+  G._gexWatchdog = setTimeout(function(){
+    if (G._gexInflight){
+      console.warn('[gex] watchdog: clearing stuck inflight token after 10min');
+      G._gexInflight = false;
+    }
+  }, 10 * 60 * 1000);
   // Wrap element + status are OPTIONAL — renderGex() handles missing wrap
   // gracefully (returns early). runGex still computes G.gexData even when
   // there's no UI to render it, so the rule scorecard's GEX rule has data
@@ -18815,7 +18850,22 @@ function fetchPositionsDirect(key,mode,host,acct){
               perUnitChange = 0;
             }
             p.prevclose = prevclose;
-            p.dayPnl = perUnitChange * p.qty * mult;
+            // BUG-13 fix 2026-05-09: for positions opened TODAY, the user's
+            // actual day P/L is (mid − cost-per-unit), not (mid − prevclose).
+            // The latter credits the user for an overnight gap they never
+            // captured. We use posOpenData's openTs to detect today-opened
+            // and switch the formula. costPerUnit = cost_basis / qty / mult.
+            var openedToday = (typeof _isOpenedTodayET === 'function')
+              ? _isOpenedTodayET((G.posOpenData[p.symbol] || {}).openTs)
+              : false;
+            if (openedToday && p.cost && p.qty){
+              var costPerUnit = p.cost / Math.abs(p.qty) / mult;
+              p.dayPnl = (mid - costPerUnit) * p.qty * mult;
+              p.dayPnlBasis = 'since-open';
+            } else {
+              p.dayPnl = perUnitChange * p.qty * mult;
+              p.dayPnlBasis = 'since-prev-close';
+            }
           }
           // Record first-seen data (open timestamp + underlying price at open).
           // ATR(14) snapshot drives the static ATR-anchored exit prices in
@@ -23551,7 +23601,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.9.3-medium-low-audit-fixes';
+var APP_VERSION = '2.9.4-rescan-tier1-critical-fixes';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -28076,7 +28126,9 @@ window.addEventListener('DOMContentLoaded',init);
     }
     if (newsState.filter === 'watchlist'){
       try {
-        var wl = (typeof G !== 'undefined' && G.watchlist) ? G.watchlist : [];
+        // BUG-1 fix 2026-05-09: was reading G.watchlist (does not exist).
+        // Real watchlist data is on G.wlTickers (string array).
+        var wl = (typeof G !== 'undefined' && G.wlTickers) ? G.wlTickers : [];
         return wl.map(function(w){ return (typeof w === 'string') ? w : w.ticker; }).filter(Boolean).slice(0, 20);
       } catch(_) { return []; }
     }
