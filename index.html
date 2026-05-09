@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-09T14:00-rescan-tier1-critical-fixes">
+<meta name="op-build" content="2026-05-09T15:00-rescan-tier2-high-fixes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -10111,16 +10111,27 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       // at the same limit price.
     } else {
       // status === 'rejected' | 'expired' | 'error' | 'unknown' | etc.
+      // CONF-6 fix 2026-05-09: 'expired' is a TERMINAL Tradier status that
+      // step-fill previously fell through and treated as a retryable
+      // rejection. The modal stayed in WORKING state forever. Terminalise
+      // the modal explicitly when expired.
       consecutiveRejected++;
       var stepDir2=goingUp?'stepping up':'stepping down';
       var reasonTag = det.reason ? (' ['+det.reason+']') : '';
+      if (status === 'expired'){
+        sfLog('Order EXPIRED'+reasonTag+' \u2014 stopping step-fill loop.','rejected');
+        try { updateOrderStatusModal({state:'rejected', stateText:'EXPIRED'+(det.reason?' \u2014 '+det.reason:''), logLine:'Order expired at the broker \u2014 stopping.', logKind:'rejected'}); } catch(_){}
+        break;
+      }
       sfLog('Order ended with status: '+status+reasonTag+' \u2014 '+(consecutiveRejected >= REJECT_ABORT_THRESHOLD ? 'aborting' : stepDir2+'...'),'rejected');
       if (consecutiveRejected >= REJECT_ABORT_THRESHOLD){
         sfLog('Aborting \u2014 '+REJECT_ABORT_THRESHOLD+' rejections in a row. Price-stepping cannot fix this; check buying power, position size, or account permissions.','rejected');
+        try { updateOrderStatusModal({state:'rejected', stateText:'REJECTED \u00d7'+REJECT_ABORT_THRESHOLD, logLine:'Aborted \u2014 '+REJECT_ABORT_THRESHOLD+' rejections in a row.', logKind:'rejected'}); } catch(_){}
         break;
       }
       if (_atLimit(currentC)){
         sfLog('Reached price limit \u2014 stopping.','rejected');
+        try { updateOrderStatusModal({state:'rejected', stateText:'AT PRICE LIMIT', logLine:'Reached price limit \u2014 stopping.', logKind:'rejected'}); } catch(_){}
         break;
       }
       currentC = _step(currentC);
@@ -10727,6 +10738,8 @@ function submitOrder(){
             }
             pollOrderDetails({host:host,key:key}, acct, data.order.id).then(function(det){
               var s = (det && det.status) || '';
+              // Known pending statuses Tradier may return — keep polling.
+              var PENDING = { open:1, pending:1, partially_filled:1, accepted:1, submitted:1, received:1, replaced:1, replacement_pending:1, pending_replace:1, pending_cancel:1 };
               if (s === 'filled'){
                 clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
                 var fillPx = det.raw && (det.raw.avg_fill_price || det.raw.last_fill_price || det.raw.price);
@@ -10740,8 +10753,14 @@ function submitOrder(){
               } else if (s === 'canceled' || s === 'cancelled'){
                 clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
                 updateOrderStatusModal({state:'cancelled', logLine:'Order cancelled.', logKind:'cancelled'});
+              } else if (s && !PENDING[s]){
+                // CONF-5 fix 2026-05-09: unrecognized non-pending status —
+                // stop polling and surface it loud so the user isn't left
+                // wondering why the modal shows WORKING for 5 minutes.
+                clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+                updateOrderStatusModal({state:'rejected', stateText:'UNKNOWN STATUS: '+s.toUpperCase(), logLine:'Tradier returned unrecognized status: '+s+'. Stopped polling.', logKind:'rejected'});
               } else {
-                updateOrderStatusModal({logLine:'status: '+s.toUpperCase(), logKind:'sent'});
+                updateOrderStatusModal({logLine:'status: '+(s||'(empty)').toUpperCase(), logKind:'sent'});
               }
             }).catch(function(){ /* swallow transient errors */ });
           }, POLL_EVERY_MS);
@@ -11123,9 +11142,16 @@ async function replaceEquityTrailingStop(creds, trailState, newStop, newLimit){
   // the OLD stop level so we at least have SOME protection. trailState.currentStop
   // is the level that was active before this walk attempt.
   var oldStop = trailState.currentStop;
-  var oldLimit = (trailState.orderKind === 'stop_limit' && trailState.lmtOffVal)
-    ? oldStop - (trailState.side === 'sell' ? trailState.lmtOffVal : -trailState.lmtOffVal)
-    : 0;
+  // BUG-10 fix 2026-05-09: respect lmtOffUnit so a percent-configured trail
+  // doesn't get mis-calculated as a dollar offset on the fallback path.
+  // Mirror the primary calc's branch (see _placeEquityStopOnce).
+  var oldLimit = 0;
+  if (trailState.orderKind === 'stop_limit' && trailState.lmtOffVal){
+    var off = trailState.lmtOffUnit === 'pct'
+      ? oldStop * (trailState.lmtOffVal / 100)
+      : trailState.lmtOffVal;
+    oldLimit = oldStop - (trailState.side === 'sell' ? off : -off);
+  }
   console.warn('[eq-trail] '+trailState.symbol+' new stop placement failed 3× — falling back to OLD stop $'+oldStop.toFixed(2));
   for (var fb = 1; fb <= 2; fb++) {
     var fbPlaced = await _placeEquityStopOnce(creds, trailState, oldStop, oldLimit);
@@ -12181,16 +12207,18 @@ function computeEMA(days, period){
   return ema;
 }
 
-// Minutes until market close (3 PM CST per existing scanner clock).
-// Returns Infinity outside market hours so EOD-only rules don't fire after-hours.
+// Minutes until market close (4 PM ET = 3 PM CST). Anchored to ET wall
+// clock — markets are ET, not the user's local clock. (BUG-15 fix
+// 2026-05-09: was using local clock + CST minute offsets, which gave
+// wrong values for users on ET, MT, or PT.) Returns Infinity outside
+// market hours so EOD-only rules don't fire after-hours.
 function minutesUntilMarketClose(){
-  var now = new Date();
-  var day = now.getDay();
+  var et = new Date(new Date().toLocaleString('en-US', { timeZone: 'America/New_York' }));
+  var day = et.getDay();
   if (day === 0 || day === 6) return Infinity;     // weekend
-  var hr = now.getHours(), mi = now.getMinutes();
-  var nowMin = hr * 60 + mi;
-  var openMin  = 8 * 60 + 30;   // 8:30 AM CST = 9:30 ET
-  var closeMin = 15 * 60;        // 3:00 PM CST = 4:00 ET
+  var nowMin  = et.getHours() * 60 + et.getMinutes();
+  var openMin  = 9 * 60 + 30;   // 9:30 AM ET
+  var closeMin = 16 * 60;       // 4:00 PM ET
   if (nowMin < openMin || nowMin >= closeMin) return Infinity;
   return closeMin - nowMin;
 }
@@ -19478,7 +19506,18 @@ function renderPositionsTable(pos,srcLabel){
     // markup so the color override survives. equityCell already has the
     // dollar amount inside a <td>; the .col-equity class on this cell
     // (and matching CSS) bumps font-weight + color.
-    var equityCellHL = equityCell.replace(/<td/, '<td class="col-equity" data-sort-equity="'+(p.last*Math.abs(p.qty)*((p.type==='STOCK')?1:100))+'"');
+    // BUG-16 fix 2026-05-09: was emitting two `class` attributes when
+    // equityCell already had a class (resulting in invalid HTML; CSS
+    // overspecificity then hid the pnl-pos/neg color flip). Merge into
+    // one class attr by detecting an existing class="..." and appending
+    // 'col-equity', else add a fresh class attribute.
+    var _eqSortVal = (p.last*Math.abs(p.qty)*((p.type==='STOCK')?1:100));
+    var equityCellHL;
+    if (/^<td\s+class="[^"]*"/.test(equityCell)){
+      equityCellHL = equityCell.replace(/^(<td\s+class=")([^"]*)"/, '$1$2 col-equity" data-sort-equity="'+_eqSortVal+'"');
+    } else {
+      equityCellHL = equityCell.replace(/<td/, '<td class="col-equity" data-sort-equity="'+_eqSortVal+'"');
+    }
     var ulPxNum = (p.type === 'STOCK') ? -1 : (p.underlyingNow || 0);
     var stockPxCellHL = (p.type === 'STOCK')
       ? '<td data-sort-ulpx="-1" style="color:var(--gry2);">—</td>'
@@ -21843,7 +21882,7 @@ function renderClosedTable(){
       +'<td class="'+pnlCls+'">'+(t.pnlPct>=0?'+':'')+fmt2(t.pnlPct)+'%</td>'
       +'<td>'+resultBadge+'</td>'
       +'<td><button class="btn" style="font-size:10px;padding:2px 8px;border-color:var(--blu3);color:var(--blub);" '
-        +'onclick="toggleClosedChart(\''+sym+'\','+t.strike+','+t.openPrice+','+t.closePrice+',\''+t.type+'\','+t.qty+')">\u25b2 P&L</button></td>'
+        +'onclick="toggleClosedChart(\''+sym+'\','+t.strike+','+t.openPrice+','+t.closePrice+',\''+t.type+'\','+t.qty+','+(t.isOption?1:0)+')">\u25b2 P&L</button></td>'
       +'</tr>'
       // Chart expansion row
       +'<tr id="clchart-'+sym+'" class="pos-chart-row">'
@@ -21941,7 +21980,7 @@ function updateClosedStats(trades){
   try{ localStorage.setItem('op_tradestat_cache', JSON.stringify({pf:pf,sortino:sortino,wr:wr,total:total,totalPnl:totalPnl,ts:Date.now()})); }catch(e){}
 }
 
-function toggleClosedChart(sym,strike,openPrice,closePrice,optType,qty){
+function toggleClosedChart(sym,strike,openPrice,closePrice,optType,qty,isOption){
   var row=document.getElementById('clchart-'+sym);
   if(!row)return;
   var isOpen=row.classList.contains('open');
@@ -21949,9 +21988,13 @@ function toggleClosedChart(sym,strike,openPrice,closePrice,optType,qty){
   if(!isOpen){
     row.classList.add('open');
     setTimeout(function(){
+      // BUG-12 fix 2026-05-09: was hardcoded ×100; stocks were inflating
+      // 100×. Default to 1 for back-compat if isOption flag not passed
+      // (legacy callers), since older code paths assumed options.
+      var mult = (isOption == null) ? 100 : (isOption ? 100 : 1);
       var breakeven=calcBreakeven(strike,openPrice,optType,'BUY_TO_OPEN');
-      var maxLoss=-(openPrice*100*qty);
-      var realizedPnl=(closePrice-openPrice)*100*qty*(optType==='PUT'?-1:1);
+      var maxLoss=-(openPrice*mult*qty);
+      var realizedPnl=(closePrice-openPrice)*mult*qty*(optType==='PUT'?-1:1);
       if(eid('clbe-'+sym))eid('clbe-'+sym).textContent=breakeven?'$'+fmt2(breakeven):'N/A';
       if(eid('clml-'+sym))eid('clml-'+sym).textContent=fmtD(maxLoss);
       if(eid('clrl-'+sym)){
@@ -23601,7 +23644,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.9.4-rescan-tier1-critical-fixes';
+var APP_VERSION = '2.9.5-rescan-tier2-high-fixes';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -24111,15 +24154,35 @@ function cwToggleWatch(ticker, strike, expDate, mid, delta, score){
 // tracked. Silent (no toast). Stock/ETF rows skipped because the watchlist
 // is contract-level. User spec 2026-05-09.
 function cwAutoAddFromPositions(positions){
-  if (!Array.isArray(positions) || !positions.length) return;
+  if (!Array.isArray(positions)) positions = [];
   var data = cwGetAll();
-  var added = 0;
+  var added = 0, removed = 0;
+
+  // Build the set of currently-held option contract keys so we can
+  // (BUG-6 fix) auto-remove auto-added entries that no longer correspond
+  // to a held position. Manual entries (source !== 'position-auto') are
+  // never removed automatically — only the user can prune those.
+  var heldKeys = {};
+  positions.forEach(function(p){
+    if (!p || p.type === 'STOCK') return;
+    if (!p.underlying || !p.strike || !p.exp || !p.type) return;
+    var tc = p.type === 'PUT' ? 'P' : 'C';
+    heldKeys[p.underlying + '_' + p.strike + '_' + p.exp + '_' + tc] = true;
+  });
+
+  // Pass 1 — auto-add missing held contracts.
   positions.forEach(function(p){
     if (!p || p.type === 'STOCK') return;
     if (!p.underlying || !p.strike || !p.exp || !p.type) return;
     var typeChar = p.type === 'PUT' ? 'P' : 'C';
     var key = p.underlying + '_' + p.strike + '_' + p.exp + '_' + typeChar;
-    if (data[key]) return;   // already tracked
+    if (data[key]) return;   // already tracked (manual or auto)
+    // Respect user-dismissed entries: if the user removed a position-auto
+    // entry, we record the key in 'rrjcar_cw_dismissed' so we don't keep
+    // re-adding it on every fetch. (See N-7 enhancement note.)
+    var dismissed = {};
+    try { dismissed = JSON.parse(localStorage.getItem('rrjcar_cw_dismissed') || '{}'); } catch(_){}
+    if (dismissed[key]) return;
     var mid = (p.bid && p.ask) ? (p.bid + p.ask) / 2 : (p.last || 0);
     data[key] = {
       ticker: p.underlying,
@@ -24136,8 +24199,25 @@ function cwAutoAddFromPositions(positions){
     };
     added++;
   });
-  if (added > 0){
+
+  // Pass 2 — auto-remove position-auto entries that the user no longer
+  // holds (closed / expired / rolled). Preserves manual entries. Doesn't
+  // touch entries with no source flag (legacy adds before this field
+  // existed) — be conservative and keep them.
+  Object.keys(data).forEach(function(key){
+    var entry = data[key];
+    if (!entry || entry.source !== 'position-auto') return;
+    if (!heldKeys[key]) {
+      delete data[key];
+      removed++;
+    }
+  });
+
+  if (added > 0 || removed > 0){
     cwSaveAll(data);
+    if (added && removed) console.log('[watchlist] auto-add/remove: +'+added+' / -'+removed);
+    else if (added)       console.log('[watchlist] auto-add: +'+added);
+    else if (removed)     console.log('[watchlist] auto-remove: -'+removed);
     // Refresh the watchlist tab if it's currently rendered (no-op otherwise).
     try { if (typeof cwRenderTable === 'function' && document.getElementById('cw-tbl-wrap')) cwRenderTable(); } catch(_){}
   }
@@ -24263,7 +24343,11 @@ async function cwRefreshAll(){
         var parts = c.expDate.split('-');
         var yy=parts[0].slice(2), mm=parts[1], dd=parts[2];
         var sp=String(Math.round(c.strike*1000)).padStart(8,'0');
-        var occSym = c.ticker+yy+mm+dd+'C'+sp;
+        // BUG-7 fix 2026-05-09: build OCC with the contract's actual type.
+        // Pre-fix this hardcoded 'C', so PUT contracts never refreshed
+        // correctly (Tradier returned the call symbol or no quote).
+        var typeChar = (c.type === 'PUT') ? 'P' : 'C';
+        var occSym = c.ticker+yy+mm+dd+typeChar+sp;
 
         var qr = await fetch(creds.host+'/v1/markets/quotes?symbols='+encodeURIComponent(occSym)+'&greeks=true',{
           headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'}
@@ -27955,15 +28039,29 @@ window.addEventListener('DOMContentLoaded',init);
         if (label) label.textContent = IDLE_TEXT;
       }
     }
+    // BUG-11 fix 2026-05-09: capture document-level handlers as named
+    // functions so dtcReset can remove them. Without this, every
+    // re-arm after a successful swipe-submit attached a new pair of
+    // mousemove/mouseup listeners to document, leaking N×session.
+    var _docMove = function(e){ onMove(e.clientX); };
+    var _docUp   = onEnd;
     thumb.addEventListener('touchstart', function(e){ onStart(e.touches[0].clientX); }, {passive:true});
     track.addEventListener('touchmove',  function(e){ onMove(e.touches[0].clientX); }, {passive:true});
     track.addEventListener('touchend',   onEnd);
     thumb.addEventListener('mousedown', function(e){ onStart(e.clientX); });
-    document.addEventListener('mousemove', function(e){ onMove(e.clientX); });
-    document.addEventListener('mouseup', onEnd);
+    document.addEventListener('mousemove', _docMove);
+    document.addEventListener('mouseup', _docUp);
+    track._dtcDocHandlers = { move:_docMove, up:_docUp };
   }
   function dtcReset(track){
     if (!track) return;
+    // BUG-11 fix: detach the document-scope handlers attached by dtcArm
+    // so subsequent re-arms don't accumulate idle listeners.
+    if (track._dtcDocHandlers){
+      try { document.removeEventListener('mousemove', track._dtcDocHandlers.move); } catch(_){}
+      try { document.removeEventListener('mouseup',   track._dtcDocHandlers.up);   } catch(_){}
+      track._dtcDocHandlers = null;
+    }
     track._dtcWired = false;
     track.classList.remove('confirmed', 'armed', 'dragging');
     var thumb = track.querySelector('.dtc-thumb');
