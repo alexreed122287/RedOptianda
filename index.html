@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-09T21:00-tier-b-features">
+<meta name="op-build" content="2026-05-09T21:30-tier-c-rh3-picker">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -1135,6 +1135,18 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     background:linear-gradient(90deg, transparent, var(--bg1));
     pointer-events:none;
   }
+  /* RH-3 fix 2026-05-09: show big BID/MID/ASK picker on iPhone, hide
+     the small desktop SET BID/MID/ASK button trio. The LIMIT PRICE
+     input remains visible (now optional — picker writes into it). */
+  .rh-picker{display:flex !important;}
+  .ord-field:has(button[onclick*="setLimitToBid"]),
+  .ord-field:has(button[onclick*="setLimitToMid"]),
+  .ord-field:has(button[onclick*="setLimitToAsk"]){display:none !important;}
+  /* Active state for the selected picker card. Adds a colored border
+     ring + subtle glow matching the cell's price color. */
+  .rh-px-card.active[data-which="bid"]{border-color:var(--ngo) !important;box-shadow:0 0 0 2px var(--ngo) inset, 0 0 12px rgba(255,0,230,.3);}
+  .rh-px-card.active[data-which="mid"]{border-color:var(--amb) !important;box-shadow:0 0 0 2px var(--amb) inset, 0 0 12px rgba(0,212,255,.4);}
+  .rh-px-card.active[data-which="ask"]{border-color:var(--blu) !important;box-shadow:0 0 0 2px var(--blu) inset, 0 0 12px rgba(112,144,200,.4);}
   th.hide-mobile, td.hide-mobile{display:none !important;}
 
   /* ── Detail split layouts stack vertically ── */
@@ -3471,6 +3483,40 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
             <option value="trailing_stop" class="ord-stk-only-opt">TRAILING STOP (GTC)</option>
             <option value="trailing_stop_limit" class="ord-stk-only-opt">TRAILING STOP LIMIT (GTC)</option>
           </select>
+        </div>
+        <!-- RH-3 fix 2026-05-09: Robinhood-style big BID/MID/ASK picker.
+             iPhone-only via CSS @media. Three large tap cards each
+             show the price as the dominant text + a label. Tapping a
+             card writes that price into the LIMIT field below + adds
+             a glow on the active card. ±1¢ / ±5¢ stepper row below
+             nudges the limit without typing. Desktop sees the existing
+             small SET BID/MID/ASK buttons further down (hidden on
+             iPhone). -->
+        <div class="ord-field rh-picker" style="display:none;flex-direction:column;gap:8px;width:100%;">
+          <label style="color:var(--gry);font-size:10px;letter-spacing:1px;">PICK PRICE</label>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;">
+            <button class="rh-px-card" data-which="bid" onclick="_rhPickPrice('bid')"
+              style="background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;min-height:72px;font-family:var(--ff-mono);">
+              <span style="font-size:9px;color:var(--gry);letter-spacing:2px;">BID</span>
+              <span class="rh-px-val" id="rh-px-bid" style="font-size:18px;font-weight:800;color:var(--ngo);">--</span>
+            </button>
+            <button class="rh-px-card" data-which="mid" onclick="_rhPickPrice('mid')"
+              style="background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;min-height:72px;font-family:var(--ff-mono);">
+              <span style="font-size:9px;color:var(--gry);letter-spacing:2px;">MID</span>
+              <span class="rh-px-val" id="rh-px-mid" style="font-size:18px;font-weight:800;color:var(--ambb);">--</span>
+            </button>
+            <button class="rh-px-card" data-which="ask" onclick="_rhPickPrice('ask')"
+              style="background:var(--bg2);border:1px solid var(--bg3);border-radius:8px;padding:14px 6px;display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;min-height:72px;font-family:var(--ff-mono);">
+              <span style="font-size:9px;color:var(--gry);letter-spacing:2px;">ASK</span>
+              <span class="rh-px-val" id="rh-px-ask" style="font-size:18px;font-weight:800;color:var(--blub);">--</span>
+            </button>
+          </div>
+          <div style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:6px;">
+            <button class="btn" style="font-size:11px;padding:8px;font-family:var(--ff-mono);font-weight:700;" onclick="_rhStepLimit(-0.05)">-5¢</button>
+            <button class="btn" style="font-size:11px;padding:8px;font-family:var(--ff-mono);font-weight:700;" onclick="_rhStepLimit(-0.01)">-1¢</button>
+            <button class="btn" style="font-size:11px;padding:8px;font-family:var(--ff-mono);font-weight:700;" onclick="_rhStepLimit(0.01)">+1¢</button>
+            <button class="btn" style="font-size:11px;padding:8px;font-family:var(--ff-mono);font-weight:700;" onclick="_rhStepLimit(0.05)">+5¢</button>
+          </div>
         </div>
         <div class="ord-field">
           <label>LIMIT PRICE <span id="lmt-hint" style="color:var(--grn);font-size:9px;"></span></label>
@@ -8904,6 +8950,8 @@ function renderQuotePanel(q){
   // User spec 2026-05-09: auto-tune step-fill delay based on spread%.
   // Runs after G.liveQuote update so the recommender sees fresh bid/ask.
   try { if (typeof _applyAutoStepDelay === 'function') _applyAutoStepDelay(); } catch(_){}
+  // RH-3 fix 2026-05-09: refresh the big BID/MID/ASK picker cards.
+  try { if (typeof _rhUpdatePicker === 'function') _rhUpdatePicker(q); } catch(_){}
   // Auto-update the order ticket's limit price + step-fill mode label
   // every time a fresh quote arrives. Per user spec 2026-05-04: "have
   // those default asks and bids refresh based off the refreshed quotes".
@@ -9114,6 +9162,63 @@ function _recommendStepDelay(q){
   if (spreadPct <= 3.0) return { secs: 4, reason: 'liquid mid-cap',       spreadPct: spreadPct };
   if (spreadPct <= 7.0) return { secs: 6, reason: 'wider spread',          spreadPct: spreadPct };
   return { secs: 8, reason: 'very wide spread',          spreadPct: spreadPct };
+}
+
+// RH-3 picker helpers 2026-05-09. Called from renderQuotePanel +
+// onclick of the big BID/MID/ASK cards.
+function _rhUpdatePicker(q){
+  if (!q) return;
+  var bidEl = document.getElementById('rh-px-bid');
+  var midEl = document.getElementById('rh-px-mid');
+  var askEl = document.getElementById('rh-px-ask');
+  if (bidEl) bidEl.textContent = q.bid ? '$'+fmt2(q.bid) : '--';
+  if (midEl) midEl.textContent = q.mid ? '$'+fmt2(q.mid) : '--';
+  if (askEl) askEl.textContent = q.ask ? '$'+fmt2(q.ask) : '--';
+}
+function _rhPickPrice(which){
+  var q = G.liveQuote || {};
+  var px = (which === 'bid') ? q.bid : (which === 'mid') ? q.mid : (which === 'ask') ? q.ask : 0;
+  if (!px || !isFinite(px)) {
+    try { toast('No live quote — refresh first'); } catch(_){}
+    return;
+  }
+  var lmtEl = eid('ord-lmt');
+  if (lmtEl){
+    lmtEl.value = (+px).toFixed(2);
+    delete lmtEl.dataset.userEdited;   // picker tap is the new source of truth
+  }
+  // Visual: clear active state on all cards, set on the chosen one.
+  document.querySelectorAll('.rh-px-card').forEach(function(b){ b.classList.remove('active'); });
+  var active = document.querySelector('.rh-px-card[data-which="'+which+'"]');
+  if (active) active.classList.add('active');
+  // Update downstream (P&L chart, qty/budget calc, hint).
+  try { if (typeof updateOrdChart === 'function') updateOrdChart(); } catch(_){}
+  try { if (typeof calcQtyFromBudget === 'function') calcQtyFromBudget(); } catch(_){}
+  try { if (typeof hap === 'function') hap(8); } catch(_){}
+  // Hint label below the input.
+  var hint = document.getElementById('lmt-hint');
+  if (hint) hint.textContent = which.toUpperCase() + ' selected';
+}
+function _rhStepLimit(delta){
+  var lmtEl = eid('ord-lmt');
+  if (!lmtEl) return;
+  var cur = parseFloat(lmtEl.value) || 0;
+  if (cur <= 0){
+    var q = G.liveQuote || {};
+    cur = q.mid || q.last || q.ask || 0;
+  }
+  var next = +(cur + delta).toFixed(2);
+  if (next < 0.01) next = 0.01;
+  lmtEl.value = next.toFixed(2);
+  delete lmtEl.dataset.userEdited;
+  // Step button cleared the picker active state — user nudged off the
+  // exact bid/mid/ask.
+  document.querySelectorAll('.rh-px-card').forEach(function(b){ b.classList.remove('active'); });
+  try { if (typeof updateOrdChart === 'function') updateOrdChart(); } catch(_){}
+  try { if (typeof calcQtyFromBudget === 'function') calcQtyFromBudget(); } catch(_){}
+  try { if (typeof hap === 'function') hap(5); } catch(_){}
+  var hint = document.getElementById('lmt-hint');
+  if (hint) hint.textContent = (delta > 0 ? '+' : '') + (delta * 100).toFixed(0) + '¢ step';
 }
 
 // Apply the recommendation: update the hint label always, write into
@@ -24064,7 +24169,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.11.2-tier-b-features';
+var APP_VERSION = '2.11.3-tier-c-rh3-picker';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
