@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-08T20:50-order-status-modal-and-chain-card">
+<meta name="op-build" content="2026-05-08T21:30-day-pnl-column-and-eod-popup-removed">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -11037,54 +11037,12 @@ function tagOutlierTrades() {
   return { tagged: tagged, total: G_closed.trades.length };
 }
 
-// END-OF-DAY RECONCILIATION MODAL (council #10).
-// At 4:05pm ET, prompt with 3 questions before the dashboard closes.
-// Saves to rrjcar_tilt_log for the next session's gate to read.
-// Triggered manually via console: showEodReconciliation()
-function showEodReconciliation() {
-  var todayK = new Date().toISOString().slice(0,10);
-  var existing = JSON.parse(localStorage.getItem('rrjcar_tilt_log_'+todayK) || 'null');
-  if (existing) {
-    return alert('EOD already reconciled today.\n\n'+JSON.stringify(existing, null, 2));
-  }
-  var q1 = prompt('EOD RECONCILIATION (1/3) — Which trade today violated your written rules?\n\n(Type ticker + reason, or "none" if all trades passed.)');
-  if (q1 === null) return;  // cancel
-  var q2 = prompt('EOD RECONCILIATION (2/3) — What were you feeling at the moment of your worst trade today?\n\n(Free text — saved to your tilt journal.)');
-  if (q2 === null) return;
-  var q3 = prompt('EOD RECONCILIATION (3/3) — What is your maximum dollar loss tomorrow before you stop trading?\n\n(Numeric value — read by next session\'s gate.)');
-  if (q3 === null) return;
-  var entry = {
-    ts: Date.now(),
-    date: todayK,
-    rule_violation: q1.trim(),
-    feeling: q2.trim(),
-    max_loss_tomorrow: parseFloat(q3) || null
-  };
-  localStorage.setItem('rrjcar_tilt_log_'+todayK, JSON.stringify(entry));
-  // Also append to running log
-  var logArr = JSON.parse(localStorage.getItem('rrjcar_tilt_log_all') || '[]');
-  logArr.push(entry);
-  if (logArr.length > 90) logArr = logArr.slice(-90);  // keep ~90 days
-  localStorage.setItem('rrjcar_tilt_log_all', JSON.stringify(logArr));
-  alert('Saved.\n\nMax loss tomorrow: $'+(entry.max_loss_tomorrow||'unset')+'\n\nIf you exceed this tomorrow, the dashboard will lock the order panel.');
-}
-// Auto-fire at 4:05pm ET on weekdays if user hasn't already done it
-window.setInterval(function(){
-  try {
-    var now = new Date();
-    var nyStr = now.toLocaleString('en-US', {timeZone:'America/New_York', hour12:false});
-    var nyHr = parseInt(nyStr.match(/(\d+):/)[1], 10);
-    var nyMin = parseInt(nyStr.match(/:(\d+):/)[1], 10);
-    var dow = now.getDay();
-    if (dow >= 1 && dow <= 5 && nyHr === 16 && nyMin >= 5 && nyMin <= 9) {
-      var todayK = new Date().toISOString().slice(0,10);
-      if (!localStorage.getItem('rrjcar_tilt_log_'+todayK) && !window._eodPrompted) {
-        window._eodPrompted = true;
-        showEodReconciliation();
-      }
-    }
-  } catch(_){}
-}, 60000);
+// END-OF-DAY RECONCILIATION MODAL — REMOVED 2026-05-08 per user request.
+// Was 3 sequential prompt() dialogs at 4:05pm ET that interrupted the
+// session. Function kept as a no-op so any external/console caller
+// (`showEodReconciliation()` was originally documented as console-callable)
+// doesn't throw a ReferenceError. Auto-fire setInterval deleted.
+function showEodReconciliation() { /* removed — no-op */ }
 
 // IC ANALYSIS — Spearman rank correlation between each scoring rule's
 // pass/fail status at entry and forward 1d/3d/5d return. Reads closed-trade
@@ -18366,6 +18324,23 @@ function fetchPositionsDirect(key,mode,host,acct){
             var contractVal=mid*Math.abs(p.qty)*mult;
             p.pnl=contractVal-p.cost;
             p.pnlPct=p.cost?((p.pnl/p.cost)*100):0;
+            // ── Per-position DAY P/L $ — computed from the same quote payload.
+            //   Tradier returns prevclose (yesterday's close) + change (per-unit
+            //   delta vs prevclose) on every quote. Day P/L = perUnitChange ×
+            //   qty × multiplier. Sign is preserved: long positions show +$
+            //   when price goes up; short positions invert. Falls back to
+            //   q.change if explicit prevclose math isn't available.
+            var prevclose = parseFloat(q.prevclose) || 0;
+            var perUnitChange;
+            if (prevclose > 0){
+              perUnitChange = mid - prevclose;
+            } else if (q.change != null){
+              perUnitChange = parseFloat(q.change) || 0;
+            } else {
+              perUnitChange = 0;
+            }
+            p.prevclose = prevclose;
+            p.dayPnl = perUnitChange * p.qty * mult;
           }
           // Record first-seen data (open timestamp + underlying price at open).
           // ATR(14) snapshot drives the static ATR-anchored exit prices in
@@ -18679,14 +18654,16 @@ function renderPositionsTable(pos,srcLabel){
   // by that field. Sort direction toggles on repeat clicks. TICKER /
   // STRIKE / EXP keys sort the data attribute on each <tr>; numeric
   // columns sort the data-sort-* numeric attribute on each <td>.
-  // Column order updated 2026-05-05 (rev 2) per user spec:
-  //   OPENED · EQUITY · P/L $ · TICKER · EXP · STRIKE · STOCK PRICE ·
-  //   B/E · QTY · DELTA · PRICE · P/L % · DTE · ENTRY PRICE · 1/2 ATR ·
-  //   1 ATR · EMERGENCY EXIT · CLOSE · ROLL · TRAIL
+  // Column order updated 2026-05-08 — added DAY P/L $ between EQUITY and
+  // (now-renamed) TOTAL P/L $:
+  //   OPENED · EQUITY · DAY P/L $ · TOTAL P/L $ · TICKER · EXP · STRIKE ·
+  //   STOCK PRICE · B/E · QTY · DELTA · PRICE · P/L % · DTE · ENTRY PRICE ·
+  //   1/2 ATR · 1 ATR · EMERGENCY EXIT · CLOSE · ROLL · TRAIL
   var html='<table id="pos-table"><thead><tr>'
     +'<th class="col-opened" data-sort="opened" style="cursor:pointer;">OPENED</th>'
     +'<th data-sort="equity" class="col-equity" style="cursor:pointer;" title="Current value of your position (mark x qty x multiplier)">EQUITY</th>'
-    +'<th data-sort="pnl" style="cursor:pointer;">P/L $</th>'
+    +'<th data-sort="dayPnl" style="cursor:pointer;" title="Today\'s P/L — current mark vs prior close × qty × multiplier">DAY P/L $</th>'
+    +'<th data-sort="pnl" style="cursor:pointer;" title="Total P/L since the position was opened">TOTAL P/L $</th>'
     +'<th data-sort="ticker" style="cursor:pointer;">TICKER</th>'
     +'<th data-sort="exp" style="cursor:pointer;">EXP</th>'
     +'<th data-sort="strike" style="cursor:pointer;">STRIKE</th>'
@@ -18705,7 +18682,7 @@ function renderPositionsTable(pos,srcLabel){
     +'<th>ROLL</th>'
     +'<th title="Trailing-stop status + per-position config. Click to expand.">TRAIL</th>'
     +'</tr></thead><tbody>';
-  colCount = 20; // total columns (used by inline config row)
+  colCount = 21; // total columns (used by inline config row) — +1 for DAY P/L $ added 2026-05-08
 
   var todayCount = 0;
   pos.forEach(function(p){
@@ -18980,19 +18957,29 @@ function renderPositionsTable(pos,srcLabel){
     var stockPxCellHL = (p.type === 'STOCK')
       ? '<td data-sort-ulpx="-1" style="color:var(--gry2);">—</td>'
       : '<td data-sort-ulpx="'+ulPxNum+'" style="color:var(--ambb);font-family:var(--ff-mono);">'+(ulCell.replace(/^<td[^>]*>|<\/td>$/g, ''))+'</td>';
+    // Day P/L cell — green when today's mark is above prior close, red when below.
+    // Falls back to "—" when prevclose is unavailable (e.g. brand-new symbol or
+    // weekend with no prior session).
+    var dayPnlVal = (p.dayPnl != null && isFinite(p.dayPnl)) ? p.dayPnl : null;
+    var dayPnlCls = dayPnlVal == null ? '' : (dayPnlVal >= 0 ? 'pnl-pos' : 'pnl-neg');
+    var dayPnlTxt = dayPnlVal == null ? '<span style="color:var(--gry2);">—</span>'
+                                      : (dayPnlVal >= 0 ? '+' : '') + fmtD(dayPnlVal);
+    var dayPnlSortAttr = dayPnlVal == null ? -999999 : dayPnlVal;
     html += '<tr data-tk="'+tk+'" data-tp="'+tp+'" data-st="'+st+'" data-ex="'+ex+'" data-qty="'+qty+'" data-sym="'+sym+'"'
       + ' data-sort-mid="'+(p.last||0)+'" data-sort-pnl="'+(p.pnl||0)+'" data-sort-pnlpct="'+(p.pnlPct||0)+'"'
+      + ' data-sort-daypnl="'+dayPnlSortAttr+'"'
       + ' data-sort-strike="'+(st||0)+'" data-sort-exp="'+(ex||'')+'" data-sort-dte="'+(p.dte||0)+'"'
       + ' data-sort-opened="'+(p.openTs||p.dateAcquired||'')+'"'
       + (openedToday ? ' class="pos-row-today" title="Opened or rolled today — closing intraday triggers a PDT day-trade"' : '')
       + '>'
-      // Cell order updated 2026-05-05 (rev 2) per user spec:
-      // OPENED · EQUITY · P/L $ · TICKER · EXP · STRIKE · STOCK PRICE ·
+      // Cell order updated 2026-05-08 — DAY P/L $ inserted between EQUITY and (renamed) TOTAL P/L $:
+      // OPENED · EQUITY · DAY P/L $ · TOTAL P/L $ · TICKER · EXP · STRIKE · STOCK PRICE ·
       // B/E · QTY · DELTA · PRICE · P/L % · DTE · ENTRY PRICE · 1/2 ATR ·
       // 1 ATR · EMERGENCY EXIT · CLOSE · ROLL · TRAIL
       +formatOpenedDateTime(p, openedToday)                                                                  // OPENED
       +equityCellHL                                                                                           // EQUITY
-      +'<td class="'+pnlCls+'">'+(p.pnl>=0?'+':'')+fmtD(p.pnl)+'</td>'                                       // P/L $
+      +'<td class="'+dayPnlCls+'">'+dayPnlTxt+'</td>'                                                        // DAY P/L $
+      +'<td class="'+pnlCls+'">'+(p.pnl>=0?'+':'')+fmtD(p.pnl)+'</td>'                                       // TOTAL P/L $
       +'<td><b>'+tk+'</b>'+(isStock?' <span style="color:var(--gry);font-size:10px;">EQ</span>':'')+'</td>'  // TICKER
       +expCell                                                                                                // EXP
       +strikeCell                                                                                             // STRIKE
@@ -23079,7 +23066,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.7.0-order-status-modal-and-chain-card';
+var APP_VERSION = '2.7.1-day-pnl-column-and-eod-popup-removed';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -27909,6 +27896,7 @@ window.addEventListener('DOMContentLoaded',init);
     if (key === 'mid')    return parseFloat(tr.dataset.sortMid)||0;
     if (key === 'pnl')    return parseFloat(tr.dataset.sortPnl)||0;
     if (key === 'pnlPct') return parseFloat(tr.dataset.sortPnlpct)||0;
+    if (key === 'dayPnl') return parseFloat(tr.dataset.sortDaypnl)||0;
     if (key === 'strike') return parseFloat(tr.dataset.sortStrike||tr.dataset.st||0)||0;
     if (key === 'exp')    return tr.dataset.sortExp || tr.dataset.ex || '';
     if (key === 'dte')    return parseFloat(tr.dataset.sortDte)||0;
@@ -27985,7 +27973,7 @@ window.addEventListener('DOMContentLoaded',init);
         posSort.key = k;
         // Default direction per column type — numeric desc (biggest first),
         // text asc.
-        var numericKeys = {qty:1,mid:1,equity:1,pnl:1,pnlPct:1,strike:1,dte:1,
+        var numericKeys = {qty:1,mid:1,equity:1,pnl:1,pnlPct:1,dayPnl:1,strike:1,dte:1,
                            ulpx:1,delta:1,entry:1,be:1};
         posSort.dir = numericKeys[k] ? -1 : 1;
       }
