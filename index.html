@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T00:30-deploy3-pivots">
+<meta name="op-build" content="2026-05-10T01:00-rescan-fixes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -3394,16 +3394,16 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <div id="ord-quick-bar" style="display:flex;flex-wrap:wrap;gap:6px;padding:8px 12px;background:var(--bg2);border-bottom:var(--bdr);align-items:center;">
       <span style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);letter-spacing:1px;flex-basis:100%;margin-bottom:2px;">QUICK PICKS</span>
       <span style="font-family:var(--ff-mono);font-size:9px;color:var(--gry);letter-spacing:1px;">STRIKE</span>
-      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(-2)" title="2 strikes ITM">−2</button>
-      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(-1)" title="1 strike ITM">−1</button>
-      <button class="btn blu" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(0)" title="Snap to ATM">ATM</button>
-      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(1)" title="1 strike OTM">+1</button>
-      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpStrike(2)" title="2 strikes OTM">+2</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);min-width:44px;" onclick="_qpStrike(-2)" title="2 strikes ITM">−2</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);min-width:44px;" onclick="_qpStrike(-1)" title="1 strike ITM">−1</button>
+      <button class="btn blu" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);min-width:44px;" onclick="_qpStrike(0)" title="Snap to ATM">ATM</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);min-width:44px;" onclick="_qpStrike(1)" title="1 strike OTM">+1</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);min-width:44px;" onclick="_qpStrike(2)" title="2 strikes OTM">+2</button>
       <span style="flex-basis:14px;"></span>
       <span style="font-family:var(--ff-mono);font-size:9px;color:var(--gry);letter-spacing:1px;">EXP</span>
-      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpExp('weekly')" title="Nearest weekly expiry">WEEKLY</button>
-      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpExp('monthly')" title="Nearest standard monthly (3rd Friday)">MONTHLY</button>
-      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);" onclick="_qpExp('30d')" title="Closest expiry to 30 DTE">30D</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);min-width:44px;" onclick="_qpExp('weekly')" title="Nearest weekly expiry">WEEKLY</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);min-width:44px;" onclick="_qpExp('monthly')" title="Nearest standard monthly (3rd Friday)">MONTHLY</button>
+      <button class="btn" style="font-size:11px;padding:6px 9px;font-family:var(--ff-mono);min-width:44px;" onclick="_qpExp('30d')" title="Closest expiry to 30 DTE">30D</button>
       <span style="flex:1 1 auto;"></span>
       <!-- IDEA-1 mini fix 2026-05-09: spread-mode toggle. When ON, exposes
            a 2-leg config (long lower-strike + short higher-strike call) and
@@ -3422,12 +3422,12 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         <label style="display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--gry);">
           <span>LONG STRIKE (buy)</span>
           <input type="number" inputmode="decimal" id="ord-spread-long" step="0.01" placeholder="e.g. 150"
-            style="font-size:14px;padding:6px 9px;background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);width:120px;">
+            style="font-size:16px;padding:8px 10px;background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);width:120px;">
         </label>
         <label style="display:flex;flex-direction:column;gap:3px;font-size:10px;color:var(--gry);">
           <span>SHORT STRIKE (sell)</span>
           <input type="number" inputmode="decimal" id="ord-spread-short" step="0.01" placeholder="e.g. 155"
-            style="font-size:14px;padding:6px 9px;background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);width:120px;">
+            style="font-size:16px;padding:8px 10px;background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);width:120px;">
         </label>
         <span id="ord-spread-hint" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry2);align-self:flex-end;padding-bottom:7px;">enter both strikes to enable</span>
       </div>
@@ -9283,31 +9283,116 @@ function _rhPickPrice(which){
   var hint = document.getElementById('lmt-hint');
   if (hint) hint.textContent = which.toUpperCase() + ' selected';
 }
-// FEAT-1 mini quick-pick handlers 2026-05-09. STRIKE chips nudge
-// ord-strike by ±N strikes from current; ATM snaps to underlying spot.
-// EXP chips switch ord-exp to weekly/monthly/30d targets — uses the
-// existing chain expirations endpoint to pick.
-function _qpStrike(delta){
+// FEAT-1 mini quick-pick handlers 2026-05-09 (revised 2026-05-10).
+// STRIKE chips snap to actual strikes in the live option chain instead
+// of using an arithmetic heuristic that could land on a non-existent
+// strike. Caches the chain per (sym, exp) for 5 minutes.
+//
+// Fix 4 (2026-05-10): the prior heuristic ($0.50/$1/$5 step width)
+// guessed strike spacing from the underlying price. Tickers like BRK.B,
+// $RUT, biotech, and tightly-spaced ETFs broke the heuristic — clicking
+// ±1 could write a strike Tradier doesn't list, and the order would
+// fail on submit. New approach: fetch the chain (cached), find real
+// strikes, walk N positions from current.
+G._strikeCache = G._strikeCache || {};
+async function _loadChainStrikes(sym, exp){
+  if (!sym || !exp) return null;
+  var key = sym + '_' + exp;
+  var entry = G._strikeCache[key];
+  if (entry && (Date.now() - entry.ts) < 5*60*1000) return entry.strikes;
+  var creds = (typeof getTradierCreds === 'function') ? getTradierCreds() : null;
+  if (!creds || !creds.key) return null;
+  try {
+    // NEW-C1 fix 2026-05-10: tradierFetch resolves to a Response-like
+    // object, not parsed JSON. Every other call site does
+    // `await tradierFetch(...).then(r => r.json())` (see lines 13443+,
+    // 25396, 26138). Without this `.json()` step `_loadChainStrikes`
+    // always returned null and the chain-aware STRIKE chip silently
+    // fell back to the broken arithmetic heuristic — defeating the
+    // whole point of the v2.12.1 fix.
+    var url = creds.host + '/v1/markets/options/chains?symbol='+encodeURIComponent(sym)+'&expiration='+encodeURIComponent(exp)+'&greeks=false';
+    var resp = await (typeof tradierFetch === 'function'
+      ? tradierFetch(url, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }, 5*60*1000)
+      : fetch(url, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }));
+    var data = (resp && typeof resp.json === 'function') ? await resp.json() : resp;
+    var opts = (data && data.options && data.options.option) || [];
+    if (!Array.isArray(opts)) opts = [opts];
+    // Use call strikes only — for spreads + single-call we need calls;
+    // puts have the same strike list per expiry on Tradier.
+    var seen = {};
+    var strikes = [];
+    opts.forEach(function(o){
+      var s = parseFloat(o.strike);
+      if (isFinite(s) && !seen[s]){ seen[s] = 1; strikes.push(s); }
+    });
+    strikes.sort(function(a,b){ return a - b; });
+    if (strikes.length){
+      G._strikeCache[key] = { ts: Date.now(), strikes: strikes };
+      return strikes;
+    }
+  } catch(e){ console.warn('[strike-cache]', sym, exp, e.message); }
+  return null;
+}
+
+async function _qpStrike(delta){
   var symEl = eid('ord-sym');
   var stEl  = eid('ord-strike');
+  var expEl = eid('ord-exp');
   if (!symEl || !stEl){ return; }
   var sym = (symEl.value || '').trim().toUpperCase();
   if (!sym){ try { toast('Enter a symbol first'); } catch(_){}; return; }
-  // Estimate one-strike width from current chain or default ~$1 for stocks <$100, $5 for >$100.
+  var exp = (expEl && expEl.value) || '';
   var spot = (G.liveQuote && G.liveQuote.last) || (G.liveQuote && G.liveQuote.mid) || 0;
-  // Snap to ATM if delta == 0.
-  if (delta === 0){
-    if (!spot){ try { toast('No live quote — refresh first'); } catch(_){}; return; }
-    var atmStrike = Math.round(spot);
-    // Round to nearest .50 for stocks <$50, nearest $1 for $50-200, $5 for >$200.
-    if (spot < 50) atmStrike = Math.round(spot * 2) / 2;
-    else if (spot < 200) atmStrike = Math.round(spot);
-    else atmStrike = Math.round(spot / 5) * 5;
-    stEl.value = atmStrike.toFixed(2);
+  // NEW-H3 fix 2026-05-10: when no expiry is set, refuse rather than
+  // silently fall through to the broken arithmetic heuristic. Auto-fix
+  // by picking a 30D expiry so the user can keep tapping STRIKE chips.
+  if (!exp){
+    try { toast('Setting EXP → 30D first'); } catch(_){}
+    if (typeof _qpExp === 'function'){
+      try { await _qpExp('30d'); } catch(_){}
+      exp = (expEl && expEl.value) || '';
+    }
+    if (!exp){ try { toast('Set EXP first — STRIKE chip needs a chain'); } catch(_){}; return; }
+  }
+
+  // Try to use the real chain. Fall back to the arithmetic heuristic
+  // if the chain isn't available (no exp set, no creds, etc.).
+  var strikes = exp ? await _loadChainStrikes(sym, exp) : null;
+  if (Array.isArray(strikes) && strikes.length){
+    var anchor = parseFloat(stEl.value) || spot || strikes[Math.floor(strikes.length/2)];
+    // Find the index of the strike nearest to anchor.
+    var nearestIdx = 0, nearestDelta = Infinity;
+    for (var i = 0; i < strikes.length; i++){
+      var d = Math.abs(strikes[i] - anchor);
+      if (d < nearestDelta){ nearestDelta = d; nearestIdx = i; }
+    }
+    // ATM: if spot is available, snap to closest-to-spot.
+    if (delta === 0){
+      if (!spot){ try { toast('No live quote — refresh first'); } catch(_){}; return; }
+      var atmIdx = 0, atmDelta = Infinity;
+      for (var ai = 0; ai < strikes.length; ai++){
+        var ad = Math.abs(strikes[ai] - spot);
+        if (ad < atmDelta){ atmDelta = ad; atmIdx = ai; }
+      }
+      stEl.value = strikes[atmIdx].toFixed(2);
+    } else {
+      var newIdx = Math.max(0, Math.min(strikes.length - 1, nearestIdx + delta));
+      stEl.value = strikes[newIdx].toFixed(2);
+    }
   } else {
-    var cur = parseFloat(stEl.value) || spot || 0;
-    var stepW = spot < 50 ? 0.5 : (spot < 200 ? 1 : 5);
-    stEl.value = (cur + delta * stepW).toFixed(2);
+    // Heuristic fallback. Same logic as before.
+    if (delta === 0){
+      if (!spot){ try { toast('No live quote — refresh first'); } catch(_){}; return; }
+      var atmStrike = Math.round(spot);
+      if (spot < 50) atmStrike = Math.round(spot * 2) / 2;
+      else if (spot < 200) atmStrike = Math.round(spot);
+      else atmStrike = Math.round(spot / 5) * 5;
+      stEl.value = atmStrike.toFixed(2);
+    } else {
+      var cur = parseFloat(stEl.value) || spot || 0;
+      var stepW = spot < 50 ? 0.5 : (spot < 200 ? 1 : 5);
+      stEl.value = (cur + delta * stepW).toFixed(2);
+    }
   }
   try { if (typeof updateOrdChart === 'function') updateOrdChart(); } catch(_){}
   try { if (typeof fetchLiveQuote === 'function') fetchLiveQuote(); } catch(_){}
@@ -9400,16 +9485,84 @@ function _submitVerticalSpread(){
   var occLong  = (typeof buildOccSym === 'function') ? buildOccSym(sym, 'CALL', lowS,  exp) : null;
   var occShort = (typeof buildOccSym === 'function') ? buildOccSym(sym, 'CALL', highS, exp) : null;
   if (!occLong || !occShort){ toast('OCC symbol build failed'); return; }
-  // Confirm before sending — multileg orders are non-trivial.
-  var confirmMsg = 'BULL CALL VERTICAL SPREAD\n'
-    + sym + ' ' + (typeof fmtDateUS==='function'?fmtDateUS(exp):exp) + '\n'
-    + 'BUY  +' + qty + ' ' + lowS  + 'C\n'
-    + 'SELL -' + qty + ' ' + highS + 'C\n'
-    + 'NET DEBIT: $' + debit.toFixed(2) + '/contract\n'
-    + 'MAX LOSS:  $' + (debit * qty * 100).toFixed(2) + '\n'
-    + 'MAX GAIN:  $' + ((highS - lowS - debit) * qty * 100).toFixed(2) + '\n\n'
-    + 'Submit?';
-  if (!confirm(confirmMsg)) return;
+  // Fix 3 (2026-05-10): replaced native confirm() with a custom bottom-
+  // sheet that matches the rest of the app. iOS PWAs render native
+  // confirm() as a system-style dialog that breaks visual flow. The
+  // sheet uses the same osm-sheet-up animation + safe-area padding as
+  // the other modals.
+  var maxLoss = (debit * qty * 100).toFixed(2);
+  var maxGain = ((highS - lowS - debit) * qty * 100).toFixed(2);
+  var spreadDte = (typeof fmtDateUS === 'function') ? fmtDateUS(exp) : exp;
+  _showSpreadConfirmSheet({
+    sym: sym, exp: spreadDte, qty: qty,
+    longStrike: lowS, shortStrike: highS, debit: debit,
+    maxLoss: maxLoss, maxGain: maxGain
+  }, function(){
+    _doSpreadSubmit({
+      sym: sym, occLong: occLong, occShort: occShort,
+      qty: qty, debit: debit, lowS: lowS, highS: highS,
+      creds: creds, acct: acct
+    });
+  });
+}
+
+// Bottom-sheet confirm for vertical spread submission.
+function _showSpreadConfirmSheet(opts, onConfirm){
+  var existing = document.getElementById('spread-confirm-sheet');
+  if (existing) existing.remove();
+  var sheet = document.createElement('div');
+  sheet.id = 'spread-confirm-sheet';
+  sheet.style.cssText = 'position:fixed;inset:0;z-index:9420;background:rgba(0,0,0,0.78);backdrop-filter:blur(3px);display:flex;align-items:flex-end;justify-content:center;';
+  sheet.onclick = function(e){ if (e.target === sheet) sheet.remove(); };
+  var inner = document.createElement('div');
+  inner.style.cssText = 'background:var(--bg1);border-top:2px solid var(--ambb);border-radius:14px 14px 0 0;width:100%;max-width:560px;padding:18px 16px calc(max(env(safe-area-inset-bottom,18px),18px)) 16px;display:flex;flex-direction:column;gap:14px;animation:osm-sheet-up .25s ease-out;';
+  inner.innerHTML =
+      '<div style="display:flex;justify-content:space-between;align-items:center;">'
+    +   '<div style="font-family:var(--ff-brand);font-size:13px;color:var(--ambb);letter-spacing:2px;font-weight:700;">CONFIRM VERTICAL SPREAD</div>'
+    +   '<button class="btn" style="font-size:14px;padding:6px 12px;min-width:36px;min-height:36px;" onclick="document.getElementById(\'spread-confirm-sheet\').remove()" title="Cancel">&#10005;</button>'
+    + '</div>'
+    + '<div style="background:var(--bg2);border:var(--bdr);border-radius:8px;padding:14px;font-family:var(--ff-mono);font-size:13px;color:var(--wht);line-height:1.6;">'
+    +   '<div style="color:var(--grn);font-weight:700;margin-bottom:6px;">▲ BULL CALL — '+_esc(opts.sym)+' '+_esc(opts.exp)+'</div>'
+    +   '<div>BUY <b style="color:var(--grn);">+'+opts.qty+'</b> @ <b>$'+(+opts.longStrike).toFixed(2)+'</b> CALL</div>'
+    +   '<div>SELL <b style="color:var(--red);">−'+opts.qty+'</b> @ <b>$'+(+opts.shortStrike).toFixed(2)+'</b> CALL</div>'
+    + '</div>'
+    + '<div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;font-family:var(--ff-mono);font-size:11px;">'
+    +   '<div style="background:var(--bg2);border:var(--bdr);border-radius:6px;padding:10px;text-align:center;">'
+    +     '<div style="color:var(--gry);font-size:9px;letter-spacing:1px;">NET DEBIT</div>'
+    +     '<div style="color:var(--ambb);font-size:14px;font-weight:800;margin-top:3px;">$'+(+opts.debit).toFixed(2)+'</div>'
+    +   '</div>'
+    +   '<div style="background:var(--bg2);border:var(--bdr);border-radius:6px;padding:10px;text-align:center;">'
+    +     '<div style="color:var(--gry);font-size:9px;letter-spacing:1px;">MAX LOSS</div>'
+    +     '<div style="color:var(--red);font-size:14px;font-weight:800;margin-top:3px;">$'+opts.maxLoss+'</div>'
+    +   '</div>'
+    +   '<div style="background:var(--bg2);border:var(--bdr);border-radius:6px;padding:10px;text-align:center;">'
+    +     '<div style="color:var(--gry);font-size:9px;letter-spacing:1px;">MAX GAIN</div>'
+    +     '<div style="color:var(--grn);font-size:14px;font-weight:800;margin-top:3px;">$'+opts.maxGain+'</div>'
+    +   '</div>'
+    + '</div>'
+    + '<div style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);text-align:center;">Multileg debit order, day duration. Tradier may take 1–2s to acknowledge.</div>'
+    + '<div style="display:flex;gap:8px;margin-top:6px;">'
+    +   '<button class="btn" style="flex:1;padding:13px;font-weight:700;font-size:13px;border-color:var(--gry2);color:var(--gry);" onclick="document.getElementById(\'spread-confirm-sheet\').remove()">CANCEL</button>'
+    +   '<button class="btn blu" id="spread-confirm-go" style="flex:2;padding:13px;font-weight:800;font-size:13px;">SUBMIT SPREAD</button>'
+    + '</div>';
+  sheet.appendChild(inner);
+  document.body.appendChild(sheet);
+  document.getElementById('spread-confirm-go').onclick = function(){
+    sheet.remove();
+    if (typeof onConfirm === 'function') onConfirm();
+  };
+}
+
+// Actually fire the multileg submission — extracted so the confirm
+// sheet can call it after user taps SUBMIT.
+function _doSpreadSubmit(opts){
+  // NEW-H2 fix 2026-05-10: in-flight flag prevents double-fire when the
+  // user mashes SUBMIT or taps form-SUBMIT then sheet-SUBMIT in quick
+  // succession. Cleared in both success + error branches below.
+  G.spreadInFlight = true;
+  var sym = opts.sym, occLong = opts.occLong, occShort = opts.occShort;
+  var qty = opts.qty, debit = opts.debit, lowS = opts.lowS, highS = opts.highS;
+  var creds = opts.creds, acct = opts.acct;
   var body = 'class=multileg'
     + '&symbol=' + encodeURIComponent(sym)
     + '&type=debit'
@@ -9444,7 +9597,65 @@ function _submitVerticalSpread(){
           if (res){ res.innerHTML = '<span style="color:var(--blub)">Spread submitted — order #'+_esc(data.order.id)+'</span>'; res.style.borderColor='var(--blu)'; }
           try { addAlert(sym, 'VERTICAL SPREAD '+lowS+'/'+highS+'C qty '+qty+' debit $'+debit.toFixed(2)+' — order #'+data.order.id, 'go'); } catch(_){}
           try { toast('Spread submitted: '+data.order.id); } catch(_){}
-          try { updateOrderStatusModal({state:'working', stateText:'SUBMITTED — WORKING', subLine:'Order #'+data.order.id, logLine:'Order #'+data.order.id+' submitted', logKind:'sent'}); } catch(_){}
+          // NEW-C3 fix 2026-05-10: store orderId on ctx so the modal's
+          // CANCEL button can fire cancelOrder, and start a poller that
+          // detects fill/reject/cancel transitions. Mirrors the single-
+          // leg one-shot poller pattern at line ~11553+. NEW-M9 fix:
+          // increment the daily entries counter for spreads.
+          try {
+            if (G.orderStatus && G.orderStatus.ctx) G.orderStatus.ctx.orderId = data.order.id;
+            updateOrderStatusModal({state:'working', stateText:'SUBMITTED — WORKING', subLine:'Order #'+data.order.id, logLine:'Order #'+data.order.id+' submitted', logKind:'sent'});
+          } catch(_){}
+          try {
+            var todayK = (typeof _etDateKey === 'function') ? _etDateKey() : new Date().toISOString().slice(0,10);
+            var c = JSON.parse(localStorage.getItem('rrjcar_daily_counters_'+todayK) || '{"entries":0,"exits":0}');
+            c.entries = (c.entries || 0) + 1;
+            localStorage.setItem('rrjcar_daily_counters_'+todayK, JSON.stringify(c));
+          } catch(_){}
+          // Spread poller: 2s cadence, 5min budget. Identical to the
+          // one-shot poller in submitOrder.
+          var pollStart = Date.now();
+          if (G.orderStatus && G.orderStatus.oneshotPoller) clearInterval(G.orderStatus.oneshotPoller);
+          if (G.orderStatus){
+            G.orderStatus.oneshotPoller = setInterval(function(){
+              if (!G.orderStatus.ctx || G.orderStatus.terminalState){ clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null; return; }
+              if (G.orderStatus.ctx.pendingCancel && G.orderStatus.ctx.orderId){
+                G.orderStatus.ctx.pendingCancel = false;
+                try { cancelOrder({host:creds.host,key:creds.key}, acct, G.orderStatus.ctx.orderId).then(function(){
+                  updateOrderStatusModal({state:'cancelled', logLine:'Queued cancel sent for order #'+G.orderStatus.ctx.orderId+'.', logKind:'cancelled'});
+                  toast('Order cancelled');
+                }); } catch(_){}
+              }
+              if (Date.now() - pollStart > 5*60*1000){
+                clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+                updateOrderStatusModal({state:'not-filled', stateText:'STILL WORKING', logLine:'Stopped polling after 5 min — spread may still fill at the broker.', logKind:'rejected'});
+                return;
+              }
+              pollOrderDetails({host:creds.host,key:creds.key}, acct, data.order.id).then(function(det){
+                var s = (det && det.status) || '';
+                var PENDING = { open:1, pending:1, partially_filled:1, accepted:1, submitted:1, received:1, replaced:1, replacement_pending:1, pending_replace:1, pending_cancel:1 };
+                if (s === 'filled'){
+                  clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+                  var fillPx = det.raw && (det.raw.avg_fill_price || det.raw.last_fill_price || det.raw.price);
+                  var fillStr = fillPx ? '$'+Number(fillPx).toFixed(2) : '$'+debit.toFixed(2);
+                  updateOrderStatusModal({state:'filled', stateText:'FILLED @ '+fillStr, logLine:'✓ FILLED @ '+fillStr, logKind:'filled', price:fillPx||debit});
+                  try { if (typeof playFillSound === 'function') playFillSound(); } catch(_){}
+                  try { if (typeof hap === 'function') hap([20,60,20]); } catch(_){}
+                } else if (s === 'rejected' || s === 'expired' || s === 'error'){
+                  clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+                  updateOrderStatusModal({state:'rejected', stateText:s.toUpperCase(), logLine:s.toUpperCase()+(det.reason?' — '+det.reason:''), logKind:'rejected'});
+                } else if (s === 'canceled' || s === 'cancelled'){
+                  clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+                  updateOrderStatusModal({state:'cancelled', logLine:'Spread cancelled.', logKind:'cancelled'});
+                } else if (s && !PENDING[s]){
+                  clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+                  updateOrderStatusModal({state:'rejected', stateText:'UNKNOWN: '+s.toUpperCase(), logLine:'Unrecognized status: '+s, logKind:'rejected'});
+                } else {
+                  updateOrderStatusModal({logLine:'status: '+(s||'pending').toUpperCase(), logKind:'sent'});
+                }
+              }).catch(function(){ /* swallow transient errors */ });
+            }, 2000);
+          }
           setTimeout(function(){ if(G.acctId) fetchPositions(); }, 3000);
         } else {
           var errs = (data.errors && data.errors.error) || 'unknown';
@@ -9455,8 +9666,10 @@ function _submitVerticalSpread(){
       } catch(e){
         if (res){ res.innerHTML = '<span style="color:var(--wrn)">Error (HTTP '+_esc(resp.s)+'): '+_esc((resp.t||'').slice(0,200))+'</span>'; res.style.borderColor='var(--wrn)'; }
       }
+      G.spreadInFlight = false;
     })
     .catch(function(e){
+      G.spreadInFlight = false;
       if (res){ res.innerHTML = '<span style="color:var(--wrn)">Error: '+_esc(e.message)+'</span>'; res.style.borderColor='var(--wrn)'; }
       try { updateOrderStatusModal({state:'rejected', stateText:'NETWORK ERROR', logLine:e.message, logKind:'rejected'}); } catch(_){}
     });
@@ -11003,24 +11216,34 @@ function previewOrder(){
 
 function submitOrder(){
   if(G.stepFillActive){toast('Step fill already running');return;}
-  // IDEA-1 mini fix 2026-05-09: route to the multileg submit path when
-  // SPREAD toggle is ON. Bypasses the normal step-fill / single-contract
-  // flow entirely.
-  if (G.spreadModeOn){
-    try { _submitVerticalSpread(); } catch(e){ console.error('[spread]', e); toast('Spread submit failed: '+e.message); }
-    return;
-  }
-  // Refuse a 2nd submission while the previous order's status modal is
-  // minimized to a chip and still working. Submitting now would clobber
-  // the prior order's tracking (poller killed, ctx replaced) so the
-  // user would lose visibility into the in-flight order at Tradier.
-  // The user can click the chip to expand and finish/cancel the prior
-  // order, then submit again. (BUG-2 fix 2026-05-09)
+  // NEW-C4 fix 2026-05-10: BUG-2 minimized-modal guard MUST run before
+  // the spread route, otherwise SPREAD submit clobbers the tracking
+  // for any prior in-flight order whose modal is minimized.
   if (G.orderStatus && G.orderStatus.isMinimized && G.orderStatus.ctx && !G.orderStatus.terminalState){
     toast('A prior order is still tracking — expand the side chip first');
     if (typeof restoreOrderStatusModal === 'function'){
       try { restoreOrderStatusModal(); } catch(_){}
     }
+    return;
+  }
+  // NEW-H2 fix 2026-05-10: guard against double-firing spread submit.
+  // The confirm sheet runs async, so a second tap on form-SUBMIT
+  // before the first sheet resolves would open a second sheet on top.
+  // If a confirm sheet is up OR a recent (within 3s) spread submit is
+  // pending, refuse.
+  if (document.getElementById('spread-confirm-sheet')){
+    toast('Confirm or cancel the open spread sheet first');
+    return;
+  }
+  if (G.spreadInFlight){
+    toast('Spread submission in flight — wait a moment');
+    return;
+  }
+  // IDEA-1 mini fix 2026-05-09: route to the multileg submit path when
+  // SPREAD toggle is ON. Bypasses the normal step-fill / single-contract
+  // flow entirely.
+  if (G.spreadModeOn){
+    try { _submitVerticalSpread(); } catch(e){ console.error('[spread]', e); toast('Spread submit failed: '+e.message); }
     return;
   }
   var sym=eid('ord-sym').value.trim().toUpperCase();
@@ -11536,6 +11759,20 @@ function onOrderTypeChange(){
   var form = document.querySelector('.ord-form');
   var isStock = (type === 'STOCK');
   if(form){ form.classList.toggle('mode-stock', isStock); }
+  // NEW-C5 fix 2026-05-10: SPREAD toggle is options-only. If the user
+  // switches to STOCK with SPREAD on, force it off so submitOrder
+  // doesn't route to _submitVerticalSpread (which would build CALL OCC
+  // symbols regardless of the STOCK type and submit a multileg call
+  // spread when the user thought they were buying shares).
+  if (isStock){
+    var st = eid('ord-spread-toggle');
+    if (st && st.checked){
+      st.checked = false;
+      G.spreadModeOn = false;
+      var cfg = eid('ord-spread-config');
+      if (cfg) cfg.style.display = 'none';
+    }
+  }
 
   // Update QTY label
   var qtyLbl = eid('ord-qty-lbl');
@@ -19132,13 +19369,19 @@ function loadWL(){try{var s=localStorage.getItem('rrjcar_wl');if(s)G.wlTickers=J
 function saveWL(){localStorage.setItem('rrjcar_wl',JSON.stringify(G.wlTickers));}
 function addWL(){var inp=eid('wl-add'),t=inp.value.trim().toUpperCase();if(!t)return;if(G.wlTickers.indexOf(t)<0){G.wlTickers.unshift(t);saveWL();}inp.value='';refreshWL();}
 function removeWL(t){G.wlTickers=G.wlTickers.filter(function(x){return x!==t;});saveWL();refreshWL();}
-// IDEA-3 fix 2026-05-09: nudge a watchlist ticker up or down one slot.
-// dir = -1 (up) or 1 (down). No-op at boundaries.
+// IDEA-3 fix 2026-05-09 (revised post-NEW-M7 2026-05-10): nudge a
+// watchlist ticker up or down one slot. Boundary-aware feedback so the
+// user knows the button worked vs hit the end of the list.
 function wlNudge(t, dir){
   var i = G.wlTickers.indexOf(t);
   if (i < 0) return;
   var j = i + dir;
-  if (j < 0 || j >= G.wlTickers.length) return;
+  if (j < 0 || j >= G.wlTickers.length){
+    // Boundary — give light haptic feedback so user knows the tap
+    // registered but the row is already at the edge.
+    try { if (typeof hap === 'function') hap(2); } catch(_){}
+    return;
+  }
   var tmp = G.wlTickers[j];
   G.wlTickers[j] = G.wlTickers[i];
   G.wlTickers[i] = tmp;
@@ -24473,7 +24716,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.12.0-deploy3-pivots';
+var APP_VERSION = '2.12.1-rescan-fixes';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -30039,28 +30282,77 @@ window.addEventListener('DOMContentLoaded',init);
     window.renderPositionsTable = function(){
       var r = _origRPT.apply(this, arguments);
       try { _renderThesisBadges(); } catch(_){}
+      // GAP-9 fix follow-up 2026-05-10 (revised post-NEW-C2): pass the
+      // rendered `pos` argument (arguments[0]) to _purgeClosedTheses
+      // so it operates on what the user actually sees, not stale
+      // G.positions. Skips purge if no array was passed (e.g. error
+      // states that re-render with an empty-state DOM string).
+      try { _purgeClosedTheses(arguments[0]); } catch(_){}
       return r;
     };
     window.renderPositionsTable._thesisHooked = true;
   }
 
-  // GAP-9 fix 2026-05-09: archive thesis when a position closes; transfer
-  // when rolled. Archive lives at 'rrjcar_pos_thesis_archive' so the
-  // user can reference past trade rationale. Limited to 200 entries.
+  // GAP-9 fix 2026-05-09 (revised 2026-05-10): archive thesis without
+  // deleting from the active store. Original implementation removed the
+  // active note before the broker confirmed the close — if the close
+  // failed, the user lost their note. Now the active note stays put
+  // until _purgeClosedTheses() runs after a positions refresh confirms
+  // the position is no longer held. This way the archive captures the
+  // rationale at close-initiation time AND the active note remains
+  // visible if the close gets rejected.
   function _archiveThesis(occSym, reason){
     try {
       var notes = _loadThesis();
       var text = notes[occSym] || '';
       if (!text) return;
+      // Skip duplicate archives within 60s for the same key (close-init
+      // can fire repeatedly during a step-fill close).
       var archive = JSON.parse(localStorage.getItem('rrjcar_pos_thesis_archive') || '[]');
+      var lastForOcc = null;
+      for (var ai = archive.length - 1; ai >= 0; ai--){
+        if (archive[ai].occ === occSym){ lastForOcc = archive[ai]; break; }
+      }
+      if (lastForOcc && Date.now() - new Date(lastForOcc.archivedAt).getTime() < 60000) return;
       archive.push({ occ: occSym, text: text, archivedAt: new Date().toISOString(), reason: reason || 'closed' });
       if (archive.length > 200) archive = archive.slice(-200);
       localStorage.setItem('rrjcar_pos_thesis_archive', JSON.stringify(archive));
-      delete notes[occSym];
-      _saveThesis(notes);
+      // NOTE: do NOT delete from active store here. _purgeClosedTheses
+      // does that only after the broker has confirmed the close.
     } catch(_){}
   }
   window._archiveThesis = _archiveThesis;
+
+  // Purge active-store entries for OCC symbols that are no longer in
+  // the just-rendered positions array. Takes the rendered array as an
+  // argument (NOT G.positions) — NEW-C2 fix 2026-05-10. The wrapper
+  // path in switchTab/cache-restore can call renderPositionsTable
+  // without updating G.positions, and the empty-broker-response path
+  // calls it with [] while G.positions is stale. Reading G.positions
+  // would (a) wipe live theses on every cache-restore, (b) fail to
+  // purge when a position closes externally. Reading the function arg
+  // is the only way to stay in sync with what the user actually sees.
+  // Also: skip purge entirely if pos is missing — no signal that the
+  // user actually closed anything.
+  function _purgeClosedTheses(pos){
+    try {
+      if (!Array.isArray(pos)) return;
+      var notes = _loadThesis();
+      var keys = Object.keys(notes);
+      if (!keys.length) return;
+      var heldSet = {};
+      pos.forEach(function(p){ if (p && p.symbol) heldSet[p.symbol] = true; });
+      var changed = false;
+      keys.forEach(function(k){
+        if (!heldSet[k]){
+          delete notes[k];
+          changed = true;
+        }
+      });
+      if (changed) _saveThesis(notes);
+    } catch(_){}
+  }
+  window._purgeClosedTheses = _purgeClosedTheses;
 
   function _transferThesis(oldOcc, newOcc, prefix){
     try {
@@ -30270,13 +30562,18 @@ window.addEventListener('DOMContentLoaded',init);
     // REG-5 fix 2026-05-09: clean dayTxt without re-ordering "+$".
     if (lpvDay) lpvDay.textContent = (dayTxt || '').replace(/today\s*$/i,'').trim();
     if (lpvEq)  lpvEq.textContent  = eqTxt;
-    // Color code by sign — robust regex: any leading + or any non-zero
-    // dollar amount counts as positive; leading − is negative.
+    // NEW-M3 fix 2026-05-10: robust sign detection. Strip $, +, −, and
+    // commas, parse as float, compare to 0. Catches edge cases like
+    // $0.50 (positive but no leading +) and -$1,234.56 (negative).
     var rawDay = (dayTxt || '').trim();
-    var positive = /^\+/.test(rawDay) || /\$0*[1-9]/.test(rawDay);
-    var negative = /^[-−]/.test(rawDay);
+    var numStr = rawDay.replace(/[\$,\s]/g, '').replace(/^[+]/, '').replace(/^[-−]/, '-');
+    var n = parseFloat(numStr);
+    var sign = isNaN(n) ? 0 : (n > 0 ? 1 : (n < 0 ? -1 : 0));
     if (lpvDay){
-      lpvDay.style.color = negative ? 'var(--wrn)' : (positive ? 'var(--grn)' : 'var(--wht)');
+      // NEW-M2 fix 2026-05-10: use --red (canonical loss color) instead
+      // of --wrn (warning amber). Matches RH-7 palette in the rest of
+      // the app for consistency.
+      lpvDay.style.color = sign < 0 ? 'var(--red)' : (sign > 0 ? 'var(--grn)' : 'var(--wht)');
     }
     // Day % from positions if available.
     if (lpvPct && Array.isArray(G.positions)){
@@ -30290,7 +30587,7 @@ window.addEventListener('DOMContentLoaded',init);
       });
       var pct = totalEq > 0 ? (totalDay / totalEq) * 100 : 0;
       lpvPct.textContent = (pct >= 0 ? '+' : '') + pct.toFixed(2) + '% on positions';
-      lpvPct.style.color = pct >= 0 ? 'var(--grn)' : 'var(--ngo)';
+      lpvPct.style.color = pct >= 0 ? 'var(--grn)' : 'var(--red)';
     }
   }
 
@@ -30413,6 +30710,12 @@ window.addEventListener('DOMContentLoaded',init);
   var STALE_WARN_MS = 30 * 1000;
   var FORCE_REFRESH_MS = 60 * 1000;
 
+  // NEW-H4 fix 2026-05-10: backoff + onclick attached on every build
+  // path. Prior version fired fetchLiveQuote every 5s when the API was
+  // slow / erroring — 12 fetches/min in a tight loop. Backoff: only
+  // force-refresh once per 30s. Banner ONCLICK is now wired on EVERY
+  // banner regardless of which branch built it.
+  var _lastForceRefreshMs = 0;
   function _renderStaleHint(){
     var orderPane = document.getElementById('tab-order');
     if (!orderPane || !orderPane.classList.contains('active')){
@@ -30424,8 +30727,13 @@ window.addEventListener('DOMContentLoaded',init);
     var ageMs = Date.now() - G.liveQuote.tsWriteMs;
     var banner = document.getElementById('stale-quote-banner');
     if (ageMs >= FORCE_REFRESH_MS){
-      // Force refresh — banner shows briefly then auto-clears when quote arrives.
-      try { if (typeof fetchLiveQuote === 'function') fetchLiveQuote(); } catch(_){}
+      // Backoff: only fire fetchLiveQuote once per 30s on the FORCE
+      // path. Otherwise an offline quote API would burn 720 fetches
+      // per hour while the user has the order tab open.
+      if (Date.now() - _lastForceRefreshMs > 30000){
+        _lastForceRefreshMs = Date.now();
+        try { if (typeof fetchLiveQuote === 'function') fetchLiveQuote(); } catch(_){}
+      }
       if (!banner){
         banner = _build('forcing refresh — quote was '+Math.round(ageMs/1000)+'s old');
       } else {
@@ -30434,7 +30742,6 @@ window.addEventListener('DOMContentLoaded',init);
     } else if (ageMs >= STALE_WARN_MS){
       if (!banner){
         banner = _build('quote is '+Math.round(ageMs/1000)+'s stale — tap to refresh');
-        banner.onclick = function(){ try { if (typeof fetchLiveQuote === 'function') fetchLiveQuote(); } catch(_){} };
       } else {
         banner.querySelector('.stale-msg').textContent = 'quote is '+Math.round(ageMs/1000)+'s stale — tap to refresh';
       }
@@ -30448,6 +30755,11 @@ window.addEventListener('DOMContentLoaded',init);
     b.id = 'stale-quote-banner';
     b.style.cssText = 'background:rgba(255,160,30,0.18);border:1px solid var(--wrn);color:var(--wrn);font-family:var(--ff-mono);font-size:11px;padding:8px 12px;margin:8px 12px;border-radius:5px;cursor:pointer;display:flex;align-items:center;gap:8px;animation:osm-banner-in .25s ease-out;';
     b.innerHTML = '<span style="font-size:14px;">⚠</span><span class="stale-msg">'+msg+'</span>';
+    // NEW-H4 fix: attach onclick on EVERY build, regardless of which
+    // branch (FORCE or WARN) created the banner. Prior version only
+    // attached for WARN, so a banner that started in FORCE state never
+    // became tap-to-refresh.
+    b.onclick = function(){ try { if (typeof fetchLiveQuote === 'function') fetchLiveQuote(); } catch(_){} };
     var hostCard = document.querySelector('#tab-order .card .quote-panel') || document.querySelector('#tab-order .card-body');
     if (hostCard){
       hostCard.parentNode.insertBefore(b, hostCard);
@@ -30510,6 +30822,27 @@ window.addEventListener('DOMContentLoaded',init);
 
     // Build SVG donut. Center 100,100; outer r=88; inner r=58.
     var cx = 100, cy = 100, rOuter = 88, rInner = 58;
+    // NEW-M1 fix 2026-05-10: SVG arc paths cannot draw a 360° (100%)
+    // slice — the start and end points coincide, producing a
+    // degenerate path that renders as empty/sliver. When all positions
+    // belong to a single sector, render two concentric circles instead.
+    if (slices.length === 1){
+      var only = slices[0];
+      only.color = PALETTE[0];
+      var paths = '<circle cx="'+cx+'" cy="'+cy+'" r="'+rOuter+'" fill="'+only.color+'"><title>'+_esc(only.sector)+': $'+only.eq.toFixed(0)+' (100%)</title></circle>'
+                + '<circle cx="'+cx+'" cy="'+cy+'" r="'+rInner+'" fill="var(--bg1)"></circle>'
+                + '<text x="100" y="98" text-anchor="middle" style="fill:var(--gry);" font-family="var(--ff-mono)" font-size="10">EQUITY</text>'
+                + '<text x="100" y="116" text-anchor="middle" style="fill:var(--wht);" font-family="var(--ff-brand)" font-size="14" font-weight="800">$'+totalEq.toFixed(0)+'</text>';
+      svg.innerHTML = paths;
+      legend.innerHTML = '<div style="display:flex;align-items:center;gap:6px;">'
+        + '<span style="display:inline-block;width:10px;height:10px;background:'+only.color+';border-radius:2px;flex-shrink:0;"></span>'
+        + '<span style="color:var(--wht);flex:1;">'+_esc(only.sector)+'</span>'
+        + '<span style="color:var(--gry);">100%</span>'
+        + '<span style="color:var(--gry2);">$'+only.eq.toFixed(0)+'</span>'
+        + '</div>';
+      if (status) status.textContent = positions.length + ' positions · 1 sector';
+      return;
+    }
     var startAngle = -Math.PI / 2;     // start at 12 o'clock
     var paths = '';
     slices.forEach(function(s, idx){
@@ -30534,9 +30867,10 @@ window.addEventListener('DOMContentLoaded',init);
       paths += '<path d="'+d+'" fill="'+color+'" stroke="var(--bg1)" stroke-width="1.5"><title>'+_esc(s.sector)+': $'+(s.eq).toFixed(0)+' ('+s.pct.toFixed(1)+'%)</title></path>';
       startAngle = endAngle;
     });
-    // Center label: total equity.
-    paths += '<text x="100" y="98" text-anchor="middle" fill="var(--gry)" font-family="var(--ff-mono)" font-size="10">EQUITY</text>';
-    paths += '<text x="100" y="116" text-anchor="middle" fill="var(--wht)" font-family="var(--ff-brand)" font-size="14" font-weight="800">$'+totalEq.toFixed(0)+'</text>';
+    // Center label: total equity. NEW-M6 fix 2026-05-10: use style=
+    // for fill so CSS variables resolve on older Safari (iOS 13—).
+    paths += '<text x="100" y="98" text-anchor="middle" style="fill:var(--gry);" font-family="var(--ff-mono)" font-size="10">EQUITY</text>';
+    paths += '<text x="100" y="116" text-anchor="middle" style="fill:var(--wht);" font-family="var(--ff-brand)" font-size="14" font-weight="800">$'+totalEq.toFixed(0)+'</text>';
     svg.innerHTML = paths;
 
     // Legend.
@@ -30635,6 +30969,10 @@ window.addEventListener('DOMContentLoaded',init);
   function openJournalModal(forceOpen){
     var rows = _todayActivity();
     if (!rows.length && !forceOpen){
+      // NEW-H1 fix 2026-05-10: ALWAYS mark fired so the auto-tick at
+      // 16:01–16:30 ET doesn't keep retoasting the same "no activity"
+      // message every minute when the user had no fills today.
+      _markFired();
       try { toast('No filled/closed positions today — journal skipped'); } catch(_){}
       return;
     }
@@ -30704,8 +31042,34 @@ window.addEventListener('DOMContentLoaded',init);
   };
 
   // Auto-fire check every minute. Works whether tab-pos is active or not.
+  // Fix 2 (2026-05-10): guard against active-order workflows so the
+  // prompt doesn't pop on top of a step-fill loop, a minimized order
+  // status modal, or a focused input field. Re-checked on every tick;
+  // the FIRED_KEY is set only once we actually open the journal.
+  // NEW-H5 fix 2026-05-10: prior implementation had two unreliable
+  // checks:
+  // 1. activeElement check fired on iPhone whenever the user had ever
+  //    tapped an input — the activeElement persists after keyboard
+  //    dismiss. Replaced with a recent-touch timestamp (last touch
+  //    < 30s ago).
+  // 2. borderColor.includes('wrn') failed because computed style
+  //    returns rgb() not the var name. Replaced with a class-based
+  //    check on a state attribute we now set when ord-result is
+  //    written.
+  if (typeof window._lastUserTouchMs === 'undefined') window._lastUserTouchMs = 0;
+  document.addEventListener('touchstart', function(){ window._lastUserTouchMs = Date.now(); }, {passive:true});
+  document.addEventListener('mousedown',  function(){ window._lastUserTouchMs = Date.now(); }, {passive:true});
+  function _hasActiveOrderWorkflow(){
+    if (G.stepFillActive) return true;
+    if (G.orderStatus && (G.orderStatus.modalEl || G.orderStatus.isMinimized) && !G.orderStatus.terminalState) return true;
+    // Recent-touch heuristic: if user touched in the last 30s, hold the
+    // prompt. Avoids stomping on someone mid-action regardless of which
+    // input element retains focus.
+    if (window._lastUserTouchMs && Date.now() - window._lastUserTouchMs < 30000) return true;
+    return false;
+  }
   setInterval(function(){
-    if (_shouldPromptNow()){
+    if (_shouldPromptNow() && !_hasActiveOrderWorkflow()){
       try {
         toast('🕓 Markets closed — log today\'s journal?');
         try { if (typeof hap === 'function') hap([20, 60, 20]); } catch(_){}
