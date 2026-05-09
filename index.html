@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-09T11:30-positions-watchlist-autoadd-and-ticker-prominence">
+<meta name="op-build" content="2026-05-09T12:00-high-severity-audit-fixes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -7017,6 +7017,47 @@ function fmtDateUS(s){
   var m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})/);
   return m ? (m[2] + '-' + m[3] + '-' + m[1]) : String(s);
 }
+// JS-string escape helper for embedding values inside an HTML attribute
+// that contains a JS string literal — e.g. onclick="fn('VALUE')". The
+// existing _esc() encodes ' as &#39;, but the HTML parser DECODES that
+// entity back to a literal ' before the JS engine sees it, breaking out
+// of the JS string. _jsq escapes via \u00XX which the HTML parser does
+// NOT decode, so the JS engine sees a valid string regardless of input.
+// Use ANYWHERE a value flows into a JS-string-literal in markup. Fix for
+// audit SEC-1 (2026-05-09).
+function _jsq(s){
+  if (s == null) return '';
+  return String(s).replace(/[\\'"<>&\u2028\u2029]/g, function(c){
+    return '\\u' + ('0000' + c.charCodeAt(0).toString(16)).slice(-4);
+  });
+}
+// Purge stale per-day localStorage keys at page init. Daily counters
+// (rrjcar_daily_counters_<YYYY-MM-DD>) accumulate one entry per trading
+// day and were never cleaned up — fix for audit MEM-1 (2026-05-09).
+// Drops anything older than 30 days. Defensive try/catch in case
+// localStorage is partially blocked (Safari private mode, quota).
+function _purgeStaleDailyKeys(){
+  try {
+    var cutoffMs = Date.now() - 30 * 24 * 60 * 60 * 1000;
+    var cutoff = (function(){
+      try {
+        var p = new Date(cutoffMs).toLocaleDateString('en-US', { timeZone:'America/New_York', year:'numeric', month:'2-digit', day:'2-digit' }).split('/');
+        return p[2] + '-' + p[0] + '-' + p[1];
+      } catch(_){ return new Date(cutoffMs).toISOString().slice(0,10); }
+    })();
+    var pattern = /^rrjcar_daily_counters_(\d{4}-\d{2}-\d{2})$/;
+    var stale = [];
+    for (var i = 0; i < localStorage.length; i++){
+      var key = localStorage.key(i);
+      if (!key) continue;
+      var m = pattern.exec(key);
+      if (m && m[1] < cutoff) stale.push(key);
+    }
+    stale.forEach(function(k){ try { localStorage.removeItem(k); } catch(_){} });
+    if (stale.length) console.log('[localStorage] purged ' + stale.length + ' stale daily-counter keys (older than '+cutoff+')');
+  } catch(_){ /* localStorage unavailable — no-op */ }
+}
+try { _purgeStaleDailyKeys(); } catch(_){}
 function fmtP(n){return isNaN(n)?'--':(+n).toFixed(2)+'%';}
 function fmtD(n){if(isNaN(n))return'--';var v=+n;return(v<0?'-$':'$')+Math.abs(v).toFixed(2);}
 function fmtK(n){if(!n||isNaN(n))return'0';if(Math.abs(n)>=1e6)return(n/1e6).toFixed(1)+'M';if(Math.abs(n)>=1e3)return(n/1e3).toFixed(1)+'K';return''+Math.round(n);}
@@ -9718,8 +9759,8 @@ function renderPendingOrders(orders){
       +   '<div style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);margin-top:2px;">'+_esc(subtitle)+'</div>'
       + '</div>'
       + '<span style="font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.5px;color:'+statusColor+';background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.30);border-radius:3px;padding:2px 6px;white-space:nowrap;">'+_esc(status)+'</span>'
-      + '<button class="btn blu" onclick="openEditOrderModal(\''+_esc(String(o.id))+'\')" style="font-size:10px;padding:5px 10px;min-height:32px;">EDIT</button>'
-      + '<button class="btn wrn" onclick="cancelPendingOrder(\''+_esc(String(o.id))+'\')" style="font-size:10px;padding:5px 10px;min-height:32px;">CANCEL</button>'
+      + '<button class="btn blu" onclick="openEditOrderModal(\''+_jsq(String(o.id))+'\')" style="font-size:10px;padding:5px 10px;min-height:32px;">EDIT</button>'
+      + '<button class="btn wrn" onclick="cancelPendingOrder(\''+_jsq(String(o.id))+'\')" style="font-size:10px;padding:5px 10px;min-height:32px;">CANCEL</button>'
       + '</div>';
   }).join('');
   body.innerHTML = rows;
@@ -9780,7 +9821,7 @@ function openEditOrderModal(orderId){
     +     '</select></label>'
     +     '<div id="eo-result" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);min-height:12px;"></div>'
     +     '<div style="display:flex;gap:8px;margin-top:4px;">'
-    +       '<button class="btn blu" onclick="submitEditOrder(\''+_esc(String(o.id))+'\')" style="flex:1;font-size:12px;padding:8px;font-weight:700;">SAVE CHANGES</button>'
+    +       '<button class="btn blu" onclick="submitEditOrder(\''+_jsq(String(o.id))+'\')" style="flex:1;font-size:12px;padding:8px;font-weight:700;">SAVE CHANGES</button>'
     +       '<button class="btn" onclick="document.getElementById(\'edit-order-modal\').remove()" style="font-size:12px;padding:8px;border-color:var(--gry2);color:var(--gry);">CANCEL</button>'
     +     '</div>'
     +   '</div>'
@@ -14684,7 +14725,7 @@ async function renderOrdChain(sym, expDate){
       if (isFlip) rowStyle = 'background:linear-gradient(90deg,rgba(0,212,255,.18),rgba(0,212,255,.05));border-left:3px solid var(--amb);box-shadow:inset 0 0 0 1px var(--amb3);';
       else if (isATM) rowStyle = 'background:rgba(255,255,255,.04);';
       var glyph = isFlip ? '<span title="Highest-GEX strike (gamma flip)" style="color:var(--ambb);">&#9670;</span> ' : (isATM ? '<span style="color:var(--gry);">&#8226;</span> ' : '');
-      return '<tr data-strike="'+strike+'" style="'+rowStyle+'cursor:pointer;" onclick="ordChainRowClick(\''+_esc(sym)+'\','+strike+',\''+_esc(expDate)+'\')">'
+      return '<tr data-strike="'+strike+'" style="'+rowStyle+'cursor:pointer;" onclick="ordChainRowClick(\''+_jsq(sym)+'\','+strike+',\''+_jsq(expDate)+'\')">'
         + '<td style="padding:5px 8px;font-family:var(--ff-mono);color:var(--wht);">'+glyph+'$'+strike.toFixed(2)+'</td>'
         + '<td style="padding:5px 8px;text-align:right;color:var(--gry);">'+bid+'</td>'
         + '<td style="padding:5px 8px;text-align:right;color:var(--gry);">'+ask+'</td>'
@@ -23378,7 +23419,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.9.1-positions-watchlist-autoadd-and-ticker-prominence';
+var APP_VERSION = '2.9.2-high-severity-audit-fixes';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -28052,18 +28093,24 @@ window.addEventListener('DOMContentLoaded',init);
       list.innerHTML = '<div class="empty-det" style="min-height:200px;"><div class="ei">&#9432;</div><p>No news found for this filter.<br><span style="color:var(--gry2);font-size:10px;">Try switching to MARKET or adding tickers to your watchlist.</span></p></div>';
       return;
     }
+    // Build cards without the background-image inline style to avoid CSS
+    // injection via decoded HTML entities (audit SEC-5). The image URL is
+    // stored on a data-img attribute (HTML-escaped) and applied post-render
+    // via element.style.backgroundImage with JSON.stringify, which produces
+    // a CSS-safe double-quoted string. URLs that don't match a strict
+    // https?:// pattern are dropped to defense-in-depth against bad data
+    // from FMP / Marketaux. (SEC-1 onclick gap also fixed with _jsq.)
     list.innerHTML = items.map(function(n){
       var sym = n.symbol || n.tickers || '';
       var img = n.image || '';
-      var imgStyle = img ? 'background-image:url(\''+_esc(img)+'\');' : '';
       var imgClass = img ? '' : ' no-img';
       var title = n.title || '';
       var src = n.site || n.publisher || '';
       var time = _ago(n.publishedDate || n.date);
       var summary = (n.text || '').slice(0, 220);
       var url = n.url || '#';
-      return '<div class="news-card" onclick="newsOpenArticle(\''+_esc(url).replace(/'/g, "\\'")+'\')">'
-        + '<div class="news-card-img'+imgClass+'" style="'+imgStyle+'"></div>'
+      return '<div class="news-card" onclick="newsOpenArticle(\''+_jsq(url)+'\')">'
+        + '<div class="news-card-img'+imgClass+'" data-img="'+_esc(img)+'"></div>'
         + '<div class="news-card-body">'
         +   '<div class="news-card-meta">'
         +     (sym ? '<span class="news-card-symbol">'+_esc(sym)+'</span>' : '')
@@ -28075,6 +28122,14 @@ window.addEventListener('DOMContentLoaded',init);
         + '</div>'
       + '</div>';
     }).join('');
+    // Apply background images safely via JS — avoids CSS injection in inline
+    // style attributes. Strict https?:// validation drops anything weird.
+    list.querySelectorAll('.news-card-img[data-img]').forEach(function(el){
+      var u = el.getAttribute('data-img') || '';
+      if (/^https?:\/\/[^\s'"<>(){}\\]+$/i.test(u)){
+        el.style.backgroundImage = 'url(' + JSON.stringify(u) + ')';
+      }
+    });
     var total = items.length;
     var newest = items[0] && items[0].publishedDate;
     _setStatus(total + ' articles · newest ' + (newest ? _ago(newest) : '—'), 'var(--gry)');
@@ -28167,10 +28222,9 @@ window.addEventListener('DOMContentLoaded',init);
       }
       container.innerHTML = arr.slice(0, 6).map(function(n){
         var img = n.image || '';
-        var imgStyle = img ? 'background-image:url(\''+_esc(img)+'\');' : '';
         var imgClass = img ? '' : ' no-img';
-        return '<div class="news-card" style="margin-bottom:6px;padding:8px;" onclick="newsOpenArticle(\''+_esc(n.url || '#').replace(/'/g, "\\'")+'\')">'
-          + '<div class="news-card-img'+imgClass+'" style="width:54px;height:54px;'+imgStyle+'"></div>'
+        return '<div class="news-card" style="margin-bottom:6px;padding:8px;" onclick="newsOpenArticle(\''+_jsq(n.url || '#')+'\')">'
+          + '<div class="news-card-img'+imgClass+'" data-img="'+_esc(img)+'" style="width:54px;height:54px;"></div>'
           + '<div class="news-card-body">'
           +   '<div class="news-card-meta">'
           +     '<span class="news-card-source">'+_esc(n.site || n.publisher || '')+'</span>'
@@ -28180,6 +28234,14 @@ window.addEventListener('DOMContentLoaded',init);
           + '</div>'
         + '</div>';
       }).join('');
+      // Same post-render image-injection trick as newsRender — avoids CSS
+      // injection via inline style. Strict https?:// validation only.
+      container.querySelectorAll('.news-card-img[data-img]').forEach(function(el){
+        var u = el.getAttribute('data-img') || '';
+        if (/^https?:\/\/[^\s'"<>(){}\\]+$/i.test(u)){
+          el.style.backgroundImage = 'url(' + JSON.stringify(u) + ')';
+        }
+      });
     } catch(e){
       container.innerHTML = '<div style="color:var(--wrn);font-size:11px;padding:8px;">News fetch failed: '+_esc(e.message||'unknown')+'</div>';
     }
