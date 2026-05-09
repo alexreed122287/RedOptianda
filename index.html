@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-05T16:00-fix-mode-stock-leak">
+<meta name="op-build" content="2026-05-08T20:50-order-status-modal-and-chain-card">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -3505,6 +3505,25 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     </div>
     <div id="ord-result-iphone" class="iphone-only-actions ord-result" style="display:none;font-size:11px;margin:10px 8px;"></div>
     </div><!-- /.ord-body-2col --></div>
+
+    <!-- ── OPTION CHAIN (collapsed by default; lazy-loaded on open / on
+         symbol change). Highlights the highest-GEX strike (gamma-flip)
+         from G.gexData when available. Built 2026-05-08. -->
+    <details class="card" id="ord-chain-card" style="margin-top:8px;">
+      <summary style="cursor:pointer;padding:9px 14px;font-family:var(--ff-mono);font-size:11px;color:var(--amb);letter-spacing:1px;user-select:none;list-style:none;display:flex;align-items:center;justify-content:space-between;background:var(--bg2);border-bottom:var(--bdr);">
+        <span>&#9662; OPTION CHAIN <span id="ord-chain-sym-lbl" style="color:var(--gry);margin-left:6px;">(load a ticker)</span></span>
+        <span id="ord-chain-status" style="color:var(--gry);font-size:10px;font-weight:400;letter-spacing:0;text-transform:none;"></span>
+      </summary>
+      <div style="padding:10px 12px;">
+        <div id="ord-chain-bar" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-bottom:8px;font-family:var(--ff-mono);font-size:11px;color:var(--gry);">
+          <label>EXPIRY <select id="ord-chain-exp" style="background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:4px 7px;margin-left:6px;"></select></label>
+          <label>RANGE <select id="ord-chain-range" style="background:var(--bg2);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:4px 7px;margin-left:6px;"><option value="10">±10 strikes</option><option value="20">±20 strikes</option><option value="all">all strikes</option></select></label>
+          <span id="ord-chain-gex-info" style="margin-left:auto;color:var(--ambb);"></span>
+          <button class="btn" style="font-size:10px;padding:3px 9px;" onclick="loadOrdChain()">&#8635; REFRESH</button>
+        </div>
+        <div id="ord-chain-tbl-wrap" style="overflow-x:auto;"><div style="color:var(--gry);font-size:11px;text-align:center;padding:14px;">Open this card after entering a symbol to load the call chain. Highest-GEX strike (gamma flip) is highlighted in cyan.</div></div>
+      </div>
+    </details>
 
     <!-- ── P&L PAYOFF CHART ── -->
     <div class="card" id="ord-pnl-card" style="display:none;">
@@ -7972,7 +7991,15 @@ function onSymbolChange(){
   clearTimeout(G._symTimer);
   G._symTimer=setTimeout(function(){
     var sym=eid('ord-sym').value.trim();
-    if(sym.length>=1)fetchLiveQuote();
+    if(sym.length>=1) {
+      fetchLiveQuote();
+      // Refresh the order-ticket option chain too — but only if the card is
+      // currently open (saves an API call when collapsed). Built 2026-05-08.
+      var chainCard = eid('ord-chain-card');
+      if (chainCard && chainCard.open && typeof loadOrdChain === 'function'){
+        loadOrdChain(sym);
+      }
+    }
     else resetQuotePanel();
   },600);
 }
@@ -8784,6 +8811,264 @@ function cancelStepFill(){
   toast('Step fill cancelled');
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  ORDER STATUS MODAL — full-screen status surface during/after submission.
+//  States: working | filled | cancelled | not-filled | rejected
+//  - Opens on every submitOrder() / runStepFill() entry.
+//  - Closes manually via × or auto-fade when terminal state ack'd.
+//  - CANCEL button: routes to cancelStepFill() for step-fill loops, or
+//    cancelOrder(creds, acct, orderId) for one-shot orders.
+//  - RESUBMIT panel: editable LIMIT, STEP, MAX ATTEMPTS, DELAY → re-fires
+//    submitOrder() with new params (writes back to the form fields first).
+//  Mounted on document.body so it follows the user across SPA tab switches.
+// ═══════════════════════════════════════════════════════════════════════════
+
+// Module-level state for the active modal session.
+G.orderStatus = G.orderStatus || {
+  modalEl: null,
+  ctx: null,           // { mode:'step'|'oneshot', creds, acct, orderId, sym, occSym, side, qty, startPrice, limitPrice, stepSize, maxAttempts, delaySec, t0 }
+  pollHandle: null,    // setInterval handle for elapsed-time tick
+  oneshotPoller: null  // for one-shot limit polling
+};
+
+function _osmFmtElapsed(ms){
+  var s = Math.floor(ms/1000);
+  if (s < 60) return s + 's';
+  return Math.floor(s/60) + 'm ' + (s%60) + 's';
+}
+
+function openOrderStatusModal(ctx){
+  // Tear down any prior modal cleanly so reopens don't leak DOM/timers.
+  closeOrderStatusModal({silent:true});
+  G.orderStatus.ctx = Object.assign({ t0: Date.now() }, ctx || {});
+
+  var c = G.orderStatus.ctx;
+  var labelOcc = _esc(c.occSym || c.sym || '--');
+  var labelSide = _esc(c.side || '--');
+  var labelQty = _esc(String(c.qty || '--'));
+  var modeLabel = c.mode === 'step' ? 'STEP FILL' : 'ORDER';
+
+  var modal = document.createElement('div');
+  modal.id = 'ord-status-modal';
+  modal.style.cssText = 'position:fixed;inset:0;z-index:9750;background:rgba(0,0,0,0.78);backdrop-filter:blur(4px);display:flex;align-items:flex-start;justify-content:center;padding:60px 12px 24px;overflow-y:auto;';
+  modal.onclick = function(e){ if (e.target === modal) closeOrderStatusModal(); };
+
+  modal.innerHTML =
+      '<div id="osm-panel" style="background:var(--bg1);border:1px solid var(--amb);border-radius:10px;width:480px;max-width:96vw;padding:0;box-shadow:0 0 28px rgba(0,212,255,.25);">'
+    +   '<div style="background:var(--bg2);border-bottom:var(--bdr);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;">'
+    +     '<span style="font-family:var(--ff-brand);font-size:12px;color:var(--amb);letter-spacing:2px;">' + modeLabel + ' STATUS — ' + labelOcc + '</span>'
+    +     '<button class="btn" style="font-size:10px;padding:2px 8px;" onclick="closeOrderStatusModal()">&#10005;</button>'
+    +   '</div>'
+    +   '<div id="osm-body" style="padding:14px;display:flex;flex-direction:column;gap:12px;">'
+    +     '<div id="osm-state-card" style="background:var(--bg2);border:1px solid var(--amb);border-radius:6px;padding:14px;text-align:center;">'
+    +       '<div id="osm-state-glyph" style="font-size:34px;line-height:1;margin-bottom:6px;">&#9650;</div>'
+    +       '<div id="osm-state-line" style="font-family:var(--ff-brand);font-size:14px;color:var(--amb);letter-spacing:1px;">SUBMITTING&hellip;</div>'
+    +       '<div id="osm-sub-line" style="font-family:var(--ff-mono);font-size:11px;color:var(--gry);margin-top:4px;">' + labelSide + ' x' + labelQty + '</div>'
+    +     '</div>'
+    +     '<div id="osm-meta-row" style="display:grid;grid-template-columns:repeat(3,1fr);gap:8px;font-family:var(--ff-mono);font-size:10px;">'
+    +       '<div style="background:var(--bg2);border:var(--bdr);border-radius:5px;padding:8px;text-align:center;"><div style="color:var(--gry);font-size:9px;letter-spacing:1px;">ATTEMPT</div><div id="osm-attempt" style="color:var(--wht);font-size:14px;font-weight:700;margin-top:2px;">--</div></div>'
+    +       '<div style="background:var(--bg2);border:var(--bdr);border-radius:5px;padding:8px;text-align:center;"><div style="color:var(--gry);font-size:9px;letter-spacing:1px;">PRICE</div><div id="osm-price" style="color:var(--ambb);font-size:14px;font-weight:700;margin-top:2px;">--</div></div>'
+    +       '<div style="background:var(--bg2);border:var(--bdr);border-radius:5px;padding:8px;text-align:center;"><div style="color:var(--gry);font-size:9px;letter-spacing:1px;">ELAPSED</div><div id="osm-elapsed" style="color:var(--wht);font-size:14px;font-weight:700;margin-top:2px;">0s</div></div>'
+    +     '</div>'
+    +     '<div id="osm-progress-wrap" style="background:var(--bg2);border:var(--bdr);border-radius:5px;height:8px;overflow:hidden;">'
+    +       '<div id="osm-progress-bar" style="height:100%;width:0%;background:linear-gradient(90deg,var(--amb),var(--ambb));transition:width .3s;"></div>'
+    +     '</div>'
+    +     '<div id="osm-log" style="background:var(--bg0);border:var(--bdr);border-radius:5px;padding:8px 10px;max-height:120px;overflow-y:auto;font-family:var(--ff-mono);font-size:10px;color:var(--gry);line-height:1.5;"><div style="color:var(--amb);">&#9654; Submitting initial order&hellip;</div></div>'
+    +     '<div id="osm-cancel-row" style="display:flex;gap:8px;">'
+    +       '<button class="btn wrn" id="osm-cancel-btn" style="flex:1;padding:10px;font-weight:700;font-size:12px;" onclick="cancelOrderFromModal()">&#9632; CANCEL ORDER</button>'
+    +     '</div>'
+    +     '<div id="osm-resubmit-card" style="display:none;background:var(--bg2);border:1px solid var(--amb3);border-radius:6px;padding:10px 12px;">'
+    +       '<div style="font-family:var(--ff-brand);font-size:11px;color:var(--amb);letter-spacing:1px;margin-bottom:8px;">&#9658; RESUBMIT WITH NEW PARAMS</div>'
+    +       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--ff-mono);font-size:10px;">'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>LIMIT $</span><input type="number" id="osm-r-lmt" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>STEP $</span><input type="number" id="osm-r-step" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>MAX ATTEMPTS</span><input type="number" id="osm-r-max" min="1" max="50" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>DELAY (sec)</span><input type="number" id="osm-r-delay" min="1" max="120" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);grid-column:1/-1;"><span>START FROM</span><select id="osm-r-start" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"><option value="bid">Bid</option><option value="mid">Mid</option><option value="ask">Ask</option></select></label>'
+    +       '</div>'
+    +       '<div style="display:flex;gap:8px;margin-top:10px;">'
+    +         '<button class="btn blu" id="osm-resubmit-btn" style="flex:1;padding:9px;font-weight:700;font-size:12px;" onclick="resubmitFromModal()">&#9658; RESUBMIT</button>'
+    +         '<button class="btn" style="flex:0 0 80px;padding:9px;font-size:11px;" onclick="closeOrderStatusModal()">DONE</button>'
+    +       '</div>'
+    +     '</div>'
+    +   '</div>'
+    + '</div>';
+
+  document.body.appendChild(modal);
+  G.orderStatus.modalEl = modal;
+
+  // Pre-fill resubmit form with the original params so the user can tweak.
+  setTimeout(function(){
+    if (eid('osm-r-lmt'))   eid('osm-r-lmt').value   = (c.limitPrice != null ? Number(c.limitPrice).toFixed(2) : '');
+    if (eid('osm-r-step'))  eid('osm-r-step').value  = (c.stepSize   != null ? Number(c.stepSize).toFixed(2)   : '');
+    if (eid('osm-r-max'))   eid('osm-r-max').value   = c.maxAttempts || '';
+    if (eid('osm-r-delay')) eid('osm-r-delay').value = c.delaySec    || '';
+    if (eid('osm-r-start')) eid('osm-r-start').value = c.startFrom   || 'bid';
+  }, 0);
+
+  // Elapsed-time tick (every 500ms).
+  if (G.orderStatus.pollHandle) clearInterval(G.orderStatus.pollHandle);
+  G.orderStatus.pollHandle = setInterval(function(){
+    var el = eid('osm-elapsed');
+    if (!el) return;
+    el.textContent = _osmFmtElapsed(Date.now() - (G.orderStatus.ctx ? G.orderStatus.ctx.t0 : Date.now()));
+  }, 500);
+}
+
+function updateOrderStatusModal(patch){
+  if (!G.orderStatus.modalEl || !document.getElementById('ord-status-modal')) return;
+  patch = patch || {};
+  var stateGlyph = eid('osm-state-glyph');
+  var stateLine  = eid('osm-state-line');
+  var subLine    = eid('osm-sub-line');
+  var attEl      = eid('osm-attempt');
+  var prEl       = eid('osm-price');
+  var bar        = eid('osm-progress-bar');
+  var card       = eid('osm-state-card');
+  var log        = eid('osm-log');
+  var cancelRow  = eid('osm-cancel-row');
+  var resubCard  = eid('osm-resubmit-card');
+
+  if (patch.attempt != null && attEl) attEl.textContent = patch.attempt;
+  if (patch.price   != null && prEl)  prEl.textContent  = '$' + Number(patch.price).toFixed(2);
+
+  if (patch.maxAttempts && patch.attempt != null && bar){
+    bar.style.width = Math.min(100, Math.round((patch.attempt / patch.maxAttempts) * 100)) + '%';
+  }
+
+  if (patch.logLine && log){
+    var entry = document.createElement('div');
+    var col = patch.logKind === 'filled'    ? 'var(--grn)'
+            : patch.logKind === 'rejected'  ? 'var(--wrn)'
+            : patch.logKind === 'cancelled' ? 'var(--gry2)'
+            : 'var(--ambb)';
+    entry.style.color = col;
+    entry.textContent = patch.logLine;
+    log.appendChild(entry);
+    log.scrollTop = log.scrollHeight;
+  }
+
+  if (patch.state){
+    var states = {
+      working:    { glyph:'&#9650;', text:'WORKING', col:'var(--amb)',  border:'var(--amb)'  },
+      filled:     { glyph:'&#10003;', text:'FILLED',  col:'var(--grn)', border:'var(--grn)'  },
+      cancelled:  { glyph:'&#9632;', text:'CANCELLED', col:'var(--gry)', border:'var(--gry2)' },
+      'not-filled':{glyph:'&#9888;', text:'NOT FILLED', col:'var(--wrn)', border:'var(--wrn)' },
+      rejected:   { glyph:'&#10005;', text:'REJECTED', col:'var(--wrn)', border:'var(--wrn)' }
+    };
+    var s = states[patch.state] || states.working;
+    if (stateGlyph){ stateGlyph.innerHTML = s.glyph; stateGlyph.style.color = s.col; }
+    if (stateLine){ stateLine.textContent = patch.stateText || s.text; stateLine.style.color = s.col; }
+    if (card){ card.style.borderColor = s.border; }
+    if (patch.subLine && subLine) subLine.textContent = patch.subLine;
+
+    var terminal = (patch.state === 'filled' || patch.state === 'cancelled' || patch.state === 'not-filled' || patch.state === 'rejected');
+    if (terminal){
+      if (cancelRow) cancelRow.style.display = 'none';
+      // Show resubmit panel for non-filled terminal states.
+      if (patch.state !== 'filled' && resubCard){
+        resubCard.style.display = 'block';
+      }
+      // Stop the elapsed-time tick on terminal — but freeze the value, don't clear.
+      if (G.orderStatus.pollHandle){ clearInterval(G.orderStatus.pollHandle); G.orderStatus.pollHandle = null; }
+      // Auto-close on filled after 6s if user doesn't dismiss.
+      if (patch.state === 'filled'){
+        setTimeout(function(){
+          if (G.orderStatus.modalEl) closeOrderStatusModal();
+        }, 6000);
+      }
+    }
+  }
+}
+
+function closeOrderStatusModal(opts){
+  opts = opts || {};
+  if (G.orderStatus.pollHandle){ clearInterval(G.orderStatus.pollHandle); G.orderStatus.pollHandle = null; }
+  if (G.orderStatus.oneshotPoller){ clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null; }
+  var el = document.getElementById('ord-status-modal');
+  if (el) el.remove();
+  G.orderStatus.modalEl = null;
+  if (!opts.silent) G.orderStatus.ctx = null;
+}
+
+function cancelOrderFromModal(){
+  var c = G.orderStatus.ctx || {};
+  // Step-fill: just flip the cancel flag; the running loop catches it on next iteration.
+  if (c.mode === 'step'){
+    if (typeof cancelStepFill === 'function') cancelStepFill();
+    updateOrderStatusModal({state:'cancelled', stateText:'CANCELLING…', logLine:'User pressed CANCEL — stopping step-fill loop.', logKind:'cancelled'});
+    return;
+  }
+  // One-shot path: directly DELETE the working order at Tradier.
+  if (c.creds && c.acct && c.orderId){
+    updateOrderStatusModal({logLine:'Cancelling order #' + c.orderId + '…', logKind:'cancelled'});
+    cancelOrder(c.creds, c.acct, c.orderId).then(function(){
+      updateOrderStatusModal({state:'cancelled', logLine:'Order #' + c.orderId + ' cancel sent.', logKind:'cancelled'});
+      toast('Order #' + c.orderId + ' cancelled');
+    });
+  } else {
+    closeOrderStatusModal();
+  }
+}
+
+function resubmitFromModal(){
+  // Block if step-fill is still running (defensive — button only shows on terminal).
+  if (G.stepFillActive){ toast('Wait for current step-fill to finish'); return; }
+
+  // Read user's edits and write them back into the order ticket form fields,
+  // then re-fire submitOrder() so the standard validation and step-fill path
+  // run unchanged. Mutating the price ensures the duplicate-loop detector
+  // doesn't lock us out (loopKey at line 9736 hashes the limit value).
+  var lmtEl  = eid('osm-r-lmt');
+  var stEl   = eid('osm-r-step');
+  var maxEl  = eid('osm-r-max');
+  var dlyEl  = eid('osm-r-delay');
+  var srtEl  = eid('osm-r-start');
+
+  if (lmtEl && lmtEl.value && eid('ord-lmt')) eid('ord-lmt').value = Number(lmtEl.value).toFixed(2);
+  if (maxEl && maxEl.value && eid('sf-max')) eid('sf-max').value = parseInt(maxEl.value) || 10;
+  if (dlyEl && dlyEl.value && eid('sf-delay')) eid('sf-delay').value = parseInt(dlyEl.value) || 3;
+  if (srtEl && srtEl.value && eid('sf-start')) eid('sf-start').value = srtEl.value;
+  // Step size — sf-step is readonly (auto from coverage). To override, set
+  // sf-coverage so the calc reflects the requested step. Skip if user left blank.
+  if (stEl && stEl.value && eid('sf-step')){
+    // Direct write — temporarily make writable.
+    eid('sf-step').readOnly = false;
+    eid('sf-step').value = Number(stEl.value).toFixed(2);
+  }
+
+  // Make sure step-fill is on.
+  if (eid('step-fill-toggle')) eid('step-fill-toggle').checked = true;
+
+  closeOrderStatusModal();
+  setTimeout(function(){ try{ submitOrder(); }catch(e){ console.error('[osm resubmit]', e); toast('Resubmit failed: '+e.message); } }, 80);
+}
+
+// ─── SMART POLL: returns as soon as order hits a terminal status, or after
+//    delaySec elapses. Fixes the lag where a sub-second fill wasn't detected
+//    until the full sleep elapsed. Polls at 750ms cadence (8 polls per 6s).
+async function pollUntilTerminalOrTimeout(creds, acct, orderId, delaySec){
+  var POLL_MS = 750;
+  var start = Date.now();
+  var cap = Math.max(1, delaySec) * 1000;
+  var last = null;
+  while (Date.now() - start < cap){
+    if (G.stepFillCancel) return last || { status:'cancelled' };
+    var det = await pollOrderDetails(creds, acct, orderId);
+    last = det;
+    var s = (det && det.status) || '';
+    // Terminal statuses — bail immediately.
+    if (s === 'filled' || s === 'rejected' || s === 'expired' || s === 'canceled' || s === 'cancelled' || s === 'error'){
+      return det;
+    }
+    // Wait the smaller of POLL_MS or remaining budget.
+    var remaining = cap - (Date.now() - start);
+    if (remaining <= 0) break;
+    await sleep(Math.min(POLL_MS, remaining));
+  }
+  return last || { status:'unknown' };
+}
+
 // IV/HV gate (council #6): reject long calls where IV is rich vs. realized.
 // Tradier chains include implied vol (greeks.smv_vol). HV20 we compute from
 // the historical bar cache (G_HIST_CACHE populated by fetchIndicatorHistory).
@@ -9384,6 +9669,16 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
   var dirLabel=goingUp?('bid\u2192ask \u25b2'):('ask\u2192bid \u25bc');
   sfLog((goingUp?'\u25b2':'\u25bc')+' Step Fill started ['+dirLabel+'] \u2014 '+side+' x'+qty+' '+occSym,'sent');
   sfLog('Start: $'+fmt2(startPrice)+' | Limit: $'+fmt2(limitPrice)+' | Step: $'+fmt2(stepSize)+' | Max: '+maxAttempts+' attempts','');
+  // \u2500\u2500 Open status modal (mirrors the inline log/progress bar but persists
+  //    across SPA tab switches because it's appended to document.body).
+  try {
+    openOrderStatusModal({
+      mode:'step', creds:creds, acct:acct, occSym:occSym, sym:sym, side:side, qty:qty,
+      startPrice:startPrice, limitPrice:limitPrice, stepSize:stepSize,
+      maxAttempts:maxAttempts, delaySec:delaySec,
+      startFrom: (eid('sf-start') && eid('sf-start').value) || 'bid'
+    });
+  } catch(e){ console.warn('[osm open]', e); }
 
   // Round to integer cents to dodge JS float-precision bugs in limit
   // comparisons (0.16 - 0.01 prints as 0.15 but stores as
@@ -9433,6 +9728,7 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
     lbl.textContent=attempt+' / '+maxAttempts;
 
     sfLog('Attempt '+attempt+'/'+maxAttempts+' \u2014 submitting limit @ $'+fmt2(currentPrice)+'...','sent');
+    try { updateOrderStatusModal({state:'working', attempt:attempt, maxAttempts:maxAttempts, price:currentPrice, logLine:'Attempt '+attempt+'/'+maxAttempts+' \u2014 limit @ $'+fmt2(currentPrice), logKind:'sent'}); } catch(_){ }
 
     var orderId=null;
     try{
@@ -9442,15 +9738,19 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       var res=await submitLimitAtPrice(creds,acct,occSym,sym,side,qty,assetClass,currentPrice,null,duration);
       orderId=res.orderId;
       sfLog('Order #'+orderId+' placed (status: '+res.status+')','sent');
+      try { G.orderStatus.ctx && (G.orderStatus.ctx.orderId = orderId); updateOrderStatusModal({logLine:'Order #'+orderId+' placed', logKind:'sent'}); } catch(_){ }
     }catch(e){
       sfLog('Order rejected: '+e.message,'rejected');
+      try { updateOrderStatusModal({logLine:'Rejected: '+e.message, logKind:'rejected'}); } catch(_){ }
       consecutiveRejected++;
       if (consecutiveRejected >= REJECT_ABORT_THRESHOLD){
         sfLog('Aborting \u2014 '+REJECT_ABORT_THRESHOLD+' rejections in a row. Price-stepping cannot fix this; check buying power, position, or account state.','rejected');
+        try { updateOrderStatusModal({state:'rejected', stateText:'REJECTED \u00d7'+REJECT_ABORT_THRESHOLD, logLine:'Aborted \u2014 '+REJECT_ABORT_THRESHOLD+' rejections in a row.', logKind:'rejected'}); } catch(_){ }
         break;
       }
       if (_atLimit(currentC)){
         sfLog('Reached price limit \u2014 stopping.','rejected');
+        try { updateOrderStatusModal({state:'rejected', stateText:'AT PRICE LIMIT', logLine:'Reached price limit \u2014 stopping.', logKind:'rejected'}); } catch(_){ }
         break;
       }
       currentC = _step(currentC);
@@ -9458,18 +9758,16 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       continue;
     }
 
-    // Wait delay then poll status
-    await sleep(delaySec*1000);
+    // \u2500\u2500 Smart poll: returns as soon as the order is filled/rejected, or after
+    //    delaySec elapses. Replaces the old "sleep then poll once" which
+    //    delayed fill detection by a full delaySec even on instant fills.
+    var det = await pollUntilTerminalOrTimeout(creds,acct,orderId,delaySec);
     if(G.stepFillCancel){
       if(orderId)await cancelOrder(creds,acct,orderId);
       sfLog('Cancelled \u2014 open order #'+orderId+' sent cancel request.','cancelled');
+      try { updateOrderStatusModal({state:'cancelled', logLine:'Order #'+orderId+' cancel sent.', logKind:'cancelled'}); } catch(_){ }
       break;
     }
-
-    // Pull full order details so we can surface the broker's rejection
-    // reason on REJECTED status (Tradier returns reason_description /
-    // description). Without this the user sees opaque "REJECTED" lines.
-    var det = await pollOrderDetails(creds,acct,orderId);
     var status = det.status;
     sfLog('Order #'+orderId+' status: '+status.toUpperCase()+(det.reason ? ' \u2014 '+det.reason : ''),'sent');
 
@@ -9477,6 +9775,7 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
       sfLog('\u2713 FILLED at $'+fmt2(currentPrice)+' on attempt '+attempt+'!','filled');
       try { if (typeof playFillSound === 'function') playFillSound(); } catch(_){}
       try { if (typeof hap === 'function') hap([20, 60, 20, 60, 30]); } catch(_){}
+      try { updateOrderStatusModal({state:'filled', stateText:'FILLED @ $'+fmt2(currentPrice), subLine:'attempt '+attempt+' / '+maxAttempts, attempt:attempt, maxAttempts:maxAttempts, price:currentPrice, logLine:'\u2713 FILLED at $'+fmt2(currentPrice)+' on attempt '+attempt, logKind:'filled'}); } catch(_){ }
       filledOrderId=orderId;
       addAlert(sym,'Step Fill: FILLED x'+qty+' @ $'+fmt2(currentPrice)+' (attempt '+attempt+')','go');
       toast('\u2713 Step Fill FILLED @ $'+fmt2(currentPrice));
@@ -9532,6 +9831,7 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
 
     if(attempt===maxAttempts&&status!=='filled'){
       sfLog('Max attempts reached without fill.','rejected');
+      try { updateOrderStatusModal({state:'not-filled', stateText:'NOT FILLED ('+maxAttempts+' attempts)', subLine:'last price tried: $'+fmt2(currentPrice), attempt:maxAttempts, maxAttempts:maxAttempts, price:currentPrice, logLine:'Max attempts reached \u2014 not filled.', logKind:'rejected'}); } catch(_){ }
       addAlert(sym,'Step Fill: max attempts ('+maxAttempts+') reached \u2014 not filled','warn');
 
       // Check fallback setting
@@ -10037,6 +10337,20 @@ function submitOrder(){
   }
   res.innerHTML='Submitting...';res.className='ord-result show';res.style.borderColor='var(--amb)';
   var _orderLabel = (type==='STOCK') ? (sym+' shares') : occSym;
+  // ── Open the order-status modal for one-shot orders too. We kick off a
+  //    passive poller after the order ID returns so the modal flips to
+  //    FILLED / REJECTED on the broker's terminal status without blocking
+  //    the form. Step-fill orders open the modal from inside runStepFill().
+  try {
+    openOrderStatusModal({
+      mode:'oneshot', creds:{host:host,key:key}, acct:acct,
+      occSym: (type==='STOCK' ? sym+' shares' : occSym),
+      sym:sym, side:side, qty:qty,
+      limitPrice: (otype==='limit' && lmt) ? parseFloat(lmt) : null,
+      maxAttempts:1, delaySec:0
+    });
+    updateOrderStatusModal({state:'working', stateText:'SUBMITTING…', logLine:otype.toUpperCase()+' '+(duration||'day').toUpperCase()+' — sending to broker', logKind:'sent'});
+  } catch(e){ console.warn('[osm one-shot open]', e); }
   fetch(host+'/v1/accounts/'+acct+'/orders',{
     method:'POST',
     headers:{Authorization:'Bearer '+key,Accept:'application/json','Content-Type':'application/x-www-form-urlencoded'},
@@ -10051,6 +10365,45 @@ function submitOrder(){
         res.style.borderColor='var(--blu)';
         addAlert(sym,'Order: '+side+' x'+qty+' '+_orderLabel+' ('+otype+', '+duration+')','go');
         toast('Order submitted: '+data.order.id);
+        try {
+          if (G.orderStatus.ctx) G.orderStatus.ctx.orderId = data.order.id;
+          updateOrderStatusModal({state:'working', stateText:'SUBMITTED — WORKING', subLine:'Order #'+data.order.id+' · '+otype.toUpperCase(), logLine:'Order #'+data.order.id+' submitted (status: '+data.order.status+')', logKind:'sent'});
+          // Passive poller: 2s cadence, 5 min budget. Updates the modal when
+          // the broker terminalises the order. Market orders usually fill
+          // within the first poll. Limit orders may sit working — user can
+          // CANCEL or just close the popup and check positions later.
+          var pollStart = Date.now();
+          var POLL_BUDGET_MS = 5 * 60 * 1000;
+          var POLL_EVERY_MS = 2000;
+          if (G.orderStatus.oneshotPoller) clearInterval(G.orderStatus.oneshotPoller);
+          G.orderStatus.oneshotPoller = setInterval(function(){
+            if (!G.orderStatus.modalEl){ clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null; return; }
+            if (Date.now() - pollStart > POLL_BUDGET_MS){
+              clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+              updateOrderStatusModal({state:'not-filled', stateText:'STILL WORKING', logLine:'Stopped polling after 5 min — order may still fill at the broker.', logKind:'rejected'});
+              return;
+            }
+            pollOrderDetails({host:host,key:key}, acct, data.order.id).then(function(det){
+              var s = (det && det.status) || '';
+              if (s === 'filled'){
+                clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+                var fillPx = det.raw && (det.raw.avg_fill_price || det.raw.last_fill_price || det.raw.price);
+                var fillStr = fillPx ? '$'+Number(fillPx).toFixed(2) : (lmt ? '$'+Number(lmt).toFixed(2) : '');
+                updateOrderStatusModal({state:'filled', stateText:'FILLED'+(fillStr?' @ '+fillStr:''), logLine:'✓ FILLED'+(fillStr?' @ '+fillStr:''), logKind:'filled', price:fillPx||lmt});
+                try { if (typeof playFillSound === 'function') playFillSound(); } catch(_){}
+                try { if (typeof hap === 'function') hap([20,60,20]); } catch(_){}
+              } else if (s === 'rejected' || s === 'expired' || s === 'error'){
+                clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+                updateOrderStatusModal({state:'rejected', stateText:s.toUpperCase(), logLine:s.toUpperCase()+(det.reason?' — '+det.reason:''), logKind:'rejected'});
+              } else if (s === 'canceled' || s === 'cancelled'){
+                clearInterval(G.orderStatus.oneshotPoller); G.orderStatus.oneshotPoller = null;
+                updateOrderStatusModal({state:'cancelled', logLine:'Order cancelled.', logKind:'cancelled'});
+              } else {
+                updateOrderStatusModal({logLine:'status: '+s.toUpperCase(), logKind:'sent'});
+              }
+            }).catch(function(){ /* swallow transient errors */ });
+          }, POLL_EVERY_MS);
+        } catch(_){ }
         // Auto-refresh positions after broker processes the order
         setTimeout(function(){ if(G.acctId) fetchPositions(); }, 3000);
         // Reset the form so the next order doesn't inherit stale state
@@ -10062,17 +10415,21 @@ function submitOrder(){
           (errs.join('').toLowerCase().includes('undefined symbol') && type!=='STOCK' ?
             '<br><small>Tip: The option '+_esc(occSym)+' may not exist. Check the expiry date matches a standard Friday expiration.</small>':'')+'</span>';
         res.style.borderColor='var(--wrn)';
+        try { updateOrderStatusModal({state:'rejected', stateText:'REJECTED', logLine:errs.join(' | '), logKind:'rejected'}); } catch(_){ }
       } else {
         res.innerHTML='<span style="color:var(--wrn)">Response: '+_esc(JSON.stringify(data).slice(0,200))+'</span>';
         res.style.borderColor='var(--wrn)';
+        try { updateOrderStatusModal({state:'rejected', stateText:'UNEXPECTED RESPONSE', logLine:JSON.stringify(data).slice(0,160), logKind:'rejected'}); } catch(_){ }
       }
     }catch(e){
       res.innerHTML='<span style="color:var(--wrn)">Error (HTTP '+_esc(resp.s)+'): '+_esc((resp.t||'').slice(0,200))+'</span>';
       res.style.borderColor='var(--wrn)';
+      try { updateOrderStatusModal({state:'rejected', stateText:'HTTP '+resp.s, logLine:(resp.t||'').slice(0,160), logKind:'rejected'}); } catch(_){ }
     }
   }).catch(function(e){
     res.innerHTML='<span style="color:var(--wrn)">Error: '+_esc(e.message)+'</span>';
     res.style.borderColor='var(--wrn)';
+    try { updateOrderStatusModal({state:'rejected', stateText:'NETWORK ERROR', logLine:e.message, logKind:'rejected'}); } catch(_){ }
   });
 }
 
@@ -13987,6 +14344,206 @@ function chainRowClick(ticker, strike, expDate){
   }, 120);
 }
 
+// ═══════════════════════════════════════════════════════════════════════════
+//  ORDER-TICKET OPTION CHAIN — collapsed by default; loads on open or
+//  when the symbol input changes. Highlights the highest-GEX (gamma flip)
+//  strike from G.gexData if available so the trader can see dealer pin
+//  inline with the chain. Built 2026-05-08.
+// ═══════════════════════════════════════════════════════════════════════════
+async function loadOrdChain(forcedSym){
+  var card = eid('ord-chain-card');
+  if (!card) return;
+  var sym = (forcedSym || (eid('ord-sym') && eid('ord-sym').value) || '').trim().toUpperCase();
+  if (!sym){
+    eid('ord-chain-tbl-wrap').innerHTML = '<div style="color:var(--gry);font-size:11px;text-align:center;padding:14px;">Enter a symbol in the form above first.</div>';
+    eid('ord-chain-sym-lbl').textContent = '(load a ticker)';
+    return;
+  }
+  if (eid('ord-chain-sym-lbl')) eid('ord-chain-sym-lbl').textContent = sym;
+  var status = eid('ord-chain-status');
+  if (status) status.textContent = 'loading expirations…';
+  var creds = (typeof getTradierCreds === 'function') ? getTradierCreds() : null;
+  if (!creds || !creds.key){
+    eid('ord-chain-tbl-wrap').innerHTML = '<div style="color:var(--wrn);font-size:11px;text-align:center;padding:14px;">Tradier credentials not set.</div>';
+    if (status) status.textContent = '';
+    return;
+  }
+  try {
+    // Reuse tradierFetch's URL cache (6h for expirations).
+    var expUrl = creds.host + '/v1/markets/options/expirations?symbol=' + encodeURIComponent(sym) + '&includeAllRoots=true';
+    var expData = await (typeof tradierFetch === 'function'
+      ? tradierFetch(expUrl, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }, 6*60*60*1000)
+      : fetch(expUrl, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }).then(function(r){return r.json();}));
+    var dates = (expData && expData.expirations && expData.expirations.date) || [];
+    if (typeof dates === 'string') dates = [dates];
+    if (!Array.isArray(dates) || !dates.length){
+      eid('ord-chain-tbl-wrap').innerHTML = '<div style="color:var(--wrn);font-size:11px;text-align:center;padding:14px;">No expirations returned for '+_esc(sym)+'.</div>';
+      if (status) status.textContent = '';
+      return;
+    }
+    // Pre-select the user-typed expiry if it's in the list, else nearest 30-45 DTE.
+    var formExp = (eid('ord-exp') && eid('ord-exp').value) || '';
+    var nowMs = Date.now();
+    var picked = formExp && dates.indexOf(formExp) >= 0 ? formExp : null;
+    if (!picked){
+      // Nearest 30-45 DTE
+      var bestDelta = Infinity, bestExp = dates[0];
+      dates.forEach(function(d){
+        var dte = Math.round((new Date(d+'T16:00:00').getTime() - nowMs) / (24*3600*1000));
+        if (dte < 1) return;
+        var delta = Math.abs(dte - 37);
+        if (delta < bestDelta){ bestDelta = delta; bestExp = d; }
+      });
+      picked = bestExp;
+    }
+    var expSel = eid('ord-chain-exp');
+    expSel.innerHTML = dates.map(function(d){
+      var dte = Math.round((new Date(d+'T16:00:00').getTime() - nowMs) / (24*3600*1000));
+      return '<option value="'+_esc(d)+'"'+(d===picked?' selected':'')+'>'+_esc(d)+' ('+dte+'d)</option>';
+    }).join('');
+    expSel.onchange = function(){ renderOrdChain(sym, this.value); };
+    var rangeSel = eid('ord-chain-range');
+    if (rangeSel) rangeSel.onchange = function(){ renderOrdChain(sym, expSel.value); };
+    await renderOrdChain(sym, picked);
+  } catch(e){
+    console.warn('[ord chain]', e);
+    eid('ord-chain-tbl-wrap').innerHTML = '<div style="color:var(--wrn);font-size:11px;text-align:center;padding:14px;">Failed to load chain: '+_esc(e.message||'error')+'</div>';
+    if (status) status.textContent = '';
+  }
+}
+
+async function renderOrdChain(sym, expDate){
+  var status = eid('ord-chain-status');
+  var wrap = eid('ord-chain-tbl-wrap');
+  if (!wrap) return;
+  if (status) status.textContent = 'loading chain…';
+  var creds = (typeof getCreds === 'function') ? getCreds() : null;
+  if (!creds || !creds.key){ if (status) status.textContent = ''; return; }
+  try {
+    var url = creds.host + '/v1/markets/options/chains?symbol=' + encodeURIComponent(sym) + '&expiration=' + encodeURIComponent(expDate) + '&greeks=true';
+    var data = await (typeof tradierFetch === 'function'
+      ? tradierFetch(url, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }, 5*60*1000)
+      : fetch(url, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }).then(function(r){return r.json();}));
+    var opts = (data && data.options && data.options.option) || [];
+    if (!Array.isArray(opts)) opts = [opts];
+    var calls = {};
+    opts.forEach(function(o){ if (o && o.option_type === 'call') calls[o.strike] = o; });
+    var allStrikes = Object.keys(calls).map(parseFloat).sort(function(a,b){return a-b;});
+    if (!allStrikes.length){
+      wrap.innerHTML = '<div style="color:var(--wrn);font-size:11px;text-align:center;padding:14px;">No call contracts found for '+_esc(sym)+' '+_esc(expDate)+'.</div>';
+      if (status) status.textContent = '';
+      return;
+    }
+    // Underlying spot — try G.results first, fall back to first call's underlying.
+    var spot = null;
+    if (Array.isArray(G.results)){
+      var hit = G.results.find(function(r){ return r.ticker === sym; });
+      if (hit && hit.last) spot = parseFloat(hit.last);
+    }
+    if (!spot && opts[0] && opts[0].underlying) spot = parseFloat(opts[0].underlying);
+    if (!spot && eid('qp-last')){
+      var qpTxt = eid('qp-last').textContent.replace(/[^0-9.]/g,'');
+      if (qpTxt) spot = parseFloat(qpTxt);
+    }
+    // Find ATM strike + slice to ±range.
+    var rangeSel = eid('ord-chain-range');
+    var rangeMode = rangeSel ? rangeSel.value : '10';
+    var atm = spot ? allStrikes.reduce(function(best,s){ return Math.abs(s-spot) < Math.abs(best-spot) ? s : best; }, allStrikes[0]) : allStrikes[Math.floor(allStrikes.length/2)];
+    var atmIdx = allStrikes.indexOf(atm);
+    var sliced = allStrikes;
+    if (rangeMode !== 'all'){
+      var n = parseInt(rangeMode) || 10;
+      sliced = allStrikes.slice(Math.max(0, atmIdx - n), Math.min(allStrikes.length, atmIdx + n + 1));
+    }
+    // GEX flip strike — look up the cached GEX row for this ticker.
+    var gexFlip = null, gexNet = null;
+    if (Array.isArray(G.gexData)){
+      var grow = G.gexData.find(function(r){ return r.t === sym; });
+      if (grow){ gexFlip = grow.flip; gexNet = grow.gex; }
+    }
+    // Snap gexFlip to the nearest available strike so it always matches a row.
+    if (gexFlip != null && allStrikes.length){
+      var snap = allStrikes.reduce(function(best,s){ return Math.abs(s-gexFlip) < Math.abs(best-gexFlip) ? s : best; }, allStrikes[0]);
+      gexFlip = snap;
+    }
+    var infoEl = eid('ord-chain-gex-info');
+    if (infoEl){
+      if (gexFlip != null){
+        infoEl.innerHTML = 'GEX FLIP: <span style="color:var(--ambb);font-weight:700;">$'+gexFlip.toFixed(2)+'</span>'+(gexNet!=null?' · NET '+(gexNet>=0?'+':'')+gexNet.toFixed(0):'');
+      } else {
+        infoEl.innerHTML = '<span style="color:var(--gry2);">no GEX data — run GEX scan</span>';
+      }
+    }
+    // Build the table.
+    var rowsHtml = sliced.map(function(strike){
+      var c = calls[strike];
+      var isATM = strike === atm;
+      var isFlip = (gexFlip != null && strike === gexFlip);
+      var bid = c ? Number(c.bid).toFixed(2) : '--';
+      var ask = c ? Number(c.ask).toFixed(2) : '--';
+      var last = c ? Number(c.last).toFixed(2) : '--';
+      var oi = c && c.open_interest != null ? Number(c.open_interest).toLocaleString() : '--';
+      var delta = c && c.greeks ? Number(c.greeks.delta).toFixed(2) : '--';
+      var rowStyle = '';
+      if (isFlip) rowStyle = 'background:linear-gradient(90deg,rgba(0,212,255,.18),rgba(0,212,255,.05));border-left:3px solid var(--amb);box-shadow:inset 0 0 0 1px var(--amb3);';
+      else if (isATM) rowStyle = 'background:rgba(255,255,255,.04);';
+      var glyph = isFlip ? '<span title="Highest-GEX strike (gamma flip)" style="color:var(--ambb);">&#9670;</span> ' : (isATM ? '<span style="color:var(--gry);">&#8226;</span> ' : '');
+      return '<tr data-strike="'+strike+'" style="'+rowStyle+'cursor:pointer;" onclick="ordChainRowClick(\''+_esc(sym)+'\','+strike+',\''+_esc(expDate)+'\')">'
+        + '<td style="padding:5px 8px;font-family:var(--ff-mono);color:var(--wht);">'+glyph+'$'+strike.toFixed(2)+'</td>'
+        + '<td style="padding:5px 8px;text-align:right;color:var(--gry);">'+bid+'</td>'
+        + '<td style="padding:5px 8px;text-align:right;color:var(--gry);">'+ask+'</td>'
+        + '<td style="padding:5px 8px;text-align:right;color:var(--gry);">'+last+'</td>'
+        + '<td style="padding:5px 8px;text-align:right;color:var(--gry);">'+oi+'</td>'
+        + '<td style="padding:5px 8px;text-align:right;color:var(--gry);">'+delta+'</td>'
+        + '</tr>';
+    }).join('');
+    wrap.innerHTML = '<table style="width:100%;border-collapse:collapse;font-family:var(--ff-mono);font-size:11px;">'
+      + '<thead><tr style="background:var(--bg2);color:var(--amb);font-weight:700;letter-spacing:1px;">'
+      +   '<th style="padding:6px 8px;text-align:left;">STRIKE</th>'
+      +   '<th style="padding:6px 8px;text-align:right;">BID</th>'
+      +   '<th style="padding:6px 8px;text-align:right;">ASK</th>'
+      +   '<th style="padding:6px 8px;text-align:right;">LAST</th>'
+      +   '<th style="padding:6px 8px;text-align:right;">OI</th>'
+      +   '<th style="padding:6px 8px;text-align:right;">&Delta;</th>'
+      + '</tr></thead><tbody>'+rowsHtml+'</tbody></table>';
+    if (status) status.textContent = sliced.length + ' calls · ' + (spot ? '$'+spot.toFixed(2) + ' spot' : '');
+  } catch(e){
+    console.warn('[ord chain render]', e);
+    wrap.innerHTML = '<div style="color:var(--wrn);font-size:11px;text-align:center;padding:14px;">Failed: '+_esc(e.message||'error')+'</div>';
+    if (status) status.textContent = '';
+  }
+}
+
+// Click a row in the order-ticket chain → pre-fill strike + expiry.
+function ordChainRowClick(sym, strike, expDate){
+  if (eid('ord-sym'))    eid('ord-sym').value    = sym;
+  if (eid('ord-type'))   eid('ord-type').value   = 'CALL';
+  if (typeof onOrderTypeChange === 'function') { try { onOrderTypeChange(); } catch(_){} }
+  if (eid('ord-strike')) eid('ord-strike').value = strike;
+  if (eid('ord-exp'))    eid('ord-exp').value    = expDate;
+  if (eid('ord-action')) eid('ord-action').value = 'BUY_TO_OPEN';
+  if (eid('ord-qty') && !eid('ord-qty').value)    eid('ord-qty').value = 1;
+  if (typeof fetchLiveQuote === 'function') fetchLiveQuote();
+  toast('CALL $'+Number(strike).toFixed(2)+' '+expDate+' pre-filled');
+}
+
+// Lazy-load when user opens the card (saves an API call until needed).
+// Also auto-loads when the user changes the symbol while the card is open.
+(function _wireOrdChainCard(){
+  function bind(){
+    var card = document.getElementById('ord-chain-card');
+    if (!card) return setTimeout(bind, 800);
+    card.addEventListener('toggle', function(){
+      if (card.open){
+        var sym = (eid('ord-sym') && eid('ord-sym').value || '').trim();
+        if (sym) loadOrdChain(sym);
+      }
+    });
+  }
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
+  else bind();
+})();
+
 // Item 7 (laptop only) — drive the table/detail width split via the
 // 'active' state. iPhone bottom-sheet rule (position:fixed) overrides
 // these on ≤480px so this is no-op on mobile. Only applies to the
@@ -16638,11 +17195,84 @@ function loadGexCache(){
     var obj = JSON.parse(raw);
     if (!obj || !obj.ts || (Date.now() - obj.ts) > GEX_CACHE_TTL_MS) return false;
     G.gexData = obj.data || [];
+    G._gexLastFetchTs = obj.ts;     // mirror to memory so the cache-age UI works without re-running runGex
     var ageMin = Math.round((Date.now() - obj.ts) / 60000);
     console.log('[gex] hydrated from cache: ' + G.gexData.length + ' tickers (' + ageMin + 'm old)');
+    // Surface the age in the GEX header timestamp on hydrate.
+    setTimeout(_renderGexCacheAge, 50);
     return true;
   } catch(e) { return false; }
 }
+
+// ── GEX cache age display: shows "Cached: 23 min ago · 198 tickers" in the
+//    #gex-ts element so the user knows whether the data they're seeing is
+//    fresh. Runs on hydrate and every minute thereafter (non-clobber: only
+//    writes if no live scan is mid-run, detected via #gex-progress text).
+function _renderGexCacheAge(){
+  var el = document.getElementById('gex-ts');
+  if (!el) return;
+  // Don't clobber an in-progress run's "expiries 47/200…" or scan completion text.
+  var prog = document.getElementById('gex-progress');
+  if (prog && prog.textContent && prog.textContent.trim().length){
+    // A scan is mid-run; the runGex pipeline owns the label. Skip.
+    return;
+  }
+  if (!G._gexLastFetchTs || !Array.isArray(G.gexData) || !G.gexData.length){
+    el.textContent = 'Click RUN to fetch flow data';
+    el.style.color = 'var(--gry)';
+    return;
+  }
+  var ageSec = Math.floor((Date.now() - G._gexLastFetchTs) / 1000);
+  var ageMin = Math.floor(ageSec / 60);
+  var ageHr  = Math.floor(ageMin / 60);
+  var label;
+  if (ageMin < 1)       label = 'just now';
+  else if (ageMin < 60) label = ageMin + ' min ago';
+  else if (ageHr < 24)  label = ageHr + 'h ' + (ageMin % 60) + 'm ago';
+  else                  label = Math.floor(ageHr / 24) + 'd ago';
+  // Color: green <30m, amber <2h, red >2h.
+  var col = ageMin < 30 ? 'var(--grn)' : ageMin < 120 ? 'var(--amb)' : 'var(--wrn)';
+  // Add next-scheduled-fire hint if the auto-schedule is on.
+  var schedHint = '';
+  if (G.gexAutoSchedule && G.gexAutoSchedule !== 'off' && typeof _gexNextFireDescription === 'function'){
+    try { schedHint = ' · next: ' + _gexNextFireDescription(); } catch(_){ }
+  }
+  el.innerHTML = 'Cached: <span style="color:'+col+';font-weight:700;">' + label + '</span> · ' + G.gexData.length + ' tickers' + schedHint;
+  el.style.color = 'var(--gry)';
+}
+
+// Compute the next-fire description for the cache-age UI based on the
+// current schedule mode. Returns "12:00 ET (in 1h 24m)" or similar.
+function _gexNextFireDescription(){
+  var mode = G.gexAutoSchedule || 'off';
+  if (mode === 'off') return '';
+  var fireMins = mode === 'open' ? [9*60+35] : [9*60+35, 12*60, 15*60];
+  // Compute "now" in ET minute-of-day (DST-aware via toLocaleString trick).
+  var nowET = new Date(new Date().toLocaleString('en-US', {timeZone:'America/New_York'}));
+  var nowMin = nowET.getHours() * 60 + nowET.getMinutes();
+  var next = fireMins.find(function(m){ return m > nowMin; });
+  if (next == null){
+    // All today's fires are past — next is tomorrow's first.
+    next = fireMins[0];
+    var deltaMin = (24*60 - nowMin) + next;
+    var dh = Math.floor(deltaMin/60), dm = deltaMin%60;
+    return _fmtETClock(next) + ' tomorrow (in ' + dh + 'h ' + dm + 'm)';
+  }
+  var delta = next - nowMin;
+  var h = Math.floor(delta/60), m = delta%60;
+  return _fmtETClock(next) + ' ET (in ' + (h?h+'h ':'') + m + 'm)';
+}
+function _fmtETClock(minOfDay){
+  var h = Math.floor(minOfDay/60), m = minOfDay%60;
+  var hh = h < 10 ? '0'+h : h;
+  var mm = m < 10 ? '0'+m : m;
+  return hh + ':' + mm;
+}
+
+// Tick the cache-age label every minute so it updates in place.
+setInterval(function(){
+  try { _renderGexCacheAge(); } catch(_){ }
+}, 60 * 1000);
 
 // ===========================================================================
 //  GEX AUTO-SCHEDULE — fire runGex at fixed ET times throughout the trading day
@@ -16877,62 +17507,6 @@ function runGex(){
   }
 
   _gexPaced(gexTickers, GEX_DISPATCH_MS, _fetchOneExpiry, _onExpiryProgress, 'expiries').then(function(expiries){
-    // Step 1.5 (added 2026-05-07): bulk-fetch underlying spot quotes for
-    // every ticker in the GEX batch. The flip-strike computation requires
-    // a non-zero spot to apply the \u00b110% near-money filter, and the
-    // STOCK PRICE column on the GEX table reads from the per-row price.
-    // Previously we relied on G.results[t].price \u2014 which is empty when
-    // the user runs GEX without a fresh scan, or when the scanner result
-    // for a given ticker landed without a price (Tradier quote miss).
-    // User report 2026-05-07: "Not displaying stock price or gamma flip
-    // on gex/flow tab" \u2014 every row showed "--" for spot and "$0.00" for
-    // flip. Fetching our own quotes here makes GEX self-sufficient.
-    //
-    // Tradier's /v1/markets/quotes endpoint accepts a comma-separated
-    // symbols list. Tradier publicly documents 100 symbols per request
-    // as the safe ceiling (some accounts are larger). Batch in 50s to
-    // stay well under the URL-length limit AND the rate limit (each
-    // batch counts as one tradierFetch).
-    var BULK_BATCH = 50;
-    var spotPrices = {};
-    var batchTickers = expiries
-      .map(function(e){ return e && e.ticker; })
-      .filter(function(t){ return !!t; });
-    var bulkBatches = [];
-    for (var i=0; i<batchTickers.length; i+=BULK_BATCH){
-      bulkBatches.push(batchTickers.slice(i, i+BULK_BATCH));
-    }
-    var bulkChain = bulkBatches.reduce(function(p, batch){
-      return p.then(function(){
-        return tradierFetch(host+'/v1/markets/quotes?symbols='+encodeURIComponent(batch.join(',')), {
-          headers:{Authorization:'Bearer '+key, Accept:'application/json'}
-        }, 60*1000)
-        .then(function(r){return r.json();})
-        .then(function(d){
-          var qs = [];
-          try { qs = d.quotes && d.quotes.quote; if (!Array.isArray(qs)) qs = qs ? [qs] : []; } catch(_){ qs = []; }
-          qs.forEach(function(q){
-            if (!q || !q.symbol) return;
-            // Prefer last trade; fall back to close, mid (bid+ask)/2, or 0.
-            var px = +q.last;
-            if (!(px > 0)) px = +q.close;
-            if (!(px > 0) && q.bid && q.ask) px = (+q.bid + +q.ask) / 2;
-            if (!(px > 0)) px = 0;
-            spotPrices[q.symbol] = px;
-          });
-        })
-        .catch(function(e){
-          // Don't fail the whole GEX run if one batch errors \u2014 leave any
-          // missing tickers without a spot and let the row render '--'.
-          console.warn('[gex] quotes batch failed:', e && e.message);
-        });
-      });
-    }, Promise.resolve());
-
-    return bulkChain.then(function(){ return { expiries:expiries, spotPrices:spotPrices }; });
-  }).then(function(state){
-    var expiries = state.expiries;
-    var spotPrices = state.spotPrices;
     // Step 2: fetch options chains for tickers that have a valid expiry \u2014 also paced
     function _fetchOneChain(e){
       if(!e || !e.expiry) return Promise.resolve({ticker:(e&&e.ticker)||'', chain:[], expiry:null});
@@ -16952,11 +17526,7 @@ function runGex(){
       // Step 3: compute net flow from call OI vs put OI
       G.gexData = chains.map(function(c){
         var result = G.results.filter(function(r){ return r.t===c.ticker||r.ticker===c.ticker; })[0];
-        // Prefer the bulk-fetched spot quote (always fresh), fall back to
-        // whatever the scanner had cached. Either way `price` ends up >0
-        // for any ticker Tradier had a quote for, which fixes both the
-        // STOCK PRICE column AND the flip-strike computation below.
-        var price = (spotPrices && spotPrices[c.ticker]) || (result ? result.price : 0) || 0;
+        var price = result ? result.price : 0;
         var score = result ? result.score : 50;
 
         var callOI = 0, putOI = 0, callVol = 0, putVol = 0;
@@ -17123,9 +17693,7 @@ function renderGex(){
     if ((r.gex||0) <= 0) return false;
     if ((r.call||0) < 90) return false;
     if ((r.callOI||0) <= 1000) return false;
-    // Prefer the spot stored on the gexData row (now reliably populated
-    // by the bulk-quote step); fall back to the scanner cache.
-    var sp = (r.price && r.price > 0) ? r.price : (spotByTk[r.t] || 0);
+    var sp = spotByTk[r.t] || 0;
     if (!sp || !r.flip || sp <= r.flip) return false;
     var dte = r.dte || 0;
     if (dte < 30 || dte > 45) return false;
@@ -17142,17 +17710,9 @@ function renderGex(){
     var primeBadge=prime?'<span style="font-size:9px;color:var(--grn);margin-left:4px;font-weight:700;letter-spacing:.5px;" title="Prime bullish entry - meets ALL criteria: net gex >0, call% >=90, callOI >1K, spot > flip, DTE 30-45.">&#9733; PRIME</span>':'';
     var expCell = r.exp ? r.exp.split('-').slice(1).join('/') : '--';
     var flipNum = parseFloat(r.flip);
-    var hasFlip  = isFinite(flipNum) && flipNum > 0;
-    var strikeCell = hasFlip ? ('$' + fmt2(flipNum)) : '--';
-    // Flip cell mirrors STRIKE: '--' when missing instead of "$0.00".
-    var flipCell = hasFlip
-      ? '<td>$' + fmt2(flipNum) + '</td>'
-      : '<td style="color:var(--gry2);">--</td>';
-    // Prefer spot stored on the gexData row (set from the new bulk-quote
-    // step in runGex). Fall back to scanner G.results lookup if the
-    // gexData entry pre-dates the quote fetch (e.g. cached payload).
-    var spot = (r.price && r.price > 0) ? r.price : (spotByTk[r.t] || 0);
-    var spotAboveFlip = spot && hasFlip && spot > flipNum;
+    var strikeCell = (isFinite(flipNum) && flipNum > 0) ? ('$' + fmt2(flipNum)) : '--';
+    var spot = spotByTk[r.t] || 0;
+    var spotAboveFlip = spot && r.flip && spot > r.flip;
     var spotCell = spot
       ? '<td style="font-family:var(--ff-mono);font-size:11px;color:'+(spotAboveFlip?'var(--grn)':'var(--gry2)')+';font-weight:600;" title="'+(spotAboveFlip?'Above gamma flip - bullish dealer-long zone':'Below gamma flip - bearish dealer-short zone')+'">$'+fmt2(spot)+'</td>'
       : '<td style="color:var(--gry2);">--</td>';
@@ -17168,7 +17728,7 @@ function renderGex(){
       +'<td class="'+gexCls+'">'+(r.gex>0?'+':'')+r.gex+'M</td>'
       +'<td style="font-family:var(--ff-mono);font-size:11px;color:var(--grn);">'+(r.callOI ? fmtK(r.callOI) : '--')+'</td>'
       +'<td style="font-family:var(--ff-mono);font-size:11px;color:var(--ngo);">'+(r.putOI ? fmtK(r.putOI) : '--')+'</td>'
-      +flipCell
+      +'<td>$'+fmt2(r.flip)+'</td>'
       +'<td class="pnl-pos">'+r.call+'%</td>'
       +'<td class="pnl-neg">'+r.put+'%</td>'
       +'<td style="font-size:11px;'+dteStyle+'">'+(r.dte||'--')+'d</td>'
@@ -22519,7 +23079,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.6.2-fix-mode-stock-leak';
+var APP_VERSION = '2.7.0-order-status-modal-and-chain-card';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
