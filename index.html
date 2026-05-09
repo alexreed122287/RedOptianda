@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-09T21:30-tier-c-rh3-picker">
+<meta name="op-build" content="2026-05-09T22:00-rescan-regressions">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -230,6 +230,21 @@ a{color:var(--blu);text-decoration:none;}
    Click opens a modal with the relevant HOW TO section. Pure-text label
    per user spec 'no icons in dashboard requests'. */
 .help-fab{position:fixed;top:auto;bottom:20px;right:14px;z-index:7000;background:rgba(0,212,255,.10);border:1px solid var(--amb);color:var(--amb);font-family:var(--ff-mono);font-size:11px;letter-spacing:1px;padding:5px 10px;border-radius:3px;cursor:pointer;text-transform:uppercase;backdrop-filter:blur(2px);}
+/* Skeleton loader bars + shimmer keyframe — global so they animate on
+   every viewport (REG-3 fix 2026-05-09). */
+.skel{
+  display:inline-block;
+  background:linear-gradient(90deg, var(--bg2) 0%, var(--bg3) 50%, var(--bg2) 100%);
+  background-size:200% 100%;
+  animation:skel-shimmer 1.5s ease-in-out infinite;
+  border-radius:3px;
+  color:transparent !important;
+  user-select:none;
+}
+@keyframes skel-shimmer{
+  0%{background-position:200% 0;}
+  100%{background-position:-200% 0;}
+}
 .help-fab:hover{background:rgba(0,212,255,.18);}
 /* Mobile: bottom-nav (≈70px) covers bottom:20px, so bump the help-fab
    above it. User spec 2026-05-09: HELP button must be visible on iPhone
@@ -1473,20 +1488,10 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   }
   @keyframes ptr-spin{to{transform:rotate(360deg);}}
 
-  /* SKELETON loaders — animated gray bars while data is loading */
-  .skel{
-    display:inline-block;
-    background:linear-gradient(90deg, var(--bg2) 0%, var(--bg3) 50%, var(--bg2) 100%);
-    background-size:200% 100%;
-    animation:skel-shimmer 1.5s ease-in-out infinite;
-    border-radius:3px;
-    color:transparent !important;
-    user-select:none;
-  }
-  @keyframes skel-shimmer{
-    0%{background-position:200% 0;}
-    100%{background-position:-200% 0;}
-  }
+  /* SKELETON loaders — moved to global scope (REG-3 fix 2026-05-09).
+     Was previously trapped inside the @media block above so the
+     animation never ran on desktop, leaving _skelLoadingHtml's bars
+     blank. Definition repeated in the global block below. */
 
   /* TOAST as iOS-style top banner */
   #toast.banner{
@@ -3520,7 +3525,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         </div>
         <div class="ord-field">
           <label>LIMIT PRICE <span id="lmt-hint" style="color:var(--grn);font-size:9px;"></span></label>
-          <input id="ord-lmt" type="number" inputmode="decimal" placeholder="0.00" step="0.01" onchange="updateOrdChart();calcQtyFromBudget()" oninput="this.dataset.userEdited='1';updateOrdChart();calcQtyFromBudget()">
+          <input id="ord-lmt" type="number" inputmode="decimal" placeholder="0.00" step="0.01" onchange="updateOrdChart();calcQtyFromBudget()" oninput="this.dataset.userEdited='1';document.querySelectorAll('.rh-px-card').forEach(function(b){b.classList.remove('active');});updateOrdChart();calcQtyFromBudget()">
         </div>
         <div class="ord-field" id="ord-stop-wrap" style="display:none;">
           <label>STOP PRICE</label>
@@ -10398,6 +10403,9 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
   // report 2026-05-04: 10 consecutive REJECTED attempts that never cleared.
   var consecutiveRejected = 0;
   var REJECT_ABORT_THRESHOLD = 3;
+  // REG-4 fix 2026-05-09: de-dupe partial-fill notifications. Keys on
+  // orderId+execQ so each new fill milestone notifies once per order.
+  var _lastNotifiedPartialKey = null;
 
   for(var attempt=1;attempt<=maxAttempts;attempt++){
     if(G.stepFillCancel){sfLog('Cancelled at attempt '+attempt+'.','cancelled');break;}
@@ -10481,19 +10489,27 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
           var execQ = parseInt(det.raw.exec_quantity || det.raw.last_fill_quantity || 0);
           var totalQ = parseInt(det.raw.quantity || qty || 0);
           if (execQ > 0 && execQ < totalQ){
-            var pmsg = 'PARTIAL FILL: '+execQ+'/'+totalQ+' @ ~$'+fmt2(currentPrice);
-            sfLog(pmsg, 'sent');
-            try { updateOrderStatusModal({state:'working', stateText:'PARTIAL '+execQ+'/'+totalQ, logLine:pmsg, logKind:'filled'}); } catch(_){}
-            try { addAlert(sym, pmsg+' — '+occSym, 'go'); } catch(_){}
-            try { toast('🔔 '+pmsg); } catch(_){}
-            try { if (typeof hap === 'function') hap([20, 40, 20]); } catch(_){}
-            try {
-              if (typeof Notification !== 'undefined' && Notification.permission === 'granted'){
-                var nP = new Notification('Option Panda — partial fill', { body: pmsg+' · '+occSym, tag: 'partial-'+occSym });
-                setTimeout(function(){ try { nP.close(); } catch(_){} }, 6000);
-              }
-            } catch(_){}
-            try { if (typeof pushNotify === 'function') pushNotify('Partial fill', pmsg+' · '+occSym); } catch(_){}
+            // REG-4 fix: only fire notify if this exact (orderId, execQ)
+            // pair hasn't been notified yet. Without the guard, retried
+            // step-fill attempts that pull the same partial state spam
+            // the user with duplicate banners.
+            var partialKey = orderId+':'+execQ;
+            if (_lastNotifiedPartialKey !== partialKey){
+              _lastNotifiedPartialKey = partialKey;
+              var pmsg = 'PARTIAL FILL: '+execQ+'/'+totalQ+' @ ~$'+fmt2(currentPrice);
+              sfLog(pmsg, 'sent');
+              try { updateOrderStatusModal({state:'working', stateText:'PARTIAL '+execQ+'/'+totalQ, logLine:pmsg, logKind:'filled'}); } catch(_){}
+              try { addAlert(sym, pmsg+' — '+occSym, 'go'); } catch(_){}
+              try { toast('🔔 '+pmsg); } catch(_){}
+              try { if (typeof hap === 'function') hap([20, 40, 20]); } catch(_){}
+              try {
+                if (typeof Notification !== 'undefined' && Notification.permission === 'granted'){
+                  var nP = new Notification('Option Panda — partial fill', { body: pmsg+' · '+occSym, tag: 'partial-'+occSym });
+                  setTimeout(function(){ try { nP.close(); } catch(_){} }, 6000);
+                }
+              } catch(_){}
+              try { if (typeof pushNotify === 'function') pushNotify('Partial fill', pmsg+' · '+occSym); } catch(_){}
+            }
           }
         }
       } catch(_){}
@@ -24169,7 +24185,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.11.3-tier-c-rh3-picker';
+var APP_VERSION = '2.11.4-rescan-regressions';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -24304,8 +24320,9 @@ function showVersionBanner(){
   try{
     var lastVer = localStorage.getItem('rrjcar_version') || '';
     if(lastVer !== APP_VERSION){
-      // Show what's new based on version
-      var msg = 'v'+APP_VERSION+' \u2014 Trail stop & step fill settings now persist between sessions';
+      // Show what's new based on version. REG-13 fix 2026-05-09: was a
+      // stale 2025-era message; now describes the current ship.
+      var msg = 'v'+APP_VERSION+' \u2014 big BID/MID/ASK picker \u00b7 thesis notes \u00b7 watchlist sparklines \u00b7 live P&L overlay \u00b7 partial-fill alerts';
       setTimeout(function(){
         var banner = document.createElement('div');
         banner.style.cssText = 'position:fixed;top:40px;left:50%;transform:translateX(-50%);'
@@ -29572,7 +29589,8 @@ window.addEventListener('DOMContentLoaded',init);
           var bell = document.createElement('span');
           bell.className = 'pos-alert-bell';
           bell.title = 'Active price alert — tap to edit';
-          bell.style.cssText = 'color:var(--amb);font-size:11px;margin-left:4px;cursor:pointer;';
+          // REG-6 fix 2026-05-09: bigger tap zone (was ~12px square).
+          bell.style.cssText = 'color:var(--amb);font-size:13px;margin-left:4px;cursor:pointer;display:inline-block;min-width:28px;min-height:28px;padding:4px 6px;text-align:center;vertical-align:middle;line-height:1;';
           bell.textContent = '🔔';
           bell.onclick = function(e){ e.stopPropagation(); openPosAlertSheet(tr); };
           tickerTd.appendChild(bell);
@@ -29692,12 +29710,13 @@ window.addEventListener('DOMContentLoaded',init);
       var note = notes[tr.dataset.sym] || '';
       var icon = document.createElement('span');
       icon.className = 'pos-thesis-note';
+      // REG-6 fix 2026-05-09: bigger tap zone for the 📝 thesis icon.
       if (note){
         icon.title = 'Thesis: '+note.slice(0,140);
-        icon.style.cssText = 'color:var(--ambb);font-size:10px;margin-left:4px;cursor:pointer;opacity:.95;';
+        icon.style.cssText = 'color:var(--ambb);font-size:13px;margin-left:2px;cursor:pointer;opacity:.95;display:inline-block;min-width:28px;min-height:28px;padding:4px 6px;text-align:center;vertical-align:middle;line-height:1;';
       } else {
         icon.title = 'Add thesis / notes for this position';
-        icon.style.cssText = 'color:var(--gry2);font-size:10px;margin-left:4px;cursor:pointer;opacity:.4;';
+        icon.style.cssText = 'color:var(--gry2);font-size:13px;margin-left:2px;cursor:pointer;opacity:.4;display:inline-block;min-width:28px;min-height:28px;padding:4px 6px;text-align:center;vertical-align:middle;line-height:1;';
       }
       icon.textContent = '📝';
       icon.onclick = function(e){ e.stopPropagation(); openPosThesisSheet(tr); };
@@ -29773,8 +29792,12 @@ window.addEventListener('DOMContentLoaded',init);
     var creds = (typeof getTradierCreds === 'function') ? getTradierCreds() : null;
     if (!creds || !creds.key) return null;
     try {
+      // REG-7 fix 2026-05-09: pass start= 14 days back so Tradier
+      // doesn't return its full 5y history (~1250 rows) just for a
+      // 5-day sparkline. Saves ~99% of bandwidth per request.
+      var startD = new Date(Date.now() - 14*86400000).toISOString().split('T')[0];
       var url = creds.host + '/v1/markets/history?symbol=' + encodeURIComponent(tk) +
-                '&interval=daily';
+                '&interval=daily&start=' + startD;
       var data = await (typeof tradierFetch === 'function'
         ? tradierFetch(url, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }, SPARK_TTL_MS)
         : fetch(url, { headers:{Authorization:'Bearer '+creds.key, Accept:'application/json'} }).then(function(r){return r.json();}));
@@ -29795,14 +29818,17 @@ window.addEventListener('DOMContentLoaded',init);
   async function _decorateWatchlistSparklines(){
     var wrap = document.getElementById('wl-tbl-wrap');
     if (!wrap) return;
-    var rows = wrap.querySelectorAll('tr[data-tk]');
+    // REG-1 fix 2026-05-09: watchlist render emits tr[data-ticker], not
+    // tr[data-tk]. Accept either so the selector stays robust if the
+    // markup changes. Without this fix sparklines never rendered.
+    var rows = wrap.querySelectorAll('tr[data-ticker], tr[data-tk]');
     if (!rows.length) return;
     // Cap to 30 rows to avoid slamming Tradier. The watchlist is rarely
     // bigger than 50; first-30-visible is the most important slice.
     var max = Math.min(30, rows.length);
     for (var i = 0; i < max; i++){
       var tr = rows[i];
-      var tk = tr.dataset.tk;
+      var tk = tr.dataset.tk || tr.dataset.ticker;
       if (!tk) continue;
       // Skip if already has sparkline rendered + not stale.
       if (tr.querySelector('.wl-spark[data-fresh]')) continue;
@@ -29882,13 +29908,16 @@ window.addEventListener('DOMContentLoaded',init);
     var lpvDay = document.getElementById('lpv-day');
     var lpvEq  = document.getElementById('lpv-eq');
     var lpvPct = document.getElementById('lpv-day-pct');
-    if (lpvDay) lpvDay.textContent = dayTxt.replace(/today\s*$/i,'').replace(/^\+\$/,'$+').trim();
+    // REG-5 fix 2026-05-09: clean dayTxt without re-ordering "+$".
+    if (lpvDay) lpvDay.textContent = (dayTxt || '').replace(/today\s*$/i,'').trim();
     if (lpvEq)  lpvEq.textContent  = eqTxt;
-    // Color code by sign.
-    var positive = (dayTxt || '').indexOf('+') >= 0 || (dayTxt || '').match(/\$[1-9]/);
-    var negative = (dayTxt || '').match(/^-/);
+    // Color code by sign — robust regex: any leading + or any non-zero
+    // dollar amount counts as positive; leading − is negative.
+    var rawDay = (dayTxt || '').trim();
+    var positive = /^\+/.test(rawDay) || /\$0*[1-9]/.test(rawDay);
+    var negative = /^[-−]/.test(rawDay);
     if (lpvDay){
-      lpvDay.style.color = negative ? 'var(--ngo)' : (positive ? 'var(--grn)' : 'var(--wht)');
+      lpvDay.style.color = negative ? 'var(--wrn)' : (positive ? 'var(--grn)' : 'var(--wht)');
     }
     // Day % from positions if available.
     if (lpvPct && Array.isArray(G.positions)){
@@ -29909,7 +29938,10 @@ window.addEventListener('DOMContentLoaded',init);
   // Long-press detector on the POSITIONS bot-tab. Same touchstart-timer
   // pattern as the share long-press — 700ms hold, <8px movement.
   function _wireLongPress(){
-    var btn = document.querySelector('.bot-tab[onclick*="bnGo(\'pos\')"], .bot-tab[onclick*="switchTab(\'pos\')"]');
+    // REG-12 fix 2026-05-09: prefer the canonical data-tab attribute over
+    // the brittle [onclick*=...] selector. Falls back to legacy if needed.
+    var btn = document.querySelector('.bot-tab[data-tab="pos"]')
+           || document.querySelector('.bot-tab[onclick*="bnGo(\'pos\')"], .bot-tab[onclick*="switchTab(\'pos\')"]');
     if (!btn) return setTimeout(_wireLongPress, 600);
     var pressTimer = null;
     var sx = 0, sy = 0;
@@ -29974,7 +30006,7 @@ window.addEventListener('DOMContentLoaded',init);
       +   '<div style="font-family:var(--ff-mono);font-size:12px;color:var(--gry);margin-top:6px;">$'+fmt2(top.price)+' · score '+Math.round(top.score)+' · '+_esc(top.sector || '')+'</div>'
       + '</div>'
       + '<div style="display:flex;gap:8px;">'
-      +   '<button class="btn blu" style="flex:1;padding:14px;font-weight:700;font-size:13px;" onclick="(function(){try{var s=document.getElementById(\'quick-buy-sheet\');if(s)s.remove();switchTab(\'order\');var sx=document.getElementById(\'ord-sym\');if(sx){sx.value='+_jsq(top.ticker)+';if(typeof onSymbolChange===\'function\')onSymbolChange();}var ot=document.getElementById(\'ord-type\');if(ot){ot.value=\'CALL\';if(typeof onOrderTypeChange===\'function\')onOrderTypeChange();}var act=document.getElementById(\'ord-action\');if(act)act.value=\'BUY_TO_OPEN\';if(typeof autoSelectContract===\'function\')setTimeout(autoSelectContract,300);}catch(e){console.error(e);}})()">▲ OPEN ORDER TICKET</button>'
+      +   '<button class="btn blu" style="flex:1;padding:14px;font-weight:700;font-size:13px;" onclick="(function(){try{var s=document.getElementById(\'quick-buy-sheet\');if(s)s.remove();switchTab(\'order\');var sx=document.getElementById(\'ord-sym\');if(sx){sx.value=\''+_jsq(top.ticker)+'\';if(typeof onSymbolChange===\'function\')onSymbolChange();}var ot=document.getElementById(\'ord-type\');if(ot){ot.value=\'CALL\';if(typeof onOrderTypeChange===\'function\')onOrderTypeChange();}var act=document.getElementById(\'ord-action\');if(act)act.value=\'BUY_TO_OPEN\';if(typeof autoSelectContract===\'function\')setTimeout(autoSelectContract,300);}catch(e){console.error(e);}})()">▲ OPEN ORDER TICKET</button>'
       + '</div>'
       + '<div style="font-family:var(--ff-mono);font-size:10px;color:var(--gry2);text-align:center;">tap OUTSIDE to dismiss</div>';
     sheet.appendChild(inner);
@@ -29983,7 +30015,9 @@ window.addEventListener('DOMContentLoaded',init);
   window.openQuickBuySheet = openQuickBuySheet;
 
   function _wireLongPress(){
-    var btn = document.querySelector('.bot-tab[onclick*="trade"], .bot-tab[onclick*="order"]');
+    // REG-12 fix 2026-05-09: prefer canonical data-tab; fall back to legacy.
+    var btn = document.querySelector('.bot-tab[data-tab="order"]')
+           || document.querySelector('.bot-tab[onclick*="trade"], .bot-tab[onclick*="order"]');
     if (!btn) return setTimeout(_wireLongPress, 600);
     var pressTimer = null;
     var sx = 0, sy = 0;
