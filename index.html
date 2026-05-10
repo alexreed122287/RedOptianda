@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T05:00-reclaim-top-space">
+<meta name="op-build" content="2026-05-10T05:30-restore-modal-scroll">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -1067,12 +1067,13 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     height: 100% !important;
     height: 100dvh !important;
     overscroll-behavior-y: none !important;
-    /* 2026-05-10 v2.15.4: belt-and-suspenders viewport lock for iOS Capacitor.
-       Without position:fixed on html, WKWebView lets the page scroll despite
-       overflow:hidden — header drags down, bot-nav drifts up. Locking html
-       to viewport via position:fixed + inset:0 is the only reliable fix. */
-    position: fixed !important;
-    inset: 0 !important;
+    /* 2026-05-10 v2.15.4: tried position:fixed + inset:0 here. Worked for
+       the header/bot-nav drift but broke touch scrolling inside modals
+       and bottom sheets on iOS WKWebView (Capacitor) — user couldn't
+       scroll inside symbol detail / GEX / flow modals. Reverted in
+       v2.15.8: overflow:hidden + height:100dvh is enough; the GPU
+       compositing on #hdr and #bot-nav (further down) handles the
+       drift visually. */
   }
   body{
     overflow-x: hidden !important;
@@ -1082,12 +1083,12 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     width: 100% !important;
     height: 100% !important;
     height: 100dvh !important;
-    /* 2026-05-10 v2.15.4: matching position:fixed lock on body. Was
-       position:relative which let the body grow taller than viewport on
-       iOS Capacitor. Now: body matches html, both pinned to inset:0,
-       so only .tab-pane.active inside #app can scroll. */
-    position: fixed !important;
-    inset: 0 !important;
+    position: relative !important;
+    /* 2026-05-10 v2.15.8: reverted v2.15.4's position:fixed+inset:0.
+       That broke modal scrolling — symbol detail sheet + GEX/flow
+       modals + spread confirm could not be scrolled on iOS WKWebView.
+       overflow:hidden + height:100dvh on html+body is enough to lock
+       the viewport; GPU compositing on #hdr / #bot-nav prevents drift. */
     /* Disable the buggy fixed background; pseudo-element below replaces it */
     background-attachment: scroll !important;
     background-image: none !important;
@@ -24790,7 +24791,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.15.7-reclaim-top-space';
+var APP_VERSION = '2.15.8-restore-modal-scroll';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
