@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T15:00-empty-state-content-sized">
+<meta name="op-build" content="2026-05-10T15:30-marquee-jump-pf-fixed-bottom">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -403,12 +403,16 @@ a{color:var(--blu);text-decoration:none;}
     display:flex !important;align-items:center !important;justify-content:center !important;}
   /* Empty-state panda: take the table area cleanly, not clipped by
      the now-fixed detail sheet (which only renders when active). */
-  /* 2026-05-10 v2.16.15: dropped 60vh min-height + height:100% on
-     the empty-state inside #sc-tbl-wrap. Was reserving a huge slab
-     that justify-content:center'd the panda in the middle, leaving
-     wasted space above + below it down to the bot-nav. Now the
-     empty-state sizes to its natural content (~panda + text). */
-  #sc-tbl-wrap .empty-det{min-height:0 !important;height:auto !important;justify-content:flex-start !important;padding:24px 20px !important;}
+  /* 2026-05-10 v2.16.15/v2.16.16: shrink empty-state to a slim
+     top-aligned strip. v2.16.15 dropped the 60vh min-height but
+     panda was still ~280px which left visible dead space. Now panda
+     is capped at 100px and the whole strip stays compact at the top
+     of the scan results area. The dark space below is unavoidable
+     when there's nothing to render — but visually it now reads as
+     "no results yet" rather than "wasted layout". */
+  #sc-tbl-wrap .empty-det{min-height:0 !important;height:auto !important;justify-content:flex-start !important;padding:14px 20px !important;gap:6px !important;}
+  #sc-tbl-wrap .empty-det-panda{width:100px !important;max-width:100px !important;}
+  #sc-tbl-wrap .empty-det p{font-size:11px !important;color:var(--gry2) !important;margin:0 !important;}
   .empty-det-panda{width:clamp(180px, 60vw, 320px) !important;}
   /* Permanent SCAN action row: scrunch but keep the SCAN button on
      the right edge — last-scan + data-status truncate first */
@@ -730,9 +734,12 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    static HTML doesn't need to be re-templated. */
 /* 2026-05-10 v2.16.13: indices sped up from 90s to 30s — user spec
    "speed up the indices to move at half the speed of the themes".
-   Themes loop is 60s, so indices loop = 60/2 = 30s (twice as fast,
-   half the duration). */
-.indices-marquee{display:inline-flex;flex-wrap:nowrap;gap:14px;align-items:center;animation:indices-scroll 30s linear infinite;will-change:transform;pointer-events:none;}
+   Themes loop is 60s, so indices loop = 60/2 = 30s.
+   2026-05-10 v2.16.16: gap moved off .indices-marquee onto the inner
+   .indices-copy span so the -50% animation endpoint lands exactly on
+   the start of copy 2 (fixes the visible jump per loop reset). */
+.indices-marquee{display:inline-flex;flex-wrap:nowrap;align-items:center;animation:indices-scroll 30s linear infinite;will-change:transform;pointer-events:none;}
+.indices-copy{display:inline-flex;align-items:center;gap:14px;padding-right:14px;flex-shrink:0;}
 @keyframes indices-scroll{
   0%{transform:translateX(0);}
   100%{transform:translateX(-50%);}
@@ -2453,15 +2460,23 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
      panel pinned at bottom of the viewport regardless of scroll
      position — collapsed it's a slim toggle bar; expanded it overlays
      the bottom portion of the columns with the donut charts. */
+  /* 2026-05-10 v2.16.16: switched from position:sticky to position:fixed.
+     Sticky only engaged when content above scrolled the panel into view —
+     when user had fewer positions than fit in #tab-pf, the panel sat at
+     its natural position in mid-page rather than pinned to the bottom.
+     Fixed at bottom:62px (8px above bot-nav top edge at bottom:8+46) so
+     it's always anchored just above the bot-nav, leaving the position
+     columns the full vertical space above. */
   #pf-summary-details{
-    position: sticky !important;
-    bottom: 0 !important;
-    margin-top: 12px !important;
-    margin-bottom: 0 !important;
-    z-index: 50;
+    position: fixed !important;
+    left: 0 !important;
+    right: 0 !important;
+    bottom: 62px !important;
+    margin: 0 !important;
+    z-index: 9300 !important;
     background: var(--bg1) !important;
     border-top: 1px solid var(--amb) !important;
-    box-shadow: 0 -4px 16px rgba(0,0,0,0.5) !important;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.6) !important;
     backdrop-filter: blur(20px);
     -webkit-backdrop-filter: blur(20px);
   }
@@ -2478,9 +2493,11 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     flex:1 1 auto !important;width:100% !important;min-width:0 !important;
   }
   #pf-summary-body canvas{height:200px !important;max-height:200px !important;}
-  /* Reduce default tab-pf bottom padding since the sticky summary now
-     occupies that space; keep enough for bot-nav clearance. */
-  #tab-pf{padding-bottom: calc(72px + env(safe-area-inset-bottom, 0)) !important;}
+  /* v2.16.16: bot-nav at bottom:8px + ~46px chrome + summary panel
+     above that. Need padding-bottom = bot-nav clearance (56) + summary
+     panel collapsed height (~48) = ~110px so position columns aren't
+     hidden under the now-fixed summary. */
+  #tab-pf{padding-bottom: 120px !important;}
 
   /* ── API TAB: full vertical scroll so the proxy-token field + sync
      card + below are all reachable. ── */
@@ -14695,9 +14712,15 @@ function renderTopThemesStrip(){
   // the content TWICE side by side; the second copy slides into view as
   // the first slides off. aria-hidden on the duplicate so screen readers
   // don't read the same headlines twice.
+  /* 2026-05-10 v2.16.16: both copies must have IDENTICAL gap +
+     padding-right for the -50% animation endpoint to land exactly on
+     the start of copy 2. Was 10px on first, 24px on second — that
+     14px difference per cycle made the marquee visibly jump on each
+     loop reset (user report: "indices and themes appear to be
+     glitching, almost jumping when resetting"). Both now 14px. */
   var html = '<div class="themes-marquee">'
-           + '<span style="display:inline-flex;gap:10px;align-items:center;padding-right:10px;">' + content + '</span>'
-           + '<span style="display:inline-flex;gap:24px;align-items:center;padding-right:24px;" aria-hidden="true">' + content + '</span>'
+           + '<span style="display:inline-flex;gap:14px;align-items:center;padding-right:14px;">' + content + '</span>'
+           + '<span style="display:inline-flex;gap:14px;align-items:center;padding-right:14px;" aria-hidden="true">' + content + '</span>'
            + '</div>';
 
   els.forEach(function(el){ el.innerHTML = html; });
@@ -25027,24 +25050,31 @@ function updateClock(){
   eid('mkt-status').textContent=mktOpen?'MARKET OPEN':'MARKET CLOSED';
   eid('mkt-status').style.color=mktOpen?'var(--blu)':'var(--gry)';
 }
-// 2026-05-10 v2.16.12: convert #hdr-tickers into a marquee like the
-// themes ribbon. One-time init: wrap the existing .htick spans in a
-// .indices-marquee container, then append a clone for seamless looping
-// at translateX(-50%). After init, _mirrorIndicesToDup() copies live
-// quote updates from the originals (h-spy, h-qqq, etc.) to the cloned
-// copies (h-spy-dup, etc.) so both halves of the marquee stay in sync.
+// 2026-05-10 v2.16.12 / v2.16.16: convert #hdr-tickers into a marquee
+// like the themes ribbon. v2.16.16 fix: each copy is now wrapped in
+// its own .indices-copy span with symmetric gap + padding-right so
+// the -50% animation endpoint lands exactly on the start of copy 2
+// (no jump on loop reset). Previously items lived as direct children
+// of .indices-marquee with a single 14px gap rule — the gap between
+// the last item of copy1 and the first item of copy2 broke the math.
+// _mirrorIndicesToDup() copies live quote updates from originals
+// (h-spy, h-qqq, etc.) to cloned copies (h-spy-dup, etc.).
 (function _wireIndicesMarquee(){
   function bind(){
     var strip = document.getElementById('hdr-tickers');
     if (!strip || strip._marqueeWrapped) return;
     if (!strip.children.length) return setTimeout(bind, 200);
     strip._marqueeWrapped = true;
+    var copy1 = document.createElement('span');
+    copy1.className = 'indices-copy';
+    while (strip.firstChild) copy1.appendChild(strip.firstChild);
+    var copy2 = copy1.cloneNode(true);
+    copy2.setAttribute('aria-hidden', 'true');
+    copy2.querySelectorAll('[id]').forEach(function(el){ el.id = el.id + '-dup'; });
     var inner = document.createElement('div');
     inner.className = 'indices-marquee';
-    while (strip.firstChild) inner.appendChild(strip.firstChild);
-    var clone = inner.cloneNode(true);
-    clone.querySelectorAll('[id]').forEach(function(el){ el.id = el.id + '-dup'; });
-    while (clone.firstChild) inner.appendChild(clone.firstChild);
+    inner.appendChild(copy1);
+    inner.appendChild(copy2);
     strip.appendChild(inner);
   }
   if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', bind);
@@ -25202,7 +25232,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.16.15-empty-state-content-sized';
+var APP_VERSION = '2.16.16-marquee-jump-pf-fixed-bottom';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
