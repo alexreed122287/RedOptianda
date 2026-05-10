@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T04:00-hdr-chips-pf-sticky-summary">
+<meta name="op-build" content="2026-05-10T04:30-hdr-chips-fixed-viewport">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -323,9 +323,27 @@ a{color:var(--blu);text-decoration:none;}
     scrollbar-width:none;min-height:24px !important;}
   #hdr-tickers::after{content:'' !important;flex-shrink:0 !important;width:8px !important;}
   #hdr-tickers::-webkit-scrollbar{display:none;}
-  #hdr-chips{position:absolute !important;top:100% !important;right:0 !important;z-index:200 !important;
-    background:var(--bg1) !important;border:1px solid var(--bg3) !important;border-radius:6px !important;
-    padding:8px !important;box-shadow:0 4px 16px rgba(0,0,0,.5) !important;min-width:140px !important;}
+  /* 2026-05-10 v2.15.6: was position:absolute right:0 inside #hdr (which
+     became a stacking context after v2.15.4 translate3d). Popup ended up
+     positioning relative to the wrong containing block + extending off
+     screen to the left on iPhone. Switch to position:fixed anchored to
+     the viewport so it can't escape regardless of any parent transform
+     / stacking-context shenanigans. Stacks column-wise so each chip is
+     a comfortable tap target. */
+  #hdr-chips{position:fixed !important;
+    top:calc(env(safe-area-inset-top, 0px) + 64px) !important;
+    right:8px !important;left:auto !important;
+    z-index:9500 !important;
+    background:var(--bg1) !important;border:1px solid var(--amb) !important;border-radius:8px !important;
+    padding:10px !important;box-shadow:0 8px 24px rgba(0,0,0,.7) !important;
+    min-width:170px !important;max-width:calc(100vw - 16px) !important;
+    flex-direction:column !important;align-items:stretch !important;gap:8px !important;}
+  /* Each chip inside the popup gets a comfortable tap target on iPhone */
+  #hdr-chips > button, #hdr-chips > span{
+    min-height:38px !important;font-size:12px !important;
+    padding:8px 12px !important;text-align:center !important;
+    display:flex !important;align-items:center !important;justify-content:center !important;
+  }
   /* Tab nav: WRAP onto multiple rows so all 9 tabs are visible on
      iPhone. Horizontal-scroll was hiding 5+ tabs unless the user
      thought to swipe. User spec 2026-05-02: 'I can't see the tabs
@@ -24768,7 +24786,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.15.5-hdr-chips-pf-sticky-summary';
+var APP_VERSION = '2.15.6-hdr-chips-fixed-viewport';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
