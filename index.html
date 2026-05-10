@@ -351,6 +351,8 @@ a{color:var(--blu);text-decoration:none;}
     border-radius:14px 14px 0 0;
     box-shadow:0 -8px 28px rgba(0,0,0,0.5);}
   #sc-det-empty{display:none !important;}
+  .det-close-btn{min-width:44px !important;min-height:44px !important;font-size:28px !important;
+    display:flex !important;align-items:center !important;justify-content:center !important;}
   /* Empty-state panda: take the table area cleanly, not clipped by
      the now-fixed detail sheet (which only renders when active). */
   #sc-tbl-wrap .empty-det{min-height:60vh;}
@@ -1767,6 +1769,8 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
   .news-card-summary{display:none;}
   /* iGAP-8 fix 2026-05-09: news filter chips on iPhone need to be tappable. */
   .news-filter{font-size:11px;padding:10px 12px;min-height:44px;white-space:nowrap;overflow:visible;}
+  #tab-news .flt-bar{flex-wrap:wrap;overflow:visible;}
+  #tab-news .news-filter-row{flex-wrap:wrap;overflow:visible;width:100%;}
 }
 
 /* iPhone-specific: treat very narrow screens as needing extra compression */
@@ -4938,11 +4942,8 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 
 <div class="tab-pane" id="tab-ind">
   <div class="stats-bar">
-    <div class="stat-box" style="display:flex;align-items:center;justify-content:space-between;gap:10px;">
-      <div>
-        <div class="stat-label">AS OF</div>
-        <div class="stat-val amb" id="ind-asof">--</div>
-      </div>
+    <div class="stat-box" style="display:flex;align-items:center;gap:10px;">
+      <span style="font-family:var(--ff-mono);font-size:11px;color:var(--amb);white-space:nowrap;" id="ind-asof">--</span>
       <button class="btn blu" style="font-size:11px;padding:6px 10px;white-space:nowrap;" onclick="renderIndustryTab(true)" title="Reload theme_scores.json from disk">&#8635; REFRESH</button>
     </div>
     <!-- Hidden stat boxes — preserved in markup so existing JS that writes to
@@ -7924,7 +7925,7 @@ function switchTab(id){
   var pane=eid('tab-'+id);if(pane)pane.classList.add('active');
   var btn=document.querySelector('.ntab[onclick="switchTab(\''+id+'\')"]');
   var tickers=eid('hdr-tickers');
-  if(tickers) tickers.style.display = (id==='sc'||id==='bs') ? '' : 'none';
+  if(tickers) tickers.style.display = (id==='sc'||id==='bs') ? 'flex' : 'none';
   if(btn)btn.classList.add('active');
   // Persist the active tab so a reload returns the user to where they were
   // instead of always landing on FULL SCANNER. 2026-05-04: user spec
@@ -15354,7 +15355,9 @@ async function loadOptionChain(ticker){
   for (var di = 0; di < dates.length; di++) {
     if (_isMonthlyExp(dates[di])) { nearestMonthly = dates[di]; break; }
   }
-  var defaultExp = nearestMonthly || dates[0];
+  var detailExp = (G.detailOpt && G.detailOpt.exp && dates.indexOf(G.detailOpt.exp) >= 0) ? G.detailOpt.exp : null;
+  var formExp = (eid('ord-exp') && eid('ord-exp').value && dates.indexOf(eid('ord-exp').value) >= 0) ? eid('ord-exp').value : null;
+  var defaultExp = detailExp || formExp || nearestMonthly || dates[0];
   var selOpts = dates.slice(0,16).map(function(d){
     var expMs = new Date(d+'T00:00:00').getTime();
     var dte   = Math.round((expMs - _today.getTime()) / 86400000);
@@ -15853,6 +15856,8 @@ function closeDetailPanel(detId, emptyId){
   document.querySelectorAll('.sig-card.sel').forEach(function(c){c.classList.remove('sel');});
   if (typeof G !== 'undefined') G.selTicker = null;
   if (typeof _setSelDetailWidth === 'function') _setSelDetailWidth(detId, false);
+  var bd = eid('det-backdrop');
+  if (bd) bd.remove();
 }
 
 function viewDetail(ticker,detId,emptyId){
@@ -15862,14 +15867,7 @@ function viewDetail(ticker,detId,emptyId){
  // post-GEX rescore re-render at index.html:13560).
  if (G.selTicker === ticker && arguments[2] !== '__force_open__'
      && !arguments[3]) {
-   var det0 = eid(detId), emp0 = eid(emptyId);
-   if (det0) det0.style.display = 'none';
-   if (emp0) emp0.style.display = 'flex';
-   document.querySelectorAll('tr.sel-row').forEach(function(row){row.classList.remove('sel-row');});
-   document.querySelectorAll('.sig-card.sel').forEach(function(c){c.classList.remove('sel');});
-   G.selTicker = null;
-   // Item 7: collapse detail back to width 0 so table reclaims full width
-   _setSelDetailWidth(detId, false);
+   closeDetailPanel(detId, emptyId);
    return;
  }
  var r=null;
@@ -15882,6 +15880,15 @@ function viewDetail(ticker,detId,emptyId){
  // Item 7: expand the detail panel to 35% of the body width
  _setSelDetailWidth(detId, true);
  buildDetail(r,detId,emptyId);
+ if (window.innerWidth <= 480) {
+   var oldBd = eid('det-backdrop');
+   if (oldBd) oldBd.remove();
+   var bd = document.createElement('div');
+   bd.id = 'det-backdrop';
+   bd.style.cssText = 'position:fixed;inset:0;z-index:7499;background:rgba(0,0,0,0.55);';
+   bd.onclick = function(){ closeDetailPanel(detId, emptyId); };
+   document.body.appendChild(bd);
+ }
 
  var tradierKey=_getTradierKey();
  var fmpKey='';try{fmpKey=localStorage.getItem('rrjcar_fmp')||'';}catch(e){}
@@ -24688,7 +24695,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.15.0-layout-overhaul';
+var APP_VERSION = '2.15.1';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -28083,13 +28090,6 @@ function init(){
     setTimeout(function(){
       try { switchTab('sc'); } catch(_){}
       try { if (typeof _updateHelpFab === 'function') _updateHelpFab('sc'); } catch(_){}
-      // iGAP-2: restore collapsed state of header ticker strip on iPhone.
-      try {
-        if (localStorage.getItem('rrjcar_hdr_tickers_collapsed') === '1'){
-          var tStrip = document.getElementById('hdr-tickers');
-          if (tStrip) tStrip.style.display = 'none';
-        }
-      } catch(_){}
     }, 60);
   } catch(_){}
 
@@ -28256,12 +28256,12 @@ function indFmtAsOf(genAt, asOf){
     var dt = new Date(genAt);
     if(!isNaN(dt.getTime())){
       var pad = function(n){ return String(n).padStart(2,'0'); };
-      return pad(dt.getMonth()+1) + '-' + pad(dt.getDate()) + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
+      return pad(dt.getMonth()+1) + '/' + pad(dt.getDate()) + ' ' + pad(dt.getHours()) + ':' + pad(dt.getMinutes());
     }
   }
   if(asOf){
     var m = String(asOf).match(/^(\d{4})-(\d{2})-(\d{2})/);
-    if(m) return m[2] + '-' + m[3];
+    if(m) return m[2] + '/' + m[3];
   }
   return '--';
 }
