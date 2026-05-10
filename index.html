@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T14:00-hide-help-fab-indices-30s">
+<meta name="op-build" content="2026-05-10T14:30-bot-nav-up-help-icon-back">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -250,12 +250,13 @@ a{color:var(--blu);text-decoration:none;}
 /* Floating per-tab HELP button — pinned top-right of the visible tab.
    Click opens a modal with the relevant HOW TO section. Pure-text label
    per user spec 'no icons in dashboard requests'. */
-/* 2026-05-10 v2.16.13: help-fab hidden completely. User report: the
-   button was sitting in a fixed-position layer that visually blocked
-   ~1/2 inch of dashboard content at the bottom of every tab. Help is
-   still reachable via the HOW TO tab (in MORE drawer on mobile), so
-   the floating button is redundant. Display:none everywhere. */
-.help-fab{display:none !important;}
+/* 2026-05-10 v2.16.14: help-fab restored per user spec ("reinstate the
+   help button on each tab too since I like them, just have them be
+   floating"). Compressed from a "HELP" text pill into a small circular
+   "?" icon — ~36×36px, opacity:0.7 to blend in. Still opens the same
+   per-tab HOW TO modal via openHelpFor(). Mobile positioning shifts
+   above the bot-nav (see @media block further down). */
+.help-fab{position:fixed;top:auto;bottom:20px;right:14px;z-index:7000;background:rgba(0,212,255,.10);border:1px solid var(--amb);color:var(--amb);font-family:var(--ff-mono);font-size:18px;font-weight:700;line-height:1;width:36px;height:36px;padding:0;border-radius:50%;cursor:pointer;text-transform:none;letter-spacing:0;backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;opacity:0.7;}
 /* GAP-1 fix 2026-05-09: BID/MID/ASK picker visible on every viewport,
    not just iPhone. Desktop SET BID/MID/ASK button trio hidden so the
    picker replaces them everywhere. */
@@ -283,16 +284,18 @@ a{color:var(--blu);text-decoration:none;}
    above it. User spec 2026-05-09: HELP button must be visible on iPhone
    on every screen that has a HOW TO section. */
 @media (max-width: 768px){
+  /* 2026-05-10 v2.16.14: mobile fab sits 8px above the bot-nav top edge.
+     Bot-nav sits at bottom:8px with ~46px height → top at 54px → fab
+     at 62px (8px clearance above tabs). */
   .help-fab{
-    bottom: calc(max(env(safe-area-inset-bottom, 0px), 0px) + 78px) !important;
-    right: 12px;
+    bottom: 62px !important;
+    right: 10px !important;
   }
-  /* iBUG-2 fix 2026-05-09: on the order tab, the swipe-to-submit fixed
-     bar sits at bottom:82px, overlapping the help-fab at bottom:78px.
-     Lift the FAB above the swipe track when order tab is active. */
+  /* On the order tab, the swipe-to-submit fixed bar sits ~82px from the
+     bottom — lift the fab above it. */
   #tab-order.active ~ .help-fab,
   body:has(#tab-order.active) .help-fab{
-    bottom: calc(max(env(safe-area-inset-bottom, 0px), 0px) + 150px) !important;
+    bottom: 130px !important;
   }
 }
 /* Help modal overlay */
@@ -1216,13 +1219,13 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     overflow-y:auto !important;
     overflow-x:hidden !important;
     -webkit-overflow-scrolling:touch !important;
-    /* 2026-05-10 v2.16.10: bot-nav padding shrunk to flush-bottom
-       (4px instead of 6+safe-area). Bot-nav is now ~56px tall total.
-       Content clearance set to 60px for a 4px breather between the
-       last visible row and the nav. No safe-area added — the nav
-       itself sits nearly flush, so adding more bottom padding to
-       the scroll container would re-introduce wasted space. */
-    padding-bottom:60px !important;
+    /* 2026-05-10 v2.16.14: tightened from 60px to 56px. Bot-nav now
+       sits at bottom:8px with ~46px visible chrome (3px+40px+3px).
+       Top edge of bot-nav from viewport bottom = 8 + 46 = 54px, so
+       56px gives a 2px breather between the last content row and
+       the tabs. User report: dead zone above the panda image (and
+       below content on every page) eliminated. */
+    padding-bottom:56px !important;
   }
   /* #app needs to be the bounded flex container the panes scroll inside */
   #app{flex:1 1 auto !important;min-height:0 !important;
@@ -1472,16 +1475,14 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     display:flex !important;
     position:fixed !important;
     left:0;right:0;
-    /* 2026-05-10 v2.16.11: PWA still showed ~1/2 inch of dead space
-       below the tabs. v2.16.10 dropped the safe-area buffer but iOS
-       still reserves the home-indicator gesture zone. Push bot-nav
-       2px BELOW viewport so the visible tab content touches the
-       screen edge — user explicitly asked for this. Combined with
-       reduced padding (3px top/bottom instead of 6/4) and slimmer
-       min-height (40px instead of 48px on .bot-tab below) the visible
-       chrome shrinks by ~14px AND the visible bottom edge moves down
-       to the actual screen bottom. */
-    bottom:-2px;
+    /* 2026-05-10 v2.16.14: bumped from -2px back up to 8px. v2.16.11
+       pushed it BELOW the viewport edge to overlap the home-indicator
+       zone, but user reported the tabs felt "too low". 8px gives a
+       small visual gap above the home indicator without re-introducing
+       the ~34px wasted space from the old safe-area-inset-bottom buffer.
+       Coordinated with the .tab-pane padding-bottom drop below
+       (60px → 56px) so the dead zone above the tabs shrinks too. */
+    bottom:8px;
     z-index:9500;
     background:var(--bg1);
     border-top:1px solid var(--amb);
@@ -5407,7 +5408,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 <!-- Per-tab HELP button + modal. Button is fixed top-right; openHelpFor()
      reads the active tab id and opens the modal with the matching HOW TO
      section's content (cloned from the existing #tab-howto cards). -->
-<button class="help-fab" id="help-fab-btn" onclick="openHelpFor()" title="Open the HOW TO section for the current tab" style="display:none;">HELP</button>
+<button class="help-fab" id="help-fab-btn" onclick="openHelpFor()" title="Open the HOW TO section for the current tab" style="display:none;">?</button>
 <div id="help-modal" onclick="if(event.target===this)closeHelpModal()">
   <div class="help-modal-inner">
     <div class="help-modal-hdr">
@@ -25190,7 +25191,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.16.13-hide-help-fab-indices-30s';
+var APP_VERSION = '2.16.14-bot-nav-up-help-icon-back';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
