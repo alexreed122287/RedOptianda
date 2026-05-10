@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T10:00-balances-diag-config">
+<meta name="op-build" content="2026-05-10T10:30-manual-bp-override">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -21946,13 +21946,106 @@ function fetchBalances(){
 // Update the persistent BP pill on the positions toolbar + the order ticket
 // header. Called from fetchBalances() on success/fail. Separate from the
 // header pill (#hdr-opt-bp) which is hidden by default per existing UX.
+//
+// 2026-05-10 v2.16.6: when Tradier returns 0 (user's real trading is on
+// Robinhood; Tradier is unfunded scanner-only), fall through to a manual
+// BP override stored in localStorage. Long-press any BP badge to enter
+// or update it. Display gets a small * suffix so user knows it's manual.
 function _setBpBadges(value){
-  var label = 'BP: ' + (value != null ? fmtD(value) : '--');
+  var manual = _getManualBp();
+  var effective = (value != null && value > 0) ? value : manual;
+  var suffix = (value == null || value === 0) && manual != null ? ' *' : '';
+  var label = 'BP: ' + (effective != null ? fmtD(effective) + suffix : '--');
   var posEl = eid('pos-bp-badge');
   var ordEl = eid('ord-bp-badge');
-  if (posEl) posEl.textContent = label;
+  if (posEl) {
+    posEl.textContent = label;
+    posEl.title = manual != null
+      ? 'Manual BP override $' + manual.toFixed(2) + ' (Tradier returns $0 — long-press to edit)'
+      : 'Option buying power — tap to refresh, long-press to set manual override';
+  }
   if (ordEl) ordEl.textContent = label;
+  // G.lastBP.option drives sizing math elsewhere — keep it in sync with
+  // whatever the badge is showing so trade-size calcs use the manual value.
+  if (G.lastBP) G.lastBP.option = effective != null ? effective : G.lastBP.option;
 }
+function _getManualBp(){
+  try {
+    var v = localStorage.getItem('rrjcar_manual_bp');
+    if (!v) return null;
+    var n = parseFloat(v);
+    return isNaN(n) ? null : n;
+  } catch(_){ return null; }
+}
+function _setManualBp(n){
+  try {
+    if (n == null || n === '' || isNaN(parseFloat(n))) localStorage.removeItem('rrjcar_manual_bp');
+    else localStorage.setItem('rrjcar_manual_bp', String(parseFloat(n)));
+  } catch(_){}
+}
+// Long-press any BP badge → prompt for manual override.
+(function _wireBpLongPress(){
+  var pressTimer = null;
+  var pressed = false;
+  function start(){
+    pressed = false;
+    if (pressTimer) clearTimeout(pressTimer);
+    pressTimer = setTimeout(function(){
+      pressed = true;
+      var current = _getManualBp();
+      var resp = prompt(
+        'Manual buying power override (used when Tradier returns $0).\n\n' +
+        'Enter your Robinhood / actual BP, or leave blank to clear.',
+        current != null ? current.toFixed(2) : ''
+      );
+      if (resp == null) return; // cancel
+      _setManualBp(resp.trim());
+      // Re-render badges with the new manual value (or cleared).
+      var lastTradierBp = (G.lastBP && G.lastBP.option && G.lastBP.option > 0) ? G.lastBP.option : null;
+      _setBpBadges(lastTradierBp);
+      try { toast(resp.trim() ? 'Manual BP set to $' + parseFloat(resp).toFixed(2) : 'Manual BP cleared'); } catch(_){}
+    }, 600);
+  }
+  function cancel(){
+    if (pressTimer) clearTimeout(pressTimer);
+    pressTimer = null;
+  }
+  document.addEventListener('touchstart', function(e){
+    var t = e.target.closest && e.target.closest('#pos-bp-badge, #hdr-opt-bp, #ord-bp-badge');
+    if (!t) return;
+    start();
+  }, {passive:true});
+  document.addEventListener('touchend', cancel, {passive:true});
+  document.addEventListener('touchmove', cancel, {passive:true});
+  document.addEventListener('touchcancel', cancel, {passive:true});
+  // Desktop: contextmenu (right-click) opens the prompt.
+  document.addEventListener('contextmenu', function(e){
+    var t = e.target.closest && e.target.closest('#pos-bp-badge, #hdr-opt-bp, #ord-bp-badge');
+    if (!t) return;
+    e.preventDefault();
+    pressed = true;
+    var current = _getManualBp();
+    var resp = prompt('Manual BP override (Tradier returns $0). Leave blank to clear.', current != null ? current.toFixed(2) : '');
+    if (resp == null) return;
+    _setManualBp(resp.trim());
+    var lastTradierBp = (G.lastBP && G.lastBP.option && G.lastBP.option > 0) ? G.lastBP.option : null;
+    _setBpBadges(lastTradierBp);
+    try { toast(resp.trim() ? 'Manual BP set' : 'Manual BP cleared'); } catch(_){}
+  });
+  // Suppress the click-handler fetch when the long-press triggered.
+  document.addEventListener('click', function(e){
+    if (pressed){
+      e.stopPropagation();
+      e.preventDefault();
+      pressed = false;
+    }
+  }, true);
+})();
+// On page load, render badges from manual override if Tradier hasn't responded yet.
+setTimeout(function(){
+  var manual = _getManualBp();
+  if (manual != null) _setBpBadges(null);
+}, 1500);
 
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 //  CLOSED POSITIONS ENGINE
@@ -25004,7 +25097,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.16.5-balances-diag-config';
+var APP_VERSION = '2.16.6-manual-bp-override';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
