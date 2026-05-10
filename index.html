@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T03:30-ios-fixed-chrome">
+<meta name="op-build" content="2026-05-10T04:00-hdr-chips-pf-sticky-summary">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -1075,12 +1075,19 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
      causes fixed elements to repaint on the CPU and "jitter" — the user
      sees the header drag down and bot-nav drift up during a scroll
      gesture. translate3d promotes the layer to the GPU, locking it
-     visually regardless of scroll velocity. */
+     visually regardless of scroll velocity.
+     2026-05-10 v2.15.5: explicit z-index on #hdr — translate3d created a
+     new stacking context but with default z-index:0, so the absolute-
+     positioned #hdr-chips popup (z-index:200 inside that context) ended
+     up rendering BELOW siblings #ticker-row / #nav. User report: hamburger
+     menu chips (LIGHT MODE / TRADE / AUTO SCAN) not visible on iPhone. */
   #hdr{
     transform: translate3d(0,0,0) !important;
     -webkit-transform: translate3d(0,0,0) !important;
     will-change: transform;
     flex-shrink: 0 !important;
+    z-index: 9400 !important;
+    position: relative !important;
   }
   #bot-nav{
     transform: translate3d(0,0,0);
@@ -2309,20 +2316,43 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     max-height:none !important;}
   #tab-pf .pf-col{min-width:280px;max-width:90vw;flex-shrink:0;}
   .pf-col-rows{overflow-y:visible !important;}
-  /* Summary & Allocations: anchored at the very bottom of #tab-pf.
-     margin-top:auto would only work in a flex layout; since #tab-pf
-     is overflow:auto (block), we instead leave a generous top margin
-     so the summary clearly reads as a "below-the-fold" panel rather
-     than crowding the positions columns. */
-  #pf-summary-details{margin-top:24px !important;}
+  /* Summary & Allocations: pinned to the bottom of the viewport, just
+     above the bot-nav, so the position columns get the full vertical
+     space above. User spec 2026-05-10: "move the summary & allocations
+     to the bottom of the screen just above the tabs to allow more space
+     to see more of the portfolio positions".
+     position:sticky inside #tab-pf (the scroll container) keeps the
+     panel pinned at bottom of the viewport regardless of scroll
+     position — collapsed it's a slim toggle bar; expanded it overlays
+     the bottom portion of the columns with the donut charts. */
+  #pf-summary-details{
+    position: sticky !important;
+    bottom: 0 !important;
+    margin-top: 12px !important;
+    margin-bottom: 0 !important;
+    z-index: 50;
+    background: var(--bg1) !important;
+    border-top: 1px solid var(--amb) !important;
+    box-shadow: 0 -4px 16px rgba(0,0,0,0.5) !important;
+    backdrop-filter: blur(20px);
+    -webkit-backdrop-filter: blur(20px);
+  }
   #pf-summary-body{
     flex-direction:column !important;
     gap:12px !important;
+    /* Cap expanded height so donut charts don't take the whole screen
+       — user can still see ~30% of the columns above when expanded. */
+    max-height: 50vh !important;
+    overflow-y: auto !important;
+    -webkit-overflow-scrolling: touch !important;
   }
   #pf-summary-body > div{
     flex:1 1 auto !important;width:100% !important;min-width:0 !important;
   }
-  #pf-summary-body canvas{height:220px !important;max-height:220px !important;}
+  #pf-summary-body canvas{height:200px !important;max-height:200px !important;}
+  /* Reduce default tab-pf bottom padding since the sticky summary now
+     occupies that space; keep enough for bot-nav clearance. */
+  #tab-pf{padding-bottom: calc(72px + env(safe-area-inset-bottom, 0)) !important;}
 
   /* ── API TAB: full vertical scroll so the proxy-token field + sync
      card + below are all reachable. ── */
@@ -24738,7 +24768,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.15.4-ios-fixed-chrome';
+var APP_VERSION = '2.15.5-hdr-chips-pf-sticky-summary';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
