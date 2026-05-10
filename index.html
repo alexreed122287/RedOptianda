@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T06:00-touch-scroll-modals">
+<meta name="op-build" content="2026-05-10T06:30-tab-switch-cleanup">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -8050,6 +8050,35 @@ window.addEventListener('keydown', function(e){
 });
 
 function switchTab(id){
+  // 2026-05-10 v2.15.10: clean up any lingering modal backdrops + bottom
+  // sheets BEFORE switching tabs. User report: switching tabs while a
+  // detail sheet is open leaves the backdrop alive — it's mostly
+  // transparent but still has onclick=closeDetailPanel, intercepting
+  // the user's next tap on the new tab. Felt like "screen auto-locks
+  // and requires another tap to interact". Now: nuke any orphaned
+  // overlays on every tab switch.
+  try {
+    var bd = document.getElementById('det-backdrop');
+    if (bd) bd.remove();
+    // Also close detail panes themselves so they don't linger off-tab
+    ['sc-detail','bs-detail'].forEach(function(detId){
+      var d = document.getElementById(detId);
+      if (d && d.style.display !== 'none'){
+        d.style.display = 'none';
+        var emp = document.getElementById(detId === 'sc-detail' ? 'sc-det-empty' : 'bs-empty');
+        if (emp) emp.style.display = 'flex';
+      }
+    });
+    // Remove any dynamically-created sheets that include "sheet" in id
+    document.querySelectorAll('[id$="-sheet"]').forEach(function(s){
+      // Only remove sheets that are full-screen overlays (position:fixed inset:0)
+      var cs = getComputedStyle(s);
+      if (cs.position === 'fixed' && (cs.inset === '0px' || (parseFloat(cs.top) === 0 && parseFloat(cs.left) === 0))){
+        s.remove();
+      }
+    });
+    if (typeof G !== 'undefined') G.selTicker = null;
+  } catch(_){}
   document.querySelectorAll('.tab-pane').forEach(function(p){p.classList.remove('active');});
   document.querySelectorAll('.ntab').forEach(function(b){b.classList.remove('active');});
   var pane=eid('tab-'+id);if(pane)pane.classList.add('active');
@@ -24825,7 +24854,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.15.9-touch-scroll-modals';
+var APP_VERSION = '2.15.10-tab-switch-cleanup';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
