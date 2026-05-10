@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T07:00-splash-pe-backdrop-shrink">
+<meta name="op-build" content="2026-05-10T07:30-modal-zindex-tab-close-pos-export">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -1125,6 +1125,20 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
     flex-shrink: 0 !important;
     z-index: 9400 !important;
     position: relative !important;
+  }
+  /* 2026-05-10 v2.16.0: ALL modal overlays must render ABOVE the header
+     (#hdr z-index 9400). Inline z-index on these ranges from 8000 to
+     9500. Force them above 9400 so the OPTION PANDA logo + clock can't
+     obscure the popup content. User report: contract-panel BUY popup
+     was hidden behind the logo header. */
+  #contract-panel,
+  #roll-modal,
+  #pf-paste-modal,
+  #trade-token-modal,
+  #hc-modal,
+  #help-modal,
+  #api-breakdown-modal{
+    z-index: 9700 !important;
   }
   #bot-nav{
     transform: translate3d(0,0,0);
@@ -3218,6 +3232,11 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     </button>
     <button class="btn blu" style="font-size:11px;padding:6px 10px;white-space:nowrap;min-height:36px;" onclick="fetchPositions()">&#8635; REFRESH</button>
     <button class="btn wrn" style="font-size:11px;padding:6px 10px;white-space:nowrap;min-height:36px;" onclick="clearPositions()">&#10005; CLEAR</button>
+    <!-- 2026-05-10 v2.16.0: positions matrix CSV export. Replaces the
+         portfolio Roll Tracker pattern; this one pulls from live
+         G.positions (Tradier) instead of the manual portfolio data.
+         Columns = accounts, rows = tickers, cells = exp + qty + strike. -->
+    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);font-size:11px;padding:6px 10px;white-space:nowrap;min-height:36px;" onclick="exportPositionsMatrix()" title="Export live positions to CSV — accounts as columns, tickers as rows. Each cell shows exp date / qty / strike for every contract on that ticker.">&#9662; EXPORT CSV</button>
     <!-- Persistent buying-power badge (2026-05-05). Always visible on the
          positions tab — taps fetchBalances to refresh. The previous pattern
          hid BP behind the SUMMARY toggle which the user reported was
@@ -8056,13 +8075,12 @@ window.addEventListener('keydown', function(e){
 });
 
 function switchTab(id){
-  // 2026-05-10 v2.15.10: clean up any lingering modal backdrops + bottom
-  // sheets BEFORE switching tabs. User report: switching tabs while a
-  // detail sheet is open leaves the backdrop alive — it's mostly
-  // transparent but still has onclick=closeDetailPanel, intercepting
-  // the user's next tap on the new tab. Felt like "screen auto-locks
-  // and requires another tap to interact". Now: nuke any orphaned
-  // overlays on every tab switch.
+  // 2026-05-10 v2.15.10/v2.16.0: clean up any lingering modal backdrops
+  // + bottom sheets + named modals BEFORE switching tabs. User reports:
+  //   - switchTab leaves det-backdrop alive → next tap eaten (v2.15.10)
+  //   - popups (contract-panel, roll-modal, etc.) stay open even after
+  //     tapping a bot-tab; should close on tab tap, including same-tab
+  //     tap (v2.16.0)
   try {
     var bd = document.getElementById('det-backdrop');
     if (bd) bd.remove();
@@ -8081,6 +8099,16 @@ function switchTab(id){
       var cs = getComputedStyle(s);
       if (cs.position === 'fixed' && (cs.inset === '0px' || (parseFloat(cs.top) === 0 && parseFloat(cs.left) === 0))){
         s.remove();
+      }
+    });
+    // 2026-05-10 v2.16.0: close any open named modal on tab tap.
+    // Includes the BUY contract picker, roll workflow, paste-from-RH,
+    // trade-token prompt, hard-close confirm, help, API breakdown.
+    ['contract-panel','roll-modal','pf-paste-modal','trade-token-modal',
+     'hc-modal','help-modal','api-breakdown-modal'].forEach(function(mId){
+      var m = document.getElementById(mId);
+      if (m && m.style.display && m.style.display !== 'none'){
+        m.style.display = 'none';
       }
     });
     if (typeof G !== 'undefined') G.selTicker = null;
@@ -24869,7 +24897,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.15.11-splash-pe-backdrop-shrink';
+var APP_VERSION = '2.16.0-modal-zindex-tab-close-pos-export';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -28010,6 +28038,100 @@ function pfExportRollTracker(){
   document.body.appendChild(a); a.click(); document.body.removeChild(a);
   setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
   toast(tickers.length + ' tickers × ' + cols.length + ' accounts — opens in Excel / Google Sheets');
+}
+
+// ─── POSITIONS MATRIX CSV EXPORT (v2.16.0) ─────────────────────────────
+// User spec 2026-05-10: "create a button that exports all positions by
+// account (columns) and tickers (rows) with the exp date, # of contracts
+// and Strike price in the appropriate cells".
+//
+// Pulls from live G.positions (Tradier-fetched) instead of manual
+// portfolio data. Account number resolved from G.acctId (single account
+// per session today; if multi-account is added, this naturally extends
+// to one column per account by grouping G.positions by p.account).
+function exportPositionsMatrix(){
+  var pos = (typeof G !== 'undefined' && Array.isArray(G.positions)) ? G.positions : [];
+  if (!pos.length){
+    if (typeof toast === 'function') toast('No positions to export — click REFRESH first');
+    return;
+  }
+  // Group by account → ticker → list of contract lines.
+  var byAcct = {};
+  pos.forEach(function(p){
+    if (!p) return;
+    var acct = p.account || (typeof G !== 'undefined' && G.acctId) || 'ACCOUNT';
+    var tk = (p.underlying || p.symbol || '').toString().toUpperCase();
+    if (!tk) return;
+    if (!byAcct[acct]) byAcct[acct] = {};
+    if (!byAcct[acct][tk]) byAcct[acct][tk] = [];
+    byAcct[acct][tk].push(p);
+  });
+  var accounts = Object.keys(byAcct).sort();
+  // Union of all tickers across accounts.
+  var tickerSet = {};
+  accounts.forEach(function(a){
+    Object.keys(byAcct[a]).forEach(function(t){ tickerSet[t] = true; });
+  });
+  var tickers = Object.keys(tickerSet).sort();
+  if (!tickers.length){
+    if (typeof toast === 'function') toast('No positions to export');
+    return;
+  }
+  // Format one position into "MM/DD/YYYY × Nq × $Strike" (or "Nq shares @ $X" for stock).
+  function fmtPos(p){
+    var qty = Math.abs(parseInt(p.qty) || 0);
+    if (p.type === 'STOCK'){
+      return qty + ' shares';
+    }
+    var typeChar = (p.type === 'PUT') ? 'P' : 'C';
+    var strike = (p.strike != null) ? '$' + (+p.strike).toFixed(2) + typeChar : '';
+    var expRaw = p.exp || '';
+    var expFmt = (typeof fmtDateUS === 'function' && expRaw) ? fmtDateUS(expRaw) : expRaw;
+    return (expFmt || '--') + ' × ' + qty + ' × ' + strike;
+  }
+  function buildCell(tk, acct){
+    var list = (byAcct[acct] && byAcct[acct][tk]) || [];
+    return list
+      .slice()
+      .sort(function(a, b){
+        // Stocks last; within options, sort by exp then strike
+        var aStock = a.type === 'STOCK', bStock = b.type === 'STOCK';
+        if (aStock !== bStock) return aStock ? 1 : -1;
+        if (!aStock){
+          var ae = a.exp || '', be = b.exp || '';
+          if (ae !== be) return ae < be ? -1 : 1;
+          return (parseFloat(a.strike) || 0) - (parseFloat(b.strike) || 0);
+        }
+        return 0;
+      })
+      .map(fmtPos)
+      .join('\n');
+  }
+  function csvCell(v){
+    if (v == null) return '';
+    var s = String(v);
+    if (s === '') return '';
+    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    return s;
+  }
+  var hdr = ['TICKER'].concat(accounts);
+  var lines = [ hdr.map(csvCell).join(',') ];
+  tickers.forEach(function(tk){
+    var row = [tk];
+    accounts.forEach(function(a){ row.push(buildCell(tk, a)); });
+    lines.push(row.map(csvCell).join(','));
+  });
+  var csv = lines.join('\n');
+  // BOM prefix so Excel auto-detects UTF-8
+  var blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8'});
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'positions_'+new Date().toISOString().slice(0,10)+'.csv';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
+  if (typeof toast === 'function'){
+    toast(tickers.length + ' tickers × ' + accounts.length + ' account(s) exported');
+  }
 }
 
 // ─── END PORTFOLIO BUILDER ENGINE ──────────────────────────────────────
