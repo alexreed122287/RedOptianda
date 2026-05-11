@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-10T15:30-marquee-jump-pf-fixed-bottom">
+<meta name="op-build" content="2026-05-10T16:00-content-sized-table-speeds-swap">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -370,11 +370,19 @@ a{color:var(--blu);text-decoration:none;}
     white-space:nowrap;}
   /* Themes ribbon: keep single line, no mid-word clipping */
   .top-themes-strip{padding:6px 10px !important;}
-  /* Scanner: stack vertically — table full-width, detail becomes a sheet */
-  #sc-body{flex-direction:column !important;}
-  #sc-tbl-wrap{flex:1 1 auto !important;width:100% !important;
+  /* Scanner: stack vertically — table full-width, detail becomes a sheet
+     2026-05-10 v2.16.17: sc-body and sc-tbl-wrap no longer stretch
+     to fill the .tab-pane. Was flex:1 1 auto + overflow:auto on the
+     wrap which created a fixed-height window — when the result table
+     was shorter than the window, ~250px of empty space sat below the
+     last row (visible in user screenshot of 16-row scan). Now wrap
+     sizes to content; .tab-pane (outer) handles scrolling for long
+     result lists. */
+  #sc-body{flex-direction:column !important;flex:0 0 auto !important;height:auto !important;overflow:visible !important;}
+  #sc-tbl-wrap{flex:0 0 auto !important;width:100% !important;height:auto !important;
     min-width:0 !important;border-right:none !important;
-    border-bottom:1px solid var(--bg3);}
+    border-bottom:1px solid var(--bg3);
+    overflow:visible !important;min-height:0 !important;}
   /* Detail pane on iPhone: bottom sheet covering 80% of viewport,
      slides up over the table. Hidden until viewDetail toggles
      display:flex; tap outside or the X to close.
@@ -717,12 +725,11 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
   z-index:5 !important;
   margin-top:0 !important;
 }
-/* 2026-05-10 v2.16.12: themes ribbon sped up 90s → 60s per user spec
-   "themes rotate through at a slightly quicker pace". Indices ribbon
-   below now uses 90s (the OLD theme speed) per user spec
-   "indices now rotated through at the speed of the settings for the
-   themes right now". */
-.themes-marquee{display:inline-flex;flex-wrap:nowrap;gap:10px;align-items:center;animation:themes-scroll 60s linear infinite;will-change:transform;pointer-events:none;}
+/* 2026-05-10 v2.16.17: speeds SWAPPED per user spec
+   "switch the speeds of the indices and the themes".
+   Themes now 30s (was 60s) — fast lane.
+   Indices now 60s (was 30s) — slow lane (see .indices-marquee below). */
+.themes-marquee{display:inline-flex;flex-wrap:nowrap;gap:10px;align-items:center;animation:themes-scroll 30s linear infinite;will-change:transform;pointer-events:none;}
 /* hover-pause removed 2026-05-04 per user spec — ribbon never stops scrolling */
 @keyframes themes-scroll{
   0%{transform:translateX(0);}
@@ -732,13 +739,10 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
    the .indices-marquee inner wrapper. Wrapper + duplicate content is
    built at init by _wireIndicesMarquee() (in scripts) so the existing
    static HTML doesn't need to be re-templated. */
-/* 2026-05-10 v2.16.13: indices sped up from 90s to 30s — user spec
-   "speed up the indices to move at half the speed of the themes".
-   Themes loop is 60s, so indices loop = 60/2 = 30s.
-   2026-05-10 v2.16.16: gap moved off .indices-marquee onto the inner
-   .indices-copy span so the -50% animation endpoint lands exactly on
-   the start of copy 2 (fixes the visible jump per loop reset). */
-.indices-marquee{display:inline-flex;flex-wrap:nowrap;align-items:center;animation:indices-scroll 30s linear infinite;will-change:transform;pointer-events:none;}
+/* 2026-05-10 v2.16.17: speed swap — indices now 60s (was 30s),
+   themes now 30s (was 60s) per user spec "switch the speeds of the
+   indices and the themes". */
+.indices-marquee{display:inline-flex;flex-wrap:nowrap;align-items:center;animation:indices-scroll 60s linear infinite;will-change:transform;pointer-events:none;}
 .indices-copy{display:inline-flex;align-items:center;gap:14px;padding-right:14px;flex-shrink:0;}
 @keyframes indices-scroll{
   0%{transform:translateX(0);}
@@ -25232,7 +25236,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.16.16-marquee-jump-pf-fixed-bottom';
+var APP_VERSION = '2.16.17-content-sized-table-speeds-swap';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
