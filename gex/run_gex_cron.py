@@ -13,8 +13,9 @@ For each ticker in `gex/gex_universe.json`:
   6. Classify flow: CALL HEAVY ≥70%, CALL LEAN ≥55%, BALANCED, PUT LEAN ≤45%, PUT HEAVY ≤30%
 
 Output: gex/gex_scores.json — a dict { ts, source, count, data: [...] }
-where each row matches the in-page G.gexData schema:
-    { t, gex, flip, call, put, callOI, putOI, dte, exp, price, flow, flowCls }
+where each row matches the in-page G.gexData UI schema directly:
+    { t, gex, flip, call(%), put(%), callOI, putOI, callVol, putVol,
+      dte, exp, price, flow("CALL HEAVY"/"PUT HEAVY"), flowCls("go"/"nogo") }
 
 Auth: TRADIER_TOKEN env var (live token — sandbox doesn't return real OI).
 Pacing: 600 ms between dispatches (matches the in-page GEX_DISPATCH_MS).
@@ -185,35 +186,28 @@ def _compute_row(ticker, spot, expiry, dte, opts):
     if total_oi <= 0:
         return None
 
-    call_pct = (call_oi / total_oi) * 100
-    # Net GEX in millions — same scaling as the page.
-    net_gex = round(((call_oi - put_oi) * spot) / 1_000_000, 2)
+    total_vol = call_vol + put_vol or 1
+    call_pct_oi = round((call_oi / total_oi) * 100)
+    call_pct_vol = round((call_vol / total_vol) * 100)
+    call_pct = max(10, min(90, round(call_pct_oi * 0.6 + call_pct_vol * 0.4)))
 
-    # Flow classification matches in-page thresholds.
-    if call_pct >= 70:
-        flow_cls = "CALL HEAVY"
-    elif call_pct >= 55:
-        flow_cls = "CALL LEAN"
-    elif call_pct <= 30:
-        flow_cls = "PUT HEAVY"
-    elif call_pct <= 45:
-        flow_cls = "PUT LEAN"
-    else:
-        flow_cls = "BALANCED"
+    net_gex = round(((call_oi - put_oi) * spot) / 1_000_000, 2)
 
     return {
         "t": ticker,
         "gex": net_gex,
         "flip": round(flip_strike, 2),
-        "call": call_vol,
-        "put": put_vol,
+        "call": call_pct,
+        "put": 100 - call_pct,
         "callOI": call_oi,
         "putOI": put_oi,
+        "callVol": call_vol,
+        "putVol": put_vol,
         "dte": dte,
         "exp": expiry,
         "price": round(spot, 2),
-        "flow": round(call_pct, 1),
-        "flowCls": flow_cls,
+        "flow": "CALL HEAVY" if call_pct >= 50 else "PUT HEAVY",
+        "flowCls": "go" if call_pct >= 50 else "nogo",
     }
 
 
@@ -263,7 +257,7 @@ def main():
         sys.exit(1)
 
     # Sort: bullish (call %≥50) first by net GEX desc, then put-heavy by net GEX desc.
-    rows.sort(key=lambda r: (0 if r["flow"] >= 50 else 1, -r["gex"], -r["callOI"]))
+    rows.sort(key=lambda r: (0 if r["call"] >= 50 else 1, -r["gex"], -r["callOI"]))
 
     out = {
         "ts": int(time.time() * 1000),
