@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-11T04:00-chart-modal-z-fix">
+<meta name="op-build" content="2026-05-11T22:00-gex-cron-schema-normalize">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -19155,13 +19155,52 @@ function _gexFreshWithin(windowMin){
   if (!lastTs) return false;
   return (Date.now() - lastTs) < (windowMin * 60000);
 }
+// Normalize a single GEX row coming from EITHER the in-page runGex()
+// computation OR the headless Python cron (gex/gex_scores.json).
+// The two sources disagree on field semantics, producing absurd %s
+// like "CALL OI % 216863%" because the cron writes raw call/put
+// VOLUME counts under .call/.put while the UI renderer expects
+// percentages.
+//
+// Heuristic: cron-format has `flow` as a NUMBER (the call_pct value
+// rounded to 1 decimal). UI-format has `flow` as a STRING label
+// ("CALL HEAVY" / "PUT HEAVY"). If `flow` is numeric, translate:
+//   cron.call    = raw call VOLUME    → drop, recompute call% from callOI/putOI
+//   cron.put     = raw put  VOLUME    → drop
+//   cron.flow    = numeric call_pct   → derive label
+//   cron.flowCls = "CALL HEAVY"/etc   → map to 'go'/'nogo' badge class
+// Already-UI rows pass through untouched (idempotent).
+// User report 2026-05-11: 216863% / 63616% on NVDA/NFLX rows.
+function _normalizeGexRow(r){
+  if (!r || typeof r !== 'object') return r;
+  if (typeof r.flow !== 'number') return r;  // already UI-format
+  var cron = r;
+  var callOI = +cron.callOI || 0;
+  var putOI  = +cron.putOI  || 0;
+  var totalOI = callOI + putOI || 1;
+  var callPct = Math.round((callOI / totalOI) * 100);
+  callPct = Math.max(1, Math.min(99, callPct));
+  var flowLabel = callPct >= 50 ? 'CALL HEAVY' : 'PUT HEAVY';
+  var flowCls   = callPct >= 50 ? 'go' : 'nogo';
+  return Object.assign({}, cron, {
+    call:    callPct,
+    put:     100 - callPct,
+    flow:    flowLabel,
+    flowCls: flowCls,
+    cronFlowCls: cron.flowCls,            // preserve original label
+    cronCallPct: cron.flow,               // preserve original numeric for sort/diagnostics
+    cronCallVol: cron.call,
+    cronPutVol:  cron.put
+  });
+}
+
 function loadGexCache(){
   try {
     var raw = localStorage.getItem(GEX_CACHE_KEY);
     if (!raw) return false;
     var obj = JSON.parse(raw);
     if (!obj || !obj.ts || (Date.now() - obj.ts) > GEX_CACHE_TTL_MS) return false;
-    G.gexData = obj.data || [];
+    G.gexData = (obj.data || []).map(_normalizeGexRow);
     G._gexLastFetchTs = obj.ts;     // mirror to memory so the cache-age UI works without re-running runGex
     G._gexSource = obj.source || 'local';
     var ageMin = Math.round((Date.now() - obj.ts) / 60000);
@@ -19208,15 +19247,20 @@ async function hydrateGexFromCron(){
       console.log('[gex] cron snapshot ('+new Date(json.ts).toISOString()+') is older than local cache — keeping local');
       return false;
     }
-    G.gexData = json.data;
+    // Translate cron-schema (raw vol counts under .call/.put, numeric
+    // .flow) → UI-schema (call%/put% under .call/.put, string .flow
+    // label). Without this, rows render absurd %s like 216863%.
+    G.gexData = (json.data || []).map(_normalizeGexRow);
     G._gexLastFetchTs = json.ts;
     G._gexSource = json.source || 'github-cron';
-    // Persist to localStorage so the next reload hits cache instead of refetching.
+    // Persist NORMALIZED data so subsequent loads don't re-run the
+    // translation (and so a downgrade to a build without
+    // _normalizeGexRow doesn't reintroduce the bug).
     try {
       localStorage.setItem(GEX_CACHE_KEY, JSON.stringify({
         ts: json.ts,
         source: G._gexSource,
-        data: json.data
+        data: G.gexData
       }));
     } catch(_){}
     var ageMin = Math.round((Date.now() - json.ts) / 60000);
@@ -19788,7 +19832,11 @@ function renderGex(){
   // most-bullish first by Call OI %, with |NET GEX| magnitude as the
   // tiebreaker (higher conviction floats up). Result: top of list =
   // strongest bullish flow conviction = best long-call candidates.
+  // Defensive normalize at render time too — covers stale localStorage
+  // payloads saved BEFORE loadGexCache / hydrateGexFromCron grew the
+  // normalizer. Idempotent on UI-schema rows.
   var bullishSorted = (G.gexData || [])
+    .map(typeof _normalizeGexRow === 'function' ? _normalizeGexRow : function(r){return r;})
     .filter(function(r){
       if (!r) return false;
       var hasData = (r.callOI || r.putOI) || r.sim;
@@ -25876,7 +25924,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.16.22-chart-modal-z-fix';
+var APP_VERSION = '2.16.23-gex-cron-schema-normalize';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
