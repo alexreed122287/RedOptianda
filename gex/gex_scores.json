@@ -1,8 +1,8 @@
 {
-  "ts": 1778533040855,
+  "ts": 1778534271821,
   "source": "github-cron",
-  "count": 244,
-  "skipped": 3,
+  "count": 243,
+  "skipped": 4,
   "universe_size": 247,
   "data": [
     {
@@ -38,7 +38,7 @@
       "gex": 89.56,
       "flip": 450.0,
       "call": 124693,
-      "put": 49732,
+      "put": 49733,
       "callOI": 656488,
       "putOI": 455234,
       "dte": 38,
@@ -205,7 +205,7 @@
       "t": "TLT",
       "gex": 16.19,
       "flip": 90.0,
-      "call": 111066,
+      "call": 111068,
       "put": 12302,
       "callOI": 638089,
       "putOI": 448811,
@@ -384,6 +384,20 @@
       "flowCls": "CALL LEAN"
     },
     {
+      "t": "ADBE",
+      "gex": 5.51,
+      "flip": 240.0,
+      "call": 2013,
+      "put": 2317,
+      "callOI": 59130,
+      "putOI": 36762,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 246.15,
+      "flow": 61.7,
+      "flowCls": "CALL LEAN"
+    },
+    {
       "t": "CRM",
       "gex": 5.3,
       "flip": 185.0,
@@ -395,20 +409,6 @@
       "exp": "2026-06-18",
       "price": 177.49,
       "flow": 57.6,
-      "flowCls": "CALL LEAN"
-    },
-    {
-      "t": "ADBE",
-      "gex": 5.0,
-      "flip": 240.0,
-      "call": 3680,
-      "put": 3637,
-      "callOI": 66057,
-      "putOI": 45731,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 246.15,
-      "flow": 59.1,
       "flowCls": "CALL LEAN"
     },
     {
@@ -542,7 +542,7 @@
       "gex": 3.22,
       "flip": 140.0,
       "call": 2886,
-      "put": 1466,
+      "put": 1465,
       "callOI": 59029,
       "putOI": 37747,
       "dte": 38,
@@ -583,10 +583,10 @@
       "t": "BSX",
       "gex": 2.87,
       "flip": 50.0,
-      "call": 1085,
+      "call": 1084,
       "put": 1729,
-      "callOI": 69495,
-      "putOI": 15723,
+      "callOI": 69484,
+      "putOI": 15721,
       "dte": 38,
       "exp": "2026-06-18",
       "price": 53.37,
@@ -650,6 +650,34 @@
       "flowCls": "CALL LEAN"
     },
     {
+      "t": "COST",
+      "gex": 2.51,
+      "flip": 1000.0,
+      "call": 1461,
+      "put": 1962,
+      "callOI": 19734,
+      "putOI": 17226,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 999.47,
+      "flow": 53.4,
+      "flowCls": "BALANCED"
+    },
+    {
+      "t": "INTU",
+      "gex": 2.45,
+      "flip": 390.0,
+      "call": 116,
+      "put": 193,
+      "callOI": 15847,
+      "putOI": 9613,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 393.29,
+      "flow": 62.2,
+      "flowCls": "CALL LEAN"
+    },
+    {
       "t": "BMY",
       "gex": 2.23,
       "flip": 57.5,
@@ -661,20 +689,6 @@
       "exp": "2026-06-18",
       "price": 55.67,
       "flow": 61.2,
-      "flowCls": "CALL LEAN"
-    },
-    {
-      "t": "INTU",
-      "gex": 2.18,
-      "flip": 390.0,
-      "call": 116,
-      "put": 200,
-      "callOI": 15869,
-      "putOI": 10324,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 393.29,
-      "flow": 60.6,
       "flowCls": "CALL LEAN"
     },
     {
@@ -819,16 +833,16 @@
     },
     {
       "t": "TXN",
-      "gex": 1.85,
+      "gex": 1.8,
       "flip": 300.0,
-      "call": 2461,
-      "put": 2322,
-      "callOI": 39736,
-      "putOI": 33513,
+      "call": 2090,
+      "put": 2227,
+      "callOI": 38064,
+      "putOI": 32035,
       "dte": 38,
       "exp": "2026-06-18",
       "price": 297.76,
-      "flow": 54.2,
+      "flow": 54.3,
       "flowCls": "BALANCED"
     },
     {
@@ -1028,34 +1042,6 @@
       "flowCls": "BALANCED"
     },
     {
-      "t": "CVS",
-      "gex": 1.32,
-      "flip": 90.0,
-      "call": 4329,
-      "put": 1539,
-      "callOI": 41755,
-      "putOI": 27430,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 92.22,
-      "flow": 60.4,
-      "flowCls": "CALL LEAN"
-    },
-    {
-      "t": "ISRG",
-      "gex": 1.21,
-      "flip": 450.0,
-      "call": 1536,
-      "put": 1519,
-      "callOI": 10402,
-      "putOI": 7513,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 420.06,
-      "flow": 58.1,
-      "flowCls": "CALL LEAN"
-    },
-    {
       "t": "LYFT",
       "gex": 1.19,
       "flip": 15.0,
@@ -1098,20 +1084,6 @@
       "flowCls": "CALL LEAN"
     },
     {
-      "t": "HUM",
-      "gex": 1.1,
-      "flip": 260.0,
-      "call": 353,
-      "put": 828,
-      "callOI": 14349,
-      "putOI": 10347,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 274.26,
-      "flow": 58.1,
-      "flowCls": "CALL LEAN"
-    },
-    {
       "t": "RBLX",
       "gex": 1.09,
       "flip": 45.0,
@@ -1123,6 +1095,20 @@
       "exp": "2026-06-18",
       "price": 41.31,
       "flow": 64.0,
+      "flowCls": "CALL LEAN"
+    },
+    {
+      "t": "ISRG",
+      "gex": 1.08,
+      "flip": 450.0,
+      "call": 774,
+      "put": 1245,
+      "callOI": 9422,
+      "putOI": 6852,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 420.06,
+      "flow": 57.9,
       "flowCls": "CALL LEAN"
     },
     {
@@ -1238,20 +1224,6 @@
       "flowCls": "BALANCED"
     },
     {
-      "t": "COST",
-      "gex": 0.81,
-      "flip": 1000.0,
-      "call": 1759,
-      "put": 2773,
-      "callOI": 22089,
-      "putOI": 21275,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 999.47,
-      "flow": 50.9,
-      "flowCls": "BALANCED"
-    },
-    {
       "t": "UPS",
       "gex": 0.8,
       "flip": 105.0,
@@ -1281,16 +1253,16 @@
     },
     {
       "t": "HPE",
-      "gex": 0.77,
+      "gex": 0.73,
       "flip": 30.0,
-      "call": 2597,
+      "call": 1775,
       "put": 757,
-      "callOI": 52872,
-      "putOI": 27816,
+      "callOI": 51535,
+      "putOI": 27815,
       "dte": 38,
       "exp": "2026-06-18",
       "price": 30.87,
-      "flow": 65.5,
+      "flow": 64.9,
       "flowCls": "CALL LEAN"
     },
     {
@@ -1299,7 +1271,7 @@
       "flip": 130.0,
       "call": 3525,
       "put": 2591,
-      "callOI": 35886,
+      "callOI": 35865,
       "putOI": 30603,
       "dte": 38,
       "exp": "2026-06-18",
@@ -1319,6 +1291,20 @@
       "exp": "2026-06-18",
       "price": 421.0,
       "flow": 60.8,
+      "flowCls": "CALL LEAN"
+    },
+    {
+      "t": "CVS",
+      "gex": 0.69,
+      "flip": 90.0,
+      "call": 3978,
+      "put": 1025,
+      "callOI": 34577,
+      "putOI": 27058,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 92.22,
+      "flow": 56.1,
       "flowCls": "CALL LEAN"
     },
     {
@@ -1579,7 +1565,7 @@
       "flip": 195.0,
       "call": 112,
       "put": 10,
-      "callOI": 6052,
+      "callOI": 6051,
       "putOI": 3936,
       "dte": 38,
       "exp": "2026-06-18",
@@ -1896,20 +1882,6 @@
       "flowCls": "CALL HEAVY"
     },
     {
-      "t": "NVAX",
-      "gex": 0.14,
-      "flip": 10.0,
-      "call": 4886,
-      "put": 307,
-      "callOI": 17240,
-      "putOI": 2201,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 9.5,
-      "flow": 88.7,
-      "flowCls": "CALL HEAVY"
-    },
-    {
       "t": "NSC",
       "gex": 0.14,
       "flip": 330.0,
@@ -2011,10 +1983,10 @@
       "t": "HPQ",
       "gex": 0.1,
       "flip": 22.0,
-      "call": 2773,
+      "call": 2764,
       "put": 660,
-      "callOI": 31734,
-      "putOI": 27040,
+      "callOI": 31732,
+      "putOI": 27022,
       "dte": 38,
       "exp": "2026-06-18",
       "price": 21.67,
@@ -2047,6 +2019,20 @@
       "exp": "2026-06-18",
       "price": 115.58,
       "flow": 51.1,
+      "flowCls": "BALANCED"
+    },
+    {
+      "t": "HUM",
+      "gex": 0.08,
+      "flip": 260.0,
+      "call": 204,
+      "put": 608,
+      "callOI": 9896,
+      "putOI": 9592,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 274.26,
+      "flow": 50.8,
       "flowCls": "BALANCED"
     },
     {
@@ -2132,20 +2118,6 @@
       "price": 44.57,
       "flow": 86.7,
       "flowCls": "CALL HEAVY"
-    },
-    {
-      "t": "AMAT",
-      "gex": 0.02,
-      "flip": 400.0,
-      "call": 2358,
-      "put": 1156,
-      "callOI": 36164,
-      "putOI": 36117,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 443.62,
-      "flow": 50.0,
-      "flowCls": "BALANCED"
     },
     {
       "t": "WFC",
@@ -2279,12 +2251,12 @@
       "flip": 430.0,
       "call": 141,
       "put": 39,
-      "callOI": 5477,
+      "callOI": 5475,
       "putOI": 5666,
       "dte": 38,
       "exp": "2026-06-18",
       "price": 435.17,
-      "flow": 49.2,
+      "flow": 49.1,
       "flowCls": "BALANCED"
     },
     {
@@ -2671,7 +2643,7 @@
       "flip": 90.0,
       "call": 129,
       "put": 256,
-      "callOI": 10751,
+      "callOI": 10749,
       "putOI": 19738,
       "dte": 38,
       "exp": "2026-06-18",
@@ -2807,16 +2779,16 @@
     },
     {
       "t": "REGN",
-      "gex": -2.04,
+      "gex": -2.0,
       "flip": 750.0,
-      "call": 52,
+      "call": 46,
       "put": 24,
-      "callOI": 3821,
-      "putOI": 6683,
+      "callOI": 3633,
+      "putOI": 6435,
       "dte": 38,
       "exp": "2026-06-18",
       "price": 712.77,
-      "flow": 36.4,
+      "flow": 36.1,
       "flowCls": "PUT LEAN"
     },
     {
@@ -2946,20 +2918,6 @@
       "flowCls": "PUT LEAN"
     },
     {
-      "t": "LRCX",
-      "gex": -4.31,
-      "flip": 280.0,
-      "call": 1374,
-      "put": 1531,
-      "callOI": 68535,
-      "putOI": 83086,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 296.05,
-      "flow": 45.2,
-      "flowCls": "BALANCED"
-    },
-    {
       "t": "XLV",
       "gex": -4.51,
       "flip": 145.0,
@@ -3044,20 +3002,6 @@
       "flowCls": "BALANCED"
     },
     {
-      "t": "KLAC",
-      "gex": -6.06,
-      "flip": 2000.0,
-      "call": 279,
-      "put": 468,
-      "callOI": 4172,
-      "putOI": 7455,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 1845.19,
-      "flow": 35.9,
-      "flowCls": "PUT LEAN"
-    },
-    {
       "t": "GEV",
       "gex": -6.19,
       "flip": 1000.0,
@@ -3069,6 +3013,20 @@
       "exp": "2026-06-18",
       "price": 1073.08,
       "flow": 44.2,
+      "flowCls": "PUT LEAN"
+    },
+    {
+      "t": "AMAT",
+      "gex": -6.29,
+      "flip": 400.0,
+      "call": 397,
+      "put": 995,
+      "callOI": 21585,
+      "putOI": 35770,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 443.62,
+      "flow": 37.6,
       "flowCls": "PUT LEAN"
     },
     {
@@ -3090,7 +3048,7 @@
       "gex": -6.74,
       "flip": 370.0,
       "call": 9931,
-      "put": 7754,
+      "put": 7755,
       "callOI": 155526,
       "putOI": 172196,
       "dte": 38,
@@ -3098,6 +3056,20 @@
       "price": 404.54,
       "flow": 47.5,
       "flowCls": "BALANCED"
+    },
+    {
+      "t": "KLAC",
+      "gex": -7.43,
+      "flip": 2000.0,
+      "call": 169,
+      "put": 450,
+      "callOI": 3185,
+      "putOI": 7211,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 1845.19,
+      "flow": 30.6,
+      "flowCls": "PUT LEAN"
     },
     {
       "t": "XLY",
@@ -3170,6 +3142,20 @@
       "flowCls": "BALANCED"
     },
     {
+      "t": "LRCX",
+      "gex": -10.52,
+      "flip": 280.0,
+      "call": 746,
+      "put": 1519,
+      "callOI": 47482,
+      "putOI": 83016,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 296.05,
+      "flow": 36.4,
+      "flowCls": "PUT LEAN"
+    },
+    {
       "t": "USO",
       "gex": -10.96,
       "flip": 150.0,
@@ -3212,46 +3198,32 @@
       "flowCls": "PUT LEAN"
     },
     {
-      "t": "MRVL",
-      "gex": -12.11,
-      "flip": 180.0,
-      "call": 7611,
-      "put": 1578,
-      "callOI": 145269,
-      "putOI": 216144,
-      "dte": 38,
-      "exp": "2026-06-18",
-      "price": 170.84,
-      "flow": 40.2,
-      "flowCls": "PUT LEAN"
-    },
-    {
       "t": "ASML",
-      "gex": -12.29,
+      "gex": -13.8,
       "flip": 1500.0,
-      "call": 874,
-      "put": 2717,
-      "callOI": 15669,
-      "putOI": 23519,
+      "call": 762,
+      "put": 2456,
+      "callOI": 13490,
+      "putOI": 22301,
       "dte": 38,
       "exp": "2026-06-18",
       "price": 1565.81,
-      "flow": 40.0,
+      "flow": 37.7,
       "flowCls": "PUT LEAN"
     },
     {
-      "t": "INTC",
-      "gex": -13.82,
-      "flip": 120.0,
-      "call": 51610,
-      "put": 38019,
-      "callOI": 614123,
-      "putOI": 720865,
+      "t": "MRVL",
+      "gex": -14.5,
+      "flip": 180.0,
+      "call": 3484,
+      "put": 1576,
+      "callOI": 130995,
+      "putOI": 215889,
       "dte": 38,
       "exp": "2026-06-18",
-      "price": 129.44,
-      "flow": 46.0,
-      "flowCls": "BALANCED"
+      "price": 170.84,
+      "flow": 37.8,
+      "flowCls": "PUT LEAN"
     },
     {
       "t": "XLK",
@@ -3310,6 +3282,20 @@
       "flowCls": "PUT LEAN"
     },
     {
+      "t": "INTC",
+      "gex": -24.74,
+      "flip": 129.44,
+      "call": 2526,
+      "put": 6054,
+      "callOI": 409425,
+      "putOI": 600527,
+      "dte": 38,
+      "exp": "2026-06-18",
+      "price": 129.44,
+      "flow": 40.5,
+      "flowCls": "PUT LEAN"
+    },
+    {
       "t": "XLP",
       "gex": -35.6,
       "flip": 80.0,
@@ -3356,7 +3342,7 @@
       "gex": -131.71,
       "flip": 605.0,
       "call": 7101,
-      "put": 34233,
+      "put": 34240,
       "callOI": 118993,
       "putOI": 347540,
       "dte": 38,
