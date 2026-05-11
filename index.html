@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-12T00:00-gex-cron-canonicalize">
+<meta name="op-build" content="2026-05-12T00:30-scan-blank-resub-overflow-earn-input">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -451,9 +451,11 @@ a{color:var(--blu);text-decoration:none;}
   #sc-action-row #sc-data-status{display:none !important;}
 }
 @media(min-width:481px) and (max-width:1024px){
-  /* iPad portrait: keep two-pane scanner but give the table a fair share */
-  #sc-tbl-wrap{flex:0 0 55% !important;}
-  #sc-detail{flex:1 1 45% !important;}
+  /* iPad portrait: two-pane split ONLY when detail panel is open.
+     Unscoped, these would lock the table at 55% even after close,
+     leaving 45% of the row blank. Scope to .sc-detail-active. */
+  #sc-body.sc-detail-active #sc-tbl-wrap{flex:0 0 55% !important;}
+  #sc-body.sc-detail-active #sc-detail{flex:1 1 45% !important;}
   /* Tab nav: nowrap + horizontal scroll per user spec 2026-05-03
      ('main tabs are still wrapping when page is resized'). User
      prefers swipe-to-reveal hidden tabs over a multi-row stack on
@@ -1889,12 +1891,11 @@ tr.pos-row-today td:first-child{box-shadow:inset 4px 0 0 var(--ambb);}
 
 /* iPad polish: two-pane master-detail in landscape; portrait stacks. */
 @media(min-width:769px) and (max-width:1024px){
-  /* Scanner: keep the existing table+detail flex split — the desktop
-     base already handles this. Just bump the detail panel's default
-     reveal width to 40% on iPad so the chart / chain section is
-     readable without horizontal scroll. */
-  #sc-tbl-wrap.tbl-wrap{flex-basis:60% !important;}
-  #sc-detail{flex-basis:40% !important;}
+  /* Scanner: split applies ONLY when detail panel is open — scoped to
+     .sc-detail-active so the table fills 100% after close.
+     2026-05-12 fix for "right side of screen blank after detail close". */
+  #sc-body.sc-detail-active #sc-tbl-wrap.tbl-wrap{flex-basis:60% !important;}
+  #sc-body.sc-detail-active #sc-detail{flex-basis:40% !important;}
   /* Watchlist: show table left, chart right with proper proportions */
   #tab-wl .split-l{width:38% !important;max-height:none !important;}
   #tab-wl .split-r{width:62% !important;max-height:none !important;}
@@ -3263,7 +3264,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <label class="ind-filter-lbl" title="TF Aligned = Time-Frame Aligned. Counts how many of three trend timeframes (e.g. daily / hourly / 15-min) are pointing the same direction. 2/3 = at least two of three timeframes agree, which filters out stocks that look bullish on one timeframe but are choppy on others."><input type="checkbox" class="ind-filter" id="filt-tf" onchange="applyFilters()"> <span>TF Aligned 2/3</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-ema200" onchange="applyFilters()"> <span>Above EMA200</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-vol" onchange="applyFilters()"> <span>Vol &gt; Avg</span></label>
-    <label class="ind-filter-lbl" title="Hide tickers with earnings today through N trading days into the future (inclusive). 0 = today only. 3 = today + next 3 days. Earnings = binary event; even good signals turn into 50/50 coin flips through earnings."><input type="checkbox" class="ind-filter" id="filt-no-earn" onchange="applyFilters()"> <span>No Earnings (today + <input type="number" id="filt-earn-days" value="0" min="0" max="30" style="width:36px;font-size:10px;padding:1px 3px;background:var(--bg2);border:1px solid var(--bg3);color:var(--amb);" onchange="applyFilters()" onclick="event.stopPropagation()" inputmode="numeric">d)</span></label>
+    <label class="ind-filter-lbl" title="Hide tickers with earnings today through N trading days into the future (inclusive). 0 = today only. 3 = today + next 3 days. Earnings = binary event; even good signals turn into 50/50 coin flips through earnings."><input type="checkbox" class="ind-filter" id="filt-no-earn" onchange="applyFilters()"> <span>No Earnings (today + <input type="number" id="filt-earn-days" value="0" min="0" max="30" style="width:48px;font-size:11px;padding:2px 5px;background:var(--bg2);border:1px solid var(--bg3);color:var(--amb);text-align:center;" onchange="applyFilters()" onclick="event.stopPropagation()" inputmode="numeric">d)</span></label>
     <label class="ind-filter-lbl" title="Sector rotation overlay — only show tickers in themes with daily composite score >= 75 (top quartile, prevailing institutional flow)"><input type="checkbox" class="ind-filter" id="filt-strong-sector" onchange="applyFilters()"> <span>Strong Sector</span></label>
     <label class="ind-filter-lbl" title="Jegadeesh-Titman 12-1 cross-sectional momentum (1993). 12-month return minus 1-month, top quintile (≥25%). Strongest replicated edge in academic finance. Worth +20 score points — most heavily weighted single rule."><input type="checkbox" class="ind-filter" id="filt-jt12" onchange="applyFilters()"> <span>JT 12-1 Mom</span></label>
     <label class="ind-filter-lbl" title="Mark Minervini's 8-criteria Stage 2 trend template. Price &gt; MA50 &gt; MA150 &gt; MA200, MA200 trending up &gt;1mo, RS rank &gt; 70, near 52wk hi, &gt;25% off 52wk lo. High-specificity swing breakout setup. Worth +15."><input type="checkbox" class="ind-filter" id="filt-minervini" onchange="applyFilters()"> <span>Minervini</span></label>
@@ -10171,19 +10172,19 @@ function openOrderStatusModal(ctx){
     +         '<span id="osm-r-current-display" style="margin-left:auto;color:var(--gry2);">--</span>'
     +       '</div>'
     +       '<div id="osm-r-chain-row" style="display:none;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--ff-mono);font-size:10px;margin-bottom:8px;">'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>EXPIRATION</span><select id="osm-r-exp" onchange="osmResubExpChange()" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"><option value="">(loading…)</option></select></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>STRIKE</span><select id="osm-r-strike" onchange="osmResubStrikeChange()" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"><option value="">(pick expiry)</option></select></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>EXPIRATION</span><select id="osm-r-exp" onchange="osmResubExpChange()" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;text-overflow:ellipsis;"><option value="">(loading…)</option></select></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>STRIKE</span><select id="osm-r-strike" onchange="osmResubStrikeChange()" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;text-overflow:ellipsis;"><option value="">(pick expiry)</option></select></label>'
     +       '</div>'
     +       '<div id="osm-r-chain-table-wrap" style="display:none;background:var(--bg0);border:var(--bdr);border-radius:4px;max-height:170px;overflow-y:auto;margin-bottom:8px;-webkit-overflow-scrolling:touch;">'
     +         '<div id="osm-r-chain-table" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);padding:6px 8px;">Pick an expiry to view the chain&hellip;</div>'
     +       '</div>'
     +       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--ff-mono);font-size:10px;">'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>LIMIT $</span><input type="number" id="osm-r-lmt" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>STEP $</span><input type="number" id="osm-r-step" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>MAX ATTEMPTS</span><input type="number" id="osm-r-max" min="1" max="50" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>DELAY (sec)</span><input type="number" id="osm-r-delay" min="1" max="120" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>QTY</span><input type="number" id="osm-r-qty" min="1" max="999" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);"><span>START FROM</span><select id="osm-r-start" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;"><option value="bid">Bid</option><option value="mid">Mid</option><option value="ask">Ask</option></select></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>LIMIT $</span><input type="number" id="osm-r-lmt" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>STEP $</span><input type="number" id="osm-r-step" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>MAX ATTEMPTS</span><input type="number" id="osm-r-max" min="1" max="50" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>DELAY (sec)</span><input type="number" id="osm-r-delay" min="1" max="120" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>QTY</span><input type="number" id="osm-r-qty" min="1" max="999" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>START FROM</span><select id="osm-r-start" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;text-overflow:ellipsis;"><option value="bid">Bid</option><option value="mid">Mid</option><option value="ask">Ask</option></select></label>'
     +       '</div>'
     +       '<div style="display:flex;gap:8px;margin-top:10px;">'
     +         '<button class="btn blu" id="osm-resubmit-btn" style="flex:1;padding:9px;font-weight:700;font-size:12px;" onclick="resubmitFromModal()">&#9658; RESUBMIT</button>'
@@ -16480,15 +16481,18 @@ function _setSelDetailWidth(detId, active){
   if (detId !== 'sc-detail') return;
   var det = eid('sc-detail');
   var tbl = eid('sc-tbl-wrap');
+  var body = eid('sc-body');
   if (!det || !tbl) return;
   if (active){
     det.style.flex = '0 0 35%';
     det.style.width = '35%';
     tbl.style.flex = '0 0 65%';
+    if (body) body.classList.add('sc-detail-active');
   } else {
     det.style.flex = '0 0 0';
     det.style.width = '0';
     tbl.style.flex = '1 1 100%';
+    if (body) body.classList.remove('sc-detail-active');
   }
 }
 
@@ -25876,7 +25880,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.17.0-gex-cron-canonicalize';
+var APP_VERSION = '2.17.1-scan-blank-resub-overflow-earn-input';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
