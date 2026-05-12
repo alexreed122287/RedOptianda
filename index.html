@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-12T00:30-scan-blank-resub-overflow-earn-input">
+<meta name="op-build" content="2026-05-12T01:00-google-sheets-exports">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -3367,11 +3367,11 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     </button>
     <button class="btn blu" style="font-size:11px;padding:6px 10px;white-space:nowrap;min-height:36px;" onclick="fetchPositions()">&#8635; REFRESH</button>
     <button class="btn wrn" style="font-size:11px;padding:6px 10px;white-space:nowrap;min-height:36px;" onclick="clearPositions()">&#10005; CLEAR</button>
-    <!-- 2026-05-10 v2.16.0: positions matrix CSV export. Replaces the
-         portfolio Roll Tracker pattern; this one pulls from live
-         G.positions (Tradier) instead of the manual portfolio data.
-         Columns = accounts, rows = tickers, cells = exp + qty + strike. -->
-    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);font-size:11px;padding:6px 10px;white-space:nowrap;min-height:36px;" onclick="exportPositionsMatrix()" title="Export live positions to CSV — accounts as columns, tickers as rows. Each cell shows exp date / qty / strike for every contract on that ticker.">&#9662; EXPORT CSV</button>
+    <!-- 2026-05-12 v2.17.2: long-form export to Google Sheets. Copies
+         TSV (one row per position with date+time opened, purchase price,
+         ATR exit levels) to clipboard and opens sheets.new — user pastes
+         with Cmd+V. Replaced the matrix CSV download. -->
+    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);font-size:11px;padding:6px 10px;white-space:nowrap;min-height:36px;" onclick="exportPositionsLongForm()" title="Open in Google Sheets — one row per position with date + time opened, purchase price, and ATR exit levels (½ ATR / 1 ATR / Emergency). Copies TSV to clipboard, opens sheets.new in a new tab, paste with ⌘V / Ctrl+V.">&#9662; EXPORT</button>
     <!-- Persistent buying-power badge (2026-05-05). Always visible on the
          positions tab — taps fetchBalances to refresh. The previous pattern
          hid BP behind the SUMMARY toggle which the user reported was
@@ -4489,8 +4489,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         <ul style="padding-left:20px;">
           <li>Click <b>↻ PULL TRADIER</b> on the first column to auto-import live Tradier positions.</li>
           <li>Click <b>+ ADD COLUMN</b> to add another account (paste positions in any format — patterns: "100 AAPL @ 185", "1 NVDA 250 CALL 06/05/26", etc.).</li>
-          <li><b>EXPORT CSV</b> — long-form, one row per position.</li>
-          <li><b>EXPORT MATRIX</b> — wide-form: ticker rows, account columns; useful for spreadsheet aggregation.</li>
+          <li><b>▾ EXPORT MATRIX</b> — opens in Google Sheets. Tickers as rows, accounts as columns; each cell lists every position (exp / qty × strike) for that pair. TSV is copied to your clipboard and a blank sheet opens in a new tab — paste with ⌘V / Ctrl+V.</li>
           <li><b>RESET</b> — clears all columns. Manual entries survive page reloads via localStorage.</li>
         </ul>
       </div>
@@ -5056,7 +5055,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <span id="pf-more-actions" style="display:none;gap:8px;align-items:center;flex-wrap:wrap;">
         <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--amb);color:var(--amb);" onclick="pfCopyAllTickers()" title="Copy comma-separated unique tickers from all columns">COPY ALL TICKERS</button>
         <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--grn);color:var(--grn);" onclick="pfAddColumn()">+ ADD COLUMN</button>
-        <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ambb);color:var(--ambb);" onclick="pfExportRollTracker()" title="Roll tracker CSV — rows are tickers, columns are accounts. Each cell shows all positions (qty × strike type expDate) with a [ ] checkbox you can flip to [x] in your spreadsheet to mark rolled/closed. 3 blank rows at the bottom for new intraday positions.">ROLL TRACKER CSV</button>
+        <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ambb);color:var(--ambb);" onclick="pfExportMatrix()" title="Open in Google Sheets — accounts as columns, tickers as rows. Each cell lists every position for that (ticker, account) pair: exp date / qty / strike. Copies TSV to clipboard, opens sheets.new in a new tab, paste with ⌘V / Ctrl+V.">&#9662; EXPORT MATRIX</button>
         <button class="btn" style="font-size:10px;padding:3px 10px;border-color:var(--ngo);color:var(--ngo);" onclick="pfResetAll()">RESET</button>
       </span>
     </div>
@@ -25880,7 +25879,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.17.1-scan-blank-resub-overflow-earn-input';
+var APP_VERSION = '2.17.2-google-sheets-exports';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -28691,88 +28690,6 @@ function pfExportCSV(){
   toast('CSV exported');
 }
 
-// Wide-form matrix export: accounts as columns, positions with the same
-// ticker/strike/expiry collapse onto one row. Quantities for the same
-// (account × position) are summed (handles duplicate manual rows).
-function pfExportMatrix(){
-  var data = pfLoad();
-  var cols = data.columns;
-  var keyMap = {};
-  cols.forEach(function(col){
-    col.rows.forEach(function(r){
-      if(!r.ticker) return;
-      var ticker = r.ticker.toUpperCase();
-      var kind = r.kind || 'option';
-      var key, strike, exp, type;
-      if(kind === 'shares'){
-        key = ticker + '|shares';
-        strike = null; exp = null; type = null;
-      } else {
-        if(!r.strike || !r.exp) return; // skip half-filled option rows
-        type = (r.type === 'PUT') ? 'PUT' : 'CALL';
-        key = ticker + '|' + r.strike + '|' + r.exp + '|' + type;
-        strike = r.strike; exp = r.exp;
-      }
-      if(!keyMap[key]){
-        keyMap[key] = { ticker:ticker, kind:kind, strike:strike, exp:exp, type:type, cells:{} };
-      }
-      keyMap[key].cells[col.id] = (keyMap[key].cells[col.id] || 0) + (parseInt(r.qty)||0);
-    });
-  });
-  var rows = Object.keys(keyMap).map(function(k){ return keyMap[k]; });
-  if(!rows.length){ toast('Nothing to export — portfolio is empty'); return; }
-  rows.sort(function(a,b){
-    if(a.ticker !== b.ticker) return a.ticker < b.ticker ? -1 : 1;
-    if(a.kind !== b.kind) return a.kind === 'shares' ? 1 : -1; // options before shares
-    if(a.kind === 'option'){
-      if(a.exp !== b.exp) return a.exp < b.exp ? -1 : 1;
-      if((a.strike||0) !== (b.strike||0)) return (a.strike||0) - (b.strike||0);
-      return (a.type||'').localeCompare(b.type||'');
-    }
-    return 0;
-  });
-  // CSV cell escape: wrap in double quotes if value contains comma, quote, or newline.
-  // Doubles any embedded quotes per RFC 4180. Empty/null becomes empty cell.
-  function csvCell(v){
-    if(v == null) return '';
-    var s = String(v);
-    if(s === '') return '';
-    if(/[",\n\r]/.test(s)){
-      return '"' + s.replace(/"/g, '""') + '"';
-    }
-    return s;
-  }
-  // Each field gets its own column. Account quantities = one column per account.
-  // Strike/Type/Expiry are separate columns (not collapsed into one cell).
-  var hdr = ['Ticker','Kind','Type','Strike','Expiry'].concat(cols.map(function(c){ return c.name; }));
-  var lines = [ hdr.map(csvCell).join(',') ];
-  rows.forEach(function(r){
-    var typeCell = r.kind === 'shares' ? '' : (r.type || 'CALL');
-    var strikeCell = r.kind === 'shares' ? '' : (r.strike != null ? r.strike : '');
-    var expCell = r.kind === 'shares' ? '' : fmtDateUS(r.exp);
-    var rowFields = [r.ticker, r.kind, typeCell, strikeCell, expCell];
-    cols.forEach(function(c){
-      var qty = r.cells[c.id];
-      rowFields.push(qty ? String(qty) : '');
-    });
-    lines.push(rowFields.map(csvCell).join(','));
-  });
-  var csv = lines.join('\n');
-  var copied = false;
-  try {
-    if(navigator.clipboard && navigator.clipboard.writeText){
-      navigator.clipboard.writeText(csv);
-      copied = true;
-    }
-  } catch(e){}
-  // BOM prefix so Excel auto-detects UTF-8 (otherwise unicode dashes/symbols break)
-  var blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'portfolio_matrix_'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  toast(rows.length + ' rows exported' + (copied ? ' — CSV copied to clipboard' : ''));
-}
 
 // ═══════════════════════════════════════════════════════════════════════════
 //  ATR PRICE LOOKUP — historical-time price + ATR bands
@@ -28928,27 +28845,60 @@ async function atrLookup(){
 function loadPortfolio(){ /* no-op loader — data loaded on demand in renderPortfolio */ }
 
 // ═══════════════════════════════════════════════════════════════════════════
-//  ROLL TRACKER CSV EXPORT — User spec 2026-05-05
-//  One row per unique ticker. One column per account. Each cell lists every
-//  position for that ticker in that account, one per line, with a [ ]
-//  checkbox the user can flip to [x] in Excel/Sheets to mark rolled/closed.
-//  Three blank rows appended at the bottom for adding new positions
-//  intra-day.
-//
-//  Cell format example:
-//    "2× $185C 2026-06-12 [ ]
-//     1× $190C 2026-07-19 [ ]"
-//  (multi-line cells are CSV-legal when wrapped in double quotes; Excel
-//   and Google Sheets both render the embedded newlines correctly.)
+//  GOOGLE SHEETS EXPORT — copy TSV to clipboard + open a blank sheet
+//  Tabs are preserved as cell separators when pasted into Google Sheets;
+//  embedded newlines inside quoted cells render as line breaks within a
+//  single cell. No OAuth required — the user pastes (Cmd+V / Ctrl+V)
+//  into the new sheet that opens in a new tab.
 // ═══════════════════════════════════════════════════════════════════════════
-function pfExportRollTracker(){
+function _openInGoogleSheet(tsv, toastMsg){
+  var ok = false;
+  try {
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(tsv);
+      ok = true;
+    }
+  } catch(_){}
+  if (!ok){
+    // Fallback: drop the data into a textarea + execCommand('copy') so
+    // older browsers (and any context without async clipboard) still work.
+    try {
+      var ta = document.createElement('textarea');
+      ta.value = tsv;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      document.execCommand('copy');
+      document.body.removeChild(ta);
+      ok = true;
+    } catch(_){}
+  }
+  // Open a fresh blank Google Sheet in a new tab. sheets.new is Google's
+  // official shortlink for "create a new spreadsheet" — no template, no
+  // intermediate landing page.
+  try { window.open('https://sheets.new', '_blank'); } catch(_){}
+  if (typeof toast === 'function'){
+    var pasteHint = ok ? ' — paste with ⌘V / Ctrl+V' : ' — clipboard blocked, retry';
+    toast((toastMsg || 'Exported') + pasteHint);
+  }
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+//  PORTFOLIO MATRIX EXPORT — accounts as columns, tickers as rows
+//  Each cell lists every position for that (ticker, account) pair, one per
+//  line. Format: "exp / qty × strike" (e.g. "06-12-2026 / 2× $185C"). Opens
+//  in a new Google Sheet via clipboard paste. Was the ROLL TRACKER CSV
+//  button — dropped the [ ] checkboxes + 3 blank rows per user spec
+//  2026-05-12 ("export matrix" button, no roll-tracker scaffolding).
+// ═══════════════════════════════════════════════════════════════════════════
+function pfExportMatrix(){
   var data = pfLoad();
   if(!data || !data.columns || !data.columns.length){
     toast('Portfolio empty — add positions first');
     return;
   }
   var cols = data.columns;
-  // Collect all unique tickers across every account.
   var tickerSet = {};
   cols.forEach(function(col){
     (col.rows || []).forEach(function(r){
@@ -28960,27 +28910,24 @@ function pfExportRollTracker(){
     toast('No positions in portfolio yet');
     return;
   }
-  // Build cell content for (ticker × account). Multiple positions for the
-  // same ticker in the same account stack as separate lines in one cell.
-  // Sort lines within a cell by expiration (closest first), then strike.
   function fmtPosLine(r){
     var qty = parseInt(r.qty)||1;
     var kind = r.kind || 'option';
     if(kind === 'shares'){
       var avg = (r.avgPrice != null) ? ' @ $'+(+r.avgPrice).toFixed(2) : '';
-      return qty + ' shares' + avg + ' [ ]';
+      return qty + ' shares' + avg;
     }
     var typeChar = (r.type === 'PUT') ? 'P' : 'C';
     var strikeStr = (r.strike != null) ? '$' + (+r.strike).toFixed(2) + typeChar : '';
     var expStr = fmtDateUS(r.exp);
-    return qty + '× ' + strikeStr + (expStr && expStr !== '--' ? ' ' + expStr : '') + ' [ ]';
+    return (expStr && expStr !== '--' ? expStr + ' / ' : '') + qty + '× ' + strikeStr;
   }
   function buildCell(tk, col){
-    var lines = (col.rows || [])
+    return (col.rows || [])
       .filter(function(r){ return r && r.ticker && r.ticker.toUpperCase() === tk; })
       .sort(function(a, b){
         var ka = a.kind || 'option', kb = b.kind || 'option';
-        if(ka !== kb) return ka === 'shares' ? 1 : -1;  // options first
+        if(ka !== kb) return ka === 'shares' ? 1 : -1;
         if(ka === 'option'){
           var ae = a.exp || '', be = b.exp || '';
           if(ae !== be) return ae < be ? -1 : 1;
@@ -28988,136 +28935,151 @@ function pfExportRollTracker(){
         }
         return 0;
       })
-      .map(fmtPosLine);
-    return lines.join('\n');
+      .map(fmtPosLine)
+      .join('\n');
   }
-  // CSV escape with newline support.
-  function csvCell(v){
+  // TSV escape: tab and newline are special; wrap in quotes when present.
+  // Google Sheets recognizes RFC-4180 quoting on paste.
+  function tsvCell(v){
     if(v == null) return '';
     var s = String(v);
     if(s === '') return '';
-    if(/[",\n\r]/.test(s)){
-      return '"' + s.replace(/"/g, '""') + '"';
-    }
+    if(/[\t"\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
     return s;
   }
-  // Header: TICKER + one column per account
   var hdr = ['TICKER'].concat(cols.map(function(c){ return c.name; }));
-  var lines = [ hdr.map(csvCell).join(',') ];
+  var lines = [ hdr.map(tsvCell).join('\t') ];
   tickers.forEach(function(tk){
     var row = [tk];
     cols.forEach(function(col){ row.push(buildCell(tk, col)); });
-    lines.push(row.map(csvCell).join(','));
+    lines.push(row.map(tsvCell).join('\t'));
   });
-  // Three blank rows at the bottom — TICKER cell empty, all account cells
-  // empty. User can fill in new intraday positions directly in the spreadsheet.
-  for(var i = 0; i < 3; i++){
-    var blankRow = ['']; for(var j = 0; j < cols.length; j++) blankRow.push('');
-    lines.push(blankRow.map(csvCell).join(','));
-  }
-  var csv = lines.join('\n');
-  // BOM prefix so Excel auto-detects UTF-8
-  var blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'roll_tracker_'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
-  toast(tickers.length + ' tickers × ' + cols.length + ' accounts — opens in Excel / Google Sheets');
+  _openInGoogleSheet(lines.join('\n'),
+    tickers.length + ' tickers × ' + cols.length + ' accounts copied');
 }
 
-// ─── POSITIONS MATRIX CSV EXPORT (v2.16.0) ─────────────────────────────
-// User spec 2026-05-10: "create a button that exports all positions by
-// account (columns) and tickers (rows) with the exp date, # of contracts
-// and Strike price in the appropriate cells".
+// ─── POSITIONS LONG-FORM EXPORT (v2.17.2) ──────────────────────────────
+// User spec 2026-05-12: "include the date and time opened in separate
+// columns along with the purchase price and atr levels — export into a
+// google sheet."
 //
-// Pulls from live G.positions (Tradier-fetched) instead of manual
-// portfolio data. Account number resolved from G.acctId (single account
-// per session today; if multi-account is added, this naturally extends
-// to one column per account by grouping G.positions by p.account).
-function exportPositionsMatrix(){
+// One row per position with: ticker, type, strike, exp, qty, date+time
+// opened (separate cols), per-contract purchase price, stock price + ATR
+// snapshot at open, and the three ATR exit prices (½ ATR / 1 ATR / 2 ATR
+// emergency). Pulls from live G.positions; open-time metadata + ATR
+// snapshot come from G.posOpenData (same source the Positions table
+// uses to render the 1/2 ATR / 1 ATR / EMERGENCY columns).
+function exportPositionsLongForm(){
   var pos = (typeof G !== 'undefined' && Array.isArray(G.positions)) ? G.positions : [];
   if (!pos.length){
-    if (typeof toast === 'function') toast('No positions to export — click REFRESH first');
+    toast('No positions to export — click REFRESH first');
     return;
   }
-  // Group by account → ticker → list of contract lines.
-  var byAcct = {};
-  pos.forEach(function(p){
-    if (!p) return;
-    var acct = p.account || (typeof G !== 'undefined' && G.acctId) || 'ACCOUNT';
-    var tk = (p.underlying || p.symbol || '').toString().toUpperCase();
-    if (!tk) return;
-    if (!byAcct[acct]) byAcct[acct] = {};
-    if (!byAcct[acct][tk]) byAcct[acct][tk] = [];
-    byAcct[acct][tk].push(p);
-  });
-  var accounts = Object.keys(byAcct).sort();
-  // Union of all tickers across accounts.
-  var tickerSet = {};
-  accounts.forEach(function(a){
-    Object.keys(byAcct[a]).forEach(function(t){ tickerSet[t] = true; });
-  });
-  var tickers = Object.keys(tickerSet).sort();
-  if (!tickers.length){
-    if (typeof toast === 'function') toast('No positions to export');
-    return;
-  }
-  // Format one position into "MM/DD/YYYY × Nq × $Strike" (or "Nq shares @ $X" for stock).
-  function fmtPos(p){
-    var qty = Math.abs(parseInt(p.qty) || 0);
-    if (p.type === 'STOCK'){
-      return qty + ' shares';
-    }
-    var typeChar = (p.type === 'PUT') ? 'P' : 'C';
-    var strike = (p.strike != null) ? '$' + (+p.strike).toFixed(2) + typeChar : '';
-    var expRaw = p.exp || '';
-    var expFmt = (typeof fmtDateUS === 'function' && expRaw) ? fmtDateUS(expRaw) : expRaw;
-    return (expFmt || '--') + ' × ' + qty + ' × ' + strike;
-  }
-  function buildCell(tk, acct){
-    var list = (byAcct[acct] && byAcct[acct][tk]) || [];
-    return list
-      .slice()
-      .sort(function(a, b){
-        // Stocks last; within options, sort by exp then strike
-        var aStock = a.type === 'STOCK', bStock = b.type === 'STOCK';
-        if (aStock !== bStock) return aStock ? 1 : -1;
-        if (!aStock){
-          var ae = a.exp || '', be = b.exp || '';
-          if (ae !== be) return ae < be ? -1 : 1;
-          return (parseFloat(a.strike) || 0) - (parseFloat(b.strike) || 0);
-        }
-        return 0;
-      })
-      .map(fmtPos)
-      .join('\n');
-  }
-  function csvCell(v){
+  function tsvCell(v){
     if (v == null) return '';
     var s = String(v);
     if (s === '') return '';
-    if (/[",\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+    if (/[\t"\n\r]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
     return s;
   }
-  var hdr = ['TICKER'].concat(accounts);
-  var lines = [ hdr.map(csvCell).join(',') ];
-  tickers.forEach(function(tk){
-    var row = [tk];
-    accounts.forEach(function(a){ row.push(buildCell(tk, a)); });
-    lines.push(row.map(csvCell).join(','));
-  });
-  var csv = lines.join('\n');
-  // BOM prefix so Excel auto-detects UTF-8
-  var blob = new Blob(['﻿' + csv], {type:'text/csv;charset=utf-8'});
-  var a = document.createElement('a');
-  a.href = URL.createObjectURL(blob);
-  a.download = 'positions_'+new Date().toISOString().slice(0,10)+'.csv';
-  document.body.appendChild(a); a.click(); document.body.removeChild(a);
-  setTimeout(function(){ URL.revokeObjectURL(a.href); }, 1000);
-  if (typeof toast === 'function'){
-    toast(tickers.length + ' tickers × ' + accounts.length + ' account(s) exported');
+  function fmtUsd(n){ return (n != null && isFinite(n) && n > 0) ? '$' + (+n).toFixed(2) : ''; }
+  function fmtUsdSigned(n){
+    if (n == null || !isFinite(n)) return '';
+    return (n < 0 ? '-$' : '$') + Math.abs(+n).toFixed(2);
   }
+  // Split an ISO/Date string into a US date + 12-hour time pair so the
+  // user can sort or filter on either dimension in Sheets.
+  function splitOpenTs(p){
+    var raw = (G.posOpenData && G.posOpenData[p.symbol] && G.posOpenData[p.symbol].openTs)
+      || p.openTs || p.dateAcquired || '';
+    if (!raw) return { date: '', time: '' };
+    var d = new Date(raw);
+    if (isNaN(d.getTime())) return { date: String(raw), time: '' };
+    var mm = String(d.getMonth() + 1).padStart(2, '0');
+    var dd = String(d.getDate()).padStart(2, '0');
+    var yyyy = d.getFullYear();
+    var hh24 = d.getHours();
+    var min = String(d.getMinutes()).padStart(2, '0');
+    var ampm = hh24 >= 12 ? 'PM' : 'AM';
+    var hh12 = hh24 % 12; if (hh12 === 0) hh12 = 12;
+    return { date: mm + '-' + dd + '-' + yyyy, time: hh12 + ':' + min + ' ' + ampm };
+  }
+  // Per-contract purchase price. cost_basis on Tradier is total dollars
+  // paid; divide by qty and 100 (option multiplier) for options, or just
+  // by qty for stock.
+  function purchasePerUnit(p){
+    var pod = (G.posOpenData && G.posOpenData[p.symbol]) || {};
+    var basis = (pod.costBasis != null) ? pod.costBasis : p.cost;
+    var qty = Math.abs(pod.qty || parseInt(p.qty) || 0);
+    if (!basis || !qty) return null;
+    var mult = (p.type === 'STOCK') ? 1 : 100;
+    return basis / qty / mult;
+  }
+  // Anchor underlying + ATR — prefer the entry snapshot so the export
+  // matches the static values shown in the positions table. Fall back to
+  // live ATR computed from the cached history when no snapshot exists
+  // (mirrors the table's "(live)" fallback path).
+  function anchorAtr(p){
+    var pod = (G.posOpenData && G.posOpenData[p.symbol]) || {};
+    var ul = pod.underlyingAtOpen || p.underlyingAtOpen || 0;
+    var atr = pod.entryAtr14 || 0;
+    if (!atr && p.underlying){
+      try {
+        var hist = (typeof loadHistCache === 'function') ? loadHistCache(p.underlying) : null;
+        if (hist && hist.length >= 15 && typeof computeATR === 'function'){
+          atr = computeATR(hist, 14) || 0;
+          if (!ul) ul = p.underlyingNow || 0;
+        }
+      } catch(_){}
+    }
+    return { ul: ul, atr: atr };
+  }
+  var headers = [
+    'TICKER','TYPE','STRIKE','EXP','QTY',
+    'DATE OPENED','TIME OPENED',
+    'PURCHASE PRICE',
+    'STOCK PRICE AT OPEN','ATR(14) AT OPEN',
+    '1/2 ATR EXIT','1 ATR EXIT','EMERGENCY EXIT',
+    'CURRENT PRICE','P/L $','P/L %'
+  ];
+  var lines = [ headers.map(tsvCell).join('\t') ];
+  // Sort like the table: options first by DTE asc (soonest expiry), stocks last.
+  var sorted = pos.slice().sort(function(a, b){
+    var aStock = a.type === 'STOCK', bStock = b.type === 'STOCK';
+    if (aStock !== bStock) return aStock ? 1 : -1;
+    var ae = a.exp || '', be = b.exp || '';
+    if (ae !== be) return ae < be ? -1 : 1;
+    return 0;
+  });
+  sorted.forEach(function(p){
+    if (!p) return;
+    var ts = splitOpenTs(p);
+    var purchase = purchasePerUnit(p);
+    var aa = anchorAtr(p);
+    var halfAtrExit = (aa.ul > 0 && aa.atr > 0) ? aa.ul - 0.5 * aa.atr : null;
+    var oneAtrExit  = (aa.ul > 0 && aa.atr > 0) ? aa.ul - 1.0 * aa.atr : null;
+    var emergExit   = (aa.ul > 0 && aa.atr > 0) ? aa.ul - 2.0 * aa.atr : null;
+    var row = [
+      (p.underlying || p.symbol || '').toString().toUpperCase(),
+      p.type || '',
+      p.type === 'STOCK' ? '' : (p.strike != null ? '$' + (+p.strike).toFixed(2) : ''),
+      p.type === 'STOCK' ? '' : (p.exp ? fmtDateUS(p.exp) : ''),
+      String(Math.abs(parseInt(p.qty) || 0)),
+      ts.date,
+      ts.time,
+      fmtUsd(purchase),
+      fmtUsd(aa.ul),
+      fmtUsd(aa.atr),
+      fmtUsd(halfAtrExit),
+      fmtUsd(oneAtrExit),
+      fmtUsd(emergExit),
+      fmtUsd(p.last),
+      fmtUsdSigned(p.pnl),
+      (p.pnlPct != null && isFinite(p.pnlPct)) ? (+p.pnlPct).toFixed(2) + '%' : ''
+    ];
+    lines.push(row.map(tsvCell).join('\t'));
+  });
+  _openInGoogleSheet(lines.join('\n'), pos.length + ' positions copied');
 }
 
 // ─── END PORTFOLIO BUILDER ENGINE ──────────────────────────────────────
