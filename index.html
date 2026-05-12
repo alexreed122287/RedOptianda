@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-12T06:00-anchor-prevclose-cache">
+<meta name="op-build" content="2026-05-12T06:15-history-seed-anchors">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -26202,6 +26202,53 @@ setInterval(function(){
   if (document.hidden) return;  // v2.17.3: skip UI mirror work when tab is backgrounded
   try { _mirrorIndicesToDup(); } catch(_){}
 }, 1000);
+// v2.18.12: one-shot fetch of the most recent daily-bar close to seed
+// the anchor cache when Tradier's quote endpoint returns degraded AH
+// payload (last only, everything else zero). Deduped per symbol per
+// session so a 60s poll loop doesn't refire it. The result lives in
+// the same 'rrjcar_idx_anchor' map the inline recompute path reads.
+var _IDX_HIST_INFLIGHT = {};
+function _seedIdxAnchorFromHistory(sym, key, host){
+  if (!key || !sym || _IDX_HIST_INFLIGHT[sym]) return;
+  _IDX_HIST_INFLIGHT[sym] = true;
+  // Fetch the last 10 calendar days of daily bars and use the most
+  // recent prior bar's close. Last-10-days handles weekends / holidays
+  // without us having to math out "the most recent trading day".
+  var end = new Date();
+  var start = new Date(end.getTime() - 10*24*60*60*1000);
+  var fmt = function(d){ return d.toISOString().slice(0,10); };
+  var url = host + '/v1/markets/history?symbol=' + encodeURIComponent(sym)
+          + '&interval=daily&start=' + fmt(start) + '&end=' + fmt(end);
+  fetch(url, { headers:{Authorization:'Bearer '+key, Accept:'application/json'} })
+    .then(function(r){ return r.json(); })
+    .then(function(data){
+      var bars = [];
+      try {
+        var d = data && data.history && data.history.day;
+        if (d) bars = Array.isArray(d) ? d : [d];
+      } catch(_){}
+      if (!bars.length) { _IDX_HIST_INFLIGHT[sym] = false; return; }
+      // Newest bar = today's RTH close (if market closed) or yesterday's.
+      // We want YESTERDAY relative to "now": the bar with date < today.
+      // Sort desc by date and pick the first one we don't think is "today
+      // intraday in progress" — simplest: take the last bar in the
+      // returned series (sorted asc by Tradier).
+      var lastBar = bars[bars.length - 1];
+      var close = lastBar && parseFloat(lastBar.close);
+      if (!close || close <= 0) { _IDX_HIST_INFLIGHT[sym] = false; return; }
+      try {
+        var anchors = JSON.parse(localStorage.getItem('rrjcar_idx_anchor') || '{}') || {};
+        anchors[sym] = { prev: close, ts: Date.now(), src: 'history' };
+        localStorage.setItem('rrjcar_idx_anchor', JSON.stringify(anchors));
+      } catch(_){}
+      // Re-render the ribbon with the freshly-seeded anchor so the user
+      // sees a real % within ~1s of opening the dashboard.
+      try { updateHeaderQuotes(); } catch(_){}
+      _IDX_HIST_INFLIGHT[sym] = false;
+    })
+    .catch(function(){ _IDX_HIST_INFLIGHT[sym] = false; });
+}
+
 function updateHeaderQuotes(){
   var key=_getTradierKey();
   var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
@@ -26329,9 +26376,14 @@ function updateHeaderQuotes(){
       // 0% is bogus and we should recompute.
       var priceVsPrevNonzero = prevC > 0 && price > 0 && Math.abs(price - prevC) > 0.0001;
       var hasAnchorPrev = anchorPrev > 0 && price > 0 && Math.abs(price - anchorPrev) > 0.0001;
-      // suspiciousZero fires when API says 0 but any independent source
-      // (prevclose, change USD, or our anchored prevclose) disagrees.
-      var suspiciousZero = hasApiPct && rawNum === 0 && (priceVsPrevNonzero || hasChangeUsd || hasAnchorPrev);
+      // v2.18.12: ANY 0% from the API is suspicious when we have a real
+      // current price. Tradier's AH "degraded" payload returns only
+      // `last` and zeros for every comparable field — including the
+      // ones we used to gate "suspicious" on. Now we treat the 0% as
+      // unproven until at least one recompute path produces a usable
+      // value. If all fail, we kick off an async history fetch to
+      // seed the anchor for the next poll.
+      var suspiciousZero = hasApiPct && rawNum === 0 && price > 0;
       if (ahFlatDaily){
         chgPct = ((todayC - prevC) / prevC) * 100;
       } else if (hasApiPct && !suspiciousZero){
@@ -26364,6 +26416,15 @@ function updateHeaderQuotes(){
         if ((chgPct === undefined || isNaN(chgPct)) && typeof ahDelta === 'function'){
           var ahd = ahDelta(q);
           if (ahd && ahd.pct) chgPct = ahd.pct;
+        }
+        // v2.18.12: FINAL — if every fast path failed AND we don't yet
+        // have an anchor for this symbol, fire a Tradier `/markets/history`
+        // call to grab yesterday's daily-bar close. The fetch is async;
+        // on completion we update the anchor cache + re-fire
+        // updateHeaderQuotes so the ribbon catches up. Deduped per
+        // symbol so a rapid poll loop doesn't fire repeat history calls.
+        if ((chgPct === undefined || isNaN(chgPct) || chgPct === 0) && price > 0){
+          _seedIdxAnchorFromHistory(p.sym, key, host);
         }
         if (chgPct === undefined || isNaN(chgPct)) chgPct = 0;
       }
@@ -26403,7 +26464,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.18.11-anchor-prevclose-cache';
+var APP_VERSION = '2.18.12-history-seed-anchors';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
