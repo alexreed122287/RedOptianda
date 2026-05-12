@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-12T01:00-google-sheets-exports">
+<meta name="op-build" content="2026-05-12T02:00-audit-fixes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -84,7 +84,7 @@ if (window.OP_ONESIGNAL_APP_ID) {
 }
 </script>
 <title>OPTION PANDA</title>
-<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <style>
 :root{
   --bg0:#050d14;--bg1:#071018;--bg2:#0b1522;--bg3:#111b2e;
@@ -2966,7 +2966,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 .tbl-wrap tbody tr:hover td{background:var(--amb3);}
 
 </style>
-<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/echarts/5.5.0/echarts.min.js" defer></script>
 </head>
 <body>
 <div id="splash-overlay" style="position:fixed;inset:0;z-index:99999;background:#000;display:flex;align-items:center;justify-content:center;flex-direction:column;transition:opacity 0.6s ease;" onclick="_dismissSplash()">
@@ -3247,6 +3247,13 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
          scores trend ~10 pts higher, so the historical "GO rate" at 89 became
          too permissive. 100 preserves the prior selectivity. Adjust to taste. -->
     <label>Min Score <input type="number" id="sc-minscore" value="130" style="width:80px;" onchange="reclassifyGoThreshold()" title="Default 130 — empirically calibrated to the observed score distribution (peaks 140-160 on a ~164-pt practical max). 130 surfaces real setups instead of an empty list. Strategy presets override with their own per-strategy thresholds: HC 145, Breakout 125, Momentum 120, Best ITM 150, Pre/Post 145."></label>
+    <!-- v2.17.3: long-call entry filters. Max premium = upper bound on the
+         suggested call's mid price ($/contract before ×100). DTE range
+         filters out too-short / too-long expiries. Both apply only when
+         GEX scan has run (so suggested contracts are populated). -->
+    <label title="Max premium per contract on the suggested call (mid price, $). Leave blank for no cap. Applies to tickers with GEX coverage; others stay visible.">Max $ <input type="number" id="sc-max-premium" value="" placeholder="any" step="0.05" min="0" style="width:70px;" onchange="applyFilters()" inputmode="decimal"></label>
+    <label title="Min DTE on the suggested expiry. 25 keeps you out of gamma-decay danger zone.">DTE ≥ <input type="number" id="sc-min-dte" value="25" min="0" max="365" style="width:60px;" onchange="applyFilters()" inputmode="numeric"></label>
+    <label title="Max DTE — capping at 60 keeps theta from eating into the trade thesis. Increase for swing/positional plays.">DTE ≤ <input type="number" id="sc-max-dte" value="60" min="0" max="365" style="width:60px;" onchange="applyFilters()" inputmode="numeric"></label>
     <button class="btn" onclick="applyFilters()">FILTER</button>
     <button class="btn" onclick="clearFilters()" style="border-color:var(--gry2);color:var(--gry);">CLEAR</button>
   </div>
@@ -3818,13 +3825,13 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
           <input id="ord-stop" type="number" inputmode="decimal" placeholder="0.00" step="0.01">
         </div>
         <div class="ord-field" style="flex:0.5;display:flex;align-items:flex-end;">
-          <button class="btn" style="font-size:10px;padding:3px 8px;width:100%;" onclick="setLimitToBid()" title="Set limit price to current bid">SET BID</button>
+          <button class="btn" style="font-size:11px;padding:8px 12px;width:100%;min-height:40px;" onclick="setLimitToBid()" title="Set limit price to current bid">SET BID</button>
         </div>
         <div class="ord-field" style="flex:0.5;display:flex;align-items:flex-end;">
-          <button class="btn" style="font-size:10px;padding:3px 8px;width:100%;" onclick="setLimitToMid()" title="Set limit price to current mid">SET MID</button>
+          <button class="btn" style="font-size:11px;padding:8px 12px;width:100%;min-height:40px;" onclick="setLimitToMid()" title="Set limit price to current mid">SET MID</button>
         </div>
         <div class="ord-field" style="flex:0.5;display:flex;align-items:flex-end;">
-          <button class="btn" style="font-size:10px;padding:3px 8px;width:100%;border-color:var(--blu3);color:var(--blub);" onclick="setLimitToAsk()" title="Set limit price to current ask (best for closing/selling)">SET ASK</button>
+          <button class="btn" style="font-size:11px;padding:8px 12px;width:100%;min-height:40px;border-color:var(--blu3);color:var(--blub);" onclick="setLimitToAsk()" title="Set limit price to current ask (best for closing/selling)">SET ASK</button>
         </div>
       </div>
 
@@ -5513,7 +5520,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <span id="chart-modal-sub" style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);flex:1;text-align:left;min-width:60px;">--</span>
       <button class="btn blu" id="chart-modal-tf-d" onclick="chartModalSetTf('D')" style="font-size:10px;padding:5px 12px;">DAILY</button>
       <button class="btn" id="chart-modal-tf-1m" onclick="chartModalSetTf('1m')" style="font-size:10px;padding:5px 12px;">1 MIN</button>
-      <button onclick="closeChartModal()" title="Close (Esc)" style="background:transparent;border:1px solid var(--bg3);color:var(--gry);font-size:18px;font-weight:700;width:32px;height:32px;border-radius:4px;cursor:pointer;line-height:1;padding:0;">&#10005;</button>
+      <button onclick="closeChartModal()" title="Close (Esc)" style="background:transparent;border:1px solid var(--bg3);color:var(--gry);font-size:18px;font-weight:700;min-width:44px;min-height:44px;border-radius:4px;cursor:pointer;line-height:1;padding:0;">&#10005;</button>
     </div>
     <div id="chart-modal-canvas-wrap" style="flex:1;position:relative;background:#ffffff;min-height:0;">
       <div id="chart-modal-canvas" style="position:absolute;inset:0;"></div>
@@ -9225,7 +9232,18 @@ function fetchStockQuote(creds,sym){
       chg:chg,chgPct:chgPct,isOption:false,sym:sym,
       rawQuote:q
     });
-  }).catch(function(){showSimQuote(sym,'STOCK');});
+  }).catch(function(err){
+    showSimQuote(sym,'STOCK');
+    // v2.17.3: surface the failure so the user doesn't trade on a silent
+    // SIM quote thinking it's real. Rate-limited via _qToastTs so a
+    // throttled session doesn't fire dozens of toasts.
+    try {
+      if (!G._qToastTs || (Date.now() - G._qToastTs) > 30000){
+        G._qToastTs = Date.now();
+        if (typeof toast === 'function') toast('Quote fetch failed for '+sym+' — showing SIM');
+      }
+    } catch(_){}
+  });
 }
 
 function fetchOptionQuote(creds,underlying,occSym){
@@ -9270,9 +9288,15 @@ function fetchOptionQuote(creds,underlying,occSym){
       greeks: optQ.greeks || null,
       underlyingPrice: ulQ ? parseFloat(ulQ.last||ulQ.prevclose||0) : 0
     });
-  }).catch(function(){
+  }).catch(function(err){
     // Fallback: just quote the underlying
     fetchStockQuote(creds,underlying);
+    try {
+      if (!G._qToastTs || (Date.now() - G._qToastTs) > 30000){
+        G._qToastTs = Date.now();
+        if (typeof toast === 'function') toast('Option quote failed for '+occSym+' — using underlying only');
+      }
+    } catch(_){}
   });
 }
 
@@ -10171,19 +10195,19 @@ function openOrderStatusModal(ctx){
     +         '<span id="osm-r-current-display" style="margin-left:auto;color:var(--gry2);">--</span>'
     +       '</div>'
     +       '<div id="osm-r-chain-row" style="display:none;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--ff-mono);font-size:10px;margin-bottom:8px;">'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>EXPIRATION</span><select id="osm-r-exp" onchange="osmResubExpChange()" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;text-overflow:ellipsis;"><option value="">(loading…)</option></select></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>STRIKE</span><select id="osm-r-strike" onchange="osmResubStrikeChange()" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;text-overflow:ellipsis;"><option value="">(pick expiry)</option></select></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--ambb);min-width:0;font-weight:600;letter-spacing:.3px;"><span>EXPIRATION</span><select id="osm-r-exp" onchange="osmResubExpChange()" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ambb) 50%),linear-gradient(135deg,var(--ambb) 50%,transparent 50%);background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:24px;"><option value="">(loading…)</option></select></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--ambb);min-width:0;font-weight:600;letter-spacing:.3px;"><span>STRIKE</span><select id="osm-r-strike" onchange="osmResubStrikeChange()" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ambb) 50%),linear-gradient(135deg,var(--ambb) 50%,transparent 50%);background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:24px;"><option value="">(pick expiry)</option></select></label>'
     +       '</div>'
     +       '<div id="osm-r-chain-table-wrap" style="display:none;background:var(--bg0);border:var(--bdr);border-radius:4px;max-height:170px;overflow-y:auto;margin-bottom:8px;-webkit-overflow-scrolling:touch;">'
     +         '<div id="osm-r-chain-table" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);padding:6px 8px;">Pick an expiry to view the chain&hellip;</div>'
     +       '</div>'
     +       '<div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--ff-mono);font-size:10px;">'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>LIMIT $</span><input type="number" id="osm-r-lmt" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>STEP $</span><input type="number" id="osm-r-step" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>MAX ATTEMPTS</span><input type="number" id="osm-r-max" min="1" max="50" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>DELAY (sec)</span><input type="number" id="osm-r-delay" min="1" max="120" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>QTY</span><input type="number" id="osm-r-qty" min="1" max="999" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
-    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--gry);min-width:0;"><span>START FROM</span><select id="osm-r-start" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;text-overflow:ellipsis;"><option value="bid">Bid</option><option value="mid">Mid</option><option value="ask">Ask</option></select></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--ambb);min-width:0;font-weight:600;letter-spacing:.3px;"><span>LIMIT $</span><input type="number" id="osm-r-lmt" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--ambb);min-width:0;font-weight:600;letter-spacing:.3px;"><span>STEP $</span><input type="number" id="osm-r-step" step="0.01" min="0.01" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--ambb);min-width:0;font-weight:600;letter-spacing:.3px;"><span>MAX ATTEMPTS</span><input type="number" id="osm-r-max" min="1" max="50" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--ambb);min-width:0;font-weight:600;letter-spacing:.3px;"><span>DELAY (sec)</span><input type="number" id="osm-r-delay" min="1" max="120" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--ambb);min-width:0;font-weight:600;letter-spacing:.3px;"><span>QTY</span><input type="number" id="osm-r-qty" min="1" max="999" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;"></label>'
+    +         '<label style="display:flex;flex-direction:column;gap:2px;color:var(--ambb);min-width:0;font-weight:600;letter-spacing:.3px;"><span>START FROM</span><select id="osm-r-start" style="background:var(--bg0);border:var(--bdr);border-radius:3px;color:var(--wht);font-family:var(--ff-mono);font-size:11px;padding:5px 7px;width:100%;min-width:0;box-sizing:border-box;appearance:none;-webkit-appearance:none;background-image:linear-gradient(45deg,transparent 50%,var(--ambb) 50%),linear-gradient(135deg,var(--ambb) 50%,transparent 50%);background-position:calc(100% - 15px) 50%,calc(100% - 10px) 50%;background-size:5px 5px,5px 5px;background-repeat:no-repeat;padding-right:24px;"><option value="bid">Bid</option><option value="mid">Mid</option><option value="ask">Ask</option></select></label>'
     +       '</div>'
     +       '<div style="display:flex;gap:8px;margin-top:10px;">'
     +         '<button class="btn blu" id="osm-resubmit-btn" style="flex:1;padding:9px;font-weight:700;font-size:12px;" onclick="resubmitFromModal()">&#9658; RESUBMIT</button>'
@@ -12481,7 +12505,6 @@ function startEquityTrailPoller(){
     return G.equityTrail[k] && G.equityTrail[k].status === 'active';
   });
   if(!active) return;
-  console.log('[eq-trail] Starting poller — '+Object.keys(G.equityTrail).length+' entries');
   // Run once immediately, then every 30s
   runEquityTrailCheck();
   G.equityTrailTimer = setInterval(runEquityTrailCheck, 30000);
@@ -13891,10 +13914,20 @@ async function checkSmartExits(){
     return;
   }
   G._smartExitRunning = true;
+  // v2.17.3: 5-min watchdog so a hung impl (network never resolves the
+  // promise) can't stick the flag forever and block all future evals.
+  if (G._smartExitWatchdog) clearTimeout(G._smartExitWatchdog);
+  G._smartExitWatchdog = setTimeout(function(){
+    if (G._smartExitRunning){
+      console.warn('[smart-exit] watchdog clearing stuck inflight flag after 5min');
+      G._smartExitRunning = false;
+    }
+  }, 5 * 60 * 1000);
   try {
     await _checkSmartExitsImpl();
   } finally {
     G._smartExitRunning = false;
+    if (G._smartExitWatchdog) { clearTimeout(G._smartExitWatchdog); G._smartExitWatchdog = null; }
   }
 }
 
@@ -15487,7 +15520,11 @@ function scoreIt(ticker, ind, opt){
     minerviniDetail = passCount + '/6 (px>MA50:'+(c1?'✓':'✗')+' px>MA150:'+(c2?'✓':'✗')+' px>MA200:'+(c3?'✓':'✗')+' stack:'+(c4?'✓':'✗')+' MA200↑:'+(c5?'✓':'✗')+' +'+pctAboveLow.toFixed(0)+'%>52wkLo:'+(c6?'✓':'✗')+')';
   }
   if (minerviniOk) { score += 15; techScore += 15; }
-  res.push({n:'Minervini Trend Template', pass:minerviniOk, val:minerviniDetail, filter:false, pts:15, isHist:true});
+  // dataGap distinguishes "not enough history to evaluate" from a genuine
+  // failed trend. v2.17.3: prevents fresh IPOs / new symbols from being
+  // penalized indistinguishably from stocks that actually failed the test.
+  var minerviniDataGap = !histDays || histDays.length < 210;
+  res.push({n:'Minervini Trend Template', pass:minerviniOk, val:minerviniDetail, filter:false, pts:15, isHist:true, dataGap:minerviniDataGap});
 
   // ── RULE: Pocket Pivot (O'Neil/Morales-Kacher, +15) ───────────────────
   // Today's volume > largest down-day volume of prior 10 days,
@@ -18385,6 +18422,10 @@ function applyFilters(){
   var sig     = eid('sc-sig').value;
   var minsc   = +eid('sc-minscore').value||0;
   var maxOptPr= parseFloat(eid('sc-maxoptprice') ? eid('sc-maxoptprice').value : 0) || 0;
+  // v2.17.3: long-call entry filters
+  var maxPremium = parseFloat(eid('sc-max-premium') ? eid('sc-max-premium').value : '') || 0;
+  var minDte = parseInt(eid('sc-min-dte') ? eid('sc-min-dte').value : '') || 0;
+  var maxDte = parseInt(eid('sc-max-dte') ? eid('sc-max-dte').value : '') || 0;
 
   // Indicator filter checkboxes
   var needAnalyst = getIndFilter('filt-analyst');
@@ -18437,6 +18478,16 @@ function applyFilters(){
     if (!themeAllowed(rTheme)) return false;
     // Max option price filter \u2014 uses last known option price from scan or detail fetch
     if(maxOptPr > 0 && r.opt && r.opt.optPr > 0 && r.opt.optPr > maxOptPr) return false;
+
+    // v2.17.3: long-call entry filters \u2014 applied against the suggested call
+    // captured during GEX scan. When GEX hasn't run for a ticker, we leave
+    // the row visible (don't penalize on missing data; user can run GEX).
+    var gx = gexMap[r.ticker];
+    if (gx){
+      if (maxPremium > 0 && gx.sugMid != null && gx.sugMid > maxPremium) return false;
+      if (minDte > 0 && gx.dte != null && gx.dte < minDte) return false;
+      if (maxDte > 0 && gx.dte != null && gx.dte > maxDte) return false;
+    }
 
     // OB filters (SMC + Institutional) \u2014 require cached daily bars
     if(needOBClear || needOBSup || needInstOBClear || needInstOBSup){
@@ -18647,6 +18698,10 @@ function clearFilters(){
   if(eid('sc-sig'))         eid('sc-sig').value  = '';   // 'All' — shows both GO and NO-GO
   if(eid('sc-minscore'))    eid('sc-minscore').value = '130';  // calibrated to observed distribution mid-top
   if(eid('sc-maxoptprice')) eid('sc-maxoptprice').value = '';
+  // v2.17.3: reset long-call entry filters
+  if(eid('sc-max-premium')) eid('sc-max-premium').value = '';
+  if(eid('sc-min-dte'))     eid('sc-min-dte').value = '25';
+  if(eid('sc-max-dte'))     eid('sc-max-dte').value = '60';
   // Reset sector multi-select to "all"
   G.selectedSectors = new Set();
   saveSelectedSectors();
@@ -18827,15 +18882,38 @@ function copyExportModalText(){
 
 function sortTable(col){
   if(G.sortCol===col)G.sortDir*=-1;else{G.sortCol=col;G.sortDir=-1;}
+  // v2.17.3: build a ticker\u2192GEX map once instead of running .filter() on
+  // G.gexData per row per comparison. Old path was O(n\u00b7m); now O(n+m).
+  var gexMap = null;
+  if ((col==='gexFlow' || col==='gexCall' || col==='bullishComp') && G.gexData){
+    gexMap = {};
+    for (var gi=0; gi<G.gexData.length; gi++){
+      var gx = G.gexData[gi]; if (gx && gx.t) gexMap[gx.t] = gx;
+    }
+  }
   G.filtered.sort(function(a,b){
     if(col==='ticker'||col==='sector') return G.sortDir*(a[col]<b[col]?-1:a[col]>b[col]?1:0);
-    // GEX columns \u2014 look up from gexMap
     if(col==='gexFlow'||col==='gexCall'){
-      var ga = G.gexData ? G.gexData.filter(function(g){return g.t===a.ticker;})[0] : null;
-      var gb = G.gexData ? G.gexData.filter(function(g){return g.t===b.ticker;})[0] : null;
-      var va = ga ? ga.call : 0;
-      var vb = gb ? gb.call : 0;
-      return G.sortDir*(va-vb);
+      var ga = gexMap ? gexMap[a.ticker] : null;
+      var gb = gexMap ? gexMap[b.ticker] : null;
+      return G.sortDir*((ga?ga.call:0)-(gb?gb.call:0));
+    }
+    if(col==='bullishComp'){
+      // v2.17.3: composite "most likely to be profitable for long calls"
+      // sort. Combines (a) the scanner score (already captures momentum +
+      // trend + breakout), (b) GEX call% above the 70 bullish floor as
+      // dealer-positioning confirmation, and (c) net GEX sign as a tie
+      // breaker (positive gamma = dampened vol, friendlier for premium).
+      var ga2 = gexMap ? gexMap[a.ticker] : null;
+      var gb2 = gexMap ? gexMap[b.ticker] : null;
+      function comp(r, gx){
+        var s = (r.score || 0);
+        var cp = gx ? (gx.call || 0) : 0;
+        var bonus = cp >= 70 ? (cp - 70) * 0.6 : -((70 - cp) * 0.2);
+        var gexSign = gx && gx.gex > 0 ? 4 : 0;
+        return s + bonus + gexSign;
+      }
+      return G.sortDir*(comp(a, ga2) - comp(b, gb2));
     }
     return G.sortDir*(a[col]-b[col]);
   });
@@ -18937,6 +19015,10 @@ function renderScan(){
   if(hasGex){
     cols.push({k:'gexFlow',l:'FLOW'});
     cols.push({k:'gexCall',l:'CALL%'});
+    // v2.17.3: SUGGESTED column shows the candidate long call (strike +
+    // exp + mid) so the user doesn't have to dive into the chain picker.
+    cols.push({k:'sugContract',l:'SUGGESTED'});
+    cols.push({k:'bullishComp',l:'BULL ★'});
   }
 
   var th='';
@@ -19102,8 +19184,21 @@ function renderScan(){
         var callCls=gx.call>=55?'pnl-pos':'pnl-neg';
         rows+='<td class="col-hide-mobile">'+flowBadge+'</td>'
           +'<td class="col-hide-mobile '+callCls+'" style="font-size:11px;">'+gx.call+'%</td>';
+        // v2.17.3: SUGGESTED column \u2014 strike / exp / mid for the picked call
+        var sugCell;
+        if (gx.sugStrike && gx.sugMid != null && gx.exp){
+          var expShort = fmtDateUS(gx.exp);
+          sugCell = '<td class="col-hide-mobile" style="font-family:var(--ff-mono);font-size:10px;color:var(--ambb);white-space:nowrap;" title="Suggested long call: '+gx.sugStrike+'C exp '+gx.exp+' \u00b7 bid '+fmt2(gx.sugBid||0)+' / ask '+fmt2(gx.sugAsk||0)+' \u00b7 '+gx.dte+'d">$'+gx.sugStrike+'C '+expShort+' <span style="color:var(--grn);font-weight:700;">$'+fmt2(gx.sugMid)+'</span></td>';
+        } else {
+          sugCell = '<td class="col-hide-mobile" style="color:var(--gry);font-size:10px;">--</td>';
+        }
+        rows += sugCell;
+        // BULL \u2605 composite: visualize the score used by the bullish sort
+        var bullCompScore = (r.score || 0) + (gx.call >= 70 ? (gx.call - 70) * 0.6 : -((70 - gx.call) * 0.2)) + (gx.gex > 0 ? 4 : 0);
+        var bullCompCls = bullCompScore >= 150 ? 'pnl-pos' : bullCompScore >= 120 ? '' : 'pnl-neg';
+        rows += '<td class="col-hide-mobile '+bullCompCls+'" style="font-family:var(--ff-mono);font-size:11px;" title="Bullish composite = scanner score + GEX call-% adjustment (above/below 70 floor) + net-GEX sign bonus. Sort by this to surface the highest-conviction long-call setups first.">'+bullCompScore.toFixed(0)+'</td>';
       } else {
-        rows+='<td class="col-hide-mobile" style="color:var(--gry);font-size:10px;">--</td><td class="col-hide-mobile" style="color:var(--gry);font-size:10px;">--</td>';
+        rows+='<td class="col-hide-mobile" style="color:var(--gry);font-size:10px;">--</td><td class="col-hide-mobile" style="color:var(--gry);font-size:10px;">--</td><td class="col-hide-mobile" style="color:var(--gry);font-size:10px;">--</td><td class="col-hide-mobile" style="color:var(--gry);font-size:10px;">--</td>';
       }
     }
     rows+='</tr>';
@@ -19125,7 +19220,11 @@ function renderScan(){
 // boundary; next-day scan will replace it. (Earlier 2h TTL note was
 // stale — fixed in audit CODE-11.)
 var GEX_CACHE_KEY = 'rrjcar_gex_data_v1';
-var GEX_CACHE_TTL_MS = 24 * 60 * 60 * 1000;
+// v2.17.3: 24h was too long for intraday volatility — OI can shift 10–20% on
+// vol spikes / circuit-breaker days. 6h keeps GEX data within one cron cycle
+// of "fresh" while still tolerating overnight reloads (cron writes 8:35 /
+// 11:00 / 14:00 CT, so any session-time load is within the 6h window).
+var GEX_CACHE_TTL_MS = 6 * 60 * 60 * 1000;
 
 function saveGexCache(){
   // Clear the in-flight token regardless of payload size — runGex paths
@@ -19521,7 +19620,10 @@ function runGex(){
   // the tradierFetch queue at once, swamping it; the queue still rate-limits
   // but creates burst pressure that triggers cascading 429s. 600ms internal
   // gap distributes evenly under the new 110/min wrapper cap.
-  var GEX_DISPATCH_MS = 600;
+  // v2.17.3: 600 → 1000ms — iPhone LTE round-trip variance routinely spikes
+  // past 600ms, causing overlapping requests + cascading 429s. 1000ms gives
+  // a ~70% drop in overlap with only +60s total scan time.
+  var GEX_DISPATCH_MS = 1000;
   var estMinutes = Math.ceil(gexTickers.length * 2 * GEX_DISPATCH_MS / 60000);
   var _gt2=eid('gex-ts');
   if(_gt2) _gt2.textContent = 'Fetching 30DTE options flow for ' + gexTickers.length + ' tickers (~' + estMinutes + 'min, paced)...';
@@ -19597,7 +19699,9 @@ function runGex(){
   }
   function _onExpiryProgress(done, total){ _gexProgState.exp = done; _renderGexProgress(); }
   function _onChainProgress(done, total){ _gexProgState.chain = done; _renderGexProgress(); }
-  var _gexProgTick = setInterval(_renderGexProgress, 1000);
+  // v2.17.3: skip GEX progress UI updates when tab is hidden — the scan
+  // itself keeps running, only the visual progress bar pauses.
+  var _gexProgTick = setInterval(function(){ if (!document.hidden) _renderGexProgress(); }, 1000);
   _renderGexProgress();
 
   function _fetchOneExpiry(t){
@@ -19677,6 +19781,37 @@ function runGex(){
           if(oi > maxOI){ maxOI=oi; flipStrike=strike; }
         });
 
+        // v2.17.3: pick a "suggested long call" from this expiry — slightly
+        // ITM (1-2 strikes below price) where delta is roughly 0.60-0.75
+        // and liquidity is decent. Captures bid/ask so the scanner can
+        // filter on premium without an extra fetch. Falls back to the
+        // ATM call if no ITM strike meets the liquidity bar.
+        var suggested = null;
+        var atmCall = null;
+        c.chain.forEach(function(opt){
+          if (opt.option_type !== 'call') return;
+          var strike = parseFloat(opt.strike) || 0;
+          if (!strike) return;
+          var bid = parseFloat(opt.bid) || 0;
+          var ask = parseFloat(opt.ask) || 0;
+          var mid = (bid > 0 && ask > 0) ? +((bid+ask)/2).toFixed(2) : 0;
+          var oi = parseInt(opt.open_interest) || 0;
+          var vol = parseInt(opt.volume) || 0;
+          if (mid <= 0) return;
+          var ent = { strike:strike, bid:bid, ask:ask, mid:mid, oi:oi, vol:vol, sym:opt.symbol };
+          // ATM = closest call strike to spot
+          if (!atmCall || Math.abs(strike - price) < Math.abs(atmCall.strike - price)){
+            atmCall = ent;
+          }
+          // Suggested: 1-3% ITM (strike between 0.97 and 0.99 of spot) with
+          // OI ≥ 100 (liquidity floor for retail size). Pick the one with
+          // the most OI in that band.
+          if (strike >= price * 0.97 && strike <= price * 0.99 && oi >= 100){
+            if (!suggested || oi > suggested.oi) suggested = ent;
+          }
+        });
+        if (!suggested) suggested = atmCall;
+
         return {
           t: c.ticker,
           gex: gexSign * Math.max(1, gexMag),
@@ -19690,6 +19825,14 @@ function runGex(){
           price: price,
           flow: callPct >= 50 ? 'CALL HEAVY' : 'PUT HEAVY',
           flowCls: callPct >= 50 ? 'go' : 'nogo',
+          // v2.17.3: suggested call contract for this ticker. The scanner
+          // surfaces this so the user can see "what to buy" without
+          // diving into the chain picker; premium filter uses .mid.
+          sugStrike: suggested ? suggested.strike : null,
+          sugBid:    suggested ? suggested.bid : null,
+          sugAsk:    suggested ? suggested.ask : null,
+          sugMid:    suggested ? suggested.mid : null,
+          sugSym:    suggested ? suggested.sym : null,
           sim: false
         };
       });
@@ -19791,12 +19934,18 @@ function renderGex(){
   // most-bullish first by Call OI %, with |NET GEX| magnitude as the
   // tiebreaker (higher conviction floats up). Result: top of list =
   // strongest bullish flow conviction = best long-call candidates.
+  // v2.17.3: bullish floor raised 50→70. 50 is a coin-flip; 70 is the
+  // dealer-short-calls / positive-gamma drift zone where long calls have
+  // a real directional edge (Garleanu-Pedersen-Poteshman). The existing
+  // PRIME criteria already use 70+ — this aligns the filter with PRIME
+  // rather than treating "majority calls" as bullish.
+  var BULLISH_CALL_PCT = 70;
   var bullishSorted = (G.gexData || [])
     .filter(function(r){
       if (!r) return false;
       var hasData = (r.callOI || r.putOI) || r.sim;
       if (!hasData) return false;
-      return (r.call || 0) >= 50;
+      return (r.call || 0) >= BULLISH_CALL_PCT;
     })
     .slice()
     .sort(function(a,b){
@@ -19832,7 +19981,7 @@ function renderGex(){
     var isEmpty = !r.sim && !r.callOI && !r.putOI;
     var prime = isPrimeBullish(r);
     if (prime) primeCount++;
-    var simBadge=r.sim?'<span style="font-size:9px;color:var(--gry);margin-left:4px;">[SIM]</span>':'';
+    var simBadge=r.sim?'<span title="No Tradier key configured — this row is FABRICATED from scan score, not real options flow. Set your API key in the API tab for real data." style="font-size:9px;color:var(--wrn);background:rgba(255,170,0,0.15);border:1px solid var(--wrn);border-radius:3px;padding:1px 4px;margin-left:6px;font-weight:700;letter-spacing:.5px;">SIM</span>':'';
     var emptyBadge=isEmpty?'<span style="font-size:9px;color:var(--ngo);margin-left:4px;" title="Tradier returned no options chain for this ticker - illiquid, expired, or out-of-hours.">[NO DATA]</span>':'';
     var primeBadge=prime?'<span style="font-size:9px;color:var(--grn);margin-left:4px;font-weight:700;letter-spacing:.5px;" title="Prime bullish entry - meets ALL criteria: net gex >0, call% >=90, callOI >1K, spot > flip, DTE 30-45.">&#9733; PRIME</span>':'';
     var expCell = fmtDateUS(r.exp);
@@ -23888,19 +24037,11 @@ function fetchClosedPositions(){
       return;
     }
 
-    // Even if API returns no orders, still load from localStorage cache
-    // This handles sandbox resets and date range gaps
+    // v2.17.3: closed-trade persistence dropped per user spec \u2014 the local
+    // cache that survived sandbox resets is no longer kept (saves ~2 MB
+    // localStorage). History tab now shows only what Tradier returns
+    // directly. If the broker truncates older trades, they're gone.
     if(!orders.length){
-      var cachedTrades = [];
-      try{ cachedTrades = JSON.parse(localStorage.getItem('rrjcar_closed_trades')||'[]'); }catch(e){}
-      if(cachedTrades.length){
-        G_closed.raw = [];
-        G_closed.trades = cachedTrades;
-        G_closed.openFilled = [];
-        src.textContent = '[CACHED] '+cachedTrades.length+' closed trade'+(cachedTrades.length!==1?'s':'')+' | '+fmtDateUS(startDate)+' \u2192 '+fmtDateUS(endDate)+' | Updated: '+new Date().toLocaleTimeString();
-        renderClosedTable();
-        return;
-      }
       wrap.innerHTML='<div class="empty-det" style="min-height:200px;"><div class="ei">\u25a0</div>'
         +'<p>No order history found for this period.</p></div>';
       src.textContent='['+creds.mode.toUpperCase()+'] 0 orders';
@@ -23952,30 +24093,10 @@ function fetchClosedPositions(){
       return isOpen && !matchedOpenIds[o.id];
     });
 
-    // Persist trades to localStorage and merge with any previously saved trades
-    // This survives Tradier sandbox resets which truncate order history
-    var savedTrades = [];
-    try{ savedTrades = JSON.parse(localStorage.getItem('rrjcar_closed_trades')||'[]'); }catch(e){}
-    // HC-H: dedup MERGES saved + fresh — fresh API data wins on overlap, but
-    // underlyingAtOpen is write-once-keep-forever so a re-fetch after the
-    // position's posOpenData was pruned doesn't wipe it from the trade record.
-    var tradeMap = {};
-    savedTrades.forEach(function(t){ if(t.closeOrderId) tradeMap[t.closeOrderId] = t; });
-    matched.forEach(function(t){
-      if(!t.closeOrderId) return;
-      var prior = tradeMap[t.closeOrderId];
-      if (prior) {
-        var merged = Object.assign({}, prior, t);
-        if (typeof t.underlyingAtOpen === 'undefined' && typeof prior.underlyingAtOpen !== 'undefined') {
-          merged.underlyingAtOpen = prior.underlyingAtOpen;
-        }
-        tradeMap[t.closeOrderId] = merged;
-      } else {
-        tradeMap[t.closeOrderId] = t;
-      }
-    });
-    var allTrades = Object.values(tradeMap).sort(function(a,b){ return new Date(b.closeDate)-new Date(a.closeDate); });
-    try{ localStorage.setItem('rrjcar_closed_trades', JSON.stringify(allTrades)); }catch(e){}
+    // v2.17.3: no longer persist trades to localStorage. History tab shows
+    // only the current API window. Removes the largest single localStorage
+    // consumer (~2 MB worst case) per user spec.
+    var allTrades = matched.slice().sort(function(a,b){ return new Date(b.closeDate)-new Date(a.closeDate); });
 
     G_closed.raw=allFilled;
     G_closed.trades=allTrades;
@@ -25745,7 +25866,10 @@ function _mirrorIndicesToDup(){
 // tap-to-refresh on the strip, and the periodic 30s poll). Wrapping
 // updateHeaderQuotes itself would miss async .then() chains and the
 // no-key sim path. Polling is simpler and the cost is negligible.
-setInterval(function(){ try { _mirrorIndicesToDup(); } catch(_){} }, 1000);
+setInterval(function(){
+  if (document.hidden) return;  // v2.17.3: skip UI mirror work when tab is backgrounded
+  try { _mirrorIndicesToDup(); } catch(_){}
+}, 1000);
 function updateHeaderQuotes(){
   var key=_getTradierKey();
   var mode='sandbox';try{mode=localStorage.getItem('rrjcar_mode')||'sandbox';}catch(e){}
@@ -25879,7 +26003,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.17.2-google-sheets-exports';
+var APP_VERSION = '2.18.0-audit-fixes';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -29085,6 +29209,28 @@ function exportPositionsLongForm(){
 // ─── END PORTFOLIO BUILDER ENGINE ──────────────────────────────────────
 
 function init(){
+  // v2.17.3: storage hygiene — purge persisted closed-trade history (we no
+  // longer track it locally) and sweep stale 30-day+ caches so localStorage
+  // doesn't approach the 5 MB iOS quota.
+  try {
+    localStorage.removeItem('rrjcar_closed_trades');
+    var THIRTY_DAYS = 30 * 24 * 60 * 60 * 1000;
+    var now = Date.now();
+    var prefixesWithTs = ['rrjcar_hist_', 'rrjcar_indicator_', 'rrjcar_news_', 'rrjcar_fmp_paused_until'];
+    for (var i = localStorage.length - 1; i >= 0; i--){
+      var k = localStorage.key(i);
+      if (!k) continue;
+      if (!prefixesWithTs.some(function(p){ return k.indexOf(p) === 0; })) continue;
+      try {
+        var raw = localStorage.getItem(k);
+        var obj = JSON.parse(raw);
+        var ts = obj && (obj.ts || obj.t || obj.fetchedAt);
+        if (typeof ts === 'number' && (now - ts) > THIRTY_DAYS){
+          localStorage.removeItem(k);
+        }
+      } catch(_){}
+    }
+  } catch(_){}
   // Register service worker for iOS push notifications. iOS 16.4+ requires
   // a service worker registration for notifications to actually fire — the
   // bare `new Notification()` API is unsupported on Safari mobile. Site
@@ -29190,8 +29336,10 @@ function init(){
   // Initialize order ticket UI mode (stock vs options field visibility)
   try{ onOrderTypeChange(); onOrderOtypeChange(); }catch(e){}
   updateClock();
-  setInterval(updateClock, 1000);
-  setInterval(saveAppSettings, 60000);
+  // v2.17.3: skip clock + settings save when tab is backgrounded — saves
+  // ~120 callbacks/min and one localStorage write/min while idle.
+  setInterval(function(){ if (!document.hidden) updateClock(); }, 1000);
+  setInterval(function(){ if (!document.hidden) saveAppSettings(); }, 60000);
 
   // ── Restore cached data — ZERO API calls on load ────────────────────────
 
