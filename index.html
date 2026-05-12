@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-12T02:00-audit-fixes">
+<meta name="op-build" content="2026-05-12T02:30-ct-timezone-fix">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -6534,7 +6534,7 @@ async function syncPushConfig(){
       try { var j = await res.json(); if (j && j.error) msg = j.error; } catch(_){}
       throw new Error(msg);
     }
-    _syncStatus('✓ Pushed ' + Object.keys(_syncSnapshot()).length + ' settings · ' + new Date().toLocaleTimeString(), 'var(--grn)');
+    _syncStatus('✓ Pushed ' + Object.keys(_syncSnapshot()).length + ' settings · ' + _fmtCT_NowTime(), 'var(--grn)');
     if (typeof toast === 'function') toast('Settings pushed to cloud');
   } catch (err) {
     _syncStatus('Push failed: ' + (err && err.message || err), 'var(--ngo)');
@@ -6592,7 +6592,7 @@ async function syncPullConfig(){
       }
     }
     var pushedFrom = snap.__device || 'unknown';
-    var pushedAt = snap.__pushed_at ? new Date(snap.__pushed_at).toLocaleString() : 'unknown';
+    var pushedAt = snap.__pushed_at ? (_fmtCT_Date(new Date(snap.__pushed_at)) + ' ' + _fmtCT_Time(new Date(snap.__pushed_at)) + ' CT') : 'unknown';
     var tradeMsg = tradeRestored > 0 ? ' + trade armed' : '';
     _syncStatus('✓ Pulled ' + restored + ' settings' + tradeMsg + ' (from ' + pushedFrom + ' · ' + pushedAt + ') — reloading…', 'var(--grn)');
     if (typeof toast === 'function') toast('Settings pulled — reloading' + tradeMsg);
@@ -7513,6 +7513,90 @@ function _esc(s){
   });
 }
 function fmt2(n){return isNaN(n)?'--':(+n).toFixed(2);}
+
+// ── TIMEZONE-SAFE DATE HELPERS (v2.18.1) ──────────────────────────────────
+// Per user spec 2026-05-12: every displayed time is normalized to America/
+// Chicago (CST/CDT) regardless of the browser's local time. Tradier's
+// `/v1/accounts/<id>/positions` returns `date_acquired` as a naive ISO
+// string (no Z / no offset) per their docs — and the convention is Eastern.
+// Bare `new Date()` parses naive ISO as the BROWSER's local time, which
+// silently shifts the time by the browser's UTC offset (5–6 hours off when
+// the user is on UTC, ET, etc.), making market-hours opens look like
+// after-hours opens. _parseTradierDate handles all three cases:
+//   1. ISO with Z / explicit offset → trust the marker
+//   2. Pure date "YYYY-MM-DD" → parses as UTC midnight (browser default)
+//   3. Naive ISO date-time → treat as ET wall time, compute UTC equivalent
+function _etOffsetHoursAt(utcMs){
+  // ET (EDT / EST) offset for a given UTC instant. Round-trips through
+  // toLocaleString to let the JS engine handle DST transitions.
+  try {
+    var d = new Date(utcMs);
+    var et  = new Date(d.toLocaleString('en-US', { timeZone:'America/New_York' }));
+    var utc = new Date(d.toLocaleString('en-US', { timeZone:'UTC' }));
+    return Math.round((et - utc) / 3600000);
+  } catch(_){ return -5; }   // CST-equivalent fallback
+}
+function _parseTradierDate(s){
+  if (s == null) return null;
+  if (s instanceof Date) return s;
+  var str = String(s).trim();
+  if (!str) return null;
+  // Has explicit timezone marker → trust it
+  if (/Z$|[+-]\d{2}:?\d{2}$/.test(str)) {
+    var d1 = new Date(str);
+    return isNaN(d1.getTime()) ? null : d1;
+  }
+  // Date-only → JS parses as UTC midnight, which is fine for date display
+  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    var d2 = new Date(str);
+    return isNaN(d2.getTime()) ? null : d2;
+  }
+  // Naive ISO date-time → assume ET wall time and convert to UTC.
+  var m = str.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?$/);
+  if (!m){
+    var d3 = new Date(str);
+    return isNaN(d3.getTime()) ? null : d3;
+  }
+  var y=+m[1], mo=+m[2]-1, day=+m[3], h=+m[4], mi=+m[5], se=+(m[6]||0);
+  var ms = m[7] ? parseInt((m[7]+'000').slice(0,3), 10) : 0;
+  // First take the wall components as if they were UTC, then subtract the ET
+  // offset for that instant so the resulting UTC ms matches the actual UTC
+  // instant for that ET wall time. (ET offset is negative, e.g. -4 EDT.)
+  var asIfUtcMs = Date.UTC(y, mo, day, h, mi, se, ms);
+  var etOff = _etOffsetHoursAt(asIfUtcMs);
+  return new Date(asIfUtcMs - etOff * 3600000);
+}
+// Format a Date as MM-DD-YYYY in America/Chicago.
+function _fmtCT_Date(d){
+  if (!(d instanceof Date) || isNaN(d.getTime())) return '--';
+  try {
+    var parts = d.toLocaleDateString('en-US', {
+      timeZone:'America/Chicago', month:'2-digit', day:'2-digit', year:'numeric'
+    }).split('/');
+    return parts.length === 3 ? (parts[0] + '-' + parts[1] + '-' + parts[2]) : '--';
+  } catch(_){ return '--'; }
+}
+// Format a Date as "9:32 AM" (no seconds) in America/Chicago.
+function _fmtCT_Time(d){
+  if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+  try {
+    return d.toLocaleTimeString('en-US', {
+      timeZone:'America/Chicago', hour:'numeric', minute:'2-digit', hour12:true
+    });
+  } catch(_){ return ''; }
+}
+// Format a Date as "9:32:14 AM" (with seconds) in America/Chicago.
+function _fmtCT_TimeSec(d){
+  if (!(d instanceof Date) || isNaN(d.getTime())) return '';
+  try {
+    return d.toLocaleTimeString('en-US', {
+      timeZone:'America/Chicago', hour:'numeric', minute:'2-digit', second:'2-digit', hour12:true
+    });
+  } catch(_){ return ''; }
+}
+// Convenience for "Updated 9:32:14 AM CT" headers — single string.
+function _fmtCT_NowTime(){ return _fmtCT_TimeSec(new Date()) + ' CT'; }
+
 // US-format date helper. Converts a YYYY-MM-DD (the wire/storage format
 // used internally by HTML date inputs, Tradier API, ISO strings, and
 // localStorage keys) into MM-DD-YYYY for user-visible display. Pass-through
@@ -8185,7 +8269,7 @@ function reclassifyGoThreshold(){
 function toggleMobileFilters(){ /* deprecated — see comment above */ }
 
 function addAlert(tk,msg,type){
-  G.alerts.unshift({tk:tk,msg:msg,type:type,ts:new Date().toLocaleTimeString()});
+  G.alerts.unshift({tk:tk,msg:msg,type:type,ts:_fmtCT_NowTime()});
   if(G.alerts.length>50)G.alerts.pop();
   if(eid('tab-al').classList.contains('active'))renderAlerts();
 }
@@ -9167,7 +9251,7 @@ function _intradayRenderBadge(ticker) {
   }
   bEl.textContent = label;
   bEl.style.color = color;
-  bEl.title = (s.signal ? 'Reversal signal: '+s.signal+' at '+new Date(s.signalTs).toLocaleTimeString()+' | ' : '')
+  bEl.title = (s.signal ? 'Reversal signal: '+s.signal+' at '+(_fmtCT_TimeSec(_parseTradierDate(s.signalTs)) + " CT")+' | ' : '')
     + 'VWAP $'+(s.vwap||0).toFixed(2)+' | last $'+(s.nowPrice||0).toFixed(2)
     + (s.orbHigh != null ? ' | ORB $'+s.orbLow.toFixed(2)+'-$'+s.orbHigh.toFixed(2) : '');
 }
@@ -9414,7 +9498,7 @@ function renderQuotePanel(q){
   eid('qp-chg').textContent=chgStr+' '+chgPctStr;
   eid('qp-chg').style.color=q.chg>=0?'var(--blu)':'var(--wrn)';
   eid('qp-iv').textContent=q.iv?'IV '+(q.iv*100).toFixed(1)+'%':'';
-  eid('qp-ts').textContent='Updated '+new Date().toLocaleTimeString();
+  eid('qp-ts').textContent='Updated '+_fmtCT_NowTime();
   // AH line — only for stocks (options don't trade AH)
   var ahEl = eid('qp-ah');
   if(ahEl){
@@ -10066,7 +10150,7 @@ function sfLog(msg,cls){
   log.classList.add('show');
   var line=document.createElement('div');
   line.className='sfl-attempt '+(cls||'');
-  line.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+  line.textContent='['+_fmtCT_NowTime()+'] '+msg;
   log.appendChild(line);
   log.scrollTop=log.scrollHeight;
 }
@@ -11208,7 +11292,7 @@ function fetchPendingOrders(){
     G.pendingOrders = pending;
     if (countEl) countEl.textContent = String(pending.length);
     if (statusEl) statusEl.textContent = pending.length
-      ? ('refreshed ' + new Date().toLocaleTimeString())
+      ? ('refreshed ' + _fmtCT_NowTime())
       : 'no pending orders';
     renderPendingOrders(pending);
     return pending;
@@ -17340,7 +17424,7 @@ function autoScanCheckAlerts(){
   } catch(_) {}
   // Update status line in the panel
   if(eid('auto-scan-status')){
-    eid('auto-scan-status').textContent = hits.length + ' new hit(s) at ' + new Date().toLocaleTimeString();
+    eid('auto-scan-status').textContent = hits.length + ' new hit(s) at ' + _fmtCT_NowTime();
   }
 }
 
@@ -17483,7 +17567,7 @@ function _renderScanCategoryStrip(){
     if (countEl) countEl.style.color = n > 0 ? 'var(--grn)' : 'var(--gry)';
   });
   var ts = eid('sc-cat-strip-ts');
-  if (ts) ts.textContent = new Date().toLocaleTimeString();
+  if (ts) ts.textContent = _fmtCT_NowTime();
 }
 
 function setScanComplete(stats){
@@ -17521,8 +17605,7 @@ function setScanComplete(stats){
   // can tell at a glance when the visible results were generated.
   var lastEl = eid('sc-last-scan');
   if(lastEl){
-    var d = new Date();
-    lastEl.textContent = '✓ Scan complete ' + d.toLocaleTimeString();
+    lastEl.textContent = '✓ Scan complete ' + _fmtCT_NowTime();
     lastEl.style.color = 'var(--grn)';
   }
   // Data-coverage status chip — surfaces missing/failed enrichment so the
@@ -19566,7 +19649,7 @@ function runGex(){
   // gracefully (returns early). runGex still computes G.gexData even when
   // there's no UI to render it, so the rule scorecard's GEX rule has data
   // to evaluate. Was bailing here before, leaving G.gexData empty forever.
-  var tsEl=eid('gex-ts'); if(tsEl) tsEl.textContent='Updated: '+new Date().toLocaleTimeString();
+  var tsEl=eid('gex-ts'); if(tsEl) tsEl.textContent='Updated: '+_fmtCT_NowTime();
 
   // GEX coverage cap. Was 35 (top 35 GO + top 15 NOGO, then sliced) \u2014 meaning
   // anything outside the top 35 by score had no GEX data and the rule scorecard
@@ -19842,11 +19925,7 @@ function runGex(){
       if(_gexLastScanEl){
         var emptyCount = G.gexData.filter(function(r){ return !r.callOI && !r.putOI; }).length;
         var elapsed = Math.round((Date.now() - _gexProgState.t0)/1000);
-        var now = new Date();
-        var hh = now.getHours(), mm = now.getMinutes();
-        var ampm = hh >= 12 ? 'PM' : 'AM';
-        if(hh > 12) hh -= 12; if(hh === 0) hh = 12;
-        var timeStr = hh + ':' + (mm < 10 ? '0' : '') + mm + ' ' + ampm;
+        var timeStr = _fmtCT_Time(new Date()) + ' CT';
         _gexLastScanEl.textContent = 'Last scan: ' + timeStr + ' (' + elapsed + 's, ' + G.gexData.length + ' tickers' + (emptyCount ? ', ' + emptyCount + ' empty' : '') + ')';
         _gexLastScanEl.style.display = 'block';
       }
@@ -20015,7 +20094,7 @@ function renderGex(){
   });
   html+='</tbody></table>';
   wrap.innerHTML=html;
-  var _gt3=eid('gex-ts'); if(_gt3) _gt3.textContent='Updated: '+new Date().toLocaleTimeString()
+  var _gt3=eid('gex-ts'); if(_gt3) _gt3.textContent='Updated: '+_fmtCT_NowTime()
     +' \u2014 '+bullishSorted.length+' bullish \u00b7 '+primeCount+' \u2605 prime entries';
 }
 
@@ -20966,8 +21045,11 @@ function fetchPositionsDirect(key,mode,host,acct){
           if(!G.posOpenData[p.symbol]){
             var firstSeenTs = (function(){
               if(!p.dateAcquired) return now;
-              var d = new Date(p.dateAcquired);
-              if(isNaN(d.getTime())) return now;
+              // v2.18.1: parse via _parseTradierDate so naive ET timestamps
+              // from Tradier convert to the right UTC instant before we
+              // canonicalize via toISOString().
+              var d = _parseTradierDate(p.dateAcquired);
+              if(!d) return now;
               return d.toISOString();
             })();
             G.posOpenData[p.symbol]={
@@ -20993,11 +21075,17 @@ function fetchPositionsDirect(key,mode,host,acct){
             // any existing position got a TODAY highlight on the Positions
             // tab. If Tradier now reports an older date_acquired, trust it.
             if(p.dateAcquired && pod.openTs){
-              var trueOpen = new Date(p.dateAcquired);
-              var stampedOpen = new Date(pod.openTs);
-              if(!isNaN(trueOpen.getTime()) && !isNaN(stampedOpen.getTime())){
-                // Difference > 12h → definitely the stale-stamp bug, fix it
-                if(Math.abs(trueOpen.getTime() - stampedOpen.getTime()) > 12*60*60*1000){
+              var trueOpen = _parseTradierDate(p.dateAcquired);
+              var stampedOpen = _parseTradierDate(pod.openTs);
+              if(trueOpen && stampedOpen){
+                // v2.18.1: drop threshold to 5 minutes so timezone-skewed
+                // legacy stamps (1–7 h offset, common when older builds
+                // mis-parsed naive Tradier ISO) get corrected on first
+                // refresh after upgrade. The original 12h threshold was
+                // designed to fix mass "now"-defaults, but it kept smaller
+                // TZ offsets stuck. Trusting trueOpen unconditionally
+                // is safe — it's the broker's authoritative timestamp.
+                if(Math.abs(trueOpen.getTime() - stampedOpen.getTime()) > 5*60*1000){
                   pod.openTs = trueOpen.toISOString();
                   try{localStorage.setItem('rrjcar_pos_open',JSON.stringify(G.posOpenData));}catch(e){}
                 }
@@ -21167,29 +21255,24 @@ function _isOpenedTodayET(ts){
 function formatOpenedDateTime(p, openedToday){
   // openTs is the local first-seen timestamp (ISO 8601 w/ time).
   // dateAcquired is from Tradier; format varies — sometimes date-only, sometimes full ISO.
+  // v2.18.1: parse via _parseTradierDate so naive ISO (Tradier convention =
+  // ET wall time, no offset marker) is correctly converted to UTC instead
+  // of being interpreted as the browser's local time. Display is forced
+  // to America/Chicago via _fmtCT_* so users see CT regardless of device.
   var src = p.openTs || p.dateAcquired || null;
   var pill = openedToday ? '<span class="today-pill" title="Opened or rolled today — closing intraday counts as a PDT day-trade">TODAY</span>' : '';
   if(!src){
     return '<td style="white-space:nowrap;color:var(--gry2);font-size:10px;">--'+pill+'</td>';
   }
-  var d = new Date(src);
-  if(isNaN(d.getTime())){
+  var d = _parseTradierDate(src);
+  if(!d){
     return '<td style="white-space:nowrap;color:var(--gry2);font-size:10px;">'+String(src).slice(0,10)+pill+'</td>';
   }
-  var mm = String(d.getMonth()+1).padStart(2,'0');
-  var dd = String(d.getDate()).padStart(2,'0');
-  var yy = String(d.getFullYear()).slice(-2);
-  var dateStr = mm+'/'+dd+'/'+yy;
-  // Time: 12-hour with am/pm, lowercase, no seconds
-  var hh = d.getHours();
-  var mn = String(d.getMinutes()).padStart(2,'0');
-  var ampm = hh >= 12 ? 'pm' : 'am';
-  var h12 = hh % 12; if(h12 === 0) h12 = 12;
-  var timeStr = h12+':'+mn+ampm;
-  // If the source had no time component (Tradier date-only), skip the time line
-  var hasTime = /T\d{2}:\d{2}/.test(String(src)) || (d.getHours() + d.getMinutes() + d.getSeconds()) > 0;
+  var dateStr = _fmtCT_Date(d);
+  var timeStr = _fmtCT_Time(d).replace(/\s+/g,'').toLowerCase();   // "9:32am"
+  var hasTime = /T\d{2}:\d{2}/.test(String(src));
   var timeHtml = hasTime
-    ? '<div style="color:var(--gry);font-size:10px;line-height:1.1;">'+timeStr+'</div>'
+    ? '<div style="color:var(--gry);font-size:10px;line-height:1.1;" title="America/Chicago (CT)">'+timeStr+'</div>'
     : '';
   return '<td style="white-space:nowrap;padding-top:6px;padding-bottom:6px;">'
     + '<div style="color:var(--wht);font-size:11px;font-weight:600;line-height:1.1;">'+dateStr+pill+'</div>'
@@ -21865,7 +21948,7 @@ function tsLog(msg,cls){
   var log=eid('ts-log');log.classList.add('show');
   var line=document.createElement('div');
   line.className='ts-log-line '+(cls||'info');
-  line.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+  line.textContent='['+_fmtCT_NowTime()+'] '+msg;
   log.appendChild(line);log.scrollTop=log.scrollHeight;
   // Trim log to last 60 lines
   while(log.children.length>60)log.removeChild(log.firstChild);
@@ -21928,7 +22011,7 @@ async function runTsCheck(){
     return;
   }
   var defaultCloseMode=eid('ts-close-mode').value||'step';
-  eid('ts-poll-status').textContent='Checking... '+new Date().toLocaleTimeString();
+  eid('ts-poll-status').textContent='Checking... '+_fmtCT_NowTime();
 
   var creds=getTradierCreds();
   for(var i=0;i<G.positions.length;i++){
@@ -22030,7 +22113,7 @@ async function runTsCheck(){
 
   if(G.positions.length)renderPositionsTable(G.positions,eid('pos-src').textContent);
   var sec=parseInt(eid('ts-interval').value)||30;
-  eid('ts-poll-status').textContent='Last check: '+new Date().toLocaleTimeString()+' | next in '+sec+'s';
+  eid('ts-poll-status').textContent='Last check: '+_fmtCT_NowTime()+' | next in '+sec+'s';
 
   // Persist state after every poll so peaks survive page refresh
   try{
@@ -22945,7 +23028,7 @@ function rollLog(msg,cls){
   log.style.display='block';
   var line=document.createElement('div');
   line.style.cssText='padding:1px 0;color:'+(cls==='ok'?'var(--grn)':cls==='err'?'var(--ngo)':'var(--gry)');
-  line.textContent='['+new Date().toLocaleTimeString()+'] '+msg;
+  line.textContent='['+_fmtCT_NowTime()+'] '+msg;
   log.appendChild(line);
   log.scrollTop=log.scrollHeight;
   // 2026-05-11 v2.16.21: mirror roll log lines into the order-status
@@ -24106,7 +24189,7 @@ function fetchClosedPositions(){
       +allTrades.length+' closed trade'+(allTrades.length!==1?'s':'')
       +(openFilled.length?' | '+openFilled.length+' open position'+(openFilled.length!==1?'s':''):'')
       +' | '+fmtDateUS(startDate)+' \u2192 '+fmtDateUS(endDate)
-      +' | Updated: '+new Date().toLocaleTimeString();
+      +' | Updated: '+_fmtCT_NowTime();
     renderClosedTable();
   })
   .catch(function(e){
@@ -24512,7 +24595,7 @@ function sendEmailJsAlert(s, ticker, score, sector, price, rulesSummary){
     score:        score + '/240',
     sector:       sector,
     price:        '$' + price.toFixed(2),
-    signal_time:  new Date().toLocaleString(),
+    signal_time:  _fmtCT_Date(new Date()) + ' ' + _fmtCT_Time(new Date()) + ' CT',
     rules_passed: rulesSummary,
     to_email:     s.emailTo
   }).then(function(){
@@ -24764,7 +24847,7 @@ function getAutoTraderSettings(){
 function atLog(msg, cls){
   var el = eid('at-status-log');
   if(!el) return;
-  var ts = new Date().toLocaleTimeString();
+  var ts = _fmtCT_NowTime();
   var color = cls==='ok'?'var(--grn)':cls==='warn'?'var(--ambb)':cls==='err'?'var(--red)':'var(--gry3)';
   var line = '<div><span style="color:var(--gry);">['+ts+']</span> <span style="color:'+color+';">'+msg+'</span></div>';
   el.innerHTML = line + (el.innerHTML||'');
@@ -26003,7 +26086,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.18.0-audit-fixes';
+var APP_VERSION = '2.18.1-ct-timezone-fix';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -26831,7 +26914,7 @@ async function cwRefreshAll(){
 
   cwSaveAll(data);
   cwRenderTable();
-  eid('cw-last-update').textContent = 'Updated: '+new Date().toLocaleTimeString();
+  eid('cw-last-update').textContent = 'Updated: '+_fmtCT_NowTime();
   toast('Watchlist refreshed');
 }
 
@@ -27848,7 +27931,7 @@ function pfRefreshAll(){
       data.columns.forEach(function(c){ c.rows.forEach(function(r){ if(r.ticker && allTickers.indexOf(r.ticker)<0) allTickers.push(r.ticker); }); });
       pfEnrichUnknownSectors(allTickers).then(function(){
         renderPortfolio();
-        eid('pf-last-update').textContent = 'Updated: '+new Date().toLocaleTimeString();
+        eid('pf-last-update').textContent = 'Updated: '+_fmtCT_NowTime();
         toast('Portfolio refreshed');
       });
       return;
@@ -28007,7 +28090,7 @@ function pfAutoPullTradier(){
       if (positions.length === 0) {
         console.warn('[portfolio] Tradier returned zero positions for account ' + acct
                      + ' — raw shape:', JSON.stringify(pd).slice(0, 200));
-        eid('pf-last-update').textContent = 'Tradier returned zero positions for ' + acct + ' (' + new Date().toLocaleTimeString() + ')';
+        eid('pf-last-update').textContent = 'Tradier returned zero positions for ' + acct + ' (' + _fmtCT_NowTime() + ')';
         col.rows = [];
         pfSave(data);
         renderPortfolio();
@@ -29117,16 +29200,11 @@ function exportPositionsLongForm(){
     var raw = (G.posOpenData && G.posOpenData[p.symbol] && G.posOpenData[p.symbol].openTs)
       || p.openTs || p.dateAcquired || '';
     if (!raw) return { date: '', time: '' };
-    var d = new Date(raw);
-    if (isNaN(d.getTime())) return { date: String(raw), time: '' };
-    var mm = String(d.getMonth() + 1).padStart(2, '0');
-    var dd = String(d.getDate()).padStart(2, '0');
-    var yyyy = d.getFullYear();
-    var hh24 = d.getHours();
-    var min = String(d.getMinutes()).padStart(2, '0');
-    var ampm = hh24 >= 12 ? 'PM' : 'AM';
-    var hh12 = hh24 % 12; if (hh12 === 0) hh12 = 12;
-    return { date: mm + '-' + dd + '-' + yyyy, time: hh12 + ':' + min + ' ' + ampm };
+    // v2.18.1: parse via _parseTradierDate (handles naive ET) and format
+    // in CT so the Google Sheet export matches the table display.
+    var d = _parseTradierDate(raw);
+    if (!d) return { date: String(raw), time: '' };
+    return { date: _fmtCT_Date(d), time: _fmtCT_Time(d) };
   }
   // Per-contract purchase price. cost_basis on Tradier is total dollars
   // paid; divide by qty and 100 (option multiplier) for options, or just
@@ -29359,15 +29437,14 @@ function init(){
     if (lastTs) {
       var lastEl = eid('sc-last-scan');
       if (lastEl) {
-        var d = new Date(lastTs);
-        lastEl.textContent = 'Last scan: ' + d.toLocaleTimeString();
+        lastEl.textContent = 'Last scan: ' + _fmtCT_TimeSec(new Date(lastTs)) + ' CT';
         lastEl.style.color = 'var(--gry)';
       }
       // Same hydration for the categorized stat strip — its counts come
       // from G.results which we already restored above; just need the
       // timestamp seeded so the strip reflects the cached scan's age.
       var stripTs = eid('sc-cat-strip-ts');
-      if (stripTs) stripTs.textContent = new Date(lastTs).toLocaleTimeString();
+      if (stripTs) stripTs.textContent = (_fmtCT_TimeSec(_parseTradierDate(lastTs)) + " CT");
     }
     if (G.results && G.results.length && typeof _renderScanCategoryStrip === 'function') {
       _renderScanCategoryStrip();
@@ -29768,7 +29845,7 @@ function indDraw(){
   if (isIntraday) {
     var asof = '—';
     if (G.results && G.results.length && G._scanFinishedAt){
-      asof = 'live · scan @ ' + new Date(G._scanFinishedAt).toLocaleTimeString();
+      asof = 'live · scan @ ' + (_fmtCT_TimeSec(_parseTradierDate(G._scanFinishedAt)) + " CT");
     } else if (G.results && G.results.length){
       asof = 'live · ' + G.results.length + ' tickers in memory';
     } else {
