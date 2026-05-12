@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-12T03:30-tier-ab-cleanup">
+<meta name="op-build" content="2026-05-12T03:45-tighter-candles">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -20632,7 +20632,7 @@ function _wlDrawCandles(ticker, days, kind){
     series:[
       {name:'Price', type:'candlestick', data: days.map(function(d){ return [+d.open, +d.close, +d.low, +d.high]; }),
         itemStyle:{color:'#1D9E75', color0:'#D85A30', borderColor:'#1D9E75', borderColor0:'#D85A30', borderWidth:1},
-        barMaxWidth:10, markArea:{silent:true, data: resAreas.concat(supAreas)}},
+        barWidth:'85%', barMaxWidth:22, markArea:{silent:true, data: resAreas.concat(supAreas)}},
       {name:'EMA10', type:'line', data:ema10, smooth:false, lineStyle:{color:'#00e676', width:1.5}, symbol:'none', connectNulls:false},
       {name:'EMA20', type:'line', data:ema20, smooth:false, lineStyle:{color:'#ffd740', width:1.5}, symbol:'none', connectNulls:false},
       {name:'EMA50', type:'line', data:ema50, smooth:false, lineStyle:{color:'#ff5252', width:2}, symbol:'none', connectNulls:false}
@@ -20857,7 +20857,7 @@ function _chartModalDrawCandles(ticker, days, kind){
     series:[
       {name:'Price', type:'candlestick', data: days.map(function(d){ return [+d.open, +d.close, +d.low, +d.high]; }),
         itemStyle:{color:'#1D9E75', color0:'#D85A30', borderColor:'#1D9E75', borderColor0:'#D85A30', borderWidth:1},
-        barMaxWidth:10, markArea:{silent:true, data: resAreas.concat(supAreas)}},
+        barWidth:'85%', barMaxWidth:22, markArea:{silent:true, data: resAreas.concat(supAreas)}},
       {name:'EMA10', type:'line', data:ema10, smooth:false, lineStyle:{color:'#00e676', width:1.5}, symbol:'none', connectNulls:false},
       {name:'EMA20', type:'line', data:ema20, smooth:false, lineStyle:{color:'#ffd740', width:1.5}, symbol:'none', connectNulls:false},
       {name:'EMA50', type:'line', data:ema50, smooth:false, lineStyle:{color:'#ff5252', width:2}, symbol:'none', connectNulls:false}
@@ -26098,7 +26098,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.18.2-tier-ab-cleanup';
+var APP_VERSION = '2.18.3-tighter-candles';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
