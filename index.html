@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-12T03:45-tighter-candles">
+<meta name="op-build" content="2026-05-12T04:00-webp-splash-microfixes">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -41,7 +41,13 @@
      on the device's media query at launch time. The 512×512 icon scales up
      cleanly because it's the panda silhouette on a solid color. Without
      these, iOS shows a stark white loading screen which feels jarring. -->
-<link rel="apple-touch-startup-image" href="assets/icon-512.png">
+<!-- v2.18.4: iPhone 17 Pro Max splash (1290×2796 @3x). The previous startup
+     image was just a 512×512 icon on a black screen — looked truncated on
+     iPhone Pro Max. Includes a fallback startup image for any device that
+     doesn't match the explicit media query. -->
+<link rel="apple-touch-startup-image" media="(device-width: 440px) and (device-height: 956px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1290x2796.png">
+<link rel="apple-touch-startup-image" media="(device-width: 430px) and (device-height: 932px) and (-webkit-device-pixel-ratio: 3) and (orientation: portrait)" href="assets/splash-1290x2796.png">
+<link rel="apple-touch-startup-image" href="assets/splash-1290x2796.png">
 <!-- iOS PWA polish: smooth scrolling + tap highlight color matching the brand -->
 <meta name="format-detection" content="telephone=no, date=no, email=no, address=no">
 <meta name="msapplication-TileColor" content="#050d14">
@@ -2997,7 +3003,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 })();
 </script>
 <div id="hdr">
-  <div id="hdr-logo"><img src="assets/rrjcar-icon.jpg?v=4" alt="" class="panda-icon" ondblclick="forceReloadFresh()" title="Double-tap to force-reload (clears stale cache)" style="border-radius:50%;"><span ondblclick="forceReloadFresh()" title="Double-tap to force-reload">OPTION PANDA</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span><!-- Version chip restored 2026-05-10 per user spec — subtly visible so user + others can confirm latest deploy. Click to force-reload. Strips descriptive suffix (e.g. '2.12.1-rescan-fixes' → 'v2.12.1') — full slug still on APP_VERSION + meta op-build for diagnostics. --><span id="hdr-version" onclick="forceReloadFresh()" title="Click to force-reload (clears cache)" style="margin-left:10px;font-family:var(--ff-mono);font-size:10px;color:var(--gry2);letter-spacing:.5px;font-weight:400;cursor:pointer;opacity:0.65;">v—</span></div>
+  <div id="hdr-logo"><img src="assets/rrjcar-icon.webp?v=5" alt="" class="panda-icon" ondblclick="forceReloadFresh()" title="Double-tap to force-reload (clears stale cache)" style="border-radius:50%;"><span ondblclick="forceReloadFresh()" title="Double-tap to force-reload">OPTION PANDA</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span><!-- Version chip restored 2026-05-10 per user spec — subtly visible so user + others can confirm latest deploy. Click to force-reload. Strips descriptive suffix (e.g. '2.12.1-rescan-fixes' → 'v2.12.1') — full slug still on APP_VERSION + meta op-build for diagnostics. --><span id="hdr-version" onclick="forceReloadFresh()" title="Click to force-reload (clears cache)" style="margin-left:10px;font-family:var(--ff-mono);font-size:10px;color:var(--gry2);letter-spacing:.5px;font-weight:400;cursor:pointer;opacity:0.65;">v—</span></div>
   <div id="hdr-tickers" onclick="if(typeof updateHeaderQuotes==='function'){try{updateHeaderQuotes();if(typeof toast==='function')toast('Indices refreshed');if(typeof hap==='function')hap(8);}catch(_){}}" title="Tap to force-refresh indices">
     <span class="htick"><span class="ts">SPY </span><span class="tv" id="h-spy">--</span> <span class="tc" id="h-spy-c">(--)</span></span>
     <span class="htick"><span class="ts">QQQ </span><span class="tv" id="h-qqq">--</span> <span class="tc" id="h-qqq-c">(--)</span></span>
@@ -3348,7 +3354,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <div class="split-l"><div class="tbl-wrap" id="wl-tbl-wrap"><div class="empty-det" id="wl-empty" style="min-height:200px;"><div class="ei">&#9632;</div><p>Add tickers to watchlist</p></div></div></div>
     <div class="split-r">
       <div class="det-wrap" style="display:flex;flex-direction:column;height:100%;">
-        <div class="empty-det" id="wl-det-empty"><img src="assets/panda-transparent.png?v=3" alt="" class="empty-det-panda"><p>Select a ticker to view chart</p></div>
+        <div class="empty-det" id="wl-det-empty"><img src="assets/panda-transparent.webp?v=4" alt="" class="empty-det-panda"><p>Select a ticker to view chart</p></div>
         <div id="wl-chart-wrap" style="display:none;flex-direction:column;height:100%;">
           <div style="padding:6px 10px;border-bottom:var(--bdr);font-family:var(--ff-mono);font-size:11px;letter-spacing:1.5px;color:var(--amb);display:flex;justify-content:space-between;align-items:center;gap:8px;">
             <span id="wl-chart-title">--</span>
@@ -5924,6 +5930,12 @@ window._tradeTokenPersisted = false;   // tracks whether current value is from p
       return;
     }
     var v = localStorage.getItem(TRADE_TOKEN_PERSIST_KEY) || '';
+    if (!v){
+      // v2.18.4: orphan TTL with no token — wipe the dangling TTL too so a
+      // stale future-timestamp doesn't keep the slot reserved.
+      localStorage.removeItem(TRADE_TOKEN_PERSIST_TTL_KEY);
+      return;
+    }
     if (v) {
       window._tradeToken = v;
       window._tradeTokenPersisted = true;
@@ -6110,18 +6122,21 @@ window.showApiBreakdown = function(){
   };
   sumEl.innerHTML = keys.map(function(k){
     var c=colors[k]||'var(--gry)';
-    return '<span style="font-size:10px;font-family:var(--ff-mono);"><span style="color:'+c+'">'+k+'</span>'
-      +' <b style="color:var(--wht)">'+counts[k]+'</b></span>';
+    return '<span style="font-size:10px;font-family:var(--ff-mono);"><span style="color:'+c+'">'+_esc(k)+'</span>'
+      +' <b style="color:var(--wht)">'+_esc(String(counts[k]))+'</b></span>';
   }).join('<span style="color:var(--bg3);margin:0 2px;">|</span>');
 
   // Log list — newest first
   var listEl = document.getElementById('api-log-list');
   var calls = (log.calls||[]).slice().reverse();
+  // v2.18.4: escape every interpolated field. The log writer is internal,
+  // but a malformed Tradier response or imported log could contain HTML
+  // entities. _esc keeps the rendering safe with no functional change.
   listEl.innerHTML = calls.map(function(c){
     var mc = c.m==='POST'?'color:var(--ngo)':'color:var(--gry)';
-    return '<div><span style="color:var(--gry2)">'+c.t+'</span>'
-      +' <span style="'+mc+'">'+c.m+'</span>'
-      +' <span style="color:var(--amb)">'+c.ep+'</span></div>';
+    return '<div><span style="color:var(--gry2)">'+_esc(c.t)+'</span>'
+      +' <span style="'+mc+'">'+_esc(c.m)+'</span>'
+      +' <span style="color:var(--amb)">'+_esc(c.ep)+'</span></div>';
   }).join('');
 
   modal.style.display='flex';
@@ -7526,14 +7541,22 @@ function fmt2(n){return isNaN(n)?'--':(+n).toFixed(2);}
 //   1. ISO with Z / explicit offset → trust the marker
 //   2. Pure date "YYYY-MM-DD" → parses as UTC midnight (browser default)
 //   3. Naive ISO date-time → treat as ET wall time, compute UTC equivalent
+// v2.18.4: cache ET offset by day. Two toLocaleString round-trips per call
+// + 3 Date allocations was the per-position-render hot path; offset only
+// changes on DST boundaries (twice a year) so a tiny per-day memo cuts the
+// cost to a single hash lookup for every subsequent same-day call.
+var _ET_OFFSET_CACHE = {};
 function _etOffsetHoursAt(utcMs){
-  // ET (EDT / EST) offset for a given UTC instant. Round-trips through
-  // toLocaleString to let the JS engine handle DST transitions.
+  var dayKey = Math.floor(utcMs / 86400000);   // UTC day index
+  var cached = _ET_OFFSET_CACHE[dayKey];
+  if (cached !== undefined) return cached;
   try {
     var d = new Date(utcMs);
     var et  = new Date(d.toLocaleString('en-US', { timeZone:'America/New_York' }));
     var utc = new Date(d.toLocaleString('en-US', { timeZone:'UTC' }));
-    return Math.round((et - utc) / 3600000);
+    var off = Math.round((et - utc) / 3600000);
+    _ET_OFFSET_CACHE[dayKey] = off;
+    return off;
   } catch(_){ return -5; }   // CST-equivalent fallback
 }
 function _parseTradierDate(s){
@@ -7541,21 +7564,13 @@ function _parseTradierDate(s){
   if (s instanceof Date) return s;
   var str = String(s).trim();
   if (!str) return null;
-  // Has explicit timezone marker → trust it
-  if (/Z$|[+-]\d{2}:?\d{2}$/.test(str)) {
-    var d1 = new Date(str);
-    return isNaN(d1.getTime()) ? null : d1;
-  }
-  // Date-only → JS parses as UTC midnight, which is fine for date display
-  if (/^\d{4}-\d{2}-\d{2}$/.test(str)) {
-    var d2 = new Date(str);
-    return isNaN(d2.getTime()) ? null : d2;
-  }
-  // Naive ISO date-time → assume ET wall time and convert to UTC.
+  // Has explicit timezone marker, or date-only (parses as UTC midnight), or
+  // any other shape we don't recognize as naive ET ISO → one Date allocation.
+  // The naive-ET branch below is the only hot path that needs offset math.
   var m = str.match(/^(\d{4})-(\d{2})-(\d{2})[T ](\d{2}):(\d{2})(?::(\d{2})(?:\.(\d+))?)?$/);
-  if (!m){
-    var d3 = new Date(str);
-    return isNaN(d3.getTime()) ? null : d3;
+  if (!m || /Z$|[+-]\d{2}:?\d{2}$/.test(str)){
+    var d0 = new Date(str);
+    return isNaN(d0.getTime()) ? null : d0;
   }
   var y=+m[1], mo=+m[2]-1, day=+m[3], h=+m[4], mi=+m[5], se=+(m[6]||0);
   var ms = m[7] ? parseInt((m[7]+'000').slice(0,3), 10) : 0;
@@ -8817,7 +8832,12 @@ function onSymbolChange(){
   // Debounce: wait 600ms after last keystroke
   clearTimeout(G._symTimer);
   G._symTimer=setTimeout(function(){
-    var sym=eid('ord-sym').value.trim();
+    // v2.18.4: guard the input lookup — the DOM can be re-rendered between
+    // keystroke and timeout fire, leaving eid('ord-sym') as null and
+    // throwing on .value.trim().
+    var symEl = eid('ord-sym');
+    if (!symEl) return;
+    var sym = (symEl.value || '').trim();
     if(sym.length>=1) {
       fetchLiveQuote();
       // Refresh the order-ticket option chain too — but only if the card is
@@ -10033,7 +10053,12 @@ function _doSpreadSubmit(opts){
                 updateOrderStatusModal({state:'not-filled', stateText:'STILL WORKING', logLine:'Stopped polling after 5 min — spread may still fill at the broker.', logKind:'rejected'});
                 return;
               }
-              pollOrderDetails({host:creds.host,key:creds.key}, acct, data.order.id).then(function(det){
+              var pollOrderId = data.order.id;   // captured for closure-vs-current check
+              pollOrderDetails({host:creds.host,key:creds.key}, acct, pollOrderId).then(function(det){
+                // v2.18.4: ignore late responses from a previous spread when
+                // the user has re-submitted. If the ctx's orderId no longer
+                // matches what THIS poller fired against, drop the result.
+                if (G.orderStatus && G.orderStatus.ctx && G.orderStatus.ctx.orderId !== pollOrderId) return;
                 var s = (det && det.status) || '';
                 var PENDING = { open:1, pending:1, partially_filled:1, accepted:1, submitted:1, received:1, replaced:1, replacement_pending:1, pending_replace:1, pending_cancel:1 };
                 if (s === 'filled'){
@@ -16929,7 +16954,7 @@ function pushNotify(title, body, tag){
     var opts = {
       body: body || '',
       tag: tag || ('opt-panda-'+Date.now()),
-      icon: './assets/pandas2.png',
+      icon: './assets/pandas2.webp',
       badge: './assets/icon-192.png',
       silent: false
     };
@@ -19054,7 +19079,7 @@ function renderScan(){
        middle, leaving ~150px of dead space below the text down to the
        bot-nav. User report: 'beginning of wasted space ... blocking
        visibility to the rest of the scan results'. */
-    wrap.innerHTML='<div class="empty-det" style="min-height:0;padding:24px 20px;"><img src="assets/panda-transparent.png?v=3" alt="" class="empty-det-panda"><p>'+msg+'</p></div>';
+    wrap.innerHTML='<div class="empty-det" style="min-height:0;padding:24px 20px;"><img src="assets/panda-transparent.webp?v=4" alt="" class="empty-det-panda"><p>'+msg+'</p></div>';
     return;
   }
 
@@ -26098,7 +26123,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.18.3-tighter-candles';
+var APP_VERSION = '2.18.4-webp-splash-microfixes';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).

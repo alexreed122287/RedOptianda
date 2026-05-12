@@ -17,12 +17,14 @@
 //   3. Notification click routing — focus an existing tab if open,
 //      otherwise launch a new one.
 
-var CACHE_NAME = 'option-panda-v2';
+var CACHE_NAME = 'option-panda-v3';   // v2.18.4: WebP rollout — bump invalidates v2 caches
 var STATIC_ASSETS = [
   './assets/icon-192.png',
   './assets/icon-512.png',
   './assets/apple-touch-icon.png',
-  './assets/pandas2.png',
+  './assets/pandas2.webp',
+  './assets/panda-transparent.webp',
+  './assets/rrjcar-icon.webp',
   './manifest.json'
 ];
 
