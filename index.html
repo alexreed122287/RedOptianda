@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-12T06:30-yesterday-not-today">
+<meta name="op-build" content="2026-05-12T07:30-proactive-anchor-seed">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -26202,6 +26202,31 @@ setInterval(function(){
   if (document.hidden) return;  // v2.17.3: skip UI mirror work when tab is backgrounded
   try { _mirrorIndicesToDup(); } catch(_){}
 }, 1000);
+// v2.18.14: proactive seed — fetch yesterday's daily-bar close for the
+// 7 ribbon indices at init, before the first quote poll. The result
+// lives in 'rrjcar_idx_anchor' (the same map _seedIdxAnchorFromHistory
+// writes to). Runs once per page load. Skips symbols whose anchor is
+// already fresh (<24h old) so we don't redundantly hit history every
+// reload. Safe to run before _getTradierKey has settled — the call
+// is fire-and-forget and the worst case is one wasted API call.
+function _proactiveSeedIndexAnchors(){
+  var key = (typeof _getTradierKey === 'function') ? _getTradierKey() : '';
+  if (!key) return;
+  var mode = 'sandbox';
+  try { mode = localStorage.getItem('rrjcar_mode') || 'sandbox'; } catch(_){}
+  var host = mode === 'live' ? 'https://api.tradier.com' : 'https://sandbox.tradier.com';
+  var idxSymbols = ['SPY','QQQ','DIA','IWM','VIX','GLD','SPX'];
+  var anchors = {};
+  try { anchors = JSON.parse(localStorage.getItem('rrjcar_idx_anchor') || '{}') || {}; } catch(_){}
+  var freshCutoff = Date.now() - 24*60*60*1000;
+  idxSymbols.forEach(function(sym){
+    var a = anchors[sym];
+    // Skip if we already have a fresh anchor — no need to refire.
+    if (a && a.prev > 0 && a.ts && a.ts > freshCutoff) return;
+    _seedIdxAnchorFromHistory(sym, key, host);
+  });
+}
+
 // v2.18.12: one-shot fetch of the most recent daily-bar close to seed
 // the anchor cache when Tradier's quote endpoint returns degraded AH
 // payload (last only, everything else zero). Deduped per symbol per
@@ -26472,7 +26497,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.18.13-yesterday-not-today';
+var APP_VERSION = '2.18.14-proactive-anchor-seed';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
@@ -29936,6 +29961,13 @@ function init(){
   // indicies. still don't see afterhours % changes'. Was previously
   // gated to RTH-only via the setInterval below; outside 9:25-4:05 ET
   // the indices stayed at their stale cached state forever.
+  // v2.18.14: proactive seed — fetch yesterday's daily-bar close for all
+  // 7 indices BEFORE the first quote poll, so anchors are populated
+  // before updateHeaderQuotes can ever produce a "no baseline" 0%.
+  // This removes the timing dependency on the in-fetch fallback chain
+  // (which depended on the recompute path being reached, history
+  // fetch succeeding, AND updateHeaderQuotes re-firing in order).
+  try { _proactiveSeedIndexAnchors(); } catch(_){}
   setTimeout(function(){ try { updateHeaderQuotes(); } catch(_){} }, 1500);
 
   // 5. Watchlist — no API, just re-render from stored tickers
