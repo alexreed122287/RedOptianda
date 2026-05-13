@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-13T01:30-scan-left-of-filters">
+<meta name="op-build" content="2026-05-13T01:45-bp-peek-global">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -3201,37 +3201,9 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
   <!-- v2.18.19: press-and-hold Buying Power chip. Bottom-right above the
        bot-nav. Tiny "$" glyph; pointerdown reveals the live BP, release
        hides it. Pointer Events handle touch + mouse uniformly. -->
-  <!-- v2.18.22: $ BP peek now stacks VERTICALLY above the ✉ feedback FAB.
-       Desktop: ✉ at bottom:20px + 36px height + 10px gap → BP at bottom:66px.
-       Mobile: ✉ at bottom:62px + 36px + 10px → BP at bottom:108px. -->
-  <div id="sc-bp-peek" class="bp-peek-fab" onpointerdown="_bpPeekStart(event)" onpointerup="_bpPeekEnd()" onpointerleave="_bpPeekEnd()" onpointercancel="_bpPeekEnd()" oncontextmenu="event.preventDefault();return false;" title="Press and hold to see Buying Power" style="position:fixed;right:14px;z-index:80;width:34px;height:34px;border-radius:50%;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.30);color:var(--ambb);font-family:var(--ff-mono);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;opacity:0.55;transition:opacity .15s;">$</div>
-  <div id="sc-bp-peek-value" class="bp-peek-value" style="display:none;position:fixed;right:54px;z-index:81;background:var(--bg1);border:1px solid var(--ambb);border-radius:6px;padding:8px 12px;font-family:var(--ff-mono);font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--grn);box-shadow:0 0 18px rgba(0,212,255,0.35);white-space:nowrap;pointer-events:none;"></div>
-  <script>
-    function _bpPeekStart(e){
-      try { e && e.preventDefault && e.preventDefault(); } catch(_){}
-      var btn = document.getElementById('sc-bp-peek');
-      var val = document.getElementById('sc-bp-peek-value');
-      if (!btn || !val) return;
-      btn.style.opacity = '1';
-      var bp = (window.G && G.lastBP && G.lastBP.option);
-      if (bp != null && isFinite(bp)){
-        val.textContent = 'BP: $' + Number(bp).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
-        val.style.color = bp > 0 ? 'var(--grn)' : 'var(--wrn)';
-      } else {
-        val.textContent = 'BP: loading…';
-        val.style.color = 'var(--gry)';
-        try { if (typeof fetchBalances === 'function') fetchBalances(); } catch(_){}
-      }
-      val.style.display = 'block';
-      try { if (typeof hap === 'function') hap(8); } catch(_){}
-    }
-    function _bpPeekEnd(){
-      var btn = document.getElementById('sc-bp-peek');
-      var val = document.getElementById('sc-bp-peek-value');
-      if (btn) btn.style.opacity = '0.55';
-      if (val) val.style.display = 'none';
-    }
-  </script>
+  <!-- v2.18.28: $ BP peek moved OUT of #tab-sc to a global location
+       (next to the feedback FAB) so it appears on every tab, not just
+       the scanner. Press-and-hold reveals the live BP from G.lastBP. -->
   <!-- Mobile-only: condensed action bar with SCAN + Filters toggle -->
   <!-- Sticky action row — single line: 4 section toggles + SCAN + status.
        Each segment toggles its corresponding sc-bar-* collapsible inline.
@@ -5726,6 +5698,37 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
      offset to the left of the ? button). Posts to the configured Google
      Apps Script webhook — see feedback/README.md. -->
 <button class="help-fab feedback-fab" id="feedback-fab-btn" onclick="openFeedbackModal()" title="Submit feedback or a change request — saves to your shared Google Sheet" style="display:flex;">&#9993;</button>
+<!-- v2.18.28: $ BP peek — moved to global scope so every tab gets the
+     press-and-hold quick-look at buying power. Positioned via CSS
+     class .bp-peek-fab which stacks it ABOVE the ✉ feedback FAB. -->
+<div id="sc-bp-peek" class="bp-peek-fab" onpointerdown="_bpPeekStart(event)" onpointerup="_bpPeekEnd()" onpointerleave="_bpPeekEnd()" onpointercancel="_bpPeekEnd()" oncontextmenu="event.preventDefault();return false;" title="Press and hold to see Buying Power" style="position:fixed;right:14px;z-index:80;width:34px;height:34px;border-radius:50%;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.30);color:var(--ambb);font-family:var(--ff-mono);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;opacity:0.55;transition:opacity .15s;">$</div>
+<div id="sc-bp-peek-value" class="bp-peek-value" style="display:none;position:fixed;right:54px;z-index:81;background:var(--bg1);border:1px solid var(--ambb);border-radius:6px;padding:8px 12px;font-family:var(--ff-mono);font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--grn);box-shadow:0 0 18px rgba(0,212,255,0.35);white-space:nowrap;pointer-events:none;"></div>
+<script>
+  function _bpPeekStart(e){
+    try { e && e.preventDefault && e.preventDefault(); } catch(_){}
+    var btn = document.getElementById('sc-bp-peek');
+    var val = document.getElementById('sc-bp-peek-value');
+    if (!btn || !val) return;
+    btn.style.opacity = '1';
+    var bp = (window.G && G.lastBP && G.lastBP.option);
+    if (bp != null && isFinite(bp)){
+      val.textContent = 'BP: $' + Number(bp).toLocaleString('en-US', {minimumFractionDigits:2, maximumFractionDigits:2});
+      val.style.color = bp > 0 ? 'var(--grn)' : 'var(--wrn)';
+    } else {
+      val.textContent = 'BP: loading…';
+      val.style.color = 'var(--gry)';
+      try { if (typeof fetchBalances === 'function') fetchBalances(); } catch(_){}
+    }
+    val.style.display = 'block';
+    try { if (typeof hap === 'function') hap(8); } catch(_){}
+  }
+  function _bpPeekEnd(){
+    var btn = document.getElementById('sc-bp-peek');
+    var val = document.getElementById('sc-bp-peek-value');
+    if (btn) btn.style.opacity = '0.55';
+    if (val) val.style.display = 'none';
+  }
+</script>
 <div id="feedback-modal" onclick="if(event.target===this)closeFeedbackModal()" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:24px;">
   <div style="background:var(--bg1);border:1px solid var(--amb);border-radius:8px;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.6);">
     <div style="padding:14px 18px;border-bottom:1px solid var(--bg3);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;">
@@ -26940,7 +26943,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.18.27-scan-left-of-filters';
+var APP_VERSION = '2.18.28-bp-peek-global';
 // v2.18.21: DEFAULT feedback webhook. Every visitor's "Submit Feedback"
 // form posts here (unless they've overridden via ALERTS → Feedback
 // Webhook). The URL points to a Google Apps Script Web App owned by
