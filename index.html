@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-12T22:00-tz-earnings-bp-feedback">
+<meta name="op-build" content="2026-05-12T22:30-fab-row-5min-chart">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -296,6 +296,12 @@ a{color:var(--blu);text-decoration:none;}
   .help-fab{
     bottom: 62px !important;
     right: 10px !important;
+  }
+  /* v2.18.20: feedback FAB sits to the LEFT of the ? FAB on the same row
+     (overrides the generic .help-fab right:10px from above). The two
+     FABs together form a discreet bottom-right pair. */
+  .help-fab.feedback-fab{
+    right: 56px !important;
   }
   /* On the order tab, the swipe-to-submit fixed bar sits ~82px from the
      bottom — lift the fab above it. */
@@ -5687,7 +5693,10 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 <!-- v2.18.19: feedback FAB stacked above the help FAB. Click opens a
      compact form that POSTs to a Google Apps Script webhook (URL set
      in the ALERTS tab → FEEDBACK card). See feedback/README.md. -->
-<button class="help-fab feedback-fab" id="feedback-fab-btn" onclick="openFeedbackModal()" title="Submit feedback or a change request — saves to your shared Google Sheet" style="display:flex;bottom:66px;">&#9993;</button>
+<!-- v2.18.20: feedback FAB now sits to the LEFT of the ? help FAB on the
+     same row (was stacked above). Both bottom-right; the help FAB stays
+     fixed at right:14px and this one offsets to right:60px. -->
+<button class="help-fab feedback-fab" id="feedback-fab-btn" onclick="openFeedbackModal()" title="Submit feedback or a change request — saves to your shared Google Sheet" style="display:flex;right:60px;">&#9993;</button>
 <div id="feedback-modal" onclick="if(event.target===this)closeFeedbackModal()" style="display:none;position:fixed;inset:0;z-index:9100;background:rgba(0,0,0,.72);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:24px;">
   <div style="background:var(--bg1);border:1px solid var(--amb);border-radius:8px;max-width:480px;width:100%;max-height:88vh;overflow-y:auto;box-shadow:0 12px 48px rgba(0,0,0,.6);">
     <div style="padding:14px 18px;border-bottom:1px solid var(--bg3);background:var(--bg2);display:flex;align-items:center;justify-content:space-between;">
@@ -5825,6 +5834,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <span id="chart-modal-title" style="font-family:var(--ff-brand);font-size:14px;font-weight:700;color:var(--amb);letter-spacing:1px;text-shadow:var(--glow-cyan);">--</span>
       <span id="chart-modal-sub" style="color:var(--gry);font-size:10px;font-family:var(--ff-mono);flex:1;text-align:left;min-width:60px;">--</span>
       <button class="btn blu" id="chart-modal-tf-d" onclick="chartModalSetTf('D')" style="font-size:10px;padding:5px 12px;">DAILY</button>
+      <button class="btn" id="chart-modal-tf-5m" onclick="chartModalSetTf('5m')" style="font-size:10px;padding:5px 12px;">5 MIN</button>
       <button class="btn" id="chart-modal-tf-1m" onclick="chartModalSetTf('1m')" style="font-size:10px;padding:5px 12px;">1 MIN</button>
       <button onclick="closeChartModal()" title="Close (Esc)" style="background:transparent;border:1px solid var(--bg3);color:var(--gry);font-size:18px;font-weight:700;min-width:44px;min-height:44px;border-radius:4px;cursor:pointer;line-height:1;padding:0;">&#10005;</button>
     </div>
@@ -21192,17 +21202,25 @@ function chartModalSetTf(tf){
   if(G._chartModalTicker) _chartModalRender(G._chartModalTicker);
 }
 function _chartModalUpdateTfButtons(){
-  var d = eid('chart-modal-tf-d'), m = eid('chart-modal-tf-1m');
-  if(d) d.className = G._chartModalTf === 'D' ? 'btn blu' : 'btn';
-  if(m) m.className = G._chartModalTf === '1m' ? 'btn blu' : 'btn';
+  var d = eid('chart-modal-tf-d'), m5 = eid('chart-modal-tf-5m'), m = eid('chart-modal-tf-1m');
+  if(d)  d.className  = G._chartModalTf === 'D'  ? 'btn blu' : 'btn';
+  if(m5) m5.className = G._chartModalTf === '5m' ? 'btn blu' : 'btn';
+  if(m)  m.className  = G._chartModalTf === '1m' ? 'btn blu' : 'btn';
 }
 function _chartModalRender(ticker){
   var canvas = eid('chart-modal-canvas'), loading = eid('chart-modal-loading');
   if(!canvas || typeof echarts === 'undefined') return;
   if(G._chartModalChart){ try{ G._chartModalChart.dispose(); }catch(e){} G._chartModalChart = null; }
-  if(loading){ loading.style.display = 'flex'; loading.textContent = 'Loading '+ticker+' ('+(G._chartModalTf==='D'?'Daily':'1 Min')+')...'; }
+  // v2.18.20: 3-tf chart modal \u2014 DAILY / 5 MIN / 1 MIN.
+  var tfLabel = G._chartModalTf === 'D' ? 'Daily'
+              : G._chartModalTf === '5m' ? '5 Min'
+              : '1 Min';
+  var tfLabelUpper = G._chartModalTf === 'D' ? 'DAILY'
+                  : G._chartModalTf === '5m' ? '5 MIN'
+                  : '1 MIN';
+  if(loading){ loading.style.display = 'flex'; loading.textContent = 'Loading '+ticker+' ('+tfLabel+')...'; }
   var titleEl = eid('chart-modal-title');
-  if(titleEl) titleEl.textContent = ticker + ' \u2014 ' + (G._chartModalTf==='D' ? 'DAILY' : '1 MIN');
+  if(titleEl) titleEl.textContent = ticker + ' \u2014 ' + tfLabelUpper;
   var subEl = eid('chart-modal-sub');
   if(subEl) subEl.textContent = '--';
 
@@ -21226,14 +21244,30 @@ function _chartModalRender(ticker){
       _chartModalDrawCandles(ticker, days, 'daily');
     }).catch(function(e){ if(loading) loading.textContent = 'Chart error: '+e.message; });
   } else {
-    var now = new Date(), mStart = new Date(now); mStart.setHours(9,30,0,0);
+    // v2.18.20: 5-min uses Tradier's interval=5min. Window extends to 2
+    // sessions back so the 5m chart has enough bars for a useful overlay
+    // (5min × 78 bars per RTH session = ~1 day; show ~2 sessions for
+    // context). 1-min stays single-session — too many bars otherwise.
+    var isFive = G._chartModalTf === '5m';
+    var tradierInterval = isFive ? '5min' : '1min';
+    var now = new Date();
+    var mStart = new Date(now);
+    if (isFive){
+      // 5-min: rewind 2 trading days so the chart shows ~2 sessions of bars.
+      mStart.setDate(mStart.getDate() - 2);
+      mStart.setHours(9,30,0,0);
+    } else {
+      mStart.setHours(9,30,0,0);
+    }
     var mEnd = new Date(now); mEnd.setHours(16,0,0,0);
     if(now.getDay()===0) mStart.setDate(mStart.getDate()-2);
     if(now.getDay()===6) mStart.setDate(mStart.getDate()-1);
     var fmtTs = function(d){ return d.getFullYear()+'-'+('0'+(d.getMonth()+1)).slice(-2)+'-'+('0'+d.getDate()).slice(-2)+' '+('0'+d.getHours()).slice(-2)+':'+('0'+d.getMinutes()).slice(-2)+':00'; };
-    tradierFetch(host+'/v1/markets/timesales?symbol='+ticker+'&interval=1min&start='+encodeURIComponent(fmtTs(mStart))+'&end='+encodeURIComponent(fmtTs(mEnd))+'&session_filter=open',{
+    // Cache TTL: 1-min refreshes every 60s; 5-min every 5 min.
+    var ttl = isFive ? 5*60*1000 : 60*1000;
+    tradierFetch(host+'/v1/markets/timesales?symbol='+ticker+'&interval='+tradierInterval+'&start='+encodeURIComponent(fmtTs(mStart))+'&end='+encodeURIComponent(fmtTs(mEnd))+'&session_filter=open',{
       headers:{Authorization:'Bearer '+key,Accept:'application/json'}
-    }, 60*1000).then(function(r){return r.json();})
+    }, ttl).then(function(r){return r.json();})
     .then(function(data){
       var series = (data.series && data.series.data) ? data.series.data : [];
       if(!Array.isArray(series)) series = [series];
@@ -26811,7 +26845,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.18.19-tz-earnings-bp-feedback';
+var APP_VERSION = '2.18.20-fab-row-5min-chart';
 // Page-source fallback constants removed. Each visitor now provides their own
 // API credentials via the API tab (or, for Tradier, sets up the worker proxy
 // at worker/tradier-proxy/ \u2014 keys never reach the browser at all).
