@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-13T01:45-bp-peek-global">
+<meta name="op-build" content="2026-05-13T02:00-positions-bal-badge">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -3441,6 +3441,9 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
          hid BP behind the SUMMARY toggle which the user reported was
          frustrating: "always have buying power displayed". -->
     <span id="pos-bp-badge" onclick="fetchBalances()" title="Option buying power (Tradier) — tap to refresh" style="font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--grn);background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.30);border-radius:4px;padding:6px 10px;cursor:pointer;white-space:nowrap;min-height:36px;display:inline-flex;align-items:center;">BP: --</span>
+    <!-- v2.18.29: total account balance next to BP. Equity = positions
+         market value + cash. Same fetchBalances call populates both. -->
+    <span id="pos-bal-badge" onclick="fetchBalances()" title="Total account balance (Tradier equity = positions market value + cash) — tap to refresh" style="font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--ambb);background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.30);border-radius:4px;padding:6px 10px;cursor:pointer;white-space:nowrap;min-height:36px;display:inline-flex;align-items:center;">BAL: --</span>
     <span class="pos-src" id="pos-src" style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);margin-left:auto;"></span>
   </div>
   <!-- Stats bar collapsed by default. Click SUMMARY to expand.
@@ -23459,6 +23462,16 @@ function fetchBalances(){
         if (lmv || smv || tc) equity = lmv + smv + tc;
       }
       if(eid('pos-acctval')) eid('pos-acctval').textContent = (equity != null ? fmtD(equity) : '--');
+      // v2.18.29: mirror the resolved equity to the new BAL badge next to
+      // the BP badge on the positions tab. Same compact $X,XXX.XX format
+      // as BP. Hides the badge if equity can't be resolved (Tradier
+      // returned only cash totals; tap to refresh).
+      if (eid('pos-bal-badge')){
+        var balEl = eid('pos-bal-badge');
+        balEl.textContent = (equity != null && equity > 0) ? ('BAL: ' + fmtD(equity)) : 'BAL: --';
+      }
+      // Stash for future use (other badges, dashboards).
+      try { (G.lastBP = G.lastBP || {}).equity = equity; } catch(_){}
       if(typeof updatePosStats === 'function') updatePosStats();
       // Option buying power: margin accts use margin.option_buying_power;
       // cash uses cash_available; pdt uses pdt.option_buying_power. Tradier
@@ -26943,7 +26956,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.18.28-bp-peek-global';
+var APP_VERSION = '2.18.29-positions-bal-badge';
 // v2.18.21: DEFAULT feedback webhook. Every visitor's "Submit Feedback"
 // form posts here (unless they've overridden via ALERTS → Feedback
 // Webhook). The URL points to a Google Apps Script Web App owned by
