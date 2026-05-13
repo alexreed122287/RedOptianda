@@ -59,6 +59,73 @@ Open the dashboard → **ALERTS tab** → **FEEDBACK WEBHOOK card** → paste th
 
 Standard Google Sheets share — give read access (or comment/edit, your call) to whoever you want to triage feedback. They'll see new submissions as rows appear.
 
+## Optional: bake the URL in as the DEFAULT for every visitor
+
+If you want **every** user of the public dashboard to submit feedback into your Sheet without each one configuring their own, paste the URL into the dashboard source as the default webhook:
+
+1. Open `index.html`
+2. Find the line `var FEEDBACK_DEFAULT_WEBHOOK = '';` (near the `APP_VERSION` constant)
+3. Paste your Apps Script URL between the quotes:
+
+   ```javascript
+   var FEEDBACK_DEFAULT_WEBHOOK = 'https://script.google.com/macros/s/AKfycb.../exec';
+   ```
+
+4. Commit + push. The new build serves the URL as the default; the `localStorage` value still wins for any user who's set their own.
+
+**Security note:** the URL is public in the page source. The Apps Script only ACCEPTS POSTs that append to the Sheet — no other operations are exposed. If spam ever becomes a problem, add the shared-secret check below.
+
+## Optional: get a Gmail notification on every submission
+
+Update your Apps Script with one extra line so every submission also emails you:
+
+```javascript
+function doPost(e) {
+  try {
+    var data = JSON.parse(e.postData.contents);
+    var sheet = SpreadsheetApp.getActiveSheet();
+    sheet.appendRow([
+      data.submittedAt || new Date().toISOString(),
+      data.type || '',
+      data.subject || '',
+      data.body || '',
+      data.version || '',
+      data.activeTab || '',
+      data.userAgent || ''
+    ]);
+    // Optional: notify yourself on every submission.
+    try {
+      MailApp.sendEmail({
+        to: 'alexander.s.reed@gmail.com',
+        subject: '[Option Panda Feedback] ' + (data.type||'other') + ': ' + (data.subject||'(no subject)'),
+        body: 'Type: ' + (data.type||'') + '\n'
+            + 'Subject: ' + (data.subject||'') + '\n'
+            + 'Submitted: ' + (data.submittedAt||'') + '\n'
+            + 'Version: ' + (data.version||'') + '\n'
+            + 'Tab: ' + (data.activeTab||'') + '\n\n'
+            + (data.body || '') + '\n\n'
+            + '— sent automatically by your feedback webhook'
+      });
+    } catch (_) { /* email is best-effort; rows still land in the Sheet */ }
+    return ContentService.createTextOutput(JSON.stringify({ok:true})).setMimeType(ContentService.MimeType.JSON);
+  } catch (err) {
+    return ContentService.createTextOutput(JSON.stringify({ok:false, error: String(err)})).setMimeType(ContentService.MimeType.JSON);
+  }
+}
+```
+
+After editing, redeploy (Deploy → Manage deployments → ✎ → New version → Deploy). The URL stays the same. Apps Script's free `MailApp` quota is 100 emails/day for a personal Gmail account — more than enough for feedback volume.
+
+## Optional: shared secret to block random POSTs
+
+If the URL is baked into the public dashboard and bots eventually find it:
+
+1. Add a constant at the top of the Apps Script: `var SHARED_SECRET = 'pick-a-random-string-32chars-or-so';`
+2. In the dashboard's `submitFeedback` payload (line ~5784 in `index.html`), add: `secret: 'same-random-string'`
+3. In `doPost`, reject mismatches: `if (data.secret !== SHARED_SECRET) return ContentService.createTextOutput('forbidden');`
+
+This isn't crypto-grade auth — anyone who reads the dashboard source can copy the secret — but it stops drive-by bot abuse.
+
 ## Notes / caveats
 
 - **Updating the script:** if you change the Apps Script later, you need to redeploy (Deploy → Manage deployments → ✎ on the active deployment → New version → Deploy). The URL stays the same.
