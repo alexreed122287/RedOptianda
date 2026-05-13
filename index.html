@@ -11,7 +11,7 @@
 <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate, max-age=0">
 <meta http-equiv="Pragma" content="no-cache">
 <meta http-equiv="Expires" content="0">
-<meta name="op-build" content="2026-05-13T00:30-collapse-4-chip-group">
+<meta name="op-build" content="2026-05-13T01:00-six-fixes-batch">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&family=Orbitron:wght@500;700;900&display=swap" rel="stylesheet">
@@ -2024,10 +2024,13 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
   .news-card-img{width:64px;height:64px;}
   .news-card-title{font-size:12px;-webkit-line-clamp:3;}
   .news-card-summary{display:none;}
-  /* iGAP-8 fix 2026-05-09: news filter chips on iPhone need to be tappable. */
-  .news-filter{font-size:11px;padding:10px 12px;min-height:44px;white-space:nowrap;overflow:visible;}
+  /* v2.18.25: 5 news filter chips on iPhone fit on ONE row without
+     wrap or truncation. font-size 11→10, padding 10/12→7/8, gap 4→3.
+     min-height 44→36 still meets iOS HIG tap target. Title row keeps
+     its own flow above the chips via the .flt-bar wrap. */
+  .news-filter{font-size:10px;padding:7px 8px;min-height:36px;white-space:nowrap;overflow:visible;flex-shrink:0;}
   #tab-news .flt-bar{flex-wrap:wrap;overflow:visible;}
-  #tab-news .news-filter-row{flex-wrap:wrap;overflow:visible;width:100%;}
+  #tab-news .news-filter-row{flex-wrap:nowrap !important;overflow:visible;width:100%;gap:3px !important;justify-content:flex-start !important;margin-left:0 !important;}
 }
 
 /* iPhone-specific: treat very narrow screens as needing extra compression */
@@ -3348,7 +3351,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <label class="ind-filter-lbl" title="TF Aligned = Time-Frame Aligned. Counts how many of three trend timeframes (e.g. daily / hourly / 15-min) are pointing the same direction. 2/3 = at least two of three timeframes agree, which filters out stocks that look bullish on one timeframe but are choppy on others."><input type="checkbox" class="ind-filter" id="filt-tf" onchange="applyFilters()"> <span>TF Aligned 2/3</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-ema200" onchange="applyFilters()"> <span>Above EMA200</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-vol" onchange="applyFilters()"> <span>Vol &gt; Avg</span></label>
-    <label class="ind-filter-lbl" title="Hide tickers with earnings today through N trading days into the future (inclusive). 0 = today only. 3 = today + next 3 days. Earnings = binary event; even good signals turn into 50/50 coin flips through earnings."><input type="checkbox" class="ind-filter" id="filt-no-earn" onchange="applyFilters()"> <span>No Earnings (today + <input type="number" id="filt-earn-days" value="0" min="0" max="30" style="width:48px;font-size:11px;padding:2px 5px;background:var(--bg2);border:1px solid var(--bg3);color:var(--amb);text-align:center;" onchange="applyFilters()" onclick="event.stopPropagation()" inputmode="numeric">d)</span></label>
+    <label class="ind-filter-lbl" title="Hide tickers with earnings today through N trading days into the future (inclusive). 0 = today only. 3 = today + next 3 days. Earnings = binary event; even good signals turn into 50/50 coin flips through earnings."><input type="checkbox" class="ind-filter" id="filt-no-earn" onchange="applyFilters()" checked> <span>No Earnings (today + <input type="number" id="filt-earn-days" value="1" min="0" max="30" style="width:48px;font-size:11px;padding:2px 5px;background:var(--bg2);border:1px solid var(--bg3);color:var(--amb);text-align:center;" onchange="applyFilters()" onclick="event.stopPropagation()" inputmode="numeric">d)</span></label>
     <label class="ind-filter-lbl" title="Sector rotation overlay — only show tickers in themes with daily composite score >= 75 (top quartile, prevailing institutional flow)"><input type="checkbox" class="ind-filter" id="filt-strong-sector" onchange="applyFilters()"> <span>Strong Sector</span></label>
     <label class="ind-filter-lbl" title="Jegadeesh-Titman 12-1 cross-sectional momentum (1993). 12-month return minus 1-month, top quintile (≥25%). Strongest replicated edge in academic finance. Worth +20 score points — most heavily weighted single rule."><input type="checkbox" class="ind-filter" id="filt-jt12" onchange="applyFilters()"> <span>JT 12-1 Mom</span></label>
     <label class="ind-filter-lbl" title="Mark Minervini's 8-criteria Stage 2 trend template. Price &gt; MA50 &gt; MA150 &gt; MA200, MA200 trending up &gt;1mo, RS rank &gt; 70, near 52wk hi, &gt;25% off 52wk lo. High-specificity swing breakout setup. Worth +15."><input type="checkbox" class="ind-filter" id="filt-minervini" onchange="applyFilters()"> <span>Minervini</span></label>
@@ -12344,6 +12347,31 @@ function submitOrder(){
   var action=eid('ord-action').value;
   var sideMap={'BUY_TO_OPEN':'buy_to_open','SELL_TO_OPEN':'sell_to_open','BUY_TO_CLOSE':'buy_to_close','SELL_TO_CLOSE':'sell_to_close','BUY':'buy','SELL':'sell'};
   var side=sideMap[action]||action.toLowerCase();
+  // v2.18.25: EARNINGS-WITHIN-1-DAY WARNING. Block BUY_TO_OPEN /
+  // straight BUY actions until the user acknowledges that the
+  // underlying has earnings today or the next trading day.
+  // Earnings are binary events; long calls into a print are a
+  // coin flip regardless of how strong the setup looks.
+  if ((action === 'BUY_TO_OPEN' || action === 'BUY') && sym){
+    var earnDays = (typeof getDaysToEarnings === 'function') ? getDaysToEarnings(sym) : null;
+    if (earnDays != null && earnDays >= 0 && earnDays <= 1){
+      var whenLbl = earnDays === 0 ? 'TODAY' : 'TOMORROW (next trading day)';
+      var ack = window.confirm(
+        '⚠ EARNINGS WARNING — ' + sym + '\n\n' +
+        'This ticker reports earnings ' + whenLbl + '.\n\n' +
+        'Earnings are binary events — even high-conviction setups ' +
+        'become coin flips through the print. Long calls held into ' +
+        'earnings risk full premium loss on a single overnight gap.\n\n' +
+        'Continue with this BUY anyway?'
+      );
+      if (!ack){
+        try { toast('Buy cancelled — earnings warning declined'); } catch(_){}
+        var res=eid('ord-result');
+        if(res){ res.innerHTML='<span style="color:var(--wrn)">Buy cancelled — '+sym+' has earnings '+whenLbl+'.</span>'; res.className='ord-result show'; }
+        return;
+      }
+    }
+  }
   var qty=eid('ord-qty').value||1;
   var strike=eid('ord-strike').value;
   var expRaw=eid('ord-exp').value;
@@ -18284,6 +18312,23 @@ async function fetchDynamicUniverse(key, mode){
     var todayVol = parseFloat(q.volume) || 0;
     var change   = parseFloat(q.change) || 0;
     var changePct= parseFloat(q.change_percentage) || 0;
+    // v2.18.25: Tradier's pre-market / AH payload can return 0% for
+    // change_percentage even when q.change (dollar) is non-zero or
+    // last differs from prevclose. Mirrors the indices-ribbon fix
+    // from v2.18.10. Recompute from the most reliable available
+    // signal: change (dollar) → prevclose math → today's close math.
+    var _prevC = parseFloat(q.prevclose) || 0;
+    var _todayC = parseFloat(q.close) || 0;
+    if (changePct === 0 && price > 0) {
+      if (Math.abs(change) > 0.001){
+        var _dp = price - change;
+        if (_dp > 0.0001) changePct = +((change / _dp) * 100).toFixed(2);
+      } else if (_prevC > 0 && Math.abs(price - _prevC) > 0.0001){
+        changePct = +(((price - _prevC) / _prevC) * 100).toFixed(2);
+      } else if (_todayC > 0 && Math.abs(_todayC - _prevC) > 0.0001){
+        changePct = +(((_todayC - _prevC) / _prevC) * 100).toFixed(2);
+      }
+    }
     if(price < minPrice) return;
     if(maxPrice > 0 && price > maxPrice) return;
     // Tradier sometimes returns 0 for average_volume even on liquid names (e.g. HOOD).
@@ -19198,7 +19243,7 @@ var SCAN_SETTING_DEFAULTS = {
   'sc-minscore':     '130',
   'sc-sig':          'GO',
   'sc-theme':        '',
-  'filt-earn-days':  '0'
+  'filt-earn-days':  '1'
 };
 // F-5: include OB / instrument-OB checkboxes so resetScanSettings actually
 // clears them (previously they were missing from this list and resetScanSettings
@@ -19256,6 +19301,10 @@ function resetScanSettings(){
   SCAN_FILTER_CHECKBOXES.forEach(function(id){
     var el = eid(id); if (el) el.checked = false;
   });
+  // v2.18.25: factory default for No-Earnings is ON with 1d horizon.
+  // Re-check it after the bulk-uncheck above.
+  if (eid('filt-no-earn')) eid('filt-no-earn').checked = true;
+  if (eid('filt-earn-days')) eid('filt-earn-days').value = '1';
   // F-5: clear sector multi-select (empty Set = "all sectors") and refresh the
   // dropdown UI so the user actually sees the reset reflected.
   G.selectedSectors = new Set();
@@ -22324,7 +22373,7 @@ function renderPositionsTable(pos,srcLabel){
       +'<td style="white-space:nowrap;"><button class="cbtn" onclick="doClose(this)">CLOSE</button></td>'    // CLOSE
       +rollCell                                                                                               // ROLL
       +trailCell                                                                                              // TRAIL
-      +'<td style="white-space:nowrap;text-align:center;"><button class="cbtn" title="Set price / contract-value alerts for this position" onclick="(function(b){var tr=b.closest(\'tr\');if(tr&&typeof openPosAlertSheet===\'function\')openPosAlertSheet(tr);})(this)" style="border-color:var(--amb);color:var(--amb);">&#128276; ALERT</button></td>'  // ALERT
+      +'<td style="white-space:nowrap;text-align:center;"><button class="cbtn" title="Set price / contract-value alerts for this position" onclick="(function(b){var tr=b.closest(\'tr\');if(tr&&typeof openPosAlertSheet===\'function\')openPosAlertSheet(tr);})(this)" style="border-color:var(--amb);color:var(--amb);">ALERT</button></td>'  // ALERT
       +'</tr>';
 
     // Inline trailing stop config row
@@ -26017,6 +26066,16 @@ function applyStrategyMode(mode, silent){
     var el = eid(id); if(el) el.checked = false;
   });
 
+  // v2.18.25: every strategy now turns ON "No Earnings (today + 1d)" by
+  // default. Earnings = binary event; no preset should accidentally surface
+  // setups about to gap on a print. User can still uncheck or set days to
+  // 0 manually after the preset applies. Individual presets can override
+  // by setting filters.noEarn:false / noEarnDays:0 if needed.
+  var defaultNoEarn = (f.noEarn !== undefined) ? f.noEarn : true;
+  var defaultEarnDays = (f.noEarnDays !== undefined) ? f.noEarnDays : 1;
+  if (eid('filt-no-earn')) eid('filt-no-earn').checked = !!defaultNoEarn;
+  if (eid('filt-earn-days')) eid('filt-earn-days').value = String(defaultEarnDays);
+
   // Apply strategy-specific checkboxes
   var f = sm.filters;
   if(f.analyst  && eid('filt-analyst'))  eid('filt-analyst').checked  = true;
@@ -26876,7 +26935,7 @@ function updateHeaderQuotes(){
 //  SETTINGS PERSISTENCE
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
-var APP_VERSION = '2.18.24-collapse-4-chip-group';
+var APP_VERSION = '2.18.25-six-fixes-batch';
 // v2.18.21: DEFAULT feedback webhook. Every visitor's "Submit Feedback"
 // form posts here (unless they've overridden via ALERTS → Feedback
 // Webhook). The URL points to a Google Apps Script Web App owned by
@@ -32373,7 +32432,9 @@ window.addEventListener('DOMContentLoaded',init);
     sheet.onclick = function(e){ if (e.target === sheet) sheet.remove(); };
 
     var inner = document.createElement('div');
-    inner.style.cssText = 'background:var(--bg1);border-top:2px solid var(--amb);border-radius:12px 12px 0 0;width:100%;max-width:560px;padding:16px 16px calc(max(env(safe-area-inset-bottom,16px),16px)) 16px;display:flex;flex-direction:column;gap:10px;animation:osm-banner-in .25s ease-out;';
+    // v2.18.25: max-height + scroll so SAVE/CLEAR aren't clipped by the
+    // home-indicator strip on narrow iPhone viewports.
+    inner.style.cssText = 'background:var(--bg1);border-top:2px solid var(--amb);border-radius:12px 12px 0 0;width:100%;max-width:560px;padding:16px 16px calc(max(env(safe-area-inset-bottom,16px),16px) + 16px) 16px;display:flex;flex-direction:column;gap:10px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:osm-banner-in .25s ease-out;';
     inner.innerHTML =
         '<div style="display:flex;justify-content:space-between;align-items:center;">'
       +   '<div style="font-family:var(--ff-brand);font-size:14px;color:var(--amb);letter-spacing:2px;font-weight:700;">PRICE ALERTS — '+_esc(tk)+'</div>'
@@ -32521,7 +32582,9 @@ window.addEventListener('DOMContentLoaded',init);
     sheet.onclick = function(e){ if (e.target === sheet) sheet.remove(); };
 
     var inner = document.createElement('div');
-    inner.style.cssText = 'background:var(--bg1);border-top:2px solid var(--amb);border-radius:12px 12px 0 0;width:100%;max-width:560px;padding:16px 16px calc(max(env(safe-area-inset-bottom,16px),16px)) 16px;display:flex;flex-direction:column;gap:10px;animation:osm-banner-in .25s ease-out;';
+    // v2.18.25: max-height + scroll so SAVE/CLEAR aren't clipped by the
+    // home-indicator strip on narrow iPhone viewports.
+    inner.style.cssText = 'background:var(--bg1);border-top:2px solid var(--amb);border-radius:12px 12px 0 0;width:100%;max-width:560px;padding:16px 16px calc(max(env(safe-area-inset-bottom,16px),16px) + 16px) 16px;display:flex;flex-direction:column;gap:10px;max-height:85vh;overflow-y:auto;-webkit-overflow-scrolling:touch;animation:osm-banner-in .25s ease-out;';
     if (preview){
       // Preview mode: read-only text + EDIT button.
       inner.innerHTML =
