@@ -84,7 +84,7 @@ Published tradier-proxy (5.43 sec)
 
 ### 6. Wire the scanner to the proxy
 
-1. Open the scanner — `https://alexreed122287.github.io/scanner/`
+1. Open the scanner — `https://alexreed122287.github.io/RedOptianda/`
 2. Click the **API** tab
 3. Find the new field labeled **"Tradier proxy URL (optional)"**
 4. Paste the workers.dev URL from step 5

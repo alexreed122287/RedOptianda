@@ -4,7 +4,7 @@ Multi-timeframe theme/sub-industry strength scoring layered on top of the
 PANDA scanner universe. Identifies which themes are leading or lagging the
 S&P 500 across daily, weekly, and monthly horizons.
 
-**Live dashboard**: [alexreed122287.github.io/scanner/industry/themes.html](https://alexreed122287.github.io/scanner/industry/themes.html)
+**Live dashboard**: [alexreed122287.github.io/RedOptianda/industry/themes.html](https://alexreed122287.github.io/RedOptianda/industry/themes.html)
 
 ## What it scores
 

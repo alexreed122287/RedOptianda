@@ -21,7 +21,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta name="apple-mobile-web-app-title" content="Panda">
+<meta name="apple-mobile-web-app-title" content="RedOptianda">
 <meta name="theme-color" content="#050d14">
 <link rel="manifest" href="manifest.json">
 <!-- Home-screen icons: iOS uses apple-touch-icon, Android reads from manifest -->
@@ -52,7 +52,7 @@
 <meta name="format-detection" content="telephone=no, date=no, email=no, address=no">
 <meta name="msapplication-TileColor" content="#050d14">
 <meta name="msapplication-TileImage" content="assets/icon-192.png">
-<meta name="application-name" content="Option Panda">
+<meta name="application-name" content="RedOptianda">
 <meta name="description" content="Options trading scanner, market breadth analyzer, and order terminal — single-user dashboard for long-call swing trades.">
 
 <!-- ── OneSignal Web Push SDK (server-side push for iOS PWAs) ──
@@ -82,20 +82,20 @@ if (window.OP_ONESIGNAL_APP_ID) {
     OneSignal.init({
       appId: window.OP_ONESIGNAL_APP_ID,
       serviceWorkerPath: 'OneSignalSDKWorker.js',
-      serviceWorkerParam: { scope: '/scanner/' },
+      serviceWorkerParam: { scope: '/RedOptianda/' },
       allowLocalhostAsSecureOrigin: true,
       notifyButton: { enable: false }
     }).catch(function(e){ console.warn('[onesignal] init failed:', e && e.message); });
   });
 }
 </script>
-<title>OPTION PANDA</title>
+<title>RedOptianda</title>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js" defer></script>
 <style>
 :root{
   --bg0:#050d14;--bg1:#071018;--bg2:#0b1522;--bg3:#111b2e;
-  --amb:#00d4ff;--ambb:#40e8ff;--amb3:rgba(0,212,255,.1);
-  --blu:#00d4ff;--blub:#40e8ff;--blu3:rgba(0,212,255,.12);
+  --amb:#ff5a30;--ambb:#ff8454;--amb3:rgba(255,90,48,.1);
+  --blu:#ff5a30;--blub:#ff8454;--blu3:rgba(255,90,48,.12);
   --ngo:#ff00e6;--wrn:#ffd740;--wrn3:rgba(255,215,64,.12);
   --wht:#c8daf8;--gry:#7090c8;--gry2:#3d5580;
   --lvb:#050d14;--grn:#22c55e;--grn3:rgba(34,197,94,.12);
@@ -108,7 +108,7 @@ if (window.OP_ONESIGNAL_APP_ID) {
   --bdr:1px solid #0e1826;--rad:6px;--ff:'Inter',system-ui,-apple-system,'Segoe UI',sans-serif;
   --ff-brand:'Orbitron',sans-serif;
   --ff-mono:'JetBrains Mono','SF Mono',Consolas,Menlo,monospace;
-  --glow-cyan:0 0 18px rgba(0,212,255,.5);
+  --glow-cyan:0 0 18px rgba(255,90,48,.5);
   --glow-pink:0 0 18px rgba(255,0,230,.5);
 }
 /* ── LIGHT MODE (colorblind-friendly: Okabe-Ito-inspired, WCAG AA on white) ── */
@@ -157,7 +157,7 @@ body{
      wins where supported, falls back to 100vh otherwise. */
   height:100vh;height:100dvh;overflow:hidden;display:flex;flex-direction:column;
   background-image:
-    radial-gradient(ellipse at 15% 15%, rgba(0,212,255,.04) 0%, transparent 45%),
+    radial-gradient(ellipse at 15% 15%, rgba(255,90,48,.04) 0%, transparent 45%),
     radial-gradient(ellipse at 85% 85%, rgba(255,0,230,.03) 0%, transparent 45%),
     url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='48' height='83' viewBox='0 0 48 83'%3E%3Cpath d='M24 1L46 13.7v25L24 51.4 2 38.7v-25z' fill='none' stroke='%230e1828' stroke-width='0.7' opacity='.6'/%3E%3Cpath d='M24 33L46 45.7v25L24 83.4 2 70.7v-25z' fill='none' stroke='%230e1828' stroke-width='0.7' opacity='.6'/%3E%3C/svg%3E");
   background-attachment:fixed;
@@ -172,8 +172,8 @@ a{color:var(--blu);text-decoration:none;}
    viewport width. Min/max preserve mobile + ultrawide bounds. User spec
    2026-05-02: 'resize the pandas to be larger along with the words Option
    Panda dependent on the size of the device it is opened on'. */
-#hdr-logo{color:var(--amb);font-weight:700;font-size:clamp(16px, 1.5vw, 28px);letter-spacing:clamp(2px, 0.25vw, 5px);white-space:nowrap;font-family:var(--ff-brand);text-shadow:0 0 12px rgba(0,212,255,.7);display:flex;align-items:center;gap:clamp(10px, 1vw, 22px);position:relative;z-index:10;}
-#hdr-logo .panda-icon{height:clamp(48px, 5vw, 84px);width:auto;object-fit:contain;filter:drop-shadow(0 0 6px rgba(0,212,255,.4)) drop-shadow(0 0 2px rgba(0,212,255,.25));flex-shrink:0;}
+#hdr-logo{color:var(--amb);font-weight:700;font-size:clamp(16px, 1.5vw, 28px);letter-spacing:clamp(2px, 0.25vw, 5px);white-space:nowrap;font-family:var(--ff-brand);text-shadow:0 0 12px rgba(255,90,48,.7);display:flex;align-items:center;gap:clamp(10px, 1vw, 22px);position:relative;z-index:10;}
+#hdr-logo .panda-icon{height:clamp(48px, 5vw, 84px);width:auto;object-fit:contain;filter:drop-shadow(0 0 6px rgba(255,90,48,.4)) drop-shadow(0 0 2px rgba(255,90,48,.25));flex-shrink:0;}
 #hdr{border-bottom:none !important;box-shadow:none !important;}
 /* 2026-05-10 v2.16.12: indices ribbon converted from manual-scroll
    (overflow-x:auto) to auto-marquee (overflow:hidden + JS-injected
@@ -194,7 +194,7 @@ a{color:var(--blu);text-decoration:none;}
 .tc.up{color:var(--grn);font-weight:600;}
 .tc.dn{color:#ef4444;font-weight:600;}
 #hdr-right{display:flex;align-items:center;gap:8px;white-space:nowrap;font-size:11px;}
-/* Logo + clock cluster — clock sits right of "OPTION PANDA" with a subtle
+/* Logo + clock cluster — clock sits right of "RedOptianda" with a subtle
    separator bar so the visual hierarchy is logo (brand) → clock (status)
    without competing for attention. */
 #hdr-logo{position:relative;}
@@ -249,7 +249,7 @@ a{color:var(--blu);text-decoration:none;}
 #nav .ntab{flex-shrink:0;}
 .ntab{background:none;border:none;border-bottom:2px solid transparent;color:var(--gry);cursor:pointer;font-family:var(--ff);font-size:13px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;padding:10px 16px;white-space:nowrap;transition:all .2s;}
 .ntab:hover{color:var(--wht);}
-.ntab.active{color:var(--amb);border-bottom-color:var(--amb);text-shadow:0 0 15px rgba(0,212,255,.4);}
+.ntab.active{color:var(--amb);border-bottom-color:var(--amb);text-shadow:0 0 15px rgba(255,90,48,.4);}
 /* App container — height accounts for new 56px header + 42px nav */
 #app{flex:1;min-height:0;overflow:hidden;position:relative;}
 .tab-pane{display:none;height:100%;overflow:hidden;}
@@ -262,7 +262,7 @@ a{color:var(--blu);text-decoration:none;}
    "?" icon — ~36×36px, opacity:0.7 to blend in. Still opens the same
    per-tab HOW TO modal via openHelpFor(). Mobile positioning shifts
    above the bot-nav (see @media block further down). */
-.help-fab{position:fixed;top:auto;bottom:20px;right:14px;z-index:7000;background:rgba(0,212,255,.10);border:1px solid var(--amb);color:var(--amb);font-family:var(--ff-mono);font-size:18px;font-weight:700;line-height:1;width:36px;height:36px;padding:0;border-radius:50%;cursor:pointer;text-transform:none;letter-spacing:0;backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;opacity:0.7;}
+.help-fab{position:fixed;top:auto;bottom:20px;right:14px;z-index:7000;background:rgba(255,90,48,.10);border:1px solid var(--amb);color:var(--amb);font-family:var(--ff-mono);font-size:18px;font-weight:700;line-height:1;width:36px;height:36px;padding:0;border-radius:50%;cursor:pointer;text-transform:none;letter-spacing:0;backdrop-filter:blur(2px);display:flex;align-items:center;justify-content:center;opacity:0.7;}
 /* v2.18.38: ✉ feedback FAB moved to LEFT side per user spec, $ BP peek
    takes the bottom-right slot it vacated. The .feedback-fab override
    wins over .help-fab's right:14px via specificity (both classes on
@@ -297,7 +297,7 @@ a{color:var(--blu);text-decoration:none;}
   0%{background-position:200% 0;}
   100%{background-position:-200% 0;}
 }
-.help-fab:hover{background:rgba(0,212,255,.18);}
+.help-fab:hover{background:rgba(255,90,48,.18);}
 /* Mobile: bottom-nav (≈70px) covers bottom:20px, so bump the help-fab
    above it. User spec 2026-05-09: HELP button must be visible on iPhone
    on every screen that has a HOW TO section. */
@@ -366,7 +366,7 @@ a{color:var(--blu);text-decoration:none;}
   #hdr-tickers{flex-wrap:nowrap !important;overflow-x:auto !important;
     -webkit-overflow-scrolling:touch;justify-content:flex-start !important;
     gap:14px !important;flex:1 1 100% !important;min-width:0 !important;order:2 !important;
-    padding:4px 0 !important;border-top:1px solid rgba(0,212,255,0.12);
+    padding:4px 0 !important;border-top:1px solid rgba(255,90,48,0.12);
     scrollbar-width:none;min-height:24px !important;}
   #hdr-tickers::after{content:'' !important;flex-shrink:0 !important;width:8px !important;}
   #hdr-tickers::-webkit-scrollbar{display:none;}
@@ -617,7 +617,7 @@ a{color:var(--blu);text-decoration:none;}
 #tab-wl #wl-tbl-wrap thead th:nth-child(6),
 #tab-wl #wl-tbl-wrap tbody td:nth-child(6){width:32px;}
 #tab-wl #wl-tbl-wrap tbody td:nth-child(6) button{padding:3px 6px !important;}
-.sec-head{background:var(--bg2);border-bottom:var(--bdr);color:var(--amb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 12px;position:sticky;top:0;z-index:5;text-shadow:0 0 20px rgba(0,212,255,.3);}
+.sec-head{background:var(--bg2);border-bottom:var(--bdr);color:var(--amb);font-size:11px;font-weight:700;letter-spacing:2px;text-transform:uppercase;padding:7px 12px;position:sticky;top:0;z-index:5;text-shadow:0 0 20px rgba(255,90,48,.3);}
 .sig-card{border-bottom:var(--bdr);cursor:pointer;padding:8px 10px;transition:background .15s;display:flex;justify-content:space-between;align-items:flex-start;}
 .sig-card:hover{background:var(--bg2);}
 .sig-card.sel{background:var(--blu3);border-left:3px solid var(--blu);}
@@ -648,7 +648,7 @@ a{color:var(--blu);text-decoration:none;}
 .skel-row{height:36px;}
 .skel-row .skel-cell{padding:6px 12px;border-bottom:1px solid var(--bg2);}
 .skel-row .skel-cell::after{content:'';display:block;height:14px;border-radius:3px;
-  background:linear-gradient(90deg, rgba(0,212,255,0.04) 0%, rgba(0,212,255,0.10) 40%, rgba(0,212,255,0.04) 80%);
+  background:linear-gradient(90deg, rgba(255,90,48,0.04) 0%, rgba(255,90,48,0.10) 40%, rgba(255,90,48,0.04) 80%);
   background-size:200% 100%;animation:skel-shimmer 1.4s linear infinite;}
 @keyframes skel-shimmer{0%{background-position:200% 0;}100%{background-position:-200% 0;}}
 .empty-det{align-items:center;color:var(--gry);display:flex;flex-direction:column;height:100%;justify-content:center;gap:8px;padding:20px;}
@@ -664,7 +664,7 @@ a{color:var(--blu);text-decoration:none;}
   opacity:.95;
   margin:0 auto 6px;
   pointer-events:none;user-select:none;
-  filter:drop-shadow(0 0 34px rgba(0,212,255,.22));
+  filter:drop-shadow(0 0 34px rgba(255,90,48,.22));
 }
 body.light-mode .empty-det-panda{
   opacity:1;
@@ -701,7 +701,7 @@ body.light-mode .empty-det-panda{
 .tbl-wrap table{width:100%;}
 .tbl-wrap > div, .tbl-wrap > table{vertical-align:top;}
 table{border-collapse:collapse;width:100%;}
-th{background:var(--bg2);border-bottom:1px solid rgba(0,212,255,.1);color:var(--amb);cursor:pointer;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 10px;text-align:left;position:sticky;top:0;white-space:nowrap;user-select:none;text-shadow:0 0 15px rgba(0,212,255,.2);transition:color .15s;}
+th{background:var(--bg2);border-bottom:1px solid rgba(255,90,48,.1);color:var(--amb);cursor:pointer;font-size:10px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;padding:8px 10px;text-align:left;position:sticky;top:0;white-space:nowrap;user-select:none;text-shadow:0 0 15px rgba(255,90,48,.2);transition:color .15s;}
 th:hover{color:var(--ambb);}
 td{border-bottom:var(--bdr);color:var(--wht);font-size:11px;padding:5px 10px;white-space:nowrap;}
 /* Subtle color highlight on row hover — text size + weight stay constant
@@ -738,7 +738,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
 .today-pill{display:inline-block;background:var(--ambb);color:var(--bg0);font-size:9px;font-weight:800;letter-spacing:1px;padding:1px 6px;border-radius:2px;margin-left:6px;text-shadow:none;animation:today-pulse 2.4s ease-in-out infinite;}
 @keyframes today-pulse{0%,100%{box-shadow:0 0 0 rgba(255,193,7,0);}50%{box-shadow:0 0 12px rgba(255,193,7,0.55);}}
 .badge{border-radius:2px;font-size:10px;font-weight:700;padding:1px 6px;display:inline-block;}
-.badge.go{background:rgba(0,212,255,.12);color:var(--amb);box-shadow:0 0 10px rgba(0,212,255,.2);}
+.badge.go{background:rgba(255,90,48,.12);color:var(--amb);box-shadow:0 0 10px rgba(255,90,48,.2);}
 .badge.nogo{background:rgba(255,0,230,.12);color:var(--ngo);box-shadow:0 0 10px rgba(255,0,230,.15);}
 .badge.warn{background:var(--amb3);color:var(--ambb);}
 /* ── Spacing scale (informal) ──
@@ -806,7 +806,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
 .gex-pill.ok{background:rgba(0,230,118,.15);color:var(--grn);border:1px solid rgba(0,230,118,.4);}
 .gex-pill.mis{background:rgba(255,179,0,.10);color:var(--ambb);border:1px solid rgba(255,179,0,.4);cursor:pointer;}
 .gex-pill.mis:hover{background:rgba(255,179,0,.25);}
-.gex-pill.busy{background:rgba(0,212,255,.10);color:var(--blu);border:1px solid rgba(0,212,255,.4);cursor:wait;}
+.gex-pill.busy{background:rgba(255,90,48,.10);color:var(--blu);border:1px solid rgba(255,90,48,.4);cursor:wait;}
 /* Quick-chart mini button — sits inline next to a ticker symbol in the
    scan results table and the positions table. Tap opens #chart-modal
    for that ticker (same renderer the watchlist chart uses). Sized
@@ -814,11 +814,11 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
    tappable on iPhone (≈22×22 with 28px touch padding from the
    padding:3px 5px + line-height). v2.16.20. */
 .chart-mini-btn{display:inline-flex;align-items:center;justify-content:center;
-  background:rgba(0,212,255,.08);border:1px solid rgba(0,212,255,.30);
+  background:rgba(255,90,48,.08);border:1px solid rgba(255,90,48,.30);
   border-radius:3px;color:var(--amb);padding:2px 4px;margin-right:5px;
   cursor:pointer;vertical-align:middle;line-height:1;
-  -webkit-tap-highlight-color:rgba(0,212,255,0.15);}
-.chart-mini-btn:hover{background:rgba(0,212,255,.18);border-color:var(--amb);}
+  -webkit-tap-highlight-color:rgba(255,90,48,0.15);}
+.chart-mini-btn:hover{background:rgba(255,90,48,.18);border-color:var(--amb);}
 .chart-mini-btn svg{display:block;}
 @media(max-width:480px){
   /* Slightly larger tap area on phone */
@@ -890,10 +890,10 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
   font-weight:800 !important;
   font-family:var(--ff-mono);
   letter-spacing:.3px;
-  text-shadow:0 0 6px rgba(0,212,255,0.18);
+  text-shadow:0 0 6px rgba(255,90,48,0.18);
 }
 #pos-tbl-wrap th.col-equity{
-  background:rgba(0,212,255,0.06);
+  background:rgba(255,90,48,0.06);
 }
 /* TICKER column — make positions easy to scan at a glance. Larger,
    brighter, with a soft glow + tint background. User spec 2026-05-09. */
@@ -917,7 +917,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
 /* Positions table sortable headers — chevron + hover affordance */
 #pos-tbl-wrap th[data-sort]{
   position:relative;user-select:none;
-  -webkit-tap-highlight-color:rgba(0,212,255,0.15);
+  -webkit-tap-highlight-color:rgba(255,90,48,0.15);
 }
 #pos-tbl-wrap th[data-sort]:hover{color:var(--amb);}
 #pos-tbl-wrap th[data-sort].sorted-asc::after{content:' ▲';font-size:9px;opacity:.85;}
@@ -929,12 +929,12 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
 #tab-pos #pos-bottom-panels:not(.expanded) > .ts-panel{display:none !important;}
 #pos-exit-toggle{
   display:flex;align-items:center;gap:6px;
-  background:rgba(0,212,255,0.06);border:1px solid var(--bg3);
+  background:rgba(255,90,48,0.06);border:1px solid var(--bg3);
   border-radius:4px;color:var(--amb);
   font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.5px;
   padding:8px 12px;cursor:pointer;
   margin:8px 10px;min-height:36px;width:auto;
-  -webkit-tap-highlight-color:rgba(0,212,255,0.15);
+  -webkit-tap-highlight-color:rgba(255,90,48,0.15);
 }
 #pos-exit-toggle .arr{display:inline-block;transition:transform .15s;}
 #pos-bottom-panels.expanded ~ #pos-exit-toggle .arr,
@@ -1154,7 +1154,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
 
 .page-wrap{overflow-y:auto;padding:12px;flex:1;}
 .card{background:var(--bg1);border:var(--bdr);border-radius:var(--rad);margin-bottom:10px;overflow:hidden;}
-.card-hdr{background:var(--bg2);border-bottom:var(--bdr);color:var(--amb);font-size:11px;font-weight:700;letter-spacing:2px;padding:9px 14px;text-transform:uppercase;text-shadow:0 0 20px rgba(0,212,255,.3);}
+.card-hdr{background:var(--bg2);border-bottom:var(--bdr);color:var(--amb);font-size:11px;font-weight:700;letter-spacing:2px;padding:9px 14px;text-transform:uppercase;text-shadow:0 0 20px rgba(255,90,48,.3);}
 .card-body{padding:10px 12px;}
 .meter-row{display:flex;align-items:center;gap:10px;margin-bottom:6px;}
 .meter-lbl{color:var(--gry);font-size:10px;width:120px;}
@@ -1197,7 +1197,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
      Apply to BODY only — applying to both html and body double-pads on iOS.
      2026-05-04 fix: was `env(safe-area-inset-top, 0)` which falls back to 0
      when env() isn't reporting (PWAs on some iOS versions). Use max() with
-     a hard 50px floor so the panda + OPTION PANDA wordmark always clear
+     a hard 50px floor so the panda + RedOptianda wordmark always clear
      the status bar / Dynamic Island even if env() returns 0. iPhone Pro
      Max actual safe-area-inset-top is 59pt. */
   body{
@@ -1214,7 +1214,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
      standalone-PWA AND regular Safari modes. Previously the safe-area
      padding was inside @media(display-mode:standalone) which doesn't
      fire when viewing in Safari with the URL bar — user reported the
-     OPTION PANDA logo sliding under the Dynamic Island in Safari.
+     RedOptianda logo sliding under the Dynamic Island in Safari.
      viewport-fit=cover is set unconditionally in <head>, so the page
      ALWAYS extends edge-to-edge and ALWAYS needs the inset honored.
      Falls back to 8px on devices without a notch (older phones / iPad
@@ -1288,7 +1288,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
   }
   /* 2026-05-10 v2.16.0: ALL modal overlays must render ABOVE the header
      (#hdr z-index 9400). Inline z-index on these ranges from 8000 to
-     9500. Force them above 9400 so the OPTION PANDA logo + clock can't
+     9500. Force them above 9400 so the RedOptianda logo + clock can't
      obscure the popup content. User report: contract-panel BUY popup
      was hidden behind the logo header. */
   #contract-panel,
@@ -1327,7 +1327,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
     z-index: -1;
     pointer-events: none;
     background:
-      radial-gradient(ellipse at 15% 15%, rgba(0,212,255,.04) 0%, transparent 45%),
+      radial-gradient(ellipse at 15% 15%, rgba(255,90,48,.04) 0%, transparent 45%),
       radial-gradient(ellipse at 85% 85%, rgba(255,0,230,.03) 0%, transparent 45%),
       var(--bg0);
   }
@@ -1460,7 +1460,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
   /* Active state for the selected picker card. Adds a colored border
      ring + subtle glow matching the cell's price color. */
   .rh-px-card.active[data-which="bid"]{border-color:var(--ngo) !important;box-shadow:0 0 0 2px var(--ngo) inset, 0 0 12px rgba(255,0,230,.3);}
-  .rh-px-card.active[data-which="mid"]{border-color:var(--amb) !important;box-shadow:0 0 0 2px var(--amb) inset, 0 0 12px rgba(0,212,255,.4);}
+  .rh-px-card.active[data-which="mid"]{border-color:var(--amb) !important;box-shadow:0 0 0 2px var(--amb) inset, 0 0 12px rgba(255,90,48,.4);}
   .rh-px-card.active[data-which="ask"]{border-color:var(--blu) !important;box-shadow:0 0 0 2px var(--blu) inset, 0 0 12px rgba(112,144,200,.4);}
   th.hide-mobile, td.hide-mobile{display:none !important;}
 
@@ -1661,18 +1661,18 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
     cursor:pointer;
     display:flex;flex-direction:column;align-items:center;gap:2px;
     min-height:40px;
-    -webkit-tap-highlight-color:rgba(0,212,255,0.15);
+    -webkit-tap-highlight-color:rgba(255,90,48,0.15);
     transition:color .12s, transform .08s;
     border-radius:6px;
   }
-  .bot-tab:active{transform:scale(0.92);background:rgba(0,212,255,0.06);}
+  .bot-tab:active{transform:scale(0.92);background:rgba(255,90,48,0.06);}
   .bot-tab.active{color:var(--amb);}
-  .bot-tab.active .bot-tab-icon{text-shadow:0 0 12px rgba(0,212,255,0.6);}
+  .bot-tab.active .bot-tab-icon{text-shadow:0 0 12px rgba(255,90,48,0.6);}
   .bot-tab-icon{font-size:18px;line-height:1;}
   .bot-tab-lbl{font-size:9px;letter-spacing:.4px;text-transform:uppercase;}
   /* The center TRADE tab — emphasized like Robinhood's BUY button */
   .bot-tab-trade{
-    background:linear-gradient(180deg, var(--amb3), rgba(0,212,255,0.05)) !important;
+    background:linear-gradient(180deg, var(--amb3), rgba(255,90,48,0.05)) !important;
     border:1px solid var(--amb) !important;
     color:var(--amb) !important;
   }
@@ -1724,7 +1724,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
     font-family:var(--ff);font-size:11px;font-weight:600;letter-spacing:.8px;
     cursor:pointer;
     min-height:54px;
-    -webkit-tap-highlight-color:rgba(0,212,255,0.15);
+    -webkit-tap-highlight-color:rgba(255,90,48,0.15);
     transition:transform .08s, background .12s;
   }
   .bot-more-btn:active{transform:scale(0.96);background:var(--amb3);border-color:var(--amb);}
@@ -1864,14 +1864,14 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
   position:relative;
   width:100%;
   height:54px;
-  background:linear-gradient(90deg, rgba(0,212,255,0.06), rgba(0,212,255,0.18));
+  background:linear-gradient(90deg, rgba(255,90,48,0.06), rgba(255,90,48,0.18));
   border:1px solid var(--amb);
   border-radius:27px;
   overflow:hidden;
   user-select:none;
   -webkit-user-select:none;
   touch-action:none;
-  box-shadow:inset 0 0 12px rgba(0,212,255,0.15);
+  box-shadow:inset 0 0 12px rgba(255,90,48,0.15);
 }
 /* Soft sweep that nudges the user to swipe — pauses while dragging /
    confirmed so it doesn't fight the drag visuals. */
@@ -1907,7 +1907,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
   font-family:var(--ff);font-size:13px;font-weight:700;letter-spacing:1.5px;
   pointer-events:none;
   z-index:2;
-  text-shadow:0 0 8px rgba(0,212,255,0.4);
+  text-shadow:0 0 8px rgba(255,90,48,0.4);
   white-space:nowrap;
 }
 .dtc-track.armed .dtc-track-label{color:var(--bg0);text-shadow:none;}
@@ -1922,7 +1922,7 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
   z-index:3;
   transition:left .15s ease, transform .12s ease, box-shadow .12s ease, background .15s ease;
   will-change:left;
-  box-shadow:0 0 12px rgba(0,212,255,0.6);
+  box-shadow:0 0 12px rgba(255,90,48,0.6);
   /* Robinhood-style chevron via pseudo-element below. */
   font-size:0;
   color:var(--amb);
@@ -1936,14 +1936,14 @@ tr.pos-row-no-quote:hover td,tr.pos-row-no-quote.sel-row td{opacity:.85;}
   line-height:1;
   letter-spacing:-2px;
   color:var(--amb);
-  text-shadow:0 0 6px rgba(0,212,255,0.55);
+  text-shadow:0 0 6px rgba(255,90,48,0.55);
   transition:color .15s ease, text-shadow .15s ease;
 }
 .dtc-track.armed .dtc-thumb::before{
   color:var(--bg0);
   text-shadow:none;
 }
-.dtc-thumb:active{cursor:grabbing;box-shadow:0 0 18px rgba(0,212,255,0.9);}
+.dtc-thumb:active{cursor:grabbing;box-shadow:0 0 18px rgba(255,90,48,0.9);}
 .dtc-track.dragging .dtc-thumb,
 .dtc-track.dragging .dtc-track-fill{transition:none;}
 .dtc-track.disabled{opacity:.5;pointer-events:none;}
@@ -2000,7 +2000,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
   padding:6px 10px;
   cursor:pointer;
   min-height:32px;
-  -webkit-tap-highlight-color:rgba(0,212,255,0.15);
+  -webkit-tap-highlight-color:rgba(255,90,48,0.15);
   transition:transform .08s, background .12s, color .12s, border-color .12s;
 }
 .news-filter:active{transform:scale(0.95);}
@@ -2016,7 +2016,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
   padding:10px;
   margin-bottom:8px;
   cursor:pointer;
-  -webkit-tap-highlight-color:rgba(0,212,255,0.15);
+  -webkit-tap-highlight-color:rgba(255,90,48,0.15);
   transition:transform .08s, border-color .12s, background .12s;
 }
 .news-card:hover, .news-card:active{
@@ -2095,7 +2095,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 @media(max-width:480px){
   /* ── HEADER: larger logo + wordmark per user spec 2026-05-04 ──
      2026-05-10 v2.16.9: safe-area-inset-top added to padding-top so the
-     OPTION PANDA logo clears the iPhone notch / Dynamic Island in both
+     RedOptianda logo clears the iPhone notch / Dynamic Island in both
      Safari and standalone PWA. The padding shorthand below was
      overriding the v2.16.8 hoisted rule (longhand AFTER shorthand wins
      when both have !important; previous order had shorthand later). */
@@ -2722,7 +2722,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
   #hdr{height:auto !important;min-height:104px !important;padding:6px 10px !important;padding-top:max(env(safe-area-inset-top, 0px), 8px) !important;flex-wrap:wrap !important;gap:6px 8px !important;align-items:center !important;align-content:flex-start !important;}
   /* iPad indices strip: nowrap + horizontal scroll per user spec
      2026-05-03 (was wrap which spilled SPY/QQQ/etc onto 2-3 rows). */
-  #hdr-tickers{flex-wrap:nowrap !important;overflow-x:auto !important;-webkit-overflow-scrolling:touch;justify-content:flex-start !important;flex:1 1 100%;order:3;padding:4px 0;border-top:1px solid rgba(0,212,255,0.1);min-height:32px;gap:14px !important;}
+  #hdr-tickers{flex-wrap:nowrap !important;overflow-x:auto !important;-webkit-overflow-scrolling:touch;justify-content:flex-start !important;flex:1 1 100%;order:3;padding:4px 0;border-top:1px solid rgba(255,90,48,0.1);min-height:32px;gap:14px !important;}
   #hdr-tickers::after{content:'';flex-shrink:0;width:10px;}
   .htick{font-size:13px;}
   #hdr-logo{font-size:16px !important;letter-spacing:2px !important;flex:0 0 auto;order:1;}
@@ -2915,7 +2915,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 #tab-ind .ind-layout{display:grid;grid-template-columns:1fr;gap:12px;}
 #tab-ind .ind-panel{background:var(--bg1);border:var(--bdr);border-radius:var(--rad);overflow:hidden;}
 #tab-ind .ind-phead{padding:8px 12px;border-bottom:var(--bdr);font-family:var(--ff-brand);font-weight:700;font-size:11px;letter-spacing:2px;color:var(--amb);text-transform:uppercase;display:flex;align-items:center;gap:8px;}
-#tab-ind .ind-phead::before{content:"";width:6px;height:6px;background:var(--amb);border-radius:50%;box-shadow:0 0 10px rgba(0,212,255,.6);}
+#tab-ind .ind-phead::before{content:"";width:6px;height:6px;background:var(--amb);border-radius:50%;box-shadow:0 0 10px rgba(255,90,48,.6);}
 #tab-ind .ind-phead .ind-pill{margin-left:auto;font-size:10px;color:var(--gry);padding:2px 8px;background:var(--bg2);border-radius:10px;letter-spacing:.05em;text-transform:none;font-family:var(--ff-mono);font-weight:400;}
 #tab-ind .ind-tbl{width:100%;border-collapse:collapse;font-size:13px;}
 /* Sticky table header — bumped z-index from 1 to 10 so the header doesn't
@@ -2938,7 +2938,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 #tab-ind .s-lo .ind-fill{background:linear-gradient(90deg,rgba(255,0,230,.3),rgba(255,0,230,.55));}
 #tab-ind .ind-rs{display:inline-block;padding:2px 7px;border-radius:3px;font-family:var(--ff-mono);font-size:11px;font-weight:600;min-width:38px;text-align:center;}
 #tab-ind .rs-90{background:rgba(0,230,118,.18);color:var(--grn);}
-#tab-ind .rs-70{background:rgba(0,212,255,.15);color:var(--ambb);}
+#tab-ind .rs-70{background:rgba(255,90,48,.15);color:var(--ambb);}
 #tab-ind .rs-50{background:rgba(255,215,64,.12);color:var(--wrn);}
 #tab-ind .rs-30{background:rgba(255,0,230,.12);color:var(--ngo);}
 #tab-ind .rs-10{background:rgba(255,0,230,.22);color:var(--ngo);}
@@ -3079,7 +3079,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 })();
 </script>
 <div id="hdr">
-  <div id="hdr-logo"><img src="assets/rrjcar-icon.webp?v=5" alt="" class="panda-icon" ondblclick="forceReloadFresh()" title="Double-tap to force-reload (clears stale cache)" style="border-radius:50%;"><span ondblclick="forceReloadFresh()" title="Double-tap to force-reload">OPTION PANDA</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span><!-- Version chip restored 2026-05-10 per user spec — subtly visible so user + others can confirm latest deploy. Click to force-reload. Strips descriptive suffix (e.g. '2.12.1-rescan-fixes' → 'v2.12.1') — full slug still on APP_VERSION + meta op-build for diagnostics. --><span id="hdr-version" onclick="forceReloadFresh()" title="Click to force-reload (clears cache)" style="margin-left:10px;font-family:var(--ff-mono);font-size:10px;color:var(--gry2);letter-spacing:.5px;font-weight:400;cursor:pointer;opacity:0.65;">v—</span></div>
+  <div id="hdr-logo"><img src="assets/rrjcar-icon.webp?v=5" alt="" class="panda-icon" ondblclick="forceReloadFresh()" title="Double-tap to force-reload (clears stale cache)" style="border-radius:50%;"><span ondblclick="forceReloadFresh()" title="Double-tap to force-reload">RedOptianda</span><span id="clk-logo" style="margin-left:14px;font-family:var(--ff-mono);font-size:12px;color:var(--amb);letter-spacing:.5px;font-weight:400;">--:--:--</span><!-- Version chip restored 2026-05-10 per user spec — subtly visible so user + others can confirm latest deploy. Click to force-reload. Strips descriptive suffix (e.g. '2.12.1-rescan-fixes' → 'v2.12.1') — full slug still on APP_VERSION + meta op-build for diagnostics. --><span id="hdr-version" onclick="forceReloadFresh()" title="Click to force-reload (clears cache)" style="margin-left:10px;font-family:var(--ff-mono);font-size:10px;color:var(--gry2);letter-spacing:.5px;font-weight:400;cursor:pointer;opacity:0.65;">v—</span></div>
   <div id="hdr-tickers" onclick="if(typeof updateHeaderQuotes==='function'){try{updateHeaderQuotes();if(typeof toast==='function')toast('Indices refreshed');if(typeof hap==='function')hap(8);}catch(_){}}" title="Tap to force-refresh indices">
     <span class="htick"><span class="ts">SPY </span><span class="tv" id="h-spy">--</span> <span class="tc" id="h-spy-c">(--)</span></span>
     <span class="htick"><span class="ts">QQQ </span><span class="tv" id="h-qqq">--</span> <span class="tc" id="h-qqq-c">(--)</span></span>
@@ -3096,9 +3096,9 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
          id=hdr-chips and starts hidden; tapping #hdr-menu-btn flips it.
          On wide screens (≥769px) we override with display:flex !important
          further down so desktops still see the chips inline. -->
-    <button id="hdr-menu-btn" onclick="toggleHdrChips()" title="Show / hide quick controls" style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:4px 10px;font-size:14px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;cursor:pointer;line-height:1;">&#x2630;</button>
+    <button id="hdr-menu-btn" onclick="toggleHdrChips()" title="Show / hide quick controls" style="background:rgba(255,90,48,0.08);border:1px solid rgba(255,90,48,0.25);border-radius:3px;padding:4px 10px;font-size:14px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;cursor:pointer;line-height:1;">&#x2630;</button>
     <div id="hdr-chips" style="display:none;align-items:center;gap:6px;flex-wrap:wrap;">
-    <button id="theme-toggle" onclick="toggleLightMode()" title="Toggle light / dark mode" style="background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:2px 8px;font-size:10px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;cursor:pointer;">&#9788; LIGHT</button>
+    <button id="theme-toggle" onclick="toggleLightMode()" title="Toggle light / dark mode" style="background:rgba(255,90,48,0.08);border:1px solid rgba(255,90,48,0.25);border-radius:3px;padding:2px 8px;font-size:10px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;cursor:pointer;">&#9788; LIGHT</button>
     <!-- NOTIFY, OPT BP, MARKET STATUS, F&G, MODE BADGE: hidden per user spec.
          Kept in DOM (display:none) so existing JS that updates textContent
          (push-toggle perms, balances refresh, mkt-status sync, sentiment
@@ -3108,7 +3108,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <button id="push-toggle" onclick="requestPushPerm()" title="Enable browser notifications for order fills, stop-loss triggers, rolls, and share buys" style="display:none !important;">NOTIFY</button>
     <span id="hdr-opt-bp" title="Option buying power from Tradier \u2014 click to refresh" onclick="fetchBalances()" style="display:none !important;">OPT BP: --</span>
     <span id="hdr-trade-token" title="Trade authorization for this session. Held in memory only \u2014 re-prompted next session." onclick="promptTradeToken()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;">TRADE: locked</span>
-    <!-- Clock relocated next to OPTION PANDA logo. Hidden span kept so the
+    <!-- Clock relocated next to RedOptianda logo. Hidden span kept so the
          existing updateClock() that writes to #clk continues to work. The
          visible value is mirrored to #clk-logo by updateClock below. -->
     <span id="clk" style="display:none !important;">--:--:--</span>
@@ -3117,7 +3117,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <!-- API counter relocated to top of API tab; keep #api-counter-badge in DOM (hidden) so existing JS that updates textContent still works -->
     <span id="api-counter-badge" style="display:none !important;" onclick="showApiBreakdown()">API: 0</span>
     <span id="hdr-scan-status" title="Scan status — click to jump to FULL SCANNER" onclick="switchTab('sc')" style="display:none;cursor:pointer;background:rgba(112,144,200,0.08);border:1px solid rgba(112,144,200,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--gry);letter-spacing:.5px;user-select:none;">SCAN: idle</span>
-    <span id="bg-enrich-badge" style="display:none;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.25);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--blub);letter-spacing:.5px;user-select:none;">↻ ENRICH 0/0</span>
+    <span id="bg-enrich-badge" style="display:none;background:rgba(255,90,48,0.06);border:1px solid rgba(255,90,48,0.25);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--blub);letter-spacing:.5px;user-select:none;">↻ ENRICH 0/0</span>
     <span id="hdr-autoscan" title="Auto-scan settings — click to expand" onclick="toggleAutoScanPanel()" style="cursor:pointer;background:rgba(255,0,230,0.06);border:1px solid rgba(255,0,230,0.30);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--ngo);letter-spacing:.5px;user-select:none;">AUTO: OFF</span>
     <!-- SANDBOX/SYNTHETIC banner — shown when no Tradier key/proxy is configured. simInd + simOpt mark rows _synth so the detail pane already badges them; this is the global counterpart so the user knows at-a-glance that ANY scan run is fully synthetic, not real-market data. Updated by _updateSandboxBanner() on page load + every API-key save. -->
     <span id="hdr-sandbox" onclick="switchTab('api')" title="No Tradier API key configured. All scan results, indicators, options chains, and GEX are randomly generated by simInd / simOpt — for UI exploration only. Click to configure keys." style="display:none;cursor:pointer;background:rgba(255,184,0,0.10);border:1px solid rgba(255,184,0,0.45);border-radius:3px;padding:1px 7px;font-size:10px;font-family:var(--ff-mono);color:var(--amb);letter-spacing:.5px;font-weight:700;user-select:none;">⚠ SANDBOX / SIM</span>
@@ -3258,7 +3258,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <!-- v2.18.27: SCAN button moved to leftmost position per user spec.
          The solid filled cyan background + glow style still flags it as
          the primary action regardless of where it sits in the row. -->
-    <button class="btn blu" id="sc-run-btn-top" onclick="runScan()" style="font-size:11px;padding:6px 16px;flex:0 0 auto;white-space:nowrap;background:var(--blu);color:var(--bg0);border-color:var(--blu);font-weight:800;letter-spacing:1px;box-shadow:0 0 14px rgba(0,212,255,0.55);">↻ SCAN</button>
+    <button class="btn blu" id="sc-run-btn-top" onclick="runScan()" style="font-size:11px;padding:6px 16px;flex:0 0 auto;white-space:nowrap;background:var(--blu);color:var(--bg0);border-color:var(--blu);font-weight:800;letter-spacing:1px;box-shadow:0 0 14px rgba(255,90,48,0.55);">↻ SCAN</button>
     <!-- v2.18.24: 4-chip group (STRATEGY / FILTERS / MUST PASS / SCREENER)
          hidden behind a single master "FILTERS" chip. Default collapsed so
          the action row reads SCAN · FILTERS · EXPORT · SEARCH · status —
@@ -3448,7 +3448,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
           <div style="padding:6px 10px;border-bottom:var(--bdr);font-family:var(--ff-mono);font-size:11px;letter-spacing:1.5px;color:var(--amb);display:flex;justify-content:space-between;align-items:center;gap:8px;">
             <span id="wl-chart-title">--</span>
             <span id="wl-chart-sub" style="color:var(--gry);font-size:10px;flex:1;text-align:right;">--</span>
-            <button onclick="wlCollapseChart()" title="Close chart" aria-label="Close chart" style="background:none;border:none;color:var(--gry);font-size:18px;cursor:pointer;padding:2px 8px;line-height:1;-webkit-tap-highlight-color:rgba(0,212,255,0.15);min-height:32px;">&times;</button>
+            <button onclick="wlCollapseChart()" title="Close chart" aria-label="Close chart" style="background:none;border:none;color:var(--gry);font-size:18px;cursor:pointer;padding:2px 8px;line-height:1;-webkit-tap-highlight-color:rgba(255,90,48,0.15);min-height:32px;">&times;</button>
           </div>
           <div id="wl-chart-canvas" style="flex:1;position:relative;background:#ffffff;min-height:300px;padding-bottom:8px;">
             <div id="wl-chart-loading" style="position:absolute;inset:0;display:flex;align-items:center;justify-content:center;color:var(--gry);font-size:11px;font-family:var(--ff-mono);letter-spacing:1px;">\u2014 select a ticker \u2014</div>
@@ -3464,7 +3464,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
        Cash / Account Value cards are hidden behind a SUMMARY toggle so
        more vertical space goes to the position list. -->
   <div style="display:flex;align-items:center;gap:6px;padding:6px 10px;border-bottom:var(--bdr);background:var(--bg1);flex-wrap:wrap;">
-    <button id="pos-summary-toggle" onclick="posToggleSummary()" style="background:rgba(0,212,255,0.06);border:1px solid var(--bg3);border-radius:4px;color:var(--amb);font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:6px 10px;cursor:pointer;min-height:36px;-webkit-tap-highlight-color:rgba(0,212,255,0.15);">
+    <button id="pos-summary-toggle" onclick="posToggleSummary()" style="background:rgba(255,90,48,0.06);border:1px solid var(--bg3);border-radius:4px;color:var(--amb);font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:.5px;padding:6px 10px;cursor:pointer;min-height:36px;-webkit-tap-highlight-color:rgba(255,90,48,0.15);">
       <span id="pos-summary-arrow" style="display:inline-block;transition:transform .15s;">&#9656;</span> SUMMARY
     </button>
     <button class="btn blu" style="font-size:11px;padding:6px 10px;white-space:nowrap;min-height:36px;" onclick="fetchPositions()">&#8635; REFRESH</button>
@@ -3481,7 +3481,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <span id="pos-bp-badge" onclick="fetchBalances()" title="Option buying power (Tradier) — tap to refresh" style="font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--grn);background:rgba(0,230,118,0.08);border:1px solid rgba(0,230,118,0.30);border-radius:4px;padding:6px 10px;cursor:pointer;white-space:nowrap;min-height:36px;display:inline-flex;align-items:center;">BP: --</span>
     <!-- v2.18.29: total account balance next to BP. Equity = positions
          market value + cash. Same fetchBalances call populates both. -->
-    <span id="pos-bal-badge" onclick="fetchBalances()" title="Total account balance (Tradier equity = positions market value + cash) — tap to refresh" style="font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--ambb);background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.30);border-radius:4px;padding:6px 10px;cursor:pointer;white-space:nowrap;min-height:36px;display:inline-flex;align-items:center;">BAL: --</span>
+    <span id="pos-bal-badge" onclick="fetchBalances()" title="Total account balance (Tradier equity = positions market value + cash) — tap to refresh" style="font-family:var(--ff-mono);font-size:11px;font-weight:700;letter-spacing:.5px;color:var(--ambb);background:rgba(255,90,48,0.08);border:1px solid rgba(255,90,48,0.30);border-radius:4px;padding:6px 10px;cursor:pointer;white-space:nowrap;min-height:36px;display:inline-flex;align-items:center;">BAL: --</span>
     <span class="pos-src" id="pos-src" style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);margin-left:auto;"></span>
   </div>
   <!-- Stats bar collapsed by default. Click SUMMARY to expand.
@@ -3515,7 +3515,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
        panel is empty — the toggle stays visible so the user can confirm
        there are no working orders. -->
   <div id="pos-pending-orders-wrap" style="border-bottom:var(--bdr);background:var(--bg1);">
-    <div id="pos-pending-orders-hdr" onclick="posTogglePending()" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 12px;font-family:var(--ff-mono);font-size:10px;letter-spacing:1.5px;color:var(--ambb);user-select:none;-webkit-tap-highlight-color:rgba(0,212,255,0.15);min-height:36px;">
+    <div id="pos-pending-orders-hdr" onclick="posTogglePending()" style="cursor:pointer;display:flex;align-items:center;gap:10px;padding:8px 12px;font-family:var(--ff-mono);font-size:10px;letter-spacing:1.5px;color:var(--ambb);user-select:none;-webkit-tap-highlight-color:rgba(255,90,48,0.15);min-height:36px;">
       <span id="pos-pending-arrow" style="display:inline-block;transition:transform .15s;color:var(--amb);font-size:13px;">&#9656;</span>
       <span style="font-weight:700;">PENDING ORDERS</span>
       <span id="pos-pending-count" style="background:rgba(255,193,7,0.10);border:1px solid rgba(255,193,7,0.45);border-radius:10px;color:var(--ambb);padding:1px 8px;font-size:9px;font-weight:700;letter-spacing:.5px;">0</span>
@@ -3829,7 +3829,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
           <select id="asr-month" style="font-size:10px;padding:2px 6px;background:var(--bg2);color:var(--gry);border:1px solid var(--bg3);border-radius:3px;cursor:pointer;" onchange="updateAsrMonthLabel()">
             <option value="">Any (10&#8211;35 DTE)</option>
           </select>
-          <button class="btn" style="font-size:13px;padding:8px 18px;font-weight:800;letter-spacing:1px;background:rgba(0,212,255,0.18);border:2px solid var(--amb);color:var(--amb);border-radius:5px;text-shadow:0 0 8px rgba(0,212,255,.5);box-shadow:0 0 12px rgba(0,212,255,.15);" onclick="autoSelectContract()">&#9650; FIND BEST</button>
+          <button class="btn" style="font-size:13px;padding:8px 18px;font-weight:800;letter-spacing:1px;background:rgba(255,90,48,0.18);border:2px solid var(--amb);color:var(--amb);border-radius:5px;text-shadow:0 0 8px rgba(255,90,48,.5);box-shadow:0 0 12px rgba(255,90,48,.15);" onclick="autoSelectContract()">&#9650; FIND BEST</button>
           <span class="auto-sel-status" id="asr-status">Enter symbol &amp; type above, then click FIND BEST to auto-fill strike &amp; expiry</span>
         </div>
         <div class="auto-sel-result" id="asr-result">
@@ -4143,8 +4143,8 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <div class="card collapsible" id="push-setup-card"><div class="card-hdr">iOS PUSH NOTIFICATIONS (PWA)</div>
     <div class="card-body" style="padding:14px 16px;">
       <div style="font-family:var(--ff-mono);font-size:11px;color:var(--gry);line-height:1.7;margin-bottom:14px;">
-        <b style="color:var(--ambb);">Receive alerts even when Option Panda is closed</b> via Apple's Web Push gateway. Requires a free <a href="https://onesignal.com" target="_blank" rel="noopener" style="color:var(--blub);">OneSignal</a> account (10,000 subscribers free) and a one-time setup. Real-time pushes work when the iPhone is locked or the app is backgrounded.<br>
-        <b style="color:var(--wrn);">iOS requirement:</b> add Option Panda to your home screen first (Safari → Share → Add to Home Screen), then open from the home-screen icon. iOS 16.4+ only allows push for installed PWAs.
+        <b style="color:var(--ambb);">Receive alerts even when RedOptianda is closed</b> via Apple's Web Push gateway. Requires a free <a href="https://onesignal.com" target="_blank" rel="noopener" style="color:var(--blub);">OneSignal</a> account (10,000 subscribers free) and a one-time setup. Real-time pushes work when the iPhone is locked or the app is backgrounded.<br>
+        <b style="color:var(--wrn);">iOS requirement:</b> add RedOptianda to your home screen first (Safari → Share → Add to Home Screen), then open from the home-screen icon. iOS 16.4+ only allows push for installed PWAs.
       </div>
 
       <!-- Step 1: Get App ID -->
@@ -4153,9 +4153,9 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         <ol style="font-size:11px;color:var(--gry);line-height:1.8;padding-left:20px;margin-top:8px;">
           <li>Go to <a href="https://onesignal.com" target="_blank" rel="noopener" style="color:var(--blub);">onesignal.com</a> → sign up (free)</li>
           <li>Create new app → choose <b style="color:var(--ambb);">Web Push</b> as the platform</li>
-          <li>Site URL: <code style="background:var(--bg0);padding:2px 6px;color:var(--ambb);">https://alexreed122287.github.io/scanner/</code></li>
-          <li>Site Name: <code style="background:var(--bg0);padding:2px 6px;color:var(--ambb);">Option Panda</code></li>
-          <li>Default Icon URL: <code style="background:var(--bg0);padding:2px 6px;color:var(--ambb);">https://alexreed122287.github.io/scanner/assets/icon-192.png</code></li>
+          <li>Site URL: <code style="background:var(--bg0);padding:2px 6px;color:var(--ambb);">https://alexreed122287.github.io/RedOptianda/</code></li>
+          <li>Site Name: <code style="background:var(--bg0);padding:2px 6px;color:var(--ambb);">RedOptianda</code></li>
+          <li>Default Icon URL: <code style="background:var(--bg0);padding:2px 6px;color:var(--ambb);">https://alexreed122287.github.io/RedOptianda/assets/icon-192.png</code></li>
           <li>Choose <b style="color:var(--ambb);">Custom Code</b> integration (NOT WordPress)</li>
           <li>Copy the <b style="color:var(--ambb);">App ID</b> (looks like <code>11111111-2222-3333-4444-555555555555</code>) and paste below ↓</li>
         </ol>
@@ -4408,7 +4408,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
           secrets <span style="color:var(--amb);">RESEND_API_KEY</span>,
           <span style="color:var(--amb);">EMAIL_TO</span>,
           <span style="color:var(--amb);">EMAIL_FROM</span> (see
-          <a href="https://github.com/alexreed122287/scanner/blob/main/daily_picks/README.md" target="_blank" style="color:var(--ambb);">daily_picks/README.md</a>)
+          <a href="https://github.com/alexreed122287/RedOptianda/blob/main/daily_picks/README.md" target="_blank" style="color:var(--ambb);">daily_picks/README.md</a>)
           and the cron fires every weekday at the time set in the workflow yaml.
         </p>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;">
@@ -4457,17 +4457,17 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
           if (st) st.innerHTML = '<span style="color:var(--grn);">✓ Saved locally.</span> To actually change the cron behavior, set repo variables: '
             + '<code style="color:var(--ambb);">DAILY_PICKS_MIN_CALL_PCT='+minCall+'</code>, '
             + '<code style="color:var(--ambb);">DAILY_PICKS_MAX_PICKS='+maxPicks+'</code> '
-            + 'at <a href="https://github.com/alexreed122287/scanner/settings/variables/actions" target="_blank" style="color:var(--ambb);">github.com/.../settings/variables/actions</a>.';
+            + 'at <a href="https://github.com/alexreed122287/RedOptianda/settings/variables/actions" target="_blank" style="color:var(--ambb);">github.com/.../settings/variables/actions</a>.';
         } catch(e){
           var st2 = document.getElementById('dp-status');
           if (st2) st2.innerHTML = '<span style="color:var(--wrn);">Save failed: '+_esc(e.message)+'</span>';
         }
       }
       function dpOpenWorkflow(){
-        window.open('https://github.com/alexreed122287/scanner/actions/workflows/daily_picks.yml', '_blank');
+        window.open('https://github.com/alexreed122287/RedOptianda/actions/workflows/daily_picks.yml', '_blank');
       }
       function dpOpenSecrets(){
-        window.open('https://github.com/alexreed122287/scanner/settings/secrets/actions', '_blank');
+        window.open('https://github.com/alexreed122287/RedOptianda/settings/secrets/actions', '_blank');
       }
     </script>
 
@@ -4478,7 +4478,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
           Configure the Google Apps Script Web App URL that receives feedback
           from the ✉ FAB. Each submission appends one row to a shared Google
           Sheet you can give developers read access to.
-          See <a href="https://github.com/alexreed122287/scanner/blob/main/feedback/README.md" target="_blank" style="color:var(--ambb);">feedback/README.md</a> for the 5-minute setup.
+          See <a href="https://github.com/alexreed122287/RedOptianda/blob/main/feedback/README.md" target="_blank" style="color:var(--ambb);">feedback/README.md</a> for the 5-minute setup.
         </p>
         <label style="display:flex;flex-direction:column;gap:4px;margin-top:6px;color:var(--ambb);font-weight:600;letter-spacing:.3px;">
           <span style="font-size:9px;letter-spacing:1px;">APPS SCRIPT WEB APP URL</span>
@@ -4561,7 +4561,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 <template id="tpl-tab-howto">
   <div class="page-wrap" style="max-width:980px;margin:0 auto;line-height:1.55;">
     <div style="padding:18px 4px 12px;border-bottom:1px solid var(--bg3);margin-bottom:14px;">
-      <div style="font-family:var(--ff-brand);font-size:18px;color:var(--amb);letter-spacing:2px;text-shadow:0 0 12px rgba(0,212,255,.4);">▲ OPTION PANDA — HOW TO</div>
+      <div style="font-family:var(--ff-brand);font-size:18px;color:var(--amb);letter-spacing:2px;text-shadow:0 0 12px rgba(255,90,48,.4);">▲ RedOptianda — HOW TO</div>
       <div style="color:var(--gry);font-size:12px;margin-top:4px;">A walkthrough of every tab, what each setting does, and the order to use them in. Read top-to-bottom on first visit.</div>
     </div>
 
@@ -4995,7 +4995,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     </div>
 
     <div style="margin-top:20px;padding:14px;text-align:center;color:var(--gry);font-size:11px;font-family:var(--ff-mono);border-top:1px solid var(--bg3);">
-      Build issues? See <a href="https://github.com/alexreed122287/scanner" target="_blank" rel="noopener noreferrer" style="color:var(--blub);">github.com/alexreed122287/scanner</a> · This tab is a static reference, no API calls.
+      Build issues? See <a href="https://github.com/alexreed122287/RedOptianda" target="_blank" rel="noopener noreferrer" style="color:var(--blub);">github.com/alexreed122287/RedOptianda</a> · This tab is a static reference, no API calls.
     </div>
 
   </div>
@@ -5055,7 +5055,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
   <div class="page-wrap">
     <!-- API counter (relocated from header). Updated in lockstep with the
          hidden #api-counter-badge by the existing fetch monkey-patch. -->
-    <div id="api-counter-tab-wrap" style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:10px 14px;background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.25);border-radius:4px;">
+    <div id="api-counter-tab-wrap" style="display:flex;align-items:center;gap:12px;margin-bottom:14px;padding:10px 14px;background:rgba(255,90,48,0.06);border:1px solid rgba(255,90,48,0.25);border-radius:4px;">
       <span style="font-family:var(--ff-mono);font-size:11px;color:var(--gry);letter-spacing:.5px;">TRADIER API CALLS TODAY:</span>
       <span id="api-counter-tab" onclick="showApiBreakdown()" title="Click to view per-endpoint breakdown" style="cursor:pointer;font-family:var(--ff-mono);font-size:14px;font-weight:700;color:var(--amb);">0</span>
       <span style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);">(resets at 11:00 PM CST)</span>
@@ -5186,7 +5186,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     </div>
     <div style="display:flex;gap:8px;align-items:center;flex-wrap:wrap;">
       <details id="gex-auto-details" style="font-size:10px;color:var(--gry);">
-        <summary style="cursor:pointer;font-family:var(--ff-mono);letter-spacing:.5px;user-select:none;list-style:none;display:flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(0,212,255,0.06);border:1px solid var(--bg3);border-radius:4px;">&#9662; AUTO</summary>
+        <summary style="cursor:pointer;font-family:var(--ff-mono);letter-spacing:.5px;user-select:none;list-style:none;display:flex;align-items:center;gap:4px;padding:4px 8px;background:rgba(255,90,48,0.06);border:1px solid var(--bg3);border-radius:4px;">&#9662; AUTO</summary>
         <label style="display:flex;align-items:center;gap:4px;margin-top:6px;" title="Auto-refresh GEX data on a schedule. CST times. Each fire = ~400 Tradier calls. Also runs headless via GitHub Actions cron 3× daily.">
           <select id="gex-sched-sel" onchange="setGexSchedule(this.value)" style="background:var(--bg2);border:var(--bdr);color:var(--wht);font-family:var(--ff);font-size:11px;padding:3px 6px;border-radius:3px;">
             <option value="off">Off (manual + post-scan + cron)</option>
@@ -5247,7 +5247,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         <tr><td style="padding:2px 8px;color:var(--amb);">STRIKE</td><td style="padding:2px 8px;">gamma flip strike — pick a contract above this</td></tr>
         <tr><td style="padding:2px 8px;color:var(--amb);">FLOW</td><td style="padding:2px 8px;">call heavy only</td></tr>
       </table>
-      <div style="margin-top:10px;padding:6px 10px;background:rgba(0,212,255,0.06);border-left:3px solid var(--amb);font-size:10px;line-height:1.5;">
+      <div style="margin-top:10px;padding:6px 10px;background:rgba(255,90,48,0.06);border-left:3px solid var(--amb);font-size:10px;line-height:1.5;">
         Rows highlighted in <span style="color:var(--grn);font-weight:700;">CYAN GLOW</span> meet ALL bullish criteria simultaneously: NET GEX positive, CALL OI % &ge; 90, CALL OI &gt; 1K, stock price above gamma flip, DTE 30-45.
       </div>
     </div>
@@ -5347,7 +5347,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
        so the open/close state is unambiguous and tappable on iPhone. -->
   <div id="pf-summary-details" style="margin:4px 10px 10px 10px;background:var(--bg1);border:var(--bdr);border-radius:4px;">
     <div id="pf-summary-toggle" onclick="pfToggleSummary()" role="button" tabindex="0" aria-expanded="false"
-         style="cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--ff-mono);font-size:11px;user-select:none;-webkit-tap-highlight-color:rgba(0,212,255,0.15);min-height:44px;">
+         style="cursor:pointer;padding:10px 12px;display:flex;align-items:center;gap:14px;flex-wrap:wrap;font-family:var(--ff-mono);font-size:11px;user-select:none;-webkit-tap-highlight-color:rgba(255,90,48,0.15);min-height:44px;">
       <span id="pf-summary-arrow" style="font-family:var(--ff-mono);font-size:13px;color:var(--amb);transition:transform 0.15s;display:inline-block;">▶</span>
       <span style="font-family:var(--ff-brand);font-size:11px;color:var(--amb);letter-spacing:2px;">SUMMARY &amp; ALLOCATIONS</span>
       <span class="pf-toggle-stats" style="color:var(--gry);display:none;">TOTAL VALUE <b id="pf-total-val" style="color:var(--ambb);font-size:13px;margin-left:4px;">$0.00</b></span>
@@ -5655,7 +5655,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
           </div>
         </div>
         <!-- Leg 2: buy to open -->
-        <div style="background:var(--bg2);border:1px solid rgba(0,212,255,.2);border-radius:4px;padding:10px 12px;">
+        <div style="background:var(--bg2);border:1px solid rgba(255,90,48,.2);border-radius:4px;padding:10px 12px;">
           <div style="font-size:10px;color:var(--gry);margin-bottom:6px;">New contract</div>
           <div style="display:flex;gap:6px;flex-wrap:wrap;margin-bottom:8px;align-items:flex-end;">
             <div style="display:flex;flex-direction:column;gap:2px;">
@@ -5756,8 +5756,8 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 <!-- v2.18.38: $ BP peek now the bottom-RIGHT corner FAB (was stacked
      above ✉ at bottom:66px). Positioned via .bp-peek-fab CSS class
      (bottom:20px+safe-area). Inline right:14px is the horizontal anchor. -->
-<div id="sc-bp-peek" class="bp-peek-fab" onpointerdown="_bpPeekStart(event)" onpointerup="_bpPeekEnd()" onpointerleave="_bpPeekEnd()" onpointercancel="_bpPeekEnd()" oncontextmenu="event.preventDefault();return false;" title="Press and hold to see Buying Power" style="position:fixed;right:14px;z-index:80;width:34px;height:34px;border-radius:50%;background:rgba(0,212,255,0.08);border:1px solid rgba(0,212,255,0.30);color:var(--ambb);font-family:var(--ff-mono);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;opacity:0.55;transition:opacity .15s;">$</div>
-<div id="sc-bp-peek-value" class="bp-peek-value" style="display:none;position:fixed;right:54px;z-index:81;background:var(--bg1);border:1px solid var(--ambb);border-radius:6px;padding:8px 12px;font-family:var(--ff-mono);font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--grn);box-shadow:0 0 18px rgba(0,212,255,0.35);white-space:nowrap;pointer-events:none;"></div>
+<div id="sc-bp-peek" class="bp-peek-fab" onpointerdown="_bpPeekStart(event)" onpointerup="_bpPeekEnd()" onpointerleave="_bpPeekEnd()" onpointercancel="_bpPeekEnd()" oncontextmenu="event.preventDefault();return false;" title="Press and hold to see Buying Power" style="position:fixed;right:14px;z-index:80;width:34px;height:34px;border-radius:50%;background:rgba(255,90,48,0.08);border:1px solid rgba(255,90,48,0.30);color:var(--ambb);font-family:var(--ff-mono);font-size:14px;font-weight:800;display:flex;align-items:center;justify-content:center;cursor:pointer;user-select:none;-webkit-user-select:none;-webkit-tap-highlight-color:transparent;touch-action:none;opacity:0.55;transition:opacity .15s;">$</div>
+<div id="sc-bp-peek-value" class="bp-peek-value" style="display:none;position:fixed;right:54px;z-index:81;background:var(--bg1);border:1px solid var(--ambb);border-radius:6px;padding:8px 12px;font-family:var(--ff-mono);font-size:12px;font-weight:700;letter-spacing:.5px;color:var(--grn);box-shadow:0 0 18px rgba(255,90,48,0.35);white-space:nowrap;pointer-events:none;"></div>
 <script>
   function _bpPeekStart(e){
     try { e && e.preventDefault && e.preventDefault(); } catch(_){}
@@ -5868,7 +5868,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         st.style.background = 'rgba(255,82,82,0.10)';
         st.style.color = 'var(--ngo)';
         st.style.border = '1px solid var(--ngo)';
-        st.innerHTML = 'No webhook configured. Set one in the ALERTS tab → FEEDBACK card. <a href="https://github.com/alexreed122287/scanner/blob/main/feedback/README.md" target="_blank" style="color:var(--ambb);">Setup walkthrough</a>.';
+        st.innerHTML = 'No webhook configured. Set one in the ALERTS tab → FEEDBACK card. <a href="https://github.com/alexreed122287/RedOptianda/blob/main/feedback/README.md" target="_blank" style="color:var(--ambb);">Setup walkthrough</a>.';
       }
       return;
     }
@@ -6804,7 +6804,7 @@ window.runApiAnalyzer = function(){
 window.clearApiLog = function(){
   try{localStorage.removeItem('op_api_log');}catch(e){}
   var el=document.getElementById('api-counter-badge');
-  if(el){el.textContent='API: 0';el.style.borderColor='rgba(0,212,255,0.25)';el.style.color='var(--amb)';el.style.background='rgba(0,212,255,0.08)';}
+  if(el){el.textContent='API: 0';el.style.borderColor='rgba(255,90,48,0.25)';el.style.color='var(--amb)';el.style.background='rgba(255,90,48,0.08)';}
   var tabEl=document.getElementById('api-counter-tab');
   if(tabEl){tabEl.textContent='0';tabEl.style.color='var(--amb)';}
   var li=document.getElementById('api-log-list');if(li)li.innerHTML='';
@@ -9191,7 +9191,7 @@ function autoSelectContract(){
       var deepBadge = (dltAbs >= 0.70 && dltAbs <= 0.90)
         ? '<span style="background:rgba(0,230,118,0.15);color:var(--grn);font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;border:1px solid rgba(0,230,118,0.4);margin-left:3px;">ITM\u2605</span>'
         : (dltAbs >= 0.45 && dltAbs <= 0.55)
-          ? '<span style="background:rgba(0,212,255,0.12);color:var(--ambb);font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;border:1px solid rgba(0,212,255,0.35);margin-left:3px;">ATM</span>'
+          ? '<span style="background:rgba(255,90,48,0.12);color:var(--ambb);font-size:8px;font-weight:700;padding:1px 4px;border-radius:2px;border:1px solid rgba(255,90,48,0.35);margin-left:3px;">ATM</span>'
           : '';
       // Visually separate each expiration group with a thin divider
       if(c.expDate !== lastExp){
@@ -10750,7 +10750,7 @@ function openOrderStatusModal(ctx){
   modal.onclick = function(e){ if (e.target === modal) minimizeOrderStatusModal(); };
 
   modal.innerHTML =
-      '<div id="osm-panel" style="background:var(--bg1);border:1px solid var(--amb);border-radius:10px;width:480px;max-width:96vw;padding:0;box-shadow:0 0 28px rgba(0,212,255,.25);">'
+      '<div id="osm-panel" style="background:var(--bg1);border:1px solid var(--amb);border-radius:10px;width:480px;max-width:96vw;padding:0;box-shadow:0 0 28px rgba(255,90,48,.25);">'
     +   '<div style="background:var(--bg2);border-bottom:var(--bdr);padding:11px 14px;display:flex;align-items:center;justify-content:space-between;">'
     +     '<span style="font-family:var(--ff-brand);font-size:12px;color:var(--amb);letter-spacing:2px;">' + modeLabel + ' STATUS — ' + labelOcc + '</span>'
     +     '<button class="btn" style="font-size:14px;padding:6px 12px;min-width:36px;min-height:36px;" onclick="closeOrderStatusModal()" title="Close">&#10005;</button>'
@@ -10778,7 +10778,7 @@ function openOrderStatusModal(ctx){
     +       '<div id="osm-contract-row" style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;font-family:var(--ff-mono);font-size:10px;color:var(--gry);margin-bottom:8px;padding:6px 8px;background:var(--bg0);border:var(--bdr);border-radius:4px;">'
     +         '<span>CONTRACT:</span>'
     +         '<b id="osm-r-ticker-display" style="color:var(--amb);font-size:12px;letter-spacing:.5px;">--</b>'
-    +         '<span id="osm-r-type-chip" style="background:rgba(0,212,255,0.12);color:var(--amb);padding:2px 7px;border-radius:3px;font-weight:700;letter-spacing:.5px;">--</span>'
+    +         '<span id="osm-r-type-chip" style="background:rgba(255,90,48,0.12);color:var(--amb);padding:2px 7px;border-radius:3px;font-weight:700;letter-spacing:.5px;">--</span>'
     +         '<span id="osm-r-current-display" style="margin-left:auto;color:var(--gry2);">--</span>'
     +       '</div>'
     +       '<div id="osm-r-chain-row" style="display:none;grid-template-columns:1fr 1fr;gap:8px;font-family:var(--ff-mono);font-size:10px;margin-bottom:8px;">'
@@ -11027,7 +11027,7 @@ function _showOrderStatusChip(){
   var c = G.orderStatus.ctx || {};
   var chip = document.createElement('div');
   chip.id = 'ord-status-chip';
-  chip.style.cssText = 'position:fixed;right:12px;top:calc(max(env(safe-area-inset-top,40px),40px) + 56px);z-index:9740;background:var(--bg1);border:1px solid var(--amb);border-left:3px solid var(--amb);border-radius:6px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;box-shadow:0 0 18px rgba(0,212,255,.4);min-width:140px;max-width:200px;font-family:var(--ff-mono);font-size:10px;animation:osm-chip-in .25s ease-out;';
+  chip.style.cssText = 'position:fixed;right:12px;top:calc(max(env(safe-area-inset-top,40px),40px) + 56px);z-index:9740;background:var(--bg1);border:1px solid var(--amb);border-left:3px solid var(--amb);border-radius:6px;padding:8px 12px;cursor:pointer;display:flex;flex-direction:column;gap:3px;box-shadow:0 0 18px rgba(255,90,48,.4);min-width:140px;max-width:200px;font-family:var(--ff-mono);font-size:10px;animation:osm-chip-in .25s ease-out;';
   var labelOcc = _esc(c.occSym || c.sym || '--');
   var labelMode = c.mode === 'step' ? 'STEP FILL' : 'ORDER';
   var stateText = G.orderStatus.terminalText || 'WORKING';
@@ -11324,7 +11324,7 @@ function _osmLoadResubmitChainForExp(ticker, side, exp){
         var mid = (o.bid!=null && o.ask!=null) ? ((+o.bid + +o.ask)/2).toFixed(2) : '--';
         var delta = (o.greeks && o.greeks.delta!=null) ? Number(o.greeks.delta).toFixed(2) : '--';
         var isSel = String(o.strike) === String(bestStrike);
-        var rowBg = isSel ? 'background:rgba(0,212,255,0.10);' : '';
+        var rowBg = isSel ? 'background:rgba(255,90,48,0.10);' : '';
         return '<tr data-strike="'+_esc(s)+'" onclick="osmResubPickStrike(\''+_esc(s)+'\')" style="cursor:pointer;'+rowBg+'">'
           + '<td style="padding:3px 6px;color:var(--amb);font-weight:700;text-align:right;">$'+_esc(s)+'</td>'
           + '<td style="padding:3px 6px;color:var(--gry);text-align:right;">'+_esc(bid)+'</td>'
@@ -11370,7 +11370,7 @@ function osmResubPickStrike(strike){
   var tbl = eid('osm-r-chain-table');
   if (tbl){
     tbl.querySelectorAll('tr[data-strike]').forEach(function(tr){
-      tr.style.background = (tr.getAttribute('data-strike') === strike) ? 'rgba(0,212,255,0.10)' : '';
+      tr.style.background = (tr.getAttribute('data-strike') === strike) ? 'rgba(255,90,48,0.10)' : '';
     });
   }
   // Auto-suggest LIMIT $ from the picked contract's mid price (bid/ask average)
@@ -11838,7 +11838,7 @@ function renderPendingOrders(orders){
       +   '</div>'
       +   '<div style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);margin-top:2px;">'+_esc(subtitle)+'</div>'
       + '</div>'
-      + '<span style="font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.5px;color:'+statusColor+';background:rgba(0,212,255,0.06);border:1px solid rgba(0,212,255,0.30);border-radius:3px;padding:2px 6px;white-space:nowrap;">'+_esc(status)+'</span>'
+      + '<span style="font-family:var(--ff-mono);font-size:9px;font-weight:700;letter-spacing:.5px;color:'+statusColor+';background:rgba(255,90,48,0.06);border:1px solid rgba(255,90,48,0.30);border-radius:3px;padding:2px 6px;white-space:nowrap;">'+_esc(status)+'</span>'
       + '<button class="btn blu" onclick="openEditOrderModal(\''+_jsq(String(o.id))+'\')" style="font-size:10px;padding:5px 10px;min-height:32px;">EDIT</button>'
       + '<button class="btn wrn" onclick="cancelPendingOrder(\''+_jsq(String(o.id))+'\')" style="font-size:10px;padding:5px 10px;min-height:32px;">CANCEL</button>'
       + '</div>';
@@ -12158,7 +12158,7 @@ async function runStepFill(creds,acct,occSym,sym,side,qty,startPrice,limitPrice,
               try { if (typeof hap === 'function') hap([20, 40, 20]); } catch(_){}
               try {
                 if (typeof Notification !== 'undefined' && Notification.permission === 'granted'){
-                  var nP = new Notification('Option Panda — partial fill', { body: pmsg+' · '+occSym, tag: 'partial-'+occSym });
+                  var nP = new Notification('RedOptianda — partial fill', { body: pmsg+' · '+occSym, tag: 'partial-'+occSym });
                   setTimeout(function(){ try { nP.close(); } catch(_){} }, 6000);
                 }
               } catch(_){}
@@ -17546,7 +17546,7 @@ async function renderOrdChain(sym, expDate){
       var oi = c && c.open_interest != null ? Number(c.open_interest).toLocaleString() : '--';
       var delta = c && c.greeks ? Number(c.greeks.delta).toFixed(2) : '--';
       var rowStyle = '';
-      if (isFlip) rowStyle = 'background:linear-gradient(90deg,rgba(0,212,255,.18),rgba(0,212,255,.05));border-left:3px solid var(--amb);box-shadow:inset 0 0 0 1px var(--amb3);';
+      if (isFlip) rowStyle = 'background:linear-gradient(90deg,rgba(255,90,48,.18),rgba(255,90,48,.05));border-left:3px solid var(--amb);box-shadow:inset 0 0 0 1px var(--amb3);';
       else if (isATM) rowStyle = 'background:rgba(255,255,255,.04);';
       var glyph = isFlip ? '<span title="Highest-GEX strike (gamma flip)" style="color:var(--ambb);">&#9670;</span> ' : (isATM ? '<span style="color:var(--gry);">&#8226;</span> ' : '');
       return '<tr data-strike="'+strike+'" style="'+rowStyle+'cursor:pointer;" onclick="ordChainRowClick(\''+_jsq(sym)+'\','+strike+',\''+_jsq(expDate)+'\')">'
@@ -17781,7 +17781,7 @@ function pushSubscribe(){
   OneSignalDeferred.push(function(OneSignal){
     OneSignal.Notifications.requestPermission().then(function(perm){
       if (!perm){
-        _pushStatus('✗ Permission denied. Re-enable in iOS Settings → Notifications → Option Panda.', 'var(--wrn)');
+        _pushStatus('✗ Permission denied. Re-enable in iOS Settings → Notifications → RedOptianda.', 'var(--wrn)');
         return;
       }
       // Older SDK exposes login-style identifiers; v16 just uses the auto Player ID
@@ -17825,7 +17825,7 @@ function pushSendTest(){
       // 2. Check permission
       if (Notification.permission !== 'granted'){
         if (Notification.permission === 'denied'){
-          _pushStatus('✗ Notifications are blocked. Open iOS Settings → Notifications → Option Panda and re-enable. (Permission state: denied)', 'var(--wrn)');
+          _pushStatus('✗ Notifications are blocked. Open iOS Settings → Notifications → RedOptianda and re-enable. (Permission state: denied)', 'var(--wrn)');
         } else {
           _pushStatus('✗ Permission not granted. Click ENABLE PUSH ON THIS DEVICE first to request permission. (Permission state: '+Notification.permission+')', 'var(--wrn)');
         }
@@ -17838,7 +17838,7 @@ function pushSendTest(){
       }
       navigator.serviceWorker.ready.then(function(reg){
         try {
-          reg.showNotification('Option Panda — Test Push', {
+          reg.showNotification('RedOptianda — Test Push', {
             body: 'If you see this, your iPhone is correctly wired for push notifications. Server-side pushes (alerts when the app is closed) require the OneSignal REST API per Step 4.',
             icon: './assets/icon-192.png',
             badge: './assets/icon-192.png',
@@ -17864,7 +17864,7 @@ function pushSendTest(){
               });
             }
           } catch(_){}
-          _pushStatus('✓ Local push fired. If you don\'t see it, check iOS Settings → Notifications → Option Panda. For pushes when the app is CLOSED, wire the REST API per Step 4.', 'var(--grn)');
+          _pushStatus('✓ Local push fired. If you don\'t see it, check iOS Settings → Notifications → RedOptianda. For pushes when the app is CLOSED, wire the REST API per Step 4.', 'var(--grn)');
         } catch(e){
           _pushStatus('✗ showNotification threw: '+(e&&e.message||'unknown')+'. Try unregistering the service worker (double-tap panda icon to force-reload) and re-enabling push.', 'var(--wrn)');
         }
@@ -17979,7 +17979,7 @@ function _pushPermBtnUpdate(){
 function requestPushPerm(){
   if(!('Notification' in window)){ toast('This browser does not support notifications'); return; }
   if(Notification.permission === 'granted'){
-    pushNotify('Option Panda', 'Notifications already enabled. You\u2019ll get alerts for order fills, stop-loss triggers, rolls, and share buys.', 'test');
+    pushNotify('RedOptianda', 'Notifications already enabled. You\u2019ll get alerts for order fills, stop-loss triggers, rolls, and share buys.', 'test');
     return;
   }
   if(Notification.permission === 'denied'){
@@ -18097,7 +18097,7 @@ function applyTheme(isLight){
     var iframe = document.getElementById('sent-iframe');
     if (iframe && iframe.contentWindow) {
       iframe.contentWindow.postMessage({
-        source: 'option-panda',
+        source: 'redoptianda',
         type: 'theme',
         theme: isLight ? 'light' : 'dark'
       }, '*');
@@ -18311,8 +18311,8 @@ function setScanProgress(pct, label){
   if(hdr){
     hdr.style.display = '';
     hdr.style.color = 'var(--amb)';
-    hdr.style.borderColor = 'rgba(0,212,255,0.5)';
-    hdr.style.background = 'rgba(0,212,255,0.10)';
+    hdr.style.borderColor = 'rgba(255,90,48,0.5)';
+    hdr.style.background = 'rgba(255,90,48,0.10)';
     hdr.textContent = 'SCAN: ' + Math.round(pct) + '%';
     hdr.title = label || ('Scanning… ' + Math.round(pct) + '%');
   }
@@ -19544,8 +19544,8 @@ function finishScan(){
     if(hdrPill){
       hdrPill.style.display = '';
       hdrPill.style.color = 'var(--ambb)';
-      hdrPill.style.borderColor = 'rgba(0,212,255,0.5)';
-      hdrPill.style.background = 'rgba(0,212,255,0.10)';
+      hdrPill.style.borderColor = 'rgba(255,90,48,0.5)';
+      hdrPill.style.background = 'rgba(255,90,48,0.10)';
       hdrPill.textContent = 'ENRICH ' + enrichIdx + '/' + enrichQueue.length;
       hdrPill.title = 'Enriching top ' + enrichQueue.length + ' results with FMP + indicator history (' + t + ')';
     }
@@ -20111,7 +20111,7 @@ function showExportModal(tickers, csv, source){
 
   var title = (source === 'sc') ? 'SCANNER — GO TICKERS' : 'BUY SIGNALS — GO TICKERS';
   m.innerHTML =
-    '<div style="background:var(--bg1);border:1px solid var(--amb);border-radius:6px;max-width:700px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(0,212,255,0.3);">' +
+    '<div style="background:var(--bg1);border:1px solid var(--amb);border-radius:6px;max-width:700px;width:100%;max-height:80vh;display:flex;flex-direction:column;box-shadow:0 0 40px rgba(255,90,48,0.3);">' +
       '<div style="background:var(--bg2);border-bottom:1px solid var(--bg3);padding:10px 14px;display:flex;align-items:center;justify-content:space-between;">' +
         '<span style="color:var(--amb);font-family:var(--ff-brand);font-size:13px;font-weight:700;letter-spacing:2px;">'+title+' ('+tickers.length+')</span>' +
         '<button onclick="document.getElementById(\'export-gos-modal\').remove()" style="background:none;border:none;color:var(--gry);font-size:20px;cursor:pointer;padding:0 4px;line-height:1;">×</button>' +
@@ -21826,7 +21826,7 @@ function _wlDrawCandles(ticker, days, kind){
     tooltip:{
       trigger:'axis',
       axisPointer:{type:'cross', crossStyle:{color:'rgba(55,138,221,0.35)', width:1}},
-      backgroundColor:'#0b1522', borderColor:'rgba(0,212,255,0.25)',
+      backgroundColor:'#0b1522', borderColor:'rgba(255,90,48,0.25)',
       textStyle:{color:'#c8daf8', fontSize:10},
       formatter: function(params){
         var c=null; for(var i=0;i<params.length;i++){ if(params[i].seriesName==='Price'){ c=params[i]; break; } }
@@ -21860,7 +21860,7 @@ function _wlDrawCandles(ticker, days, kind){
     },
     dataZoom:[
       {type:'inside', start:zoomStart, end:100, filterMode:'filter'},
-      {type:'slider', start:zoomStart, end:100, bottom:8, height:22, filterMode:'filter', borderColor:'rgba(0,212,255,0.15)', fillerColor:'rgba(0,212,255,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}, showDetail:false}
+      {type:'slider', start:zoomStart, end:100, bottom:8, height:22, filterMode:'filter', borderColor:'rgba(255,90,48,0.15)', fillerColor:'rgba(255,90,48,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(255,90,48,0.04)'}}, showDetail:false}
     ],
     series:[
       {name:'Price', type:'candlestick', data: days.map(function(d){ return [+d.open, +d.close, +d.low, +d.high]; }),
@@ -22082,7 +22082,7 @@ function _chartModalDrawCandles(ticker, days, kind){
     tooltip:{
       trigger:'axis',
       axisPointer:{type:'cross', crossStyle:{color:'rgba(55,138,221,0.35)', width:1}},
-      backgroundColor:'#0b1522', borderColor:'rgba(0,212,255,0.25)',
+      backgroundColor:'#0b1522', borderColor:'rgba(255,90,48,0.25)',
       textStyle:{color:'#c8daf8', fontSize:10},
       formatter: function(params){
         var c=null; for(var i=0;i<params.length;i++){ if(params[i].seriesName==='Price'){ c=params[i]; break; } }
@@ -22109,7 +22109,7 @@ function _chartModalDrawCandles(ticker, days, kind){
     },
     dataZoom:[
       {type:'inside', start:zoomStart, end:100, filterMode:'filter'},
-      {type:'slider', start:zoomStart, end:100, bottom:8, height:22, filterMode:'filter', borderColor:'rgba(0,212,255,0.15)', fillerColor:'rgba(0,212,255,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(0,212,255,0.04)'}}, showDetail:false}
+      {type:'slider', start:zoomStart, end:100, bottom:8, height:22, filterMode:'filter', borderColor:'rgba(255,90,48,0.15)', fillerColor:'rgba(255,90,48,0.05)', handleStyle:{color:'#378ADD'}, textStyle:{color:'#7090c8', fontSize:8}, dataBackground:{areaStyle:{color:'rgba(255,90,48,0.04)'}}, showDetail:false}
     ],
     series:[
       {name:'Price', type:'candlestick', data: days.map(function(d){ return [+d.open, +d.close, +d.low, +d.high]; }),
@@ -22824,7 +22824,7 @@ function renderPositionsTable(pos,srcLabel){
     var strikeCell = (function(){
       if(isStock){
         // Stock: show "SHARES" badge instead of a strike with ITM/OTM
-        return '<td style="white-space:nowrap;"><span style="background:rgba(0,212,255,0.12);color:var(--ambb);font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;border:1px solid rgba(0,212,255,0.35);letter-spacing:.5px;">SHARES</span></td>';
+        return '<td style="white-space:nowrap;"><span style="background:rgba(255,90,48,0.12);color:var(--ambb);font-size:10px;font-weight:700;padding:2px 8px;border-radius:3px;border:1px solid rgba(255,90,48,0.35);letter-spacing:.5px;">SHARES</span></td>';
       }
       var ul = p.ulNow || p.underlyingNow || 0;
       var typeSfx = p.type === 'CALL' ? 'C' : 'P';
@@ -24644,7 +24644,7 @@ function rollLoadChain(){
       var d=o.greeks?fmt2(Math.abs(+o.greeks.delta)):'--';
       var oi=fmtK(+o.open_interest||0);
       var isBest=o._score===bestScore;
-      var rowCls=isBest?'background:rgba(0,212,255,0.07);':'';
+      var rowCls=isBest?'background:rgba(255,90,48,0.07);':'';
       var bestTag=isBest?'<span style="color:var(--amb);font-size:9px;">★</span> ':'';
       return '<tr style="border-bottom:1px solid var(--bg3);'+rowCls+'" data-sym="'+o.symbol+'">'
         +'<td style="padding:3px 6px;color:var(--wht);">$'+fmt2(+o.strike)+'</td>'
@@ -24654,7 +24654,7 @@ function rollLoadChain(){
         +'<td style="padding:3px 6px;color:var(--gry);text-align:center;">'+oi+'</td>'
         +'<td style="padding:3px 6px;color:var(--ambb);text-align:center;">'+bestTag+o._score+'</td>'
 +'<td style="padding:3px 6px;"><button onclick="rollSelectContract(\''+o.symbol+'\', true)" '
-        +'style="background:none;border:1px solid rgba(0,212,255,0.3);color:var(--amb);font-size:9px;padding:1px 6px;cursor:pointer;border-radius:2px;">SELECT</button></td>'
+        +'style="background:none;border:1px solid rgba(255,90,48,0.3);color:var(--amb);font-size:9px;padding:1px 6px;cursor:pointer;border-radius:2px;">SELECT</button></td>'
         +'</tr>';
     }).join('');
     // Auto-select the best contract WITHIN this expiry only \u2014 local pick, no
@@ -24690,7 +24690,7 @@ function rollSelectContract(sym, byUser){
   eid('roll-status').textContent='Contract selected';
   // Highlight selected row
   var rows=eid('roll-chain-body').querySelectorAll('tr');
-  rows.forEach(function(r){r.style.background=r.dataset.sym===sym?'rgba(0,212,255,0.12)':'';});
+  rows.forEach(function(r){r.style.background=r.dataset.sym===sym?'rgba(255,90,48,0.12)':'';});
 
   // Update comparison panel
   var cmp = eid('roll-compare');
@@ -24839,7 +24839,7 @@ function rollRenderChainTable(chain){
     var d=o.greeks?fmt2(Math.abs(+o.greeks.delta)):'--';
     var oi=fmtK(+o.open_interest||0);
     var isBest=o._score===bestScore;
-    var rowCls=isBest?'background:rgba(0,212,255,0.07);':'';
+    var rowCls=isBest?'background:rgba(255,90,48,0.07);':'';
     var bestTag=isBest?'<span style="color:var(--amb);font-size:9px;">\u2605</span> ':'';
     return '<tr style="border-bottom:1px solid var(--bg3);'+rowCls+'" data-sym="'+o.symbol+'">'
       +'<td style="padding:3px 6px;color:var(--wht);">$'+fmt2(+o.strike)+'</td>'
@@ -24849,7 +24849,7 @@ function rollRenderChainTable(chain){
       +'<td style="padding:3px 6px;color:var(--gry);text-align:center;">'+oi+'</td>'
       +'<td style="padding:3px 6px;color:var(--ambb);text-align:center;">'+bestTag+o._score+'</td>'
       +'<td style="padding:3px 6px;"><button onclick="rollSelectContract(\''+o.symbol+'\', true)" '
-      +'style="background:none;border:1px solid rgba(0,212,255,0.3);color:var(--amb);font-size:9px;padding:1px 6px;cursor:pointer;border-radius:2px;">SELECT</button></td>'
+      +'style="background:none;border:1px solid rgba(255,90,48,0.3);color:var(--amb);font-size:9px;padding:1px 6px;cursor:pointer;border-radius:2px;">SELECT</button></td>'
       +'</tr>';
   }).join('');
 }
@@ -25951,7 +25951,7 @@ function requestNotifPermission(){
       // Send test notification
       new Notification('RRJCAR Terminal', {
         body: 'Notifications enabled \u2014 high-conviction signals will appear here',
-        icon: 'https://ruizminer.github.io/rrjcar-Terminal-v3/favicon.ico'
+        icon: 'assets/icon-192.png'
       });
     } else {
       toast('Notification permission denied');
@@ -25965,7 +25965,7 @@ function fireBrowserNotif(ticker, score, sector, price, rulesSummary){
   if(!s.browser) return;
   var n = new Notification('\u2605 HIGH CONVICTION: ' + ticker, {
     body: 'Score: ' + score + '/240 | ' + sector + ' | $' + price.toFixed(2) + '\n' + rulesSummary,
-    icon: 'https://ruizminer.github.io/rrjcar-Terminal-v3/favicon.ico',
+    icon: 'assets/icon-192.png',
     tag:  'rrjcar-' + ticker, // replaces previous notification for same ticker
     requireInteraction: true  // stays until user dismisses
   });
@@ -27333,7 +27333,7 @@ function updateClock(){
   var ampm=h>=12?'PM':'AM';h=h%12||12;
   var ts=[h,m<10?'0'+m:m,s<10?'0'+s:s].join(':')+' '+ampm+' CST';
   eid('clk').textContent=ts;
-  // Mirror to the relocated clock next to the OPTION PANDA logo.
+  // Mirror to the relocated clock next to the RedOptianda logo.
   var clkLogo=eid('clk-logo'); if(clkLogo) clkLogo.textContent=ts;
   var day=now.getDay(),hr=now.getHours(),min=now.getMinutes();
   var isWeekday=day>=1&&day<=5;var mktOpen=isWeekday&&(hr>8||(hr===8&&min>=30))&&hr<15;
@@ -28109,7 +28109,7 @@ function renderContractPanel(ticker, contracts){
     var scoreColor = c.totalScore>=65?'var(--amb)':c.totalScore>=45?'var(--wrn)':'var(--ngo)';
 
     var monthly = isMonthlyExp(c.expDate);
-    var rowStyle = 'border-bottom:var(--bdr);transition:background .15s;' + (monthly ? 'background:rgba(0,212,255,0.07);box-shadow:inset 3px 0 0 var(--amb),inset 0 0 25px rgba(0,212,255,0.1);' : '');
+    var rowStyle = 'border-bottom:var(--bdr);transition:background .15s;' + (monthly ? 'background:rgba(255,90,48,0.07);box-shadow:inset 3px 0 0 var(--amb),inset 0 0 25px rgba(255,90,48,0.1);' : '');
     var expCell = monthly ? '<span style="color:var(--amb);text-shadow:0 0 10px var(--amb);font-weight:700;">\u25c6 '+fmtDateUS(c.expDate)+'</span>' : fmtDateUS(c.expDate);
     return '<tr style="'+rowStyle+'">'+
       '<td style="padding:8px 14px;'+dteCls+'">'+expCell+'</td>'+
@@ -28208,7 +28208,7 @@ function cwToggleWatch(ticker, strike, expDate, mid, delta, score){
       btn.textContent = '★ WATCHING';
       btn.style.borderColor = 'var(--amb)';
       btn.style.color = 'var(--amb)';
-      btn.style.background = 'rgba(0,212,255,.2)';
+      btn.style.background = 'rgba(255,90,48,.2)';
     }
     toast('Added to watchlist: '+ticker+' $'+strike+' CALL '+fmtDateUS(expDate));
   }
@@ -28871,7 +28871,7 @@ var PF_CHAIN_CACHE = {};      // { ticker: { expirations: [], strikesByExp: {exp
 
 // ── Palette (recycles across categories) ───────────────────────────────────
 var PF_PALETTE = [
-  '#00d4ff','#40e8ff','#ff00e6','#ffd740','#00e676','#ff6b9d',
+  '#ff5a30','#ff8454','#ff00e6','#ffd740','#00e676','#ff6b9d',
   '#b388ff','#64ffda','#ffab40','#69f0ae','#ff8a80','#82b1ff',
   '#ea80fc','#80d8ff','#ffd180','#ccff90','#a7ffeb','#ff9e80'
 ];
@@ -29055,7 +29055,7 @@ function pfRenderColumn(col){
   var isTradier = col.type === 'tradier';
   var headerBadge = isTradier
     ? '<span style="background:rgba(0,230,118,.15);color:var(--grn);border:1px solid var(--grn);border-radius:2px;font-size:8px;padding:1px 5px;letter-spacing:1px;">AUTO</span>'
-    : '<span style="background:rgba(0,212,255,.1);color:var(--ambb);border:1px solid var(--amb);border-radius:2px;font-size:8px;padding:1px 5px;letter-spacing:1px;">MANUAL</span>';
+    : '<span style="background:rgba(255,90,48,.1);color:var(--ambb);border:1px solid var(--amb);border-radius:2px;font-size:8px;padding:1px 5px;letter-spacing:1px;">MANUAL</span>';
 
   var colVal = 0, colCount = 0, deadCount = 0;
   for(var r=0;r<col.rows.length;r++){
@@ -29909,9 +29909,9 @@ function pfChartOpts(){
       },
       tooltip: {
         backgroundColor: '#0b1522',
-        titleColor: '#00d4ff',
+        titleColor: '#ff5a30',
         bodyColor: '#c8daf8',
-        borderColor: '#00d4ff',
+        borderColor: '#ff5a30',
         borderWidth: 1,
         callbacks: {
           label: function(ctx){
@@ -31425,11 +31425,11 @@ function init(){
     if (verEl){
       var shortVer = String(APP_VERSION).split('-')[0];
       verEl.textContent = 'v'+shortVer;
-      verEl.title = 'Option Panda v'+APP_VERSION+' — click to force-reload (clears cache)';
+      verEl.title = 'RedOptianda v'+APP_VERSION+' — click to force-reload (clears cache)';
     }
   } catch(_){}
 
-  addAlert('SYS','Option Panda v'+APP_VERSION+' initialized — cached data loaded, no API calls on startup','go');
+  addAlert('SYS','RedOptianda v'+APP_VERSION+' initialized — cached data loaded, no API calls on startup','go');
 
   // Populate option buying power badge at startup, then every 2 minutes while market is open
   try{
@@ -31998,7 +31998,7 @@ function indDrawHist(topNames){
     ctx.beginPath(); ctx.moveTo(padL, y); ctx.lineTo(W - padR, y); ctx.stroke();
     ctx.textAlign = 'right'; ctx.fillText(v, padL - 4*dpr, y + 3*dpr);
   }
-  var palette = ['#00d4ff','#ff00e6','#00e676','#ffd740','#ff7ad9'];
+  var palette = ['#ff5a30','#ff00e6','#00e676','#ffd740','#ff7ad9'];
   lines.forEach(function(line, idx){
     ctx.strokeStyle = palette[idx % palette.length];
     ctx.lineWidth = 1.5*dpr;
@@ -32487,9 +32487,9 @@ window.addEventListener('DOMContentLoaded',init);
       if (!ticker) return;
       try {
         navigator.share({
-          title: 'Option Panda — '+ticker,
-          text: ticker + ' — open in Option Panda',
-          url: 'https://alexreed122287.github.io/scanner/?ticker='+encodeURIComponent(ticker)
+          title: 'RedOptianda — '+ticker,
+          text: ticker + ' — open in RedOptianda',
+          url: 'https://alexreed122287.github.io/RedOptianda/?ticker='+encodeURIComponent(ticker)
         });
         try { if (typeof hap === 'function') hap([20, 40, 20]); } catch(_){}
       } catch(_){}
@@ -33245,7 +33245,7 @@ window.addEventListener('DOMContentLoaded',init);
     // Browser notification (best effort).
     try {
       if (typeof Notification !== 'undefined' && Notification.permission === 'granted'){
-        var n = new Notification('Option Panda — '+sym, { body: reason, tag: 'pos-alert-'+p.symbol });
+        var n = new Notification('RedOptianda — '+sym, { body: reason, tag: 'pos-alert-'+p.symbol });
         setTimeout(function(){ try { n.close(); } catch(_){} }, 6000);
       }
     } catch(_){}

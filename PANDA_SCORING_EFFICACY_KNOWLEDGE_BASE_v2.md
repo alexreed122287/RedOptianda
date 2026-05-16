@@ -1,5 +1,5 @@
-# OPTION PANDA Scoring Efficacy Knowledge Base — v2 (Post-Weekend-Fix)
-**Source:** OPTION PANDA (https://alexreed122287.github.io/scanner/), v2.18.40 + PRs #45 and #46
+# RedOptianda Scoring Efficacy Knowledge Base — v2 (Post-Weekend-Fix)
+**Source:** RedOptianda (https://alexreed122287.github.io/RedOptianda/), v2.18.40 + PRs #45 and #46
 **Date:** May 15, 2026, post-deploy verification
 **Universe sampled:** 90 tickers in `G_HIST_CACHE`, each with 275 bars of daily OHLCV
 **SPY reference:** present and current (275 bars, market return +5.35% over 21d, +0.21% over 5d)
@@ -251,7 +251,7 @@ The post-fix tracking starts now (May 15, 2026). Trades executed before the depl
 
 ## 10. Verification Reproducibility
 
-The numbers in this document were captured live from the deployed app at https://alexreed122287.github.io/scanner/ after PRs #45 and #46. To reproduce:
+The numbers in this document were captured live from the deployed app at https://alexreed122287.github.io/RedOptianda/ after PRs #45 and #46. To reproduce:
 
 1. Open the deployed page
 2. Click SCAN, wait for completion
@@ -263,4 +263,4 @@ The script is included as a companion file. It does not modify state.
 
 ---
 
-*Generated May 15, 2026, ~11:15 PM CT. Reflects deployed state of OPTION PANDA after weekend fix cycle (PRs #45 and #46 merged). Supersedes v1 knowledge base (May 15, 2026 ~5:30 PM CT).*
+*Generated May 15, 2026, ~11:15 PM CT. Reflects deployed state of RedOptianda after weekend fix cycle (PRs #45 and #46 merged). Supersedes v1 knowledge base (May 15, 2026 ~5:30 PM CT).*

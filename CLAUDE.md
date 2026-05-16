@@ -1,4 +1,4 @@
-# CLAUDE.md — Option Panda scanner context
+# CLAUDE.md — RedOptianda scanner context
 
 This file is the handoff for new Claude Code sessions. Read it before doing anything else. It captures hard-earned context that's expensive to re-derive from the codebase.
 

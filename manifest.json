@@ -1,9 +1,9 @@
 {
-  "name": "Option Panda",
-  "short_name": "Panda",
+  "name": "RedOptianda",
+  "short_name": "RedOptianda",
   "description": "Options trading scanner, market breadth analyzer, and order terminal — single-user dashboard for long-call swing trades.",
   "start_url": "./index.html",
-  "id": "/scanner/",
+  "id": "/RedOptianda/",
   "scope": "./",
   "display": "standalone",
   "display_override": ["standalone", "minimal-ui", "browser"],

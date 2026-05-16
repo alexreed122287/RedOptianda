@@ -6,7 +6,7 @@ The `✉` floating button in the dashboard POSTs feedback to a Google Apps Scrip
 
 ### 1. Create the Sheet
 
-[sheets.new](https://sheets.new) → name it "Option Panda Feedback" (or whatever). Add a header row in row 1:
+[sheets.new](https://sheets.new) → name it "RedOptianda Feedback" (or whatever). Add a header row in row 1:
 
 ```
 timestamp | type | subject | body | version | activeTab | userAgent
@@ -97,7 +97,7 @@ function doPost(e) {
     try {
       MailApp.sendEmail({
         to: 'alexander.s.reed@gmail.com',
-        subject: '[Option Panda Feedback] ' + (data.type||'other') + ': ' + (data.subject||'(no subject)'),
+        subject: '[RedOptianda Feedback] ' + (data.type||'other') + ': ' + (data.subject||'(no subject)'),
         body: 'Type: ' + (data.type||'') + '\n'
             + 'Subject: ' + (data.subject||'') + '\n'
             + 'Submitted: ' + (data.submittedAt||'') + '\n'

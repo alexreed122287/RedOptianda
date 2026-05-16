@@ -157,4 +157,4 @@ Same missing `pts` field. rrjcar has no Strong Sector / Weak Sector rule, so no 
 - Panda repo cloned to: `C:\Users\Ruiz Family Laptop\scanner`
 - rrjcar repo (read-only reference): `C:\Users\Ruiz Family Laptop\rrjcar-Terminal-v3`
 - Working branch created: `weekend-scoring-fixes` (from `main`, clean, not pushed)
-- Remote confirmed: `https://github.com/alexreed122287/scanner.git`
+- Remote confirmed: `https://github.com/alexreed122287/RedOptianda.git`

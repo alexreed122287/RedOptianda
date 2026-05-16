@@ -1,4 +1,4 @@
-// Option Panda service worker — v2 (2026-05-04)
+// RedOptianda service worker — v2 (2026-05-04)
 // Handles three responsibilities:
 //
 //   1. iOS 16.4+ Web Push notifications. iOS only fires alerts that come
@@ -17,7 +17,7 @@
 //   3. Notification click routing — focus an existing tab if open,
 //      otherwise launch a new one.
 
-var CACHE_NAME = 'option-panda-v3';   // v2.18.4: WebP rollout — bump invalidates v2 caches
+var CACHE_NAME = 'redoptianda-v3';   // v2.18.4: WebP rollout — bump invalidates v2 caches
 var STATIC_ASSETS = [
   './assets/icon-192.png',
   './assets/icon-512.png',
@@ -85,7 +85,7 @@ self.addEventListener('push', function(e){
   }
   // OneSignal wraps payloads in {custom:{a:{...}}} — flatten if present
   if (data.custom && data.custom.a) data = Object.assign({}, data, data.custom.a);
-  var title = data.title || data.heading || 'Option Panda';
+  var title = data.title || data.heading || 'RedOptianda';
   var body  = data.body  || data.alert    || '';
   var opts = {
     body: body,
@@ -108,7 +108,7 @@ self.addEventListener('notificationclick', function(e){
     self.clients.matchAll({type:'window', includeUncontrolled:true}).then(function(clients){
       for (var i=0; i<clients.length; i++){
         var c = clients[i];
-        if (c.url.indexOf('alexreed122287.github.io/scanner') >= 0 && 'focus' in c){
+        if (c.url.indexOf('alexreed122287.github.io/RedOptianda') >= 0 && 'focus' in c){
           if (c.navigate && targetUrl !== './index.html') {
             try { c.navigate(targetUrl); } catch(_){}
           }

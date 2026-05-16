@@ -1,10 +1,10 @@
-# HANDOFF BRIEFING — Option Panda Trading Scanner
+# HANDOFF BRIEFING — RedOptianda Trading Scanner
 
 > Paste this entire file as the first message in a new Claude conversation (incl. Claude Dispatch on mobile), then add your specific request after it. Claude will have full context.
 
 ## What this is
 
-Personal trading scanner ("Option Panda") for long-calls-only swing trading. Single-file vanilla-JS app at `/Users/alex/rrjcar-Terminal-v3/index.html` (~21,200 lines), deployed to GitHub Pages at https://alexreed122287.github.io/scanner/. Backed by:
+Personal trading scanner ("RedOptianda") for long-calls-only swing trading. Single-file vanilla-JS app at `/Users/alex/rrjcar-Terminal-v3/index.html` (~21,200 lines), deployed to GitHub Pages at https://alexreed122287.github.io/RedOptianda/. Backed by:
 
 - Cloudflare Worker for Tradier API proxying (server-side keys, X-Live-Token + X-Trade-Token gates)
 - Python pipeline (`industry/score_themes.py`) for nightly sector RS scoring via GH Actions cron — Tradier-backed since 2026-04-29
@@ -39,7 +39,7 @@ User: solo developer/trader. Live Tradier account `6YB72268`. Mode: `live`.
 
 | Service | URL | Auth |
 |---|---|---|
-| Scanner | https://alexreed122287.github.io/scanner/ | none |
+| Scanner | https://alexreed122287.github.io/RedOptianda/ | none |
 | Tradier proxy | https://tradier-proxy.alexander-s-reed.workers.dev | X-Live-Token + X-Trade-Token |
 
 **Worker secrets** (managed via `wrangler secret put`):
@@ -206,7 +206,7 @@ Auto-loaded by Claude from `~/.claude/projects/-Users-alex/memory/`:
 
 ## How to resume on phone via Claude Dispatch
 
-1. Open https://alexreed122287.github.io/scanner/ in mobile Safari
+1. Open https://alexreed122287.github.io/RedOptianda/ in mobile Safari
 2. Open Claude Dispatch on phone
 3. Either paste this entire HANDOFF.md as your first message, OR tell Claude:
    ```

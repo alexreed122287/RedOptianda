@@ -1,4 +1,4 @@
-# Option Panda — Data Liveness Health Check
+# RedOptianda — Data Liveness Health Check
 
 This document is the acceptance-criteria contract for "every data element in the scanner is dynamic, not a placeholder, and not stale." It is the source of truth for the runtime checks wired into `window.opHealthCheck()` and the API-tab UI panel.
 

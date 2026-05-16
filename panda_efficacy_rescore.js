@@ -1,5 +1,5 @@
 // PANDA SCORING EFFICACY — re-scoring analysis script
-// Paste into Chrome devtools console at https://alexreed122287.github.io/scanner/
+// Paste into Chrome devtools console at https://alexreed122287.github.io/RedOptianda/
 // Requires: G_HIST_CACHE populated (run a scan first), scoreIt and calc* helpers in global scope.
 
 (() => {
