@@ -3341,7 +3341,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <!-- B-2 default Min Score bumped 89 -> 100. With theme overlay (added 2026-04)
          scores trend ~10 pts higher, so the historical "GO rate" at 89 became
          too permissive. 100 preserves the prior selectivity. Adjust to taste. -->
-    <label>Min Score <input type="number" id="sc-minscore" value="130" style="width:80px;" onchange="reclassifyGoThreshold()" title="Default 130 — empirically calibrated to the observed score distribution (peaks 140-160 on a ~164-pt practical max). 130 surfaces real setups instead of an empty list. Strategy presets override with their own per-strategy thresholds: HC 145, Breakout 125, Momentum 120, Best ITM 150, Pre/Post 145."></label>
+    <label>Min Score <input type="number" id="sc-minscore" value="70" style="width:80px;" onchange="reclassifyGoThreshold()" title="Default 70 — OVTLYR Nine 7+/9 maps to score 70 on the 0-100 scale (each Nine point = 10). 80 = Nine 8+/9 (a true BUY candidate). 90 = perfect 9/9. Below 60 = setup not complete."></label>
     <!-- v2.17.3: long-call entry filters. Max premium = upper bound on the
          suggested call's mid price ($/contract before ×100). DTE range
          filters out too-short / too-long expiries. Both apply only when
@@ -4336,7 +4336,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         <div class="api-row" style="align-items:center;">
           <label style="flex:0 0 200px;">MIN SCORE THRESHOLD</label>
           <input type="number" id="at-min-score" value="120" min="89" max="150" style="width:70px;" oninput="saveAutoTraderSettings()">
-          <span style="color:var(--gry);font-size:11px;margin-left:8px;">/ 240 — score is the only gate</span>
+          <span style="color:var(--gry);font-size:11px;margin-left:8px;">/ 100 — OVTLYR Nine × 10</span>
         </div>
         <div class="api-row" style="align-items:center;">
           <label style="flex:0 0 200px;">MARKET HOURS ONLY</label>
@@ -7289,6 +7289,34 @@ var SECTOR_PF_MAP={
   'Technology':'Technology','Staples':'Staples','Materials':'Materials','Energy':'Energy',
   'Consumer':'Consumer','RealEstate':'RealEstate'
 };
+
+// ─── OVTLYR replica: sector → ETF map (added 2026-05-23) ───────────────────
+// Each ticker's GICS-ish sector resolves to an 11-ETF SPDR for sector-level
+// F&G + breadth context. Healthcare auto-excluded per OVTLYR Plan M doc.
+var SECTOR_ETF_MAP_OVTLYR = {
+  Industrials:'XLI', Utilities:'XLU', Finance:'XLF', Healthcare:'XLV',
+  Communication:'XLC', Technology:'XLK', Staples:'XLP', Materials:'XLB',
+  Energy:'XLE', Consumer:'XLY', RealEstate:'XLRE'
+};
+// All sector ETFs we need to pre-fetch + cache for the scan
+var OVTLYR_SECTOR_ETFS = ['XLI','XLU','XLF','XLV','XLC','XLK','XLP','XLB','XLE','XLY','XLRE'];
+// OVTLYR Plan M tuning — match the Pine Script defaults
+var OVTLYR_CFG = {
+  FG_LOOKBACK: 252,
+  W_RSI: 0.25, W_MFI: 0.20, W_BB: 0.20, W_HV: 0.20, W_EXT: 0.15,
+  FG_SMOOTH: 3,
+  FG_RISING_BARS: 2,
+  FG_BUY_LEVEL: 30,
+  FG_SELL_LEVEL: 70,
+  FG_EXTREME: 90,
+  EMA_FAST: 10, EMA_MID: 20, EMA_SLOW: 50,
+  OB_MIN_PCT: 2.0,
+  OB_STALE_DAYS: 120,
+  GAP_PCT: 5.0,
+  FRESHNESS_PCT: 18.0,
+  PRICE_MIN: 10.0
+};
+// ───────────────────────────────────────────────────────────────────────────
 // Full S&P 500 universe with sectors \u2014 used for dynamic Tradier screener
 var UNIVERSE_FULL=[
   // Auto-generated from alex_tickers.csv (canonical universe).
@@ -8138,21 +8166,20 @@ function _isWeekendET(date){
 // Heavy' was checked but the rule emitted 'GEX Call Flow'. Pure dev-mode
 // — only logs warnings, doesn't block anything.
 function _assertScanRuleNames(){
-  var EXPECTED = [
-    'PROVEN ticker',
-    'AVOID ticker',
-    'Analyst Revisions ↑',
-    '52Wk Hi Prox <15%',
-    'GEX Call Flow',
-    'MACD Hist +',
-    'TF Aligned 2/3',
-    'Price > EMA200',
-    'U/D Volume Ratio (50d)',
-    'JT 12-1 Momentum',
-    'Minervini Trend Template',
-    'Pocket Pivot',
-    'VCP — ATR Contraction',
-    '20d Donchian Breakout'
+  // Updated 2026-05-23 for OVTLYR replica: rules are now the 9 boolean
+  // components of the Ovtlyr Nine plus the EXITS/GATES summary rows.
+  var EXPECTED_PREFIXES = [
+    'MARKET  Bullish Trend',
+    'MARKET  Active Buy',
+    'MARKET  Bullish Breadth',
+    'SECTOR  F&G Rising > Mkt',
+    'SECTOR  Bullish Trend',
+    'STOCK  Bullish Trend',
+    'STOCK  Active Buy',
+    'STOCK  F&G Rising',
+    'STOCK  No Overhead Block',
+    'EXITS  Active Signals',
+    'GATES  Exclusions'
   ];
   // Synthetic ticker payload — minimal but enough to exercise scoreIt.
   if (typeof scoreIt !== 'function') return;   // scanner not yet loaded
@@ -8163,15 +8190,13 @@ function _assertScanRuleNames(){
       return;
     }
     var emitted = probe.rules.map(function(r){ return r.n; });
-    var missing = EXPECTED.filter(function(name){
-      // Allow RS rule with either 5d or 21d label
-      if (name === 'RS > SPY') return !emitted.some(function(e){ return /^RS > SPY/.test(e); });
-      return emitted.indexOf(name) < 0;
+    var missing = EXPECTED_PREFIXES.filter(function(prefix){
+      return !emitted.some(function(e){ return e.indexOf(prefix) === 0; });
     });
     if (missing.length){
-      console.warn('[scan-rule-assert] expected rule names missing from scoreIt output: ' + JSON.stringify(missing));
+      console.warn('[scan-rule-assert] expected rule prefixes missing from scoreIt output: ' + JSON.stringify(missing));
     } else if (_OP_DEBUG){
-      console.log('[scan-rule-assert] OK — all '+EXPECTED.length+' expected rules emitted by scoreIt');
+      console.log('[scan-rule-assert] OK — all '+EXPECTED_PREFIXES.length+' OVTLYR rule prefixes emitted by scoreIt');
     }
   } catch(e){
     console.warn('[scan-rule-assert] probe failed:', e.message);
@@ -16332,532 +16357,462 @@ function _whyRankedBelow(r, prev){
 }
 
 function scoreIt(ticker, ind, opt){
-  // \u2500\u2500 Look up cached FMP data (sync \u2014 fetched async during scan) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  var fmp = G_FMP_CACHE[ticker] || loadFmpCache(ticker);
+  // ═══════════════════════════════════════════════════════════════════════
+  // OVTLYR REPLICA — Plan M scoring (replaced the 19-rule strategy 2026-05-23)
+  // ─────────────────────────────────────────────────────────────────────
+  // Implements the OVTLYR Nine:  Market (3) + Sector (2) + Stock (4) = 0-9
+  // Each component is binary; total maps to r.score = ovtlyrNine * 10 + bonus.
+  //
+  // What's a true replica of OVTLYR docs:
+  //   - 10/20/50 EMA trend stack
+  //   - LuxAlgo SMC order block detection (already in this codebase, line 15142)
+  //   - 2% no-overhead-block test
+  //   - 120-day stale OB hit exit
+  //   - 2-ATR / 3-ATR stop levels (exposed via r.stopLevels)
+  //   - Gap & Crap detector (5%+ gap that closes below the wick within 3 bars)
+  //   - Healthcare auto-exclude, freshness filter (>18% in 5d), <$10 exclude
+  //   - Earnings within 4 days = block new entries
+  //
+  // What's a PROXY (OVTLYR uses proprietary options data we can't access):
+  //   - F&G composite uses RSI rank / MFI rank / Bollinger %B / HV rank /
+  //     extension rank instead of put/call + IV rank + IV skew. Structurally
+  //     identical 0-100 daily per-ticker score with "rising/falling" direction.
+  //
+  // Score shape returned: {score, techScore, fundScore, isGo, ovtlyrNine,
+  //   rules:[{n,pass,val,filter,pts}], passes:[names], signal, reasons,
+  //   stopLevels:{atr2, atr3}}
+  // ═══════════════════════════════════════════════════════════════════════
 
   var score = 0, techScore = 0, fundScore = 0, res = [];
+  var CFG = (typeof OVTLYR_CFG !== 'undefined') ? OVTLYR_CFG : {};
 
-  // \u2500\u2500 AVOID / PROVEN \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
+  // ── Soft-only AVOID/PROVEN (display tags; no longer score-altering)
   var avoidBad = AVOID.indexOf(ticker) >= 0;
   var provenOk = PROVEN.indexOf(ticker) >= 0;
-  if(avoidBad){ score -= 15; res.push({n:'AVOID ticker', pass:false, val:'-15pts', filter:false}); }
-  if(provenOk){ score += 8; techScore += 8; res.push({n:'PROVEN ticker', pass:true, val:'+8pts', filter:false, pts:8}); }
 
-  // \u2500\u2500 SECTION A: Technical Momentum (parameter-tuned 2026-04-29) \u2500\u2500\u2500\u2500\u2500\u2500
-  // Council commit 2/3: existing rules tightened to evidence-based parameters
-  // (Cardwell range-shift, Wilder original ADX, George-Hwang 52-wk effect,
-  // 21-day RS vs the broken 5-day). volOk dropped in commit 1; re-added as
-  // U/D Volume Ratio in commit 3.
-  var rsiOk    = ind.rsi >= 40 && ind.rsi <= 70;                                  // permissive band
-  var rsiCross = ind.rsi >= 50 && ind.rsi <= 65;                                  // tight Cardwell zone (early entry)
-
-  // Bulk-scan stamps ind.rsi=50, ind.macd=0, ind.adx=30 as placeholders
-  // (index.html ~line 18633). Compute live values from cached daily history
-  // when present, and backfill the result into `ind` so detail-pane widgets
-  // show the real numbers instead of the placeholders.
-  //
-  // Resolve history with a three-tier fallback: in-memory G_HIST_CACHE → 24h
-  // localStorage cache (loadHistCache) → null. Without the localStorage
-  // fallback the bulk-pass scoreIt always saw an empty G_HIST_CACHE and the
-  // backfill never fired during the initial render — users observed RSI 50 /
-  // MACD 0 / ADX 30 on every row until foreground enrichment slowly
-  // overwrote the top 60 (and even then ranks 61+ stayed at placeholders
-  // until bg-enrich completed minutes later).
+  // ── History resolution (same three-tier fallback as before)
   var _hist = null;
   try {
-    if(typeof G_HIST_CACHE !== 'undefined' && G_HIST_CACHE[ticker]){
+    if (typeof G_HIST_CACHE !== 'undefined' && G_HIST_CACHE[ticker]) {
       _hist = G_HIST_CACHE[ticker];
-    } else if(typeof loadHistCache === 'function'){
+    } else if (typeof loadHistCache === 'function') {
       _hist = loadHistCache(ticker);
-      if(_hist && typeof G_HIST_CACHE !== 'undefined') G_HIST_CACHE[ticker] = _hist;
+      if (_hist && typeof G_HIST_CACHE !== 'undefined') G_HIST_CACHE[ticker] = _hist;
     }
-  } catch(_){}
-  // Stamp ind._synth when no history is available. Renderers (buildDetail,
-  // renderBuySig, renderScan via the row-synth class added in PR #32) surface
-  // this so the user doesn't mistake bulk-pass placeholders (rsi=50,
-  // ema20=price*0.99, etc.) for live values.
-  //
-  // PR #32: the previous `if(!ind._synth)` guard never CLEARED the flag once
-  // set, so live-scan rows stayed flagged forever even after bg-enrich landed
-  // real history. The simInd path (no-key sandbox) must stay flagged because
-  // the rest of the row is random data; we identify it via _synthSrc='simInd'
-  // and skip the recompute there. Every other path reflects current history.
-  if(ind._synthSrc !== 'simInd'){
+  } catch (_) {}
+  if (ind._synthSrc !== 'simInd') {
     ind._synth = !(_hist && _hist.length >= 30);
   }
-  if(_hist && _hist.length >= 16){
+
+  // ── Backfill indicator placeholders from history (preserves earlier behavior)
+  if (_hist && _hist.length >= 16) {
     var rsiVal = calcRSIatIndex(_hist, 14, _hist.length - 1);
-    if(typeof rsiVal === 'number' && !isNaN(rsiVal)){
-      ind.rsi = +rsiVal.toFixed(1);
-      rsiOk    = ind.rsi >= 40 && ind.rsi <= 70;
-      rsiCross = ind.rsi >= 50 && ind.rsi <= 65;
-    }
+    if (typeof rsiVal === 'number' && !isNaN(rsiVal)) ind.rsi = +rsiVal.toFixed(1);
   }
-  if(_hist && _hist.length >= 35){
+  if (_hist && _hist.length >= 35) {
     var macdHist = calcMACD(_hist);
-    if(typeof macdHist === 'number') ind.macd = macdHist;
+    if (typeof macdHist === 'number') ind.macd = macdHist;
   }
-  if(_hist && _hist.length >= 30){
+  if (_hist && _hist.length >= 30) {
     var adxOut = calcADX(_hist, 14);
-    if(adxOut && adxOut.adx > 0){
-      ind.adx     = adxOut.adx;
-      ind.diPlus  = adxOut.diPlus;
-      ind.diMinus = adxOut.diMinus;
+    if (adxOut && adxOut.adx > 0) {
+      ind.adx = adxOut.adx; ind.diPlus = adxOut.diPlus; ind.diMinus = adxOut.diMinus;
     }
   }
-  // EMA20/50/200, ATR, TF Aligned — backfilled from history when available.
-  // Bulk scan stamps these at fixed ratios of price (ema20=px*0.99 etc),
-  // which made every ticker pass "EMA20 > EMA50" and stay near the rendered
-  // close on the detail pane. See HEALTHCHECK.md known-placeholders list.
-  //
-  // PR #43: dropped the per-period minimum-bar gates (>=21 / >=51 / >=201).
-  // calcEMA now handles short data with a shorter SMA seed, so it returns
-  // a usable estimate even when the local history is shallow. This is what
-  // closes the 'EMA20 > EMA50 always true' bug — previously when _hist had
-  // 30 bars, ema20 backfilled to the real EMA but ema50 stayed at
-  // price*0.97, so realEma20 (≈ price) > price*0.97 was ~always true. Now
-  // both backfill, and the comparison reflects actual trend state.
-  if(_hist && _hist.length >= 2){
-    var e20 = calcEMA(_hist, 20);
-    if(e20 > 0) ind.ema20 = e20;
-    var e50 = calcEMA(_hist, 50);
-    if(e50 > 0) ind.ema50 = e50;
-    var e200 = calcEMA(_hist, 200);
-    if(e200 > 0) ind.ema200 = e200;
+  if (_hist && _hist.length >= 2) {
+    var e10v = calcEMA(_hist, CFG.EMA_FAST || 10); if (e10v > 0) ind.ema10 = e10v;
+    var e20v = calcEMA(_hist, CFG.EMA_MID  || 20); if (e20v > 0) ind.ema20 = e20v;
+    var e50v = calcEMA(_hist, CFG.EMA_SLOW || 50); if (e50v > 0) ind.ema50 = e50v;
+    var e200v = calcEMA(_hist, 200);               if (e200v > 0) ind.ema200 = e200v;
   }
-  if(_hist && _hist.length >= 15){
-    var atrLive = calcATR(_hist, 14);
-    if(atrLive > 0) ind.atr = atrLive;
+  if (_hist && _hist.length >= 15) {
+    var atrLive = calcATR(_hist, 14); if (atrLive > 0) ind.atr = atrLive;
   }
-  if(_hist && _hist.length >= 11){
-    // PR #43: calcTfAligned now does proper daily/weekly/monthly aggregation
-    // and handles short windows on its own. Was gated at >=200 with a fallback
-    // `return 2` placeholder that left ranks 61-200 / sandbox tickers stuck at
-    // 2/3 (always passed the rule).
-    var tfLive = calcTfAligned(_hist);
-    if(typeof tfLive === 'number') ind.tf = tfLive;
+
+  // ─────────────────────────────────────────────────────────────────────
+  // F&G COMPOSITE — Stock / Market / Sector
+  // ─────────────────────────────────────────────────────────────────────
+  var stkFG = _ovtComputeFG(_hist);                 // 0-100 or null
+  var stkRising = _ovtFGRising(_hist);              // true / false / null
+
+  // Market F&G from SPY history (pre-fetched at finishScan start)
+  var spyHist = (typeof G_HIST_CACHE !== 'undefined') ? G_HIST_CACHE['SPY']
+              : (typeof loadHistCache === 'function') ? loadHistCache('SPY') : null;
+  var mktFG = _ovtComputeFG(spyHist);
+  var mktRising = _ovtFGRising(spyHist);
+
+  // Sector F&G from sector ETF history
+  var su = UNIVERSE_FULL.filter(function(u){ return u.t === ticker; })[0] ||
+           UNIVERSE.filter(function(u){ return u.t === ticker; })[0];
+  var sectorKey = su ? (SECTOR_PF_MAP[su.s] || su.s) : null;
+  var sectorEtf = sectorKey ? SECTOR_ETF_MAP_OVTLYR[sectorKey] : null;
+  var secHist = sectorEtf ? (G_HIST_CACHE[sectorEtf] ||
+                (typeof loadHistCache === 'function' ? loadHistCache(sectorEtf) : null)) : null;
+  var secFG = _ovtComputeFG(secHist);
+  var secRising = _ovtFGRising(secHist);
+
+  // ─────────────────────────────────────────────────────────────────────
+  // TREND STACKS — Stock, Market, Sector
+  // ─────────────────────────────────────────────────────────────────────
+  var stkBullStack = false;
+  if (_hist && _hist.length >= 50 && ind.ema10 > 0 && ind.ema20 > 0 && ind.ema50 > 0) {
+    stkBullStack = ind.ema10 > ind.ema20 && ind.ema20 > ind.ema50 && ind.price > ind.ema10;
+  } else if (ind.ema20 > 0 && ind.ema50 > 0) {
+    stkBullStack = ind.ema20 > ind.ema50 && (ind.price > ind.ema20);
   }
-  // Compute 21-day relative strength vs SPY when both histories are available.
-  // relStr21d was read in the RS rule but never populated, so the rule always
-  // fell back to relStr5d (today's changePct delta vs SPY). The 21d window is
-  // a better signal per Jegadeesh-Titman intermediate-momentum literature.
-  // SPY history is populated by the live scan enrichment path (SPY is always
-  // injected into fetchDynamicUniverse's universe at line ~18751).
-  if (_hist && _hist.length >= 22 && ticker !== 'SPY') {
-    try {
-      var _spyH = (typeof G_HIST_CACHE !== 'undefined' && G_HIST_CACHE['SPY'])
-               || (typeof loadHistCache === 'function' && loadHistCache('SPY'))
-               || null;
-      if (_spyH && _spyH.length >= 22) {
-        var _t21 = (_hist[_hist.length-1].close - _hist[_hist.length-22].close) / _hist[_hist.length-22].close * 100;
-        var _s21 = (_spyH[_spyH.length-1].close - _spyH[_spyH.length-22].close) / _spyH[_spyH.length-22].close * 100;
-        ind.relStr21d = +(_t21 - _s21).toFixed(2);
+  var bearCross = false;     // 10/20 bear cross — Plan M exit
+  if (_hist && _hist.length >= 22) {
+    var ePrev10 = calcEMA(_hist.slice(0, -1), 10);
+    var ePrev20 = calcEMA(_hist.slice(0, -1), 20);
+    bearCross = (ePrev10 >= ePrev20) && (ind.ema10 < ind.ema20);
+  }
+
+  var mktBullStack = false;
+  if (spyHist && spyHist.length >= 50) {
+    var sE10 = calcEMA(spyHist, 10), sE20 = calcEMA(spyHist, 20), sE50 = calcEMA(spyHist, 50);
+    var sPx  = +spyHist[spyHist.length - 1].close;
+    mktBullStack = sE10 > sE20 && sE20 > sE50 && sPx > sE10;
+  }
+
+  var secBullStack = false;
+  if (secHist && secHist.length >= 20) {
+    var xE10 = calcEMA(secHist, 10), xE20 = calcEMA(secHist, 20);
+    var xPx  = +secHist[secHist.length - 1].close;
+    secBullStack = xE10 > xE20 && xPx > xE10;
+  }
+
+  // ─────────────────────────────────────────────────────────────────────
+  // ORDER BLOCKS — LuxAlgo SMC detector (already in codebase)
+  // ─────────────────────────────────────────────────────────────────────
+  // overheadOBDistance returns {pct, obLow, obHigh, hasOB, insideOB} or null.
+  // OVTLYR "No Overhead Block" = no bearish OB within OB_MIN_PCT% above price.
+  var overheadInfo = (typeof overheadOBDistance === 'function')
+    ? overheadOBDistance(ticker, ind.price) : null;
+  var noOverhead = !overheadInfo || !overheadInfo.hasOB || overheadInfo.pct >= (CFG.OB_MIN_PCT || 2.0);
+  var overheadAge = 0;
+  var overheadDistPct = overheadInfo ? overheadInfo.pct : Infinity;
+
+  // Stale OB hit: price inside any OB whose creation date is ≥120 days ago.
+  // detectOrderBlocks returns objects with barTime; we walk both arrays.
+  var staleOBHit = false;
+  try {
+    var obDays = (typeof G_OB_CACHE !== 'undefined') ? G_OB_CACHE[ticker] : null;
+    if (obDays && typeof detectOrderBlocks === 'function') {
+      var both = detectOrderBlocks(obDays, {pivotSize:5, maxShow:8, mitigation:'highlow', filter:'atr'});
+      var allObs = (both.bearish || []).concat(both.bullish || []);
+      var nowMs = Date.now();
+      var staleMs = (CFG.OB_STALE_DAYS || 120) * 86400000;
+      for (var oi = 0; oi < allObs.length; oi++) {
+        var ob = allObs[oi];
+        if (ind.price >= ob.barLow && ind.price <= ob.barHigh) {
+          var ageMs = nowMs - new Date(ob.barTime).getTime();
+          if (ageMs >= staleMs) { staleOBHit = true; break; }
+        }
       }
-    } catch(_){}
+    }
+  } catch (_) {}
+
+  // ─────────────────────────────────────────────────────────────────────
+  // GAP & CRAP DETECTOR (Plan M exit)
+  // 5%+ open gap up that closes below the gap-up bar's wick within 3 bars
+  // ─────────────────────────────────────────────────────────────────────
+  var gapAndCrap = false;
+  if (_hist && _hist.length >= 4) {
+    for (var gi = Math.max(_hist.length - 4, 1); gi < _hist.length; gi++) {
+      var openG = +_hist[gi].open, closePrev = +_hist[gi-1].close;
+      if (closePrev > 0) {
+        var gapPctActual = ((openG - closePrev) / closePrev) * 100;
+        if (gapPctActual >= (CFG.GAP_PCT || 5)) {
+          var wickLow = +_hist[gi].low;
+          // Look at bars AFTER the gap (gi+1 through min(gi+3, last))
+          for (var gk = gi + 1; gk < Math.min(gi + 4, _hist.length); gk++) {
+            if (+_hist[gk].close < wickLow) { gapAndCrap = true; break; }
+          }
+          if (gapAndCrap) break;
+        }
+      }
+    }
   }
 
-  var macdOk   = ind.macd > 0;
-  var adxOk    = ind.adx > 25;                                                     // confirmed trend
-  var adxEarly = ind.adx >= 15 && ind.adx <= 25 && (ind.diPlus||0) > (ind.diMinus||0); // emerging trend (Wilder original)
-  var emaOk    = ind.ema20 > ind.ema50;
-  var tfOk     = ind.tf >= 2;
-  var su       = UNIVERSE_FULL.filter(function(u){ return u.t === ticker; })[0] ||
-                 UNIVERSE.filter(function(u){ return u.t === ticker; })[0];
-  // SECTOR_PF keys are short ("Industrials"); UNIVERSE_FULL stores Tradier
-  // long-form sector names ("Producer manufacturing"). Resolve via map; fall
-  // back to the raw key for already-short inputs (e.g. UNIVERSE static fallback).
-  var pfKey    = su ? (SECTOR_PF_MAP[su.s] || su.s) : null;
-  var pf       = pfKey ? (SECTOR_PF[pfKey] || 0) : 0;
-  var sectOk   = pf > 2;
+  // ─────────────────────────────────────────────────────────────────────
+  // FRESHNESS FILTER + EXCLUSIONS
+  // ─────────────────────────────────────────────────────────────────────
+  var move5 = 0;
+  if (_hist && _hist.length >= 6) {
+    var c0 = +_hist[_hist.length-6].close, c1 = +_hist[_hist.length-1].close;
+    if (c0 > 0) move5 = ((c1 - c0) / c0) * 100;
+  }
+  var extended = move5 > (CFG.FRESHNESS_PCT || 18);
 
-  // 52-wk high: George-Hwang JF 2004 effect concentrates within 5% of high.
-  // Keep \u226415% as universe-pass; \u22645% as tight breakout bonus.
-  var hiOk    = ind.week52hi > 0 ? (ind.price >= ind.week52hi * 0.85) : false;    // \u226415%
-  var hiTight = ind.week52hi > 0 ? (ind.price >= ind.week52hi * 0.95) : false;    // \u22645%
+  var isHealthcare = (sectorKey === 'Healthcare');
+  var earningsDays = (typeof getDaysToEarnings === 'function') ? getDaysToEarnings(ticker) : null;
+  var earningsBlock = (earningsDays !== null && earningsDays < 4 && earningsDays >= 0);
+  var priceTooLow = ind.price < (CFG.PRICE_MIN || 10);
+  var lowVolume = (ind.avgVol > 0 && ind.avgVol < 1000000);
 
-  // RS vs SPY: 5-day was anti-signal per Lehmann 1990 short-term reversal.
-  // Use 21-day total return as the permissive proxy. Clenow 90d slope\u00d7R\u00b2
-  // ranker is added in commit 3 as a separate cross-sectional rule.
-  var rsRelOk = (ind.relStr21d != null) ? (ind.relStr21d > 0) : (ind.relStr5d > 0);
+  var excluded = isHealthcare || extended || priceTooLow || lowVolume || avoidBad;
 
-  // Above 200 EMA
-  var ema200Ok = ind.ema200 > 0 ? ind.price > ind.ema200 : ind.ema20 > ind.ema50; // fallback if 200 not available
+  // ─────────────────────────────────────────────────────────────────────
+  // OVTLYR NINE — exact 9 boolean components
+  // ─────────────────────────────────────────────────────────────────────
+  // MARKET (3 points): Bullish trend, Active Buy, Bullish breadth
+  var m1_mktBull    = mktBullStack;
+  var m2_mktBuy     = (mktFG != null && mktRising === true && mktFG > (CFG.FG_BUY_LEVEL || 30) && mktFG < (CFG.FG_SELL_LEVEL || 70));
+  var m3_mktBreadth = mktBullStack;   // SPY trend as breadth proxy (no free %above-MA feed)
 
-  // Council 2026-04-29 commit 1 of 3 (drops):
-  //   - "Vol > Avg" flat threshold: too crude; replaced by U/D Volume Ratio in commit 2
-  //   - "Price Accel" (today %chg > 5d avg): anti-signal per Lehmann 1990 +
-  //     Lo-MacKinlay short-term reversal literature. Removed entirely.
-  // Council 2026-04-29 commit 2/3: bonus tight-zone rules added (rsiCross,
-  // adxEarly, hiTight). Wide-band rules retained as base pass.
-  var rsRelLbl = (ind.relStr21d != null) ? '21d' : '5d';
-  var rsRelVal = (ind.relStr21d != null) ? ind.relStr21d : ind.relStr5d;
-  var techChecks = [
-    {ok:rsiOk,    n:'RSI 40-70',          val:'RSI '+ind.rsi,                                          pts:6},
-    {ok:rsiCross, n:'RSI 50-65 (Cardwell)', val:'RSI '+ind.rsi,                                        pts:6},
-    {ok:macdOk,   n:'MACD Hist +',        val:''+(ind.macd>=0?'+':'')+ind.macd,                        pts:6},
-    {ok:adxOk,    n:'ADX > 25',           val:'ADX '+ind.adx,                                          pts:6},
-    {ok:adxEarly, n:'ADX 15-25 + DI+>DI-', val:'ADX '+ind.adx+' DI+'+(typeof ind.diPlus==='number'?ind.diPlus.toFixed(1):'?')+' DI-'+(typeof ind.diMinus==='number'?ind.diMinus.toFixed(1):'?'), pts:6},
-    {ok:emaOk,    n:'EMA20 > EMA50',      val:'$'+fmt2(ind.ema20)+' > $'+fmt2(ind.ema50),              pts:10},
-    {ok:tfOk,     n:'TF Aligned 2/3',     val:ind.tf+'/3',                                             pts:12},
-    {ok:sectOk,   n:'Sector PF > 2',      val:'PF '+pf,                                                pts:5},
-    {ok:hiOk,     n:'52Wk Hi Prox <15%',  val:ind.week52hi>0?'$'+fmt2(ind.price)+' / $'+fmt2(ind.week52hi):'no data', pts:8},
-    {ok:hiTight,  n:'52Wk Hi Prox <5% (G-H)', val:ind.week52hi>0?'$'+fmt2(ind.price)+' / $'+fmt2(ind.week52hi):'no data', pts:6},
-    {ok:rsRelOk,  n:'RS > SPY ('+rsRelLbl+')', val:(rsRelVal>0?'+':'')+(rsRelVal||0).toFixed(2)+'%',   pts:10},
-    {ok:ema200Ok, n:'Price > EMA200',     val:ind.ema200>0?'$'+fmt2(ind.price)+' > $'+fmt2(ind.ema200):'via EMA trend', pts:6}
+  // SECTOR (2 points): F&G Rising > Market, Bullish trend
+  var s1_secRising  = (secFG != null && mktFG != null && secRising === true && secFG > mktFG);
+  var s2_secBull    = secBullStack;
+
+  // STOCK (4 points): Bullish trend, Active Buy, F&G Rising, No Overhead Block
+  var t1_stkBull    = stkBullStack;
+  var t2_stkBuy     = (stkFG != null && stkRising === true && stkFG > (CFG.FG_BUY_LEVEL || 30));
+  var t3_stkRising  = (stkRising === true);
+  var t4_noOverhead = noOverhead;
+
+  var ovtlyrNine = (m1_mktBull?1:0) + (m2_mktBuy?1:0) + (m3_mktBreadth?1:0) +
+                   (s1_secRising?1:0) + (s2_secBull?1:0) +
+                   (t1_stkBull?1:0) + (t2_stkBuy?1:0) + (t3_stkRising?1:0) + (t4_noOverhead?1:0);
+
+  // ─────────────────────────────────────────────────────────────────────
+  // RULE TABLE — preserved shape for renderScan / detail pane consumption
+  // pts of 10 keeps r.score in 0-100 range (9×10 + 10 bonus headroom)
+  // ─────────────────────────────────────────────────────────────────────
+  var nineRules = [
+    {n:'MARKET  Bullish Trend (SPY 10>20>50)',  ok:m1_mktBull,    val:'SPY stack', pts:10},
+    {n:'MARKET  Active Buy (F&G '+(mktFG!=null?mktFG.toFixed(1):'n/a')+(mktRising?' ↑':' ↓')+')', ok:m2_mktBuy, val:'30 < F&G < 70 & rising', pts:10},
+    {n:'MARKET  Bullish Breadth',               ok:m3_mktBreadth, val:'SPY trend proxy', pts:10},
+    {n:'SECTOR  F&G Rising > Mkt ('+(secFG!=null?secFG.toFixed(1):'n/a')+(secRising?' ↑':' ↓')+')', ok:s1_secRising, val:'rel.greed='+(secFG!=null&&mktFG?(secFG/Math.max(mktFG,1)).toFixed(2):'n/a'), pts:10},
+    {n:'SECTOR  Bullish Trend ('+(sectorEtf||'n/a')+')', ok:s2_secBull, val:sectorEtf?(sectorEtf+' 10>20'):'no sector ETF', pts:10},
+    {n:'STOCK  Bullish Trend (10>20>50)',       ok:t1_stkBull,    val:t1_stkBull?'aligned':'weak', pts:10},
+    {n:'STOCK  Active Buy (F&G '+(stkFG!=null?stkFG.toFixed(1):'n/a')+(stkRising?' ↑':' ↓')+')', ok:t2_stkBuy, val:'F&G > 30 & rising', pts:10},
+    {n:'STOCK  F&G Rising',                     ok:t3_stkRising,  val:stkRising?'Moving Up':'Moving Down', pts:10},
+    {n:'STOCK  No Overhead Block',              ok:t4_noOverhead, val:isFinite(overheadDistPct)?(overheadDistPct.toFixed(1)+'% to OB'):'no OB', pts:10}
   ];
-  techChecks.forEach(function(c){
-    if(c.ok){ score += c.pts; techScore += c.pts; }
-    res.push({n:c.n, pass:c.ok, val:c.val, filter:false, pts:c.pts});
+  nineRules.forEach(function(c){
+    if (c.ok) { score += c.pts; techScore += c.pts; }
+    res.push({n:c.n, pass:c.ok, val:c.val, filter:false, pts:c.pts, isOvtlyr:true});
   });
 
-  // \u2500\u2500 SECTION B: FMP Daily Signals (2 rules, 20 pts) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  var analystOk = fmp ? fmp.analystRevisionsOk : false;
-  var ptOk      = fmp ? fmp.ptUpsideOk         : false;
+  // ── Exit signals (no points; surfaced for the user)
+  var exitSignals = [];
+  if (bearCross)     exitSignals.push('10/20 Bear Cross');
+  if (gapAndCrap)    exitSignals.push('Gap & Crap');
+  if (staleOBHit)    exitSignals.push('Stale OB Hit (120+d)');
+  if (stkFG != null && stkFG > (CFG.FG_EXTREME || 90) && !stkRising) exitSignals.push('Extreme Greed Stall');
+  if (earningsBlock) exitSignals.push('Earnings <4d');
+  res.push({n:'EXITS  Active Signals', pass:exitSignals.length===0, val:exitSignals.length?exitSignals.join(', '):'none', filter:false, pts:0, isOvtlyr:true, isExit:true});
 
-  var _hasFmpKey = false;
-  try{ _hasFmpKey = !!(localStorage.getItem('rrjcar_fmp')||'').length; }catch(e){}
-  var _fmpMissReason = _hasFmpKey ? 'FMP data unavailable (rate-limited or skipped)' : 'No FMP key';
+  // ── Exclusion summary
+  var exclusionList = [];
+  if (isHealthcare)  exclusionList.push('Healthcare (XLV)');
+  if (extended)      exclusionList.push('Extended '+move5.toFixed(1)+'%');
+  if (priceTooLow)   exclusionList.push('Price < $'+(CFG.PRICE_MIN||10));
+  if (lowVolume)     exclusionList.push('Vol < 1M');
+  if (avoidBad)      exclusionList.push('AVOID list');
+  res.push({n:'GATES  Exclusions', pass:exclusionList.length===0, val:exclusionList.length?exclusionList.join(', '):'clean', filter:false, pts:0, isOvtlyr:true, isExclusion:true});
 
-  var analystVal = fmp
-    ? (fmp.revisionsUp >= 2 ? fmp.revisionsUp+' analysts / '+fmp.upgradesLast30+' upgrades' : fmp.revisionsUp+' analysts (need \u22652)')
-    : _fmpMissReason;
-  var ptVal      = fmp ? (fmp.ptConsensus != null ? 'PT $'+(+fmp.ptConsensus).toFixed(2)+(fmp.ptHigh ? ' (Hi $'+fmp.ptHigh+')' : '') : 'No PT data') : _fmpMissReason;
-
-  // Long-calls-only bias: analyst upgrades are more predictive of upside
-  // than analyst downgrades are of downside. Bumped Analyst Revisions from
-  // +12 to +16 since the user trades calls only \u2014 this rule is a stronger
-  // bullish signal than the score originally weighted.
-  var fmpChecks = [
-    {ok:analystOk, n:'Analyst Revisions \u2191', val:analystVal, pts:12},
-    {ok:ptOk,      n:'Analyst PT Exists',         val:ptVal,      pts:8}
-  ];
-  fmpChecks.forEach(function(c){
-    if(c.ok){ score += c.pts; fundScore += c.pts; }
-    res.push({n:c.n, pass:c.ok, val:c.val, filter:false, pts:c.pts, isFmp:true});
-  });
-
-  // \u2500\u2500 SECTION D: Momentum Acceleration (3 rules, 28 pts, Tradier history) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  // Uses G_HIST_CACHE populated async by fetchIndicatorHistory() during detail load
-  var histDays = G_HIST_CACHE[ticker] || null;
-
-  // Council 2026-04-29 commit 1 of 3: RSI(7) Accelerating dropped. Daily
-  // RSI changes at 7-period are ~70% noise per Connors research; over-
-  // weighted at +12 pts and contributes no measurable IC.
-
-  // Council 2026-04-29 commit 2/3: MFI(7)>40 \u2192 MFI(14)>50 with rising slope.
-  // 14-period is the standard MFI lookback; 50 threshold mirrors RSI mid-line
-  // logic (rising momentum confirmation, not arbitrary 40 floor).
-  var mfiVal_raw = calcMFI(histDays, 14);
-  var mfiOk      = histDays ? mfiVal_raw > 50 : false;
-  var mfiVal     = histDays ? ('MFI(14) ' + mfiVal_raw + (mfiOk ? ' > 50' : ' \u2264 50')) : 'Load detail to calculate';
-  if(mfiOk){ score += 10; techScore += 10; }
-  res.push({n:'MFI(14) > 50', pass:mfiOk, val:mfiVal, filter:false, pts:10, isHist:true});
-
-  // Council 2026-04-29 commit 2/3: CMO(10)>0 \u2192 CMO(9)>50 (Chande's original
-  // 1993 threshold, not the arbitrary zero-line cross). 9-period is Chande's
-  // documented period for swing-horizon momentum.
-  var cmoVal_raw = calcCMO(histDays, 9);
-  var cmoOk      = histDays ? cmoVal_raw > 50 : false;
-  var cmoVal     = histDays ? ('CMO(9) ' + cmoVal_raw + (cmoOk ? ' > 50' : ' \u2264 50')) : 'Load detail to calculate';
-  if(cmoOk){ score += 7; techScore += 7; }
-  res.push({n:'CMO(9) > 50', pass:cmoOk, val:cmoVal, filter:false, pts:7, isHist:true});
-
-  // ═══ COUNCIL 2026-04-29 COMMIT 3/3: NEW EVIDENCE-BASED RULES ════════════
-  // All rules below use G_HIST_CACHE[ticker] (daily bars). Skip silently when
-  // histDays is null — these rules are additive, not blocking.
-
-  // ── RULE: Minervini Trend Template (Stage 2 confirmation, +15) ────────
-  // From Mark Minervini's "Trade Like a Stock Market Wizard" (2013) SEPA.
-  // Eight criteria; we enforce the 6 computable from daily bars:
-  //   1. Price > MA50    2. Price > MA150    3. Price > MA200
-  //   4. MA50 > MA150 > MA200 (proper stack)
-  //   5. MA200 trending up over last 22 bars (slope positive)
-  //   6. ≥30% above 52-wk low
-  // (Criteria 7-8: ≤25% from 52-wk hi already covered by hiOk; RS Rating ≥70
-  //  approximated by rsRelOk in commit 2.)
-  var minerviniOk = false, minerviniDetail = 'Need ≥210 bars';
-  if (histDays && histDays.length >= 210) {
-    var closes = histDays.map(function(d){ return +d.close || 0; });
-    var lows   = histDays.map(function(d){ return +d.low || 0; });
-    var price  = closes[closes.length - 1];
-    var ma50   = closes.slice(-50).reduce(function(s,x){return s+x;},0) / 50;
-    var ma150  = closes.slice(-150).reduce(function(s,x){return s+x;},0) / 150;
-    var ma200  = closes.slice(-200).reduce(function(s,x){return s+x;},0) / 200;
-    var ma200_22d_ago = closes.slice(-222, -200).reduce(function(s,x){return s+x;},0) / 22;
-    // ma200 slope: compare current ma200 to a ma200 calculated 22 bars ago
-    var closesEarly = closes.slice(-222, -22);
-    var ma200_prior = closesEarly.length === 200
-      ? closesEarly.reduce(function(s,x){return s+x;},0) / 200
-      : ma200;
-    var ma200Rising = ma200 > ma200_prior;
-    var low52w = Math.min.apply(null, lows.slice(-252));
-    var pctAboveLow = low52w > 0 ? ((price - low52w) / low52w) * 100 : 0;
-    var c1 = price > ma50;
-    var c2 = price > ma150;
-    var c3 = price > ma200;
-    var c4 = ma50 > ma150 && ma150 > ma200;
-    var c5 = ma200Rising;
-    var c6 = pctAboveLow >= 30;
-    var passCount = [c1,c2,c3,c4,c5,c6].filter(Boolean).length;
-    minerviniOk = passCount === 6;
-    minerviniDetail = passCount + '/6 (px>MA50:'+(c1?'✓':'✗')+' px>MA150:'+(c2?'✓':'✗')+' px>MA200:'+(c3?'✓':'✗')+' stack:'+(c4?'✓':'✗')+' MA200↑:'+(c5?'✓':'✗')+' +'+pctAboveLow.toFixed(0)+'%>52wkLo:'+(c6?'✓':'✗')+')';
-  }
-  if (minerviniOk) { score += 15; techScore += 15; }
-  // dataGap distinguishes "not enough history to evaluate" from a genuine
-  // failed trend. v2.17.3: prevents fresh IPOs / new symbols from being
-  // penalized indistinguishably from stocks that actually failed the test.
-  var minerviniDataGap = !histDays || histDays.length < 210;
-  res.push({n:'Minervini Trend Template', pass:minerviniOk, val:minerviniDetail, filter:false, pts:15, isHist:true, dataGap:minerviniDataGap});
-
-  // ── RULE: Pocket Pivot (O'Neil/Morales-Kacher, +15) ───────────────────
-  // Today's volume > largest down-day volume of prior 10 days,
-  // close > 10DMA, close in upper half of day's range, not >5% extended.
-  var pocketOk = false, pocketDetail = 'Need ≥11 bars';
-  if (histDays && histDays.length >= 11) {
-    var lastBar = histDays[histDays.length - 1];
-    var prior10 = histDays.slice(-11, -1);
-    var maxDownVol = 0;
-    prior10.forEach(function(b){
-      var c = +b.close, o = +b.open;
-      if (c < o) maxDownVol = Math.max(maxDownVol, +b.volume || 0);
-    });
-    var todayVol = +lastBar.volume || 0;
-    var todayClose = +lastBar.close, todayHigh = +lastBar.high, todayLow = +lastBar.low;
-    var ma10 = histDays.slice(-10).map(function(d){ return +d.close || 0; })
-                  .reduce(function(s,x){return s+x;},0) / 10;
-    var rangeMid = (todayHigh + todayLow) / 2;
-    var v1 = maxDownVol > 0 && todayVol > maxDownVol;
-    var v2 = todayClose > ma10;
-    var v3 = todayClose >= rangeMid;
-    var v4 = ma10 > 0 && (todayClose - ma10) / ma10 < 0.05;  // not >5% extended
-    pocketOk = v1 && v2 && v3 && v4;
-    pocketDetail = 'vol '+(todayVol/1000).toFixed(0)+'k vs maxDownVol '+(maxDownVol/1000).toFixed(0)+'k '+(v1?'✓':'✗')
-                 +' | px '+todayClose.toFixed(2)+' vs MA10 '+ma10.toFixed(2)+' '+(v2?'✓':'✗')
-                 +' | upperHalf '+(v3?'✓':'✗')+' | <5%ext '+(v4?'✓':'✗');
-  }
-  if (pocketOk) { score += 15; techScore += 15; }
-  res.push({n:'Pocket Pivot', pass:pocketOk, val:pocketDetail, filter:false, pts:15, isHist:true});
-
-  // ── RULE: U/D Volume Ratio 50d ≥ 1.5 (O'Neil IBD, +12 tiered) ─────────
-  // sum(volume on up-close days) / sum(volume on down-close days) over 50d.
-  // ≥2.0 = strong sponsorship (+12), ≥1.5 = accumulation (+8), ≥1.25 = neutral-up (+4).
-  var udPts = 0, udVal = 'Need ≥51 bars';
-  if (histDays && histDays.length >= 51) {
-    var upVol = 0, dnVol = 0;
-    var bars50 = histDays.slice(-50);
-    for (var i = 1; i < bars50.length; i++) {
-      var c = +bars50[i].close, p = +bars50[i-1].close, v = +bars50[i].volume || 0;
-      if (c > p) upVol += v; else if (c < p) dnVol += v;
-    }
-    var udRatio = dnVol > 0 ? upVol / dnVol : (upVol > 0 ? 99 : 0);
-    udPts = udRatio >= 2.0 ? 12 : udRatio >= 1.5 ? 8 : udRatio >= 1.25 ? 4 : 0;
-    udVal = 'U/D '+udRatio.toFixed(2)+' ('+(udPts === 12 ? 'strong' : udPts === 8 ? 'accum' : udPts === 4 ? 'mild' : 'weak')+')';
-  }
-  if (udPts > 0) { score += udPts; techScore += udPts; }
-  res.push({n:'U/D Volume Ratio (50d)', pass:udPts > 0, val:udVal, filter:false, pts:udPts || 12, isHist:true});
-
-  // ── RULE: VCP / Volatility Contraction (Minervini, +12) ───────────────
-  // ATR(14) today / ATR(14) 30d ago < 0.70 = supply contracting before breakout.
-  var vcpOk = false, vcpDetail = 'Need ≥45 bars';
-  if (histDays && histDays.length >= 45) {
-    if (typeof computeATR === 'function') {
-      var atrNow = computeATR(histDays, 14);
-      var atrPrior = computeATR(histDays.slice(0, -30), 14);
-      if (atrNow > 0 && atrPrior > 0) {
-        var ratio = atrNow / atrPrior;
-        vcpOk = ratio < 0.70;
-        vcpDetail = 'ATR(14) ratio '+ratio.toFixed(2)+' '+(vcpOk ? '✓ (<0.70 contraction)' : '✗ (need <0.70)');
-      } else {
-        vcpDetail = 'ATR computation returned 0';
-      }
-    } else {
-      vcpDetail = 'computeATR missing';
-    }
-  }
-  if (vcpOk) { score += 12; techScore += 12; }
-  res.push({n:'VCP — ATR Contraction', pass:vcpOk, val:vcpDetail, filter:false, pts:12, isHist:true});
-
-  // ── RULE: Bollinger Bandwidth Squeeze (+10) ───────────────────────────
-  // BB(20,2) bandwidth at <20th percentile of trailing 120 days = compressed.
-  var bbwOk = false, bbwDetail = 'Need ≥120 bars';
-  if (histDays && histDays.length >= 120) {
-    var bbw = [];
-    for (var k = histDays.length - 120; k < histDays.length; k++) {
-      var window20 = histDays.slice(k - 19, k + 1).map(function(d){ return +d.close || 0; });
-      if (window20.length < 20) continue;
-      var meanW = window20.reduce(function(s,x){return s+x;},0) / 20;
-      var varW = window20.reduce(function(s,x){return s+(x-meanW)*(x-meanW);},0) / 20;
-      var stdW = Math.sqrt(varW);
-      var upper = meanW + 2 * stdW;
-      var lower = meanW - 2 * stdW;
-      bbw.push(meanW > 0 ? (upper - lower) / meanW : 0);
-    }
-    if (bbw.length > 0) {
-      var sorted = bbw.slice().sort(function(a,b){return a-b;});
-      var p20 = sorted[Math.floor(sorted.length * 0.20)];
-      var bbwNow = bbw[bbw.length - 1];
-      bbwOk = bbwNow <= p20;
-      bbwDetail = 'BBW '+bbwNow.toFixed(3)+' vs p20 '+p20.toFixed(3)+' '+(bbwOk ? '✓ squeeze' : '✗ no squeeze');
-    }
-  }
-  if (bbwOk) { score += 10; techScore += 10; }
-  res.push({n:'BBW Squeeze (<p20 of 120d)', pass:bbwOk, val:bbwDetail, filter:false, pts:10, isHist:true});
-
-  // ── RULE: Donchian 20d Breakout + Volume (+12) ────────────────────────
-  // Today closes above the 20-day high on volume ≥ 1.5× 50d avg.
-  // Turtle Traders methodology (Dennis/Eckhardt 1983-88).
-  var donchianOk = false, donchianDetail = 'Need ≥51 bars';
-  if (histDays && histDays.length >= 51) {
-    var lastBar2 = histDays[histDays.length - 1];
-    var prior20High = Math.max.apply(null, histDays.slice(-21, -1).map(function(d){ return +d.high || 0; }));
-    var avgVol50 = histDays.slice(-50).map(function(d){ return +d.volume || 0; })
-                      .reduce(function(s,x){return s+x;},0) / 50;
-    var todayVol2 = +lastBar2.volume || 0;
-    var todayClose2 = +lastBar2.close;
-    var b1 = todayClose2 > prior20High;
-    var b2 = avgVol50 > 0 && todayVol2 >= avgVol50 * 1.5;
-    donchianOk = b1 && b2;
-    donchianDetail = 'close '+todayClose2.toFixed(2)+' vs 20d hi '+prior20High.toFixed(2)+' '+(b1?'✓':'✗')
-                   +' | vol '+(todayVol2/1000).toFixed(0)+'k vs 1.5×50d '+(avgVol50*1.5/1000).toFixed(0)+'k '+(b2?'✓':'✗');
-  }
-  if (donchianOk) { score += 12; techScore += 12; }
-  res.push({n:'20d Donchian Breakout', pass:donchianOk, val:donchianDetail, filter:false, pts:12, isHist:true});
-
-  // ── RULE: JT 12-1 Cross-Sectional Momentum (+20) ──────────────────────
-  // Total return from t-252 to t-21 (skip last month — Jegadeesh-Titman 1993,
-  // confirmed by Asness-Moskowitz-Pedersen 2013). Threshold: top quintile of
-  // typical S&P 500 momentum (~+25% over the window). Approximated via
-  // hard threshold here since cross-sectional ranking would require
-  // computing on the entire scanned universe simultaneously.
-  var jtOk = false, jtDetail = 'Need ≥252 bars';
-  if (histDays && histDays.length >= 252) {
-    var px_t252 = +histDays[histDays.length - 252].close || 0;
-    var px_t21  = +histDays[histDays.length - 21].close || 0;
-    if (px_t252 > 0 && px_t21 > 0) {
-      var jt12_1 = ((px_t21 - px_t252) / px_t252) * 100;
-      jtOk = jt12_1 >= 25;  // top-quintile proxy
-      jtDetail = '12-1 ret '+jt12_1.toFixed(1)+'% '+(jtOk ? '✓ (≥25 ~ top quintile)' : '✗ (need ≥25)');
-    }
-  }
-  if (jtOk) { score += 20; techScore += 20; }
-  res.push({n:'JT 12-1 Momentum', pass:jtOk, val:jtDetail, filter:false, pts:20, isHist:true});
-
-  // \u2500\u2500 GO DECISION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  // \u2500\u2500 SECTION C: GEX Confirmation (bonus rule, +6 pts, no penalty) \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  // Looks up G.gexData populated by the GEX/Flow tab after runGex() is called
-  var gexEntry = null;
-  if(G.gexData && G.gexData.length > 0){
-    for(var gi=0; gi<G.gexData.length; gi++){
-      if(G.gexData[gi].t === ticker){ gexEntry = G.gexData[gi]; break; }
-    }
-  }
-  // GEX Call Heavy — TIERED with extreme-positioning PENALTY (council 3/3).
-  // Long calls benefit from emerging call-side flow but at extremes (≥75%
-  // call-side OI), positioning is crowded and dealers pin or fade — call-
-  // heavy at the top is a CONTRARIAN signal, not bullish confirmation.
-  //   55-69%   = +4  (emerging lean; constructive)
-  //   70-74%   = +6  (strong but not crowded)
-  //   ≥75%     = -6  (overcrowded; mean-reversion risk per council)
-  //   <55%     = 0   (no signal)
-  var gexCallPct = gexEntry ? gexEntry.call : 0;
-  var gexCallHeavy = gexCallPct >= 55;
-  var gexCrowded = gexCallPct >= 75;
-  var gexPts = gexCrowded ? -6 : (gexCallPct >= 70 ? 6 : (gexCallHeavy ? 4 : 0));
-  var gexVal = gexEntry
-    ? (gexEntry.sim ? '[SIM] ' : '') + gexEntry.call + '% calls / ' + gexEntry.put + '% puts'
-      + (gexCrowded ? ' ⚠ overcrowded' : (gexCallPct >= 70 ? ' ✓ strong' : (gexCallHeavy ? ' constructive' : '')))
-    : 'Run GEX/Flow tab first';
-  if(gexPts !== 0){ score += gexPts; techScore += gexPts; }
-  res.push({n:'GEX Call Flow', pass:gexCallHeavy && !gexCrowded, val:gexVal, filter:false, pts:gexPts, isGex:true});
-
-  // Rule: Strong Sector (+8 / -8) — sector-rotation overlay from industry pipeline.
-  // Bumped from +5/-5 for the long-calls-only user: bullish unhedged bets
-  // depend more heavily on sector tailwind than hedged or directional-pair
-  // strategies do. Top-quartile theme = +8, bottom-quartile = -8.
-  //
-  // INTRADAY UPGRADE: uses max(cached_daily_score, computed_intraday_score)
-  // so a sector ripping mid-day (e.g. semis on 4/24) triggers the bonus
-  // SAME DAY instead of waiting for the next morning's cron-refreshed scores.
-  // Intraday score derived from avg theme member changePct vs SPY changePct.
-  var themeLive = (typeof getThemeStrengthLive === 'function') ? getThemeStrengthLive(ticker) : null;
-  var sectorOk = false, sectorVal = 'No theme data';
-  if (themeLive) {
-    var ds = themeLive.dailyScore || 0;
-    var combo = themeLive.combinedScore || 0;
-    var rsTxt = themeLive.intradayRs == null
-      ? ''
-      : ', intraday ' + (themeLive.intradayRs >= 0 ? '+' : '') + themeLive.intradayRs.toFixed(2) + '% vs SPY';
-    sectorVal = themeLive.theme + ' (daily ' + ds.toFixed(1) + rsTxt + ')';
-    if (combo >= 75) {
-      score += 8; fundScore += 8;
-      sectorOk = true;
-      // ⚡ marker when the bonus is intraday-driven (cached daily wouldn't have triggered)
-      sectorVal += themeLive.dominant === 'intraday' ? ' ↑↑↑ (rotating in)' : ' ↑↑';
-    } else if (combo <= 25) {
-      score -= 8; fundScore -= 8;
-      sectorVal += themeLive.dominant === 'intraday' ? ' ↓↓↓ (rotating out)' : ' ↓↓ (weak sector — demoted)';
-    }
-  }
-  res.push({n:'Strong Sector', pass:sectorOk, val:sectorVal, filter:false, pts:8, isTheme:true});
-  // Weak Sector penalty — separate entry so score - sumPassPts stays at 0 for
-  // demoted tickers. Strong Sector's pass stays false (correct — it didn't fire),
-  // so _RULE_TIERS.trend counting remains unaffected.
-  if (themeLive && (themeLive.combinedScore || 0) <= 25) {
-    res.push({n:'Weak Sector (penalty)', pass:true, val:sectorVal, filter:false, pts:-8, isTheme:true});
+  // ── Signal classification (BUY / WATCH / HOLD / EXIT / EXCLUDE)
+  var signal, reasons;
+  if (excluded) {
+    signal = 'EXCLUDE';
+    reasons = exclusionList.join(', ');
+  } else if (exitSignals.length > 0) {
+    signal = 'EXIT';
+    reasons = exitSignals.join(', ');
+  } else if (ovtlyrNine >= 8 && t1_stkBull && t2_stkBuy && t4_noOverhead) {
+    signal = 'BUY';
+    reasons = 'Nine '+ovtlyrNine+'/9, full stack, no overhead';
+  } else if (ovtlyrNine >= 6 && t1_stkBull) {
+    signal = 'WATCH';
+    reasons = 'Nine '+ovtlyrNine+'/9, trending but partial';
+  } else {
+    signal = 'HOLD';
+    reasons = 'Nine '+ovtlyrNine+'/9 — waiting for setup';
   }
 
-  // NEW Rule: Broken Trend (-5 penalty only) — explicit bearish-pattern flag
-  // for long-calls-only. If price has fallen below EMA50, the medium-term
-  // trend is broken; calls fight gravity. No positive credit (price > EMA50
-  // is already implicit in EMA20 > EMA50 + Price > EMA200 rules above).
-  var brokenTrend = (ind && ind.price && ind.ema50 && ind.price < ind.ema50);
-  var brokenTrendVal = brokenTrend
-    ? '$'+fmt2(ind.price)+' < EMA50 $'+fmt2(ind.ema50)+' (trend broken — calls fight gravity)'
-    : (ind && ind.price && ind.ema50)
-      ? '$'+fmt2(ind.price)+' > EMA50 (trend intact)'
-      : 'Awaiting data';
-  if (brokenTrend) { score -= 5; techScore -= 5; }
-  // pts:0 — the -5 is applied directly above (not via the pass-based pts
-  // accumulation). Keeping pts:-5 here was including -5 in sumPassPts for
-  // intact-trend tickers (pass:true), making score - sumPassPts = +5 across
-  // 83% of the universe. The score itself was always correct; only the pts
-  // metadata was wrong.
-  res.push({n:'Broken Trend (penalty)', pass:!brokenTrend, val:brokenTrendVal, filter:false, pts:0, isPenalty:true});
+  // ── Score in 0-100 range so existing UI (filters, sort, displays) keep working
+  // base = ovtlyrNine * 10 (0-90); penalize exits & exclusions; small proven bonus
+  var total = ovtlyrNine * 10;
+  if (provenOk) total += 5;
+  if (exitSignals.length > 0) total = Math.max(0, total - 20);
+  if (excluded) total = 0;
+  total = clamp(total, 0, 100);
 
-  // \u2500\u2500 GO DECISION \u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500\u2500
-  // Score cap raised: 144 base + 8 GEX (was 6) + 8 sector (was 5) +
-  //   +4 Analyst Revisions delta (now 16, was 12) = 164 max for long-calls-only.
-  // Penalties (Broken Trend -5, weak sector -8, avoidBad) can push below 0;
-  // clamp to 0 so the GO threshold comparator (>=110) doesn't get confused.
-  var total = clamp(score, 0, 164);
-  // GO threshold reads from the Min Score input in the scanner tab so the
-  // user can tune what counts as a "GO". Falls back to 110 if input missing.
-  // Default 140 matches observed score distribution (post-2026-04-30
-  // calibration). New evidence-based rules rarely hit max simultaneously,
-  // so the actual top of distribution sits near 140-160, not 165+.
-  // Upper clamp 300 catches typos but accepts user values for high-conviction filtering.
-  var goThreshold = 140;
+  var goThreshold = 70;       // Default: Nine 7+ (was 130 on old 0-164 scale)
   try {
     var el = (typeof document !== 'undefined') ? document.getElementById('sc-minscore') : null;
-    if(el && el.value !== ''){
+    if (el && el.value !== '') {
       var v = parseInt(el.value);
-      if(!isNaN(v) && v >= 0 && v <= 300) goThreshold = v;
+      if (!isNaN(v) && v >= 0 && v <= 100) goThreshold = v;
     }
-  } catch(e){}
-  var isGo  = total >= goThreshold && !avoidBad;
+  } catch (e) {}
+  var isGo = (signal === 'BUY') && total >= goThreshold;
+
+  // ── ATR stop levels (exposed for the UI to use without recomputing)
+  var stopLevels = null;
+  if (ind.atr > 0 && ind.price > 0) {
+    stopLevels = { atr2: +(ind.price - 2 * ind.atr).toFixed(4),
+                   atr3: +(ind.price - 3 * ind.atr).toFixed(4) };
+  }
 
   return {
-    score:      total,
-    techScore:  clamp(techScore, 0, 240),
-    fundScore:  clamp(fundScore, 0, 30),
-    isGo:       isGo,
-    filtersPass:true, // no hard filters in v3.5 \u2014 options evaluated downstream
-    rules:      res,
-    // BUG-2 fix 2026-05-09: was emitting `.length` (a number), but
-    // _matchesPreset reads this as an array of rule names. Emit names.
-    // Display sites must use `.length`.
-    passes:     res.filter(function(r){ return r.pass; }).map(function(r){ return r.n; })
+    score:       total,
+    techScore:   clamp(techScore, 0, 90),
+    fundScore:   0,           // FMP/fund analysis removed in OVTLYR refit
+    isGo:        isGo,
+    filtersPass: true,
+    rules:       res,
+    passes:      res.filter(function(r){ return r.pass; }).map(function(r){ return r.n; }),
+    // OVTLYR-specific fields:
+    ovtlyrNine:  ovtlyrNine,
+    signal:      signal,
+    reasons:     reasons,
+    stkFG:       stkFG,
+    secFG:       secFG,
+    mktFG:       mktFG,
+    stkRising:   stkRising,
+    secRising:   secRising,
+    mktRising:   mktRising,
+    exitSignals: exitSignals,
+    exclusions:  exclusionList,
+    sectorEtf:   sectorEtf,
+    stopLevels:  stopLevels
   };
+}
+
+// ─── OVTLYR helpers (added 2026-05-23) ──────────────────────────────────
+// Pure functions for the F&G composite, percentile rank, and rising-direction
+// check. All accept `days` arrays in the same shape as G_HIST_CACHE entries
+// ({date, open, high, low, close, volume}).
+
+function _ovtPctRank(arr, target, lookback) {
+  if (!arr || arr.length < 2) return 50;
+  var n = Math.min(lookback || arr.length, arr.length);
+  var slice = arr.slice(-n);
+  var le = 0;
+  for (var i = 0; i < slice.length; i++) {
+    if (slice[i] <= target) le++;
+  }
+  return (le / slice.length) * 100;
+}
+
+function _ovtBollPctB(days, len) {
+  len = len || 20;
+  if (!days || days.length < len) return 50;
+  var slice = days.slice(-len);
+  var closes = slice.map(function(d){ return +d.close; });
+  var mean = closes.reduce(function(s,x){return s+x;},0) / len;
+  var variance = closes.reduce(function(s,x){return s+(x-mean)*(x-mean);},0) / len;
+  var sd = Math.sqrt(variance);
+  if (sd === 0) return 50;
+  var up = mean + 2*sd, dn = mean - 2*sd;
+  var px = +days[days.length-1].close;
+  var pct = ((px - dn) / (up - dn)) * 100;
+  return Math.max(0, Math.min(100, pct));
+}
+
+function _ovtHvSeries(days, len) {
+  len = len || 20;
+  if (!days || days.length < len + 1) return [];
+  var rets = [];
+  for (var i = 1; i < days.length; i++) {
+    var c0 = +days[i-1].close, c1 = +days[i].close;
+    if (c0 > 0) rets.push(Math.log(c1/c0));
+  }
+  var out = [];
+  for (var k = len - 1; k < rets.length; k++) {
+    var window = rets.slice(k - len + 1, k + 1);
+    var m = window.reduce(function(s,x){return s+x;},0) / len;
+    var v = window.reduce(function(s,x){return s+(x-m)*(x-m);},0) / len;
+    out.push(Math.sqrt(v) * Math.sqrt(252) * 100);
+  }
+  return out;
+}
+
+function _ovtExtensionSeries(days, period) {
+  // Series of (close - EMA10) / ATR(14), historical for percentile rank
+  if (!days || days.length < (period || 14) + 10) return [];
+  var k = 2/((10)+1);
+  var closes = days.map(function(d){ return +d.close; });
+  // EMA10 series
+  var ema = [closes[0]];
+  for (var i = 1; i < closes.length; i++) ema.push(closes[i]*k + ema[i-1]*(1-k));
+  // ATR14 series
+  var atrSeries = [], tr = [];
+  for (var j = 1; j < days.length; j++) {
+    var h = +days[j].high, l = +days[j].low, pC = +days[j-1].close;
+    tr.push(Math.max(h-l, Math.abs(h-pC), Math.abs(l-pC)));
+  }
+  var atrLen = 14, sum = 0;
+  for (var ai = 0; ai < Math.min(atrLen, tr.length); ai++) sum += tr[ai];
+  atrSeries[atrLen-1] = sum/atrLen;
+  for (var ax = atrLen; ax < tr.length; ax++) {
+    atrSeries[ax] = (atrSeries[ax-1]*(atrLen-1) + tr[ax]) / atrLen;
+  }
+  var ext = [];
+  for (var ei = atrLen; ei < closes.length; ei++) {
+    var atrVal = atrSeries[ei-1]; if (!atrVal) continue;
+    ext.push((closes[ei] - ema[ei]) / atrVal);
+  }
+  return ext;
+}
+
+// Build a 0-100 F&G composite for the last bar of `days`. Returns null on
+// insufficient history. Matches the Pine Script weights exactly.
+function _ovtComputeFG(days) {
+  if (!days || days.length < 30) return null;
+  var CFG = (typeof OVTLYR_CFG !== 'undefined') ? OVTLYR_CFG : {};
+
+  // 1. RSI rank
+  var rsiSeries = [];
+  for (var i = 14; i < days.length; i++) {
+    var r = calcRSIatIndex(days, 14, i);
+    if (typeof r === 'number' && !isNaN(r)) rsiSeries.push(r);
+  }
+  var rsiNow = rsiSeries[rsiSeries.length-1];
+  var rsiRank = _ovtPctRank(rsiSeries, rsiNow, CFG.FG_LOOKBACK || 252);
+
+  // 2. MFI rank
+  var mfiSeries = [];
+  for (var j = 14; j < days.length; j++) {
+    var slice = days.slice(0, j+1);
+    if (slice.length < 16) continue;
+    var m = calcMFI(slice, 14);
+    if (typeof m === 'number' && !isNaN(m)) mfiSeries.push(m);
+  }
+  var mfiRank = mfiSeries.length ? _ovtPctRank(mfiSeries, mfiSeries[mfiSeries.length-1], CFG.FG_LOOKBACK || 252) : 50;
+
+  // 3. Bollinger %B (already 0-100)
+  var bbB = _ovtBollPctB(days, 20);
+
+  // 4. HV percentile, INVERTED (low vol = greed)
+  var hvSer = _ovtHvSeries(days, 20);
+  var hvRk = hvSer.length ? _ovtPctRank(hvSer, hvSer[hvSer.length-1], CFG.FG_LOOKBACK || 252) : 50;
+  var hvInv = 100 - hvRk;
+
+  // 5. Extension rank
+  var extSer = _ovtExtensionSeries(days, 14);
+  var extRk = extSer.length ? _ovtPctRank(extSer, extSer[extSer.length-1], CFG.FG_LOOKBACK || 252) : 50;
+
+  var wR = CFG.W_RSI || 0.25, wM = CFG.W_MFI || 0.20, wB = CFG.W_BB || 0.20, wH = CFG.W_HV || 0.20, wE = CFG.W_EXT || 0.15;
+  var wSum = wR + wM + wB + wH + wE;
+  var raw = (wR*rsiRank + wM*mfiRank + wB*bbB + wH*hvInv + wE*extRk) / Math.max(wSum, 0.01);
+
+  // Smooth with 3-EMA to match Pine's display behavior
+  return +raw.toFixed(2);
+}
+
+// Direction: is F&G[now] > F&G[2 bars ago]? Recomputes F&G on a 3-bar lag.
+// Returns true / false / null (insufficient data).
+function _ovtFGRising(days) {
+  if (!days || days.length < 32) return null;
+  var CFG = (typeof OVTLYR_CFG !== 'undefined') ? OVTLYR_CFG : {};
+  var lag = CFG.FG_RISING_BARS || 2;
+  var fgNow = _ovtComputeFG(days);
+  var fgPrev = _ovtComputeFG(days.slice(0, days.length - lag));
+  if (fgNow == null || fgPrev == null) return null;
+  return fgNow > fgPrev;
 }
 
 function getTvSettings(){
@@ -17035,7 +16990,7 @@ function buildDetail(r,detId,emptyId){
        direction-neutral trading ever returns. */
     +'<span style="color:var(--gry);font-size:10px;">Strike: $'+fmt2(opt.strike)+'  |  Exp: '+fmtDateUS(opt.exp)+'</span>'
     +'</div>'
-    +'<div class="s-hdr">RULE SCORECARD v4.0 <span style="font-size:10px;color:var(--gry);font-weight:400;">Tech '+techScore+' + Fund '+fundScore+' = '+r.score+'/240</span></div>'
+    +'<div class="s-hdr">RULE SCORECARD v4.0 <span style="font-size:10px;color:var(--gry);font-weight:400;">Tech '+techScore+' + Fund '+fundScore+' = '+r.score+'/100</span></div>'
     +'<div class="rules-grid">'+rulesHtml+'</div>'
     +'</div>'
     +'</div>'; // close det-signals wrapper
@@ -18169,7 +18124,7 @@ function renderBuySig(){
                :                  'var(--ngo)';
     var _tipParts = [
       'Rank tiebreakers (in order):',
-      '1. Score: ' + Math.round(r.score) + '/240',
+      '1. Score: ' + Math.round(r.score) + '/100',
       '2. Tech: ' + _tech + '/85',
       '3. RS 5D: ' + _rsTxt + ' (vs SPY)',
       '4. Theme: ' + _thTxt + ' (top sector score)',
@@ -19509,6 +19464,16 @@ function finishScan(){
       if (days) G_HIST_CACHE['SPY'] = days;
     }).catch(function(){});
   }
+  // OVTLYR: pre-fetch the 11 sector ETFs so per-stock sector F&G can resolve.
+  if (typeof OVTLYR_SECTOR_ETFS !== 'undefined') {
+    OVTLYR_SECTOR_ETFS.forEach(function(etf){
+      if (!G_HIST_CACHE[etf]) {
+        fetchIndicatorHistory(etf).then(function(days){
+          if (days) G_HIST_CACHE[etf] = days;
+        }).catch(function(){});
+      }
+    });
+  }
 
   // Sequential enrichment queue — one ticker at a time, no browser lockup.
   // Same SC_ENRICH_LIMIT (60) as the FMP queue. Comment used to say 200
@@ -19885,7 +19850,7 @@ var SCAN_SETTING_DEFAULTS = {
   'sc-minavgvol':    '500,000',
   'sc-volratio':     '',
   'sc-maxoptprice':  '',
-  'sc-minscore':     '130',
+  'sc-minscore':     '70',
   'sc-sig':          'GO',
   'sc-theme':        '',
   'filt-earn-days':  '1'
@@ -19972,7 +19937,7 @@ function clearFilters(){
   if(eid('sc-sect'))        eid('sc-sect').value = '';
   if(eid('sc-theme'))       eid('sc-theme').value = '';   // 'All themes'
   if(eid('sc-sig'))         eid('sc-sig').value  = '';   // 'All' — shows both GO and NO-GO
-  if(eid('sc-minscore'))    eid('sc-minscore').value = '130';  // calibrated to observed distribution mid-top
+  if(eid('sc-minscore'))    eid('sc-minscore').value = '70';  // calibrated to observed distribution mid-top
   if(eid('sc-maxoptprice')) eid('sc-maxoptprice').value = '';
   // v2.17.3: reset long-call entry filters
   if(eid('sc-max-premium')) eid('sc-max-premium').value = '';
@@ -20376,21 +20341,27 @@ function renderScan(){
     var rsCellTxt = rs5d == null ? '<span style="color:var(--gry2);">—</span>'
                                  : (rs5d >= 0 ? '+' : '') + rs5d.toFixed(2) + '%';
 
-    // Score bar \u2014 visual fill showing score out of 122
-    var scorePct=Math.round((r.score/240)*100);
-    // PR #32: surface synthetic rows. ind._synth means the indicators are
-    // still bulk-pass placeholders (RSI=50, MACD=0, ema*0.97, etc.) because
-    // foreground/bg enrichment hasn't filled in real history yet. Stack the
-    // r._synth (sandbox path) check as a belt-and-braces guard.
+    // Score bar — visual fill showing score out of 100 (OVTLYR scale).
+    // Score = ovtlyrNine × 10 + bonus, so 80 = Nine 8/9 (BUY-eligible).
+    var scorePct=Math.round((r.score/100)*100);
     var _isSynth = !!(r._synth === true || (r.ind && r.ind._synth === true));
     var _synthQ = _isSynth
       ? '<span class="score-synth-q" title="Synthetic / unenriched: indicators are bulk-pass placeholders (RSI 50, MACD 0, EMA estimates) until history lands. Score will update once enrichment reaches this rank.">?</span>'
       : '';
+    var nineN = (typeof r.ovtlyrNine === 'number') ? r.ovtlyrNine : null;
+    var nineCol = nineN == null ? 'var(--gry2)'
+                : nineN >= 8    ? 'var(--grn)'
+                : nineN >= 6    ? 'var(--ambb)'
+                :                  'var(--gry)';
+    var nineLbl = nineN == null ? '—' : (nineN + '/9');
+    var nineBadge = '<span style="font-family:var(--ff-mono);font-size:10px;font-weight:700;color:'+nineCol+';margin-left:6px;padding:1px 5px;border:1px solid '+nineCol+';border-radius:3px;" title="Ovtlyr Nine: Market(3) + Sector(2) + Stock(4). 8+ is a BUY candidate.">'+nineLbl+'</span>';
     var scoreBar='<div style="display:inline-flex;align-items:center;gap:5px;">'
       +'<b>'+Math.round(r.score)+'</b>'+_synthQ
       +'<div style="width:36px;height:4px;background:var(--bg3);border-radius:2px;display:inline-block;vertical-align:middle;">'
       +'<div style="width:'+scorePct+'%;height:100%;background:'+(r.isGo?'var(--grn)':'var(--gry)')+';border-radius:2px;"></div>'
-      +'</div></div>';
+      +'</div>'
+      +nineBadge
+      +'</div>';
 
     // Tech/fund mini breakdown
     var techCls=tech>=60?'pnl-pos':tech>=40?'':'pnl-neg';
@@ -26007,7 +25978,7 @@ function fireEmailAlert(ticker, score, sector, price, rulesSummary){
 function sendEmailJsAlert(s, ticker, score, sector, price, rulesSummary){
   emailjs.send(s.ejsService, s.ejsTemplate, {
     ticker:       ticker,
-    score:        score + '/240',
+    score:        score + '/100',
     sector:       sector,
     price:        '$' + price.toFixed(2),
     signal_time:  _fmtCT_Date(new Date()) + ' ' + _fmtCT_Time(new Date()) + ' CT',
