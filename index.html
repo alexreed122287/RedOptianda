@@ -4578,7 +4578,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <div class="card collapsible" id="howto-fullscanner" data-default-collapsed>
       <div class="card-hdr">▶ FULL SCANNER TAB</div>
       <div class="card-body" style="font-size:13px;color:var(--wht);">
-        <p><b>Purpose:</b> The primary tab. Scores ~1500 tickers across 14+ technical and fundamental rules, ranks them, and surfaces the ones most likely to move.</p>
+        <p><b>Purpose:</b> The primary tab. Scores ~1500 tickers using the OVTLYR Nine system (9 boolean components across Market / Sector / Stock layers), ranks them, and surfaces the ones most likely to move.</p>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">Sticky header bar (always visible)</p>
         <ul style="padding-left:20px;">
@@ -4591,13 +4591,13 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">STRATEGY presets</p>
         <ul style="padding-left:20px;">
-          <li><b>★ HIGH CONVICTION</b> — PROVEN + Score ≥160 + Analyst Revisions ↑ + GEX Call Heavy. ~67% of max score; rarest setups.</li>
-          <li><b>▲ BREAKOUT</b> — Near 52-week high + RS &gt; SPY + MACD + + TF Aligned 2/3.</li>
-          <li><b>▶ MOMENTUM</b> — MACD + + Above EMA200 + Vol &gt; Avg + RS &gt; SPY.</li>
-          <li><b>◆ BEST ITM CALLS</b> — Score ≥180 + liquid + contract ≤$8. Deep-ITM (δ 0.70–0.90) candidates.</li>
-          <li><b>▲ PRE/POST MARKET</b> — same filters as HIGH CONVICTION but the table re-sorts by absolute % gap so the biggest movers float to the top. Use during 3:00–8:30am CST (pre) or 3:00–7:00pm CST (post).</li>
+          <li><b>HIGH CONVICTION</b> — Ovtlyr Nine 9/9, signal=BUY, no exit signals, no exclusions. Perfect score across all three layers (Market + Sector + Stock). Rarest setups.</li>
+          <li><b>BUY CANDIDATES</b> — Nine 8+/9, signal=BUY, stock trend + no overhead block. Core buy-candidate filter.</li>
+          <li><b>WATCHLIST</b> — Nine 7+/9, stock trend. Setups building but not yet full BUY — watch for the missing component(s) to flip.</li>
+          <li><b>GREEN REGIME</b> — Nine 6+/9 with market trend. Wider net during confirmed bullish regime.</li>
+          <li><b>PRE/POST MARKET</b> — same as BUY CANDIDATES (Nine 8+/9), sorted by absolute gap %. Use during extended-hours sessions.</li>
           <li><b>VERIFY</b> — diagnostic only. Pings Tradier with 5 sentinel tickers and shows the raw `change_percentage`/`last_volume`/`trade_date` fields so you can confirm extended-hours data is flowing through your proxy.</li>
-          <li><b>✕ CLEAR</b> — removes any active preset. Restores score-based ranking.</li>
+          <li><b>CLEAR</b> — removes any active preset. Restores score-based ranking.</li>
         </ul>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">FILTERS row</p>
@@ -4605,25 +4605,19 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
           <li><b>Sectors</b> — multi-select. Empty = all. Useful for narrowing scans to specific industries.</li>
           <li><b>Themes</b> — multi-select industry themes (e.g. "AI Infrastructure", "Memory & Storage"). Hydrated from theme_scores.json. Click any chip in the scrolling ribbon at the top to filter to just that theme.</li>
           <li><b>Signal</b> — GO / NO-GO / All.</li>
-          <li><b>Min Score</b> — composite score floor. Default 130 (calibrated to observed distribution mid-top). Range 0–240. When a strategy preset is selected, this gets overwritten with that preset's own threshold (HC=140, BO=125, MO=120, ITM=145).</li>
+          <li><b>Min Score</b> — composite score floor. Default 80. Range 0–100 (score = Ovtlyr Nine count × 10 + small bonus). When a strategy preset is selected, this gets overwritten with that preset's threshold (HC=90, BUY=80, WL=70, GREEN=60).</li>
           <li><b>FILTER / CLEAR</b> — applies / resets the criteria.</li>
         </ul>
 
-        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">MUST PASS chips</p>
-        <p>Each checkbox forces the corresponding rule to pass for a ticker to appear. Stack as needed. The chip set is grouped by tier:</p>
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">FILTER chips</p>
+        <p>Each checkbox forces the corresponding OVTLYR condition to pass for a ticker to appear. Stack as needed:</p>
         <ul style="padding-left:22px;">
-          <li><b>Tier 1 (highest IC, +12 to +20 score points):</b> JT 12-1 Mom, Minervini, Pocket Pivot, VCP, Donchian 20d. These were exposed as MUST-PASS chips on 2026-05-03 — previously they only contributed to the score. Use them to enforce the published-research signals directly instead of relying on a score threshold to be a proxy for them.</li>
-          <li><b>Tier 2 (confirmation, +5 to +10):</b> 52Wk Hi &lt;15%, RS &gt; SPY, MACD +, TF Aligned, &gt; EMA200, Vol &gt; Avg.</li>
-          <li><b>Tier 3 (overlay / fundamental):</b> Analyst Revisions ↑, GEX Call Heavy, PROVEN, Strong Sector.</li>
-          <li><b>Hard filters:</b> No Earnings &lt;Nd (binary-event exclusion).</li>
-        </ul>
-        <p style="color:var(--ambb);font-weight:700;margin-top:10px;">Recommended Tier-1 stacks for hand-rolled (no preset) screens</p>
-        <ul style="padding-left:22px;">
-          <li><b>Pure Trend (academic):</b> JT 12-1 + &gt; EMA200. Adds Asness/Frazzini momentum on top of Minervini's Stage 2 floor.</li>
-          <li><b>Coiled Spring:</b> VCP + Pocket Pivot + Vol &gt; Avg. Tight contraction → institutional accumulation print.</li>
-          <li><b>Channel Breakout:</b> Donchian 20d + Vol &gt; Avg + RS &gt; SPY. Classic Turtle setup with leadership confirmation.</li>
-          <li><b>Wizard Buy:</b> Minervini + 52Wk Hi &lt;15% + RS &gt; SPY. Full SEPA template — Mark Minervini's "Trade Like a Stock Market Wizard" buy criteria.</li>
-          <li><b>Belt-and-suspenders:</b> JT 12-1 + Minervini + Pocket Pivot. All three highest-IC scoring rules required — typically 0-3 names, but every hit has the strongest published edge.</li>
+          <li><b>BUY Signal Only</b> — requires signal=BUY (Ovtlyr Nine 8+/9 and score above preset threshold).</li>
+          <li><b>No Overhead Block</b> — no bearish order block within 2% above current price (LuxAlgo SMC detector).</li>
+          <li><b>Stock Trend</b> — stock EMA 10 &gt; 20 &gt; 50 (bullish stacked trend).</li>
+          <li><b>Market Trend</b> — SPY EMA 10 &gt; 20 &gt; 50 (broad market confirming).</li>
+          <li><b>F&amp;G Rising</b> — stock Fear &amp; Greed composite is rising (period-over-period increase).</li>
+          <li><b>No Exit Signals</b> — no active exit signal (10/20 EMA bear cross, gap-and-crap, stale OB hit, extreme greed stall, earnings &lt;4d).</li>
         </ul>
 
         <p style="color:var(--ambb);font-weight:700;margin-top:14px;">SCREENER row</p>
@@ -4639,8 +4633,8 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         <ul style="padding-left:20px;">
           <li><b># rank</b> — sort priority is: <code>score → techScore → RS 5D → theme dailyScore → volume</code>. The "↓ X" annotation shows which factor decided that row's position vs the row above. (Pre/Post preset overrides this with absolute gap %.)</li>
           <li><b>SYMBOL</b> — click to open detail panel. Click again to close. The <b>RUN</b> pill next to a symbol means GEX hasn't been computed for that ticker (it's outside the top-200 batch). Click RUN to fetch single-ticker GEX (~3s).</li>
-          <li><b>SCORE</b> — composite out of ~240 max points.</li>
-          <li><b>SIGNAL</b> — GO (green, score ≥ Min Score) or NO-GO.</li>
+          <li><b>SCORE</b> — composite 0–100 (Ovtlyr Nine count × 10 + bonus). Colored N/9 badge shows how many of the nine components passed.</li>
+          <li><b>SIGNAL</b> — BUY / WATCH / HOLD / EXIT / EXCLUDE. BUY requires Nine 8+/9 and score above preset threshold.</li>
           <li><b>BUY</b> — opens the contract popup with all calls ranked by liquidity × OI score.</li>
           <li><b>THEME / SECTOR / PRICE / CHG % / VOLUME / TECH / FUND / RS 5D</b> — sortable columns. Click any header to sort.</li>
         </ul>
@@ -4829,78 +4823,56 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     </div>
 
     <div class="card collapsible" id="howto-strategy" data-default-collapsed>
-      <div class="card-hdr">▶ STRATEGY PRESETS — RATIONALE BEHIND EACH SETTING</div>
+      <div class="card-hdr">▶ STRATEGY PRESETS — OVTLYR NINE SYSTEM</div>
       <div class="card-body" style="font-size:13px;color:var(--wht);">
-        <p>Each preset applies a different combination of filter rules to surface a specific kind of setup. <b>Thresholds re-calibrated 2026-05-03</b> against the observed score distribution: practical max is ~164 (cap), median GO scores 100–135, top decile sits ≈145+. Prior values (160 for everything, 180 for Best ITM) were above the 90th percentile of GO candidates which is why most presets returned 0–2 hits.</p>
+        <p>The scanner uses the <b>Ovtlyr Nine</b> scoring framework — 9 boolean components across 3 layers. Score = Nine count × 10 + small bonus, clamped 0–100. Each preset sets a minimum Nine count and applies OVTLYR-aligned filter checkboxes.</p>
 
-        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">Empirical-evidence review of the rule weights</p>
-        <p>Highest-IC (information coefficient) rules in the scoring system, ranked by published swing-trade research:</p>
-        <ol style="padding-left:22px;">
-          <li><b>JT 12-1 Momentum (+20)</b> — Jegadeesh-Titman 1993, 12-month return minus 1-month, top quintile. Strongest replicated edge in the system.</li>
-          <li><b>Minervini Template (+15)</b> — Mark Minervini's 8-criteria growth setup. High specificity for swing breakouts.</li>
-          <li><b>Pocket Pivot (+15)</b> — institutional accumulation signature; high signal-to-noise.</li>
-          <li><b>VCP / Donchian / TF Aligned (+12 each)</b> — volatility contraction, channel breakout, multi-timeframe trend.</li>
-          <li><b>EMA20 &gt; EMA50 / RS &gt; SPY 21d / MFI / BBW (+10 each)</b> — established trend + relative strength + flow.</li>
-        </ol>
-        <p><b>2026-05-03 update:</b> the 5 highest-IC rules (JT 12-1, Minervini, Pocket Pivot, VCP, Donchian) are now exposed as MUST-PASS chips. Each preset below has been upgraded to require a curated subset of these chips in addition to the previous criteria — the score threshold is no longer a proxy for "did the high-weight rules fire", it's an independent confirmation on TOP of the actual rule passes. The GO/NO-GO flag respects the active strategy's <b>own</b> Min Score (e.g. switching to HC reclassifies all GOs at threshold 140; switching to MOMENTUM reclassifies at 120).</p>
-
-        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">★ HIGH CONVICTION</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥140 + Analyst Revisions ↑ + PROVEN ticker + GEX Call Heavy + JT 12-1 Mom + Minervini Trend Template.</p>
-        <p><b>Idea:</b> the rarest, highest-quality setups. Every piece confirms a different dimension:</p>
-        <ul style="padding-left:20px;">
-          <li><b>JT 12-1 Mom (NEW)</b> — Jegadeesh-Titman 12-month-minus-1-month return ≥25% (top quintile). Strongest replicated cross-sectional edge in equity markets.</li>
-          <li><b>Minervini Trend Template (NEW)</b> — full Stage 2 SEPA: price &gt; MA50 &gt; MA150 &gt; MA200, MA200 trending up, RS rank ≥70, near 52wk hi. Mark Minervini's complete buy template, not just "above 200".</li>
-          <li><b>Score ≥140</b> — top of the actual score distribution. Was 145 in the prior version; lowered to 140 to compensate for the new rule MUST-PASS gates already eliminating low-quality candidates upstream.</li>
-          <li><b>Analyst Revisions ↑</b> — fundamental tailwind. Sell-side estimates being raised is a slow-moving but high-conviction signal that the company's outlook just improved.</li>
-          <li><b>PROVEN ticker</b> — curated whitelist. Names that have historically responded predictably to this scoring system.</li>
-          <li><b>GEX Call Heavy</b> — institutional positioning is on the long side.</li>
-        </ul>
-        <p>Expect 0–5 GO candidates per scan. If nothing passes, the regime isn't right for high-conviction setups.</p>
-
-        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▲ BREAKOUT</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥125 + 52Wk Hi within 15% + RS &gt; SPY + MACD + + TF Aligned 2/3 + Donchian 20d + VCP.</p>
-        <p><b>Idea:</b> stocks pushing fresh highs with momentum + market leadership AND a confirmed pattern-based breakout. The Minervini / O'Neil school of breakout buying:</p>
-        <ul style="padding-left:20px;">
-          <li><b>Donchian 20d (NEW)</b> — close at or above 20-day high with confirming volume. Classic Turtle/channel breakout. Filters out names that LOOK extended but haven't actually printed a fresh 20-day high.</li>
-          <li><b>VCP (NEW)</b> — Volatility Contraction Pattern (Minervini). Successive ATR-based price ranges contracting before the breakout. Without this, you'd buy "wide-and-loose" continuation moves that have lower hit rate.</li>
-          <li><b>52Wk Hi &lt;15%</b> — proximity to 52-week high. George–Hwang (JF 2004) effect — return premium concentrated near the high.</li>
-          <li><b>RS &gt; SPY</b> — relative strength positive. Stock outperforming the index = market voting for it.</li>
-          <li><b>MACD + + TF Aligned 2/3</b> — short-term momentum + multi-timeframe agreement.</li>
-        </ul>
-
-        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▶ MOMENTUM</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥120 + MACD + + Above EMA200 + RS &gt; SPY + Strong Sector + JT 12-1 Mom.</p>
-        <p><b>Idea:</b> strong trending stocks with sector tailwind, gated by the academic gold-standard cross-sectional momentum factor. Different from BREAKOUT in that you DON'T need 52-week-hi proximity — momentum can come from a mid-base extension or recovery off a base.</p>
-        <ul style="padding-left:20px;">
-          <li><b>JT 12-1 Mom (NEW)</b> — 12-month-minus-1-month return top quintile. Without this MUST-PASS, "MOMENTUM" was just "MACD + above 200" which is too lenient. Now it's "MACD + above 200 AND in the top fifth by 12-month return", which is the actual definition.</li>
-          <li><b>Above EMA200</b> — primary trend filter. Long bias only above the 200-day EMA.</li>
-          <li><b>Strong Sector</b> — top-quartile theme score. Asness-Moskowitz cross-sectional momentum at the sector level.</li>
-          <li><b>MACD + + RS &gt; SPY</b> — short-term momentum + leadership confirmation.</li>
-        </ul>
-
-        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">◆ BEST ITM CALLS</p>
-        <p><b>Filters:</b> Signal=GO + Min Score ≥145 + MACD + + Above EMA200 + RS &gt; SPY + JT 12-1 Mom + Minervini + Pocket Pivot + Min Price $5 + Min AvgVol 1M + Today Vol &gt;100% + Max Opt Price $8.</p>
-        <p><b>Idea:</b> deep-ITM (delta 0.70–0.90) call buying on names that pass <i>all three</i> highest-IC scoring rules — JT 12-1 (+20), Minervini (+15), Pocket Pivot (+15). You're paying real premium for deep-ITM contracts, so the candidate has to clear the highest published bar across momentum, trend, and accumulation.</p>
-        <ul style="padding-left:20px;">
-          <li><b>JT 12-1 + Minervini + Pocket Pivot (NEW)</b> — the three rules with the strongest empirical track records, each capturing a different dimension (cross-sectional momentum, Stage 2 trend, institutional accumulation print). All three required.</li>
-          <li><b>Score ≥145</b> — top of the GO distribution. Was 150; lowered slightly because the three new MUST-PASS gates already concentrate quality upstream.</li>
-          <li><b>Min Price $5 + Min AvgVol 1M</b> — liquidity floor. Cheap/illiquid names have wide option spreads that destroy edge.</li>
-          <li><b>Today Vol &gt;100%</b> — the move is happening NOW.</li>
-          <li><b>Max Opt Price $8</b> — keeps single-contract cost ≤$800.</li>
-        </ul>
-
-        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">▲ PRE/POST MARKET</p>
-        <p><b>Filters:</b> SAME as HIGH CONVICTION (PROVEN + Score ≥140 + Analyst ↑ + GEX + JT 12-1 + Minervini) + secondary sort by absolute % gap (largest movers first).</p>
-        <p><b>Idea:</b> extended-hours gappers screened with the conviction gate. Tradier's <code>change_percentage</code> reflects extended-hours quotes during 3–8:30am CST (pre) and 3–7pm CST (post); on weekends it shows the most recent extended-hours print. Use this preset to surface big movers <i>that also pass HC criteria</i>, not just any random gapper. The sort flip pushes biggest |gap %| to the top within the HC-passing subset.</p>
-
-        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">Recommendations for new strategy presets (not yet built — note for future)</p>
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">The Nine Components</p>
+        <p><b>Market layer (3):</b></p>
         <ul style="padding-left:22px;">
-          <li><b>★ FACTOR PURE</b> — Score ≥130 + JT 12-1 + Minervini + Strong Sector + RS &gt; SPY. Pure academic-factor stack with no chart-pattern dependence. Best for names where the visible setup is messy but the underlying factor profile is excellent.</li>
-          <li><b>▲ COILED SPRING</b> — Score ≥125 + VCP + Pocket Pivot + 52Wk Hi &lt;15% + Vol &gt; Avg. Tight pre-breakout coil with institutional accumulation print, then volume spike. Highest-conviction pre-breakout entry; alternative to BREAKOUT for "buying the spring" instead of "buying the breakout itself".</li>
-          <li><b>▶ TURTLE</b> — Score ≥125 + Donchian 20d + RS &gt; SPY + Vol &gt; Avg + &gt; EMA200. Classic Dennis-Eckhardt 20d channel breakout, gated by leadership and primary-trend filters. Mechanical entry rule with strong out-of-sample edge.</li>
-          <li><b>◆ BUY-THE-DIP</b> — Score ≥130 + JT 12-1 + Minervini + RS &gt; SPY (no breakout / 52Wk Hi requirement). Buys high-momentum quality names <i>not</i> at the highs — pulls from mid-base or post-correction setups. Pairs well with limit orders below current price.</li>
-          <li><b>▲ ALL FIVE</b> — Score ≥135 + JT 12-1 + Minervini + Pocket Pivot + VCP + Donchian. The "every Tier-1 chip MUST PASS" preset. Will return 0-1 names most days; useful as a daily "is anything truly perfect" probe rather than a working preset.</li>
+          <li><b>SPY Bullish Trend</b> — SPY EMA 10 &gt; 20 &gt; 50 (stacked uptrend in the broad market).</li>
+          <li><b>Market F&amp;G Active Buy</b> — market-level Fear &amp; Greed composite between 30–70 AND rising.</li>
+          <li><b>Market Breadth</b> — SPY trend proxy (confirms broad participation).</li>
         </ul>
+        <p><b>Sector layer (2):</b></p>
+        <ul style="padding-left:22px;">
+          <li><b>Sector F&amp;G Rising &gt; Market</b> — sector ETF's F&amp;G composite is rising faster than market F&amp;G.</li>
+          <li><b>Sector Bullish Trend</b> — sector ETF EMA 10 &gt; 20 (short-term sector momentum).</li>
+        </ul>
+        <p><b>Stock layer (4):</b></p>
+        <ul style="padding-left:22px;">
+          <li><b>Stock Bullish Trend</b> — stock EMA 10 &gt; 20 &gt; 50 (stacked uptrend).</li>
+          <li><b>Stock F&amp;G Active Buy</b> — stock-level F&amp;G composite &gt;30 AND rising.</li>
+          <li><b>Stock F&amp;G Rising</b> — stock F&amp;G increasing period-over-period.</li>
+          <li><b>No Overhead Block</b> — no bearish order block within 2% above price (LuxAlgo SMC).</li>
+        </ul>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">F&amp;G Composite</p>
+        <p>A 5-factor technical proxy for OVTLYR's proprietary options-based Fear &amp; Greed score: RSI rank (0.25) + MFI rank (0.20) + Bollinger %B (0.20) + inverted HV rank (0.20) + extension rank (0.15). Produces a 0–100 daily per-ticker score.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">Signal Classification</p>
+        <ul style="padding-left:22px;">
+          <li><b>BUY</b> — Nine 8+/9 AND score above preset threshold.</li>
+          <li><b>WATCH</b> — Nine 6–7/9. Building but not yet actionable.</li>
+          <li><b>HOLD</b> — Nine 4–5/9. Neutral — wait for more alignment.</li>
+          <li><b>EXIT</b> — active exit signal detected (10/20 EMA bear cross, gap-and-crap, stale OB hit 120+d, extreme greed stall, earnings &lt;4d).</li>
+          <li><b>EXCLUDE</b> — Healthcare sector (XLV), extended &gt;18% in 5d, price &lt;$10, low vol (&lt;1M), or AVOID list.</li>
+        </ul>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">HIGH CONVICTION (Min Score 90)</p>
+        <p>Nine 9/9 — perfect alignment across all three layers. Signal=BUY, no exit signals, no exclusions. Expect 0–5 candidates per scan. If nothing passes, the regime isn't right.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">BUY CANDIDATES (Min Score 80)</p>
+        <p>Nine 8+/9 — BUY signal with stock trend + active buy + no overhead block all passing. The core working preset for daily scanning.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">WATCHLIST (Min Score 70)</p>
+        <p>Nine 7+/9 — setups building toward BUY. Track these for the missing component(s) to flip. Wider net, more candidates.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">GREEN REGIME (Min Score 60)</p>
+        <p>Nine 6+/9 with market trend confirming. Widest net — only use during confirmed bullish market regimes where the broad tape supports risk-on entries.</p>
+
+        <p style="color:var(--ambb);font-weight:700;margin-top:14px;">PRE/POST MARKET (Min Score 80)</p>
+        <p>Same as BUY CANDIDATES (Nine 8+/9), sorted by absolute gap %. Surfaces biggest movers that also pass the buy filter. Use during extended-hours sessions (3–8:30am CST pre, 3–7pm CST post).</p>
       </div>
     </div>
 
@@ -4940,12 +4912,11 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
           <li><b>GEX (Gamma Exposure)</b> — net dealer gamma positioning derived from call OI − put OI normalized by price.</li>
           <li><b>MACD +</b> — MACD histogram positive (12-EMA above 26-EMA).</li>
           <li><b>OI (Open Interest)</b> — total open contracts at a strike. Higher OI = more liquid.</li>
-          <li><b>PROVEN ticker</b> — on the curated whitelist of names that have historically responded well to this scoring system. Built into the universe.</li>
+          <li><b>Ovtlyr Nine</b> — 9 boolean components across Market (3) / Sector (2) / Stock (4) layers. Score = Nine × 10 + bonus. BUY requires 8+/9.</li>
+          <li><b>F&amp;G Composite</b> — 5-factor technical proxy: RSI rank + MFI rank + Bollinger %B + inverted HV rank + extension rank. 0–100 per ticker daily.</li>
           <li><b>RS 5D</b> — 5-day relative strength vs SPY (your stock's % change minus SPY's % change). Positive = outperforming.</li>
           <li><b>RTH / PRE / POST / CLOSED</b> — Regular Trading Hours (8:30am–3:00pm CST) / Pre-market (3:00–8:30am CST) / Post-market (3:00–7:00pm CST) / outside both.</li>
-          <li><b>TF Aligned 2/3</b> — Time-Frame Aligned. Counts how many of three trend timeframes (daily / hourly / 15-min) point the same direction. ≥2/3 passes.</li>
-          <li><b>U/D Volume</b> — Up-volume / down-volume ratio. &gt;1.5 = institutional accumulation.</li>
-          <li><b>VCP</b> — Volatility Contraction Pattern (Minervini). Tightening price ranges before breakout.</li>
+          <li><b>Order Block (OB)</b> — LuxAlgo SMC bearish/bullish supply-demand zones. "No Overhead Block" means no bearish OB within 2% above price.</li>
         </ul>
       </div>
     </div>
