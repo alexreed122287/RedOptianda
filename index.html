@@ -3286,11 +3286,11 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
        with every other filter row in the app. -->
   <div class="flt-bar collapsible" id="sc-bar-strategy" data-default-collapsed style="border-bottom:1px solid var(--bg3);">
     <button type="button" class="sec-toggle" title="Collapse / expand the STRATEGY presets row">STRATEGY</button>
-    <button class="btn blu" onclick="applyStrategyMode('highConviction')" title="PROVEN + Score ≥140 + Analyst Revisions ↑ + GEX Call Heavy + JT 12-1 Mom + Minervini Trend Template — rarest, highest-quality setups. The 2 highest-IC scoring rules are now MUST-PASS.">&#9733; HIGH CONVICTION</button>
-    <button class="btn" onclick="applyStrategyMode('breakout')" title="Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 + Donchian 20d + VCP — stocks breaking out with market leadership AND a confirmed pattern-based breakout. Score ≥125.">&#9650; BREAKOUT</button>
-    <button class="btn" onclick="applyStrategyMode('momentum')" title="MACD + + Above EMA200 + RS > SPY + Strong Sector + JT 12-1 Mom — confirmed trending stocks with sector tailwind, gated by Jegadeesh-Titman cross-sectional momentum. Score ≥120.">&#9654; MOMENTUM</button>
-    <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')" title="Score ≥145 + liquid (\$5+, 1M+ avg vol) + in-play today + contract ≤\$8 + JT 12-1 + Minervini + Pocket Pivot — deep-ITM (δ 0.70–0.90) calls on names passing all three highest-IC rules.">&#9670; BEST ITM CALLS</button>
-    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Score ≥140 + Analyst ↑ + GEX + JT 12-1 + Minervini), then sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.">&#9650; PRE/POST MARKET</button>
+    <button class="btn blu" onclick="applyStrategyMode('highConviction')" title="Ovtlyr Nine 9/9 — perfect score across Market + Sector + Stock layers. Signal = BUY, no exits, no exclusions. The rarest, highest-conviction setups.">HIGH CONVICTION</button>
+    <button class="btn" onclick="applyStrategyMode('buyCandidates')" title="Ovtlyr Nine 8+/9 — BUY signal with stock trend + active buy + no overhead block all passing. Core buy-candidate filter.">BUY CANDIDATES</button>
+    <button class="btn" onclick="applyStrategyMode('watchlist')" title="Ovtlyr Nine 7+/9 — setups building but not yet full BUY. Watch for the missing component(s) to flip.">WATCHLIST</button>
+    <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('greenRegime')" title="Ovtlyr Nine 6+/9 with market F&amp;G rising — bullish regime filter. Wider net during confirmed up-markets.">GREEN REGIME</button>
+    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Same as BUY CANDIDATES (Nine 8+/9), sorted by absolute gap %. Use during extended-hours sessions or on weekends.">PRE/POST MARKET</button>
     <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--gry2);color:var(--gry);" onclick="probePreMarketData()" title="One-shot live fetch of SPY/QQQ/NVDA/TSLA/AAPL — surfaces the raw `change_percentage` Tradier is returning right now. Use it to verify pre-market data is flowing.">VERIFY</button>
     <button class="btn" style="border-color:var(--gry2);color:var(--gry);" onclick="applyStrategyMode('clear')">&#10005; CLEAR</button>
     <span id="pre-market-pill" style="display:none;font-family:var(--ff-mono);font-size:9px;font-weight:800;letter-spacing:1.5px;background:var(--ambb);color:var(--bg0);padding:2px 8px;border-radius:2px;animation:today-pulse 2.4s ease-in-out infinite;" title="Pre-market session is active — Tradier `last` reflects extended-hours quotes. Use the PRE-MARKET preset to sort by gap %.">PRE-MARKET LIVE</span>
@@ -3357,22 +3357,15 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
        horizontally if chips exceed viewport width. -->
   <div class="flt-bar must-pass-row collapsible" id="sc-bar-mustpass" data-default-collapsed style="flex-wrap:nowrap;border-top:1px solid var(--bg3);overflow-x:auto;width:100%;">
     <button type="button" class="sec-toggle" title="Collapse / expand the MUST PASS chips row" style="margin-right:4px;">MUST PASS:</button>
-    <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-analyst" onchange="applyFilters()"> <span>Analyst Revisions &#8593;</span></label>
-    <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-gex" onchange="applyFilters()"> <span>GEX Call Heavy</span></label>
+    <label class="ind-filter-lbl" title="Only show tickers with signal = BUY (Ovtlyr Nine 8+/9, full stock stack, no overhead block, no exits, not excluded)."><input type="checkbox" class="ind-filter" id="filt-ovtlyr-buy" onchange="applyFilters()"> <span>Signal = BUY</span></label>
+    <label class="ind-filter-lbl" title="Require STOCK No Overhead Block passing — no bearish order block within 2% above price."><input type="checkbox" class="ind-filter" id="filt-no-overhead" onchange="applyFilters()"> <span>No Overhead OB</span></label>
+    <label class="ind-filter-lbl" title="Require STOCK Bullish Trend — EMA 10 > 20 > 50 with price above EMA 10."><input type="checkbox" class="ind-filter" id="filt-stk-trend" onchange="applyFilters()"> <span>Stock Trend</span></label>
+    <label class="ind-filter-lbl" title="Require MARKET Bullish Trend — SPY EMA 10 > 20 > 50 with price above EMA 10."><input type="checkbox" class="ind-filter" id="filt-mkt-trend" onchange="applyFilters()"> <span>Mkt Trend</span></label>
+    <label class="ind-filter-lbl" title="Require Stock F&amp;G rising (current F&amp;G > F&amp;G 2 bars ago)."><input type="checkbox" class="ind-filter" id="filt-fg-rising" onchange="applyFilters()"> <span>F&amp;G Rising</span></label>
+    <label class="ind-filter-lbl" title="Require no active exit signals (bear cross, gap &amp; crap, stale OB hit, extreme greed stall, earnings block)."><input type="checkbox" class="ind-filter" id="filt-no-exits" onchange="applyFilters()"> <span>No Exits</span></label>
     <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-proven" onchange="applyFilters()"> <span>PROVEN Ticker</span></label>
-    <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-52hi" onchange="applyFilters()"> <span>52Wk Hi &lt;15%</span></label>
-    <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-rs" onchange="applyFilters()"> <span>RS &gt; SPY</span></label>
-    <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-macd" onchange="applyFilters()"> <span>MACD +</span></label>
-    <label class="ind-filter-lbl" title="TF Aligned = Time-Frame Aligned. Counts how many of three trend timeframes (e.g. daily / hourly / 15-min) are pointing the same direction. 2/3 = at least two of three timeframes agree, which filters out stocks that look bullish on one timeframe but are choppy on others."><input type="checkbox" class="ind-filter" id="filt-tf" onchange="applyFilters()"> <span>TF Aligned 2/3</span></label>
-    <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-ema200" onchange="applyFilters()"> <span>Above EMA200</span></label>
-    <label class="ind-filter-lbl"><input type="checkbox" class="ind-filter" id="filt-vol" onchange="applyFilters()"> <span>Vol &gt; Avg</span></label>
     <label class="ind-filter-lbl" title="Hide tickers with earnings today through N trading days into the future (inclusive). 0 = today only. 3 = today + next 3 days. Earnings = binary event; even good signals turn into 50/50 coin flips through earnings."><input type="checkbox" class="ind-filter" id="filt-no-earn" onchange="applyFilters()" checked> <span>No Earnings (today + <input type="number" id="filt-earn-days" value="1" min="0" max="30" style="width:48px;font-size:11px;padding:2px 5px;background:var(--bg2);border:1px solid var(--bg3);color:var(--amb);text-align:center;" onchange="applyFilters()" onclick="event.stopPropagation()" inputmode="numeric">d)</span></label>
     <label class="ind-filter-lbl" title="Sector rotation overlay — only show tickers in themes with daily composite score >= 75 (top quartile, prevailing institutional flow)"><input type="checkbox" class="ind-filter" id="filt-strong-sector" onchange="applyFilters()"> <span>Strong Sector</span></label>
-    <label class="ind-filter-lbl" title="Jegadeesh-Titman 12-1 cross-sectional momentum (1993). 12-month return minus 1-month, top quintile (≥25%). Strongest replicated edge in academic finance. Worth +20 score points — most heavily weighted single rule."><input type="checkbox" class="ind-filter" id="filt-jt12" onchange="applyFilters()"> <span>JT 12-1 Mom</span></label>
-    <label class="ind-filter-lbl" title="Mark Minervini's 8-criteria Stage 2 trend template. Price &gt; MA50 &gt; MA150 &gt; MA200, MA200 trending up &gt;1mo, RS rank &gt; 70, near 52wk hi, &gt;25% off 52wk lo. High-specificity swing breakout setup. Worth +15."><input type="checkbox" class="ind-filter" id="filt-minervini" onchange="applyFilters()"> <span>Minervini</span></label>
-    <label class="ind-filter-lbl" title="O'Neil/Morales-Kacher pocket pivot — first up-day with volume &gt; max down-volume of prior 10 days, while above 50DMA. Institutional accumulation signature. Worth +15."><input type="checkbox" class="ind-filter" id="filt-pocket" onchange="applyFilters()"> <span>Pocket Pivot</span></label>
-    <label class="ind-filter-lbl" title="VCP — Volatility Contraction Pattern (Minervini). Successive ATR-based price ranges contracting before breakout. Tight pre-breakout coil. Worth +12."><input type="checkbox" class="ind-filter" id="filt-vcp" onchange="applyFilters()"> <span>VCP</span></label>
-    <label class="ind-filter-lbl" title="20-day Donchian channel breakout with confirming volume — close at or above 20-day high. Classic Turtle/channel breakout. Worth +12."><input type="checkbox" class="ind-filter" id="filt-donchian" onchange="applyFilters()"> <span>Donchian 20d</span></label>
     <!-- Search ticker box was here; moved 2026-05-05 to #sc-action-row
          (next to SCAN + EXPORT GOs) so it's visible without expanding
          the MUST PASS row. -->
@@ -4253,7 +4246,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
       <!-- Alert threshold -->
       <div class="api-row" style="align-items:center;margin-top:8px;">
         <label style="flex:0 0 180px;">MIN SCORE THRESHOLD</label>
-        <input type="number" id="notif-min-score" value="120" min="89" max="150" style="width:70px;" oninput="saveNotifSettings()">
+        <input type="number" id="notif-min-score" value="80" min="0" max="100" style="width:70px;" oninput="saveNotifSettings()">
         <span style="color:var(--gry);font-size:11px;margin-left:8px;">/ 122 — GO signals above this score trigger alerts</span>
       </div>
 
@@ -4335,7 +4328,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
         </div>
         <div class="api-row" style="align-items:center;">
           <label style="flex:0 0 200px;">MIN SCORE THRESHOLD</label>
-          <input type="number" id="at-min-score" value="120" min="89" max="150" style="width:70px;" oninput="saveAutoTraderSettings()">
+          <input type="number" id="at-min-score" value="80" min="0" max="100" style="width:70px;" oninput="saveAutoTraderSettings()">
           <span style="color:var(--gry);font-size:11px;margin-left:8px;">/ 100 — OVTLYR Nine × 10</span>
         </div>
         <div class="api-row" style="align-items:center;">
@@ -4385,10 +4378,10 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <div class="card"><div class="card-hdr">&#9650; STRATEGY MODE — QUICK FILTERS</div>
     <div class="card-body" style="padding:12px 14px;">
       <div style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;">
-        <button class="btn blu" style="font-size:11px;" onclick="applyStrategyMode('highConviction')">&#9733; HIGH CONVICTION</button>
-        <button class="btn" style="font-size:11px;" onclick="applyStrategyMode('breakout')">&#9650; BREAKOUT</button>
-        <button class="btn" style="font-size:11px;" onclick="applyStrategyMode('momentum')">&#9654; MOMENTUM</button>
-        <button class="btn" style="font-size:11px;border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('bestItmCalls')">&#9670; BEST ITM CALLS</button>
+        <button class="btn blu" style="font-size:11px;" onclick="applyStrategyMode('highConviction')">HIGH CONVICTION</button>
+        <button class="btn" style="font-size:11px;" onclick="applyStrategyMode('buyCandidates')">BUY CANDIDATES</button>
+        <button class="btn" style="font-size:11px;" onclick="applyStrategyMode('watchlist')">WATCHLIST</button>
+        <button class="btn" style="font-size:11px;border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('greenRegime')">GREEN REGIME</button>
         <button class="btn" style="font-size:11px;border-color:var(--gry2);color:var(--gry);" onclick="applyStrategyMode('clear')">CLEAR ALL</button>
       </div>
       <div id="strategy-desc" style="font-family:var(--ff-mono);font-size:10px;color:var(--gry);line-height:1.7;min-height:32px;"></div>
@@ -18606,7 +18599,7 @@ function _renderScanCategoryStrip(){
   if (!results.length) { strip.style.display = 'none'; return; }
   strip.style.display = 'flex';
   var scored = results.length;
-  ['highConviction','breakout','momentum','bestItmCalls','preMarket'].forEach(function(mode){
+  ['highConviction','buyCandidates','watchlist','greenRegime','preMarket'].forEach(function(mode){
     var sm = STRATEGY_MODES && STRATEGY_MODES[mode];
     if (!sm) return;
     var box = strip.querySelector('[data-cat="'+mode+'"]');
@@ -19664,29 +19657,19 @@ function applyFilters(){
   var minDte = parseInt(eid('sc-min-dte') ? eid('sc-min-dte').value : '') || 0;
   var maxDte = parseInt(eid('sc-max-dte') ? eid('sc-max-dte').value : '') || 0;
 
-  // Indicator filter checkboxes
-  var needAnalyst = getIndFilter('filt-analyst');
-  var needGex     = getIndFilter('filt-gex');
-  var needProven  = getIndFilter('filt-proven');
-  var need52hi    = getIndFilter('filt-52hi');
-  var needRS      = getIndFilter('filt-rs');
-  var needMacd    = getIndFilter('filt-macd');
-  var needTF      = getIndFilter('filt-tf');
-  var needEma200  = getIndFilter('filt-ema200');
-  var needVol     = getIndFilter('filt-vol');
+  // OVTLYR indicator filter checkboxes (2026-05-23)
+  var needOvtlyrBuy  = getIndFilter('filt-ovtlyr-buy');
+  var needNoOverhead = getIndFilter('filt-no-overhead');
+  var needStkTrend   = getIndFilter('filt-stk-trend');
+  var needMktTrend   = getIndFilter('filt-mkt-trend');
+  var needFGRising   = getIndFilter('filt-fg-rising');
+  var needNoExits    = getIndFilter('filt-no-exits');
+  var needProven     = getIndFilter('filt-proven');
   // Earnings exclusion: hide tickers within N days of upcoming earnings
   var needNoEarn  = getIndFilter('filt-no-earn');
   var earnDays    = parseInt((eid('filt-earn-days') && eid('filt-earn-days').value) || '7') || 7;
   // Sector rotation: only top-quartile-theme tickers
   var needStrongSector = getIndFilter('filt-strong-sector');
-  // High-IC scoring rules — exposed as MUST PASS chips 2026-05-03 so the
-  // user can require any combination of the 5 highest-information-coefficient
-  // rules without leaning purely on the score threshold.
-  var needJT12      = getIndFilter('filt-jt12');
-  var needMinervini = getIndFilter('filt-minervini');
-  var needPocket    = getIndFilter('filt-pocket');
-  var needVCP       = getIndFilter('filt-vcp');
-  var needDonchian  = getIndFilter('filt-donchian');
   // OB filter checkboxes were removed from the UI; underlying detection JS
   // and cache stay defined so the feature can be reactivated. Hardcoded false
   // here (was 4 per-cycle DOM lookups that always returned false).
@@ -19753,39 +19736,48 @@ function applyFilters(){
       // Uncached: optimistically include; re-apply once batch fetch completes
     }
 
-    // Indicator filters \u2014 check rule scorecards
-    if(needAnalyst || needGex || needProven ||
-       need52hi || needRS || needMacd || needTF || needEma200 || needVol ||
-       needJT12 || needMinervini || needPocket || needVCP || needDonchian){
-
-      // Build a quick lookup of which rules passed for this ticker
-      var passed = {};
+    // OVTLYR filters \u2014 check scoreIt output fields directly (2026-05-23).
+    // These use the structured r.signal / r.ovtlyrNine / r.exitSignals
+    // fields instead of matching rule name strings.
+    if(needOvtlyrBuy && r.signal !== 'BUY') return false;
+    if(needNoOverhead){
+      var hasNoOH = false;
       if(r.rules){
-        r.rules.forEach(function(rule){ if(rule.pass) passed[rule.n] = true; });
+        for(var fi=0;fi<r.rules.length;fi++){
+          if(r.rules[fi].n.indexOf('STOCK  No Overhead Block')===0 && r.rules[fi].pass){ hasNoOH=true; break; }
+        }
       }
-
-      // Check each active filter against the rule scorecard. Rule names
-      // MUST match what scoreIt emits \u2014 see scoreIt res.push() calls.
-      // BUG-3/4/5 fix 2026-05-09: 'GEX Call Heavy' \u2192 'GEX Call Flow'
-      // (current scoreIt name); 'RS > SPY (5d)' \u2192 either 5d or 21d label;
-      // 'Vol > Avg' \u2192 'U/D Volume Ratio (50d)' (rule renamed).
-      if(needAnalyst && !passed['Analyst Revisions \u2191']) return false;
-      if(needGex     && !passed['GEX Call Flow'])           return false;
-      if(needProven  && !passed['PROVEN ticker'])           return false;
-      if(need52hi    && !passed['52Wk Hi Prox <15%'])       return false;
-      if(needRS      && !(passed['RS > SPY (21d)'] || passed['RS > SPY (5d)'])) return false;
-      if(needMacd    && !passed['MACD Hist +'])             return false;
-      if(needTF      && !passed['TF Aligned 2/3'])          return false;
-      if(needEma200  && !passed['Price > EMA200'])          return false;
-      if(needVol     && !passed['U/D Volume Ratio (50d)'])  return false;
-      // High-IC rules (2026-05-03). Rule names match the strings emitted by
-      // scoreIt \u2014 see lines 11124, 11153, 11192, 11238, 11257.
-      if(needJT12      && !passed['JT 12-1 Momentum'])           return false;
-      if(needMinervini && !passed['Minervini Trend Template'])   return false;
-      if(needPocket    && !passed['Pocket Pivot'])               return false;
-      if(needVCP       && !passed['VCP \u2014 ATR Contraction']) return false;
-      if(needDonchian  && !passed['20d Donchian Breakout'])      return false;
+      if(!hasNoOH) return false;
     }
+    if(needStkTrend){
+      var hasStkT = false;
+      if(r.rules){
+        for(var fi2=0;fi2<r.rules.length;fi2++){
+          if(r.rules[fi2].n.indexOf('STOCK  Bullish Trend')===0 && r.rules[fi2].pass){ hasStkT=true; break; }
+        }
+      }
+      if(!hasStkT) return false;
+    }
+    if(needMktTrend){
+      var hasMktT = false;
+      if(r.rules){
+        for(var fi3=0;fi3<r.rules.length;fi3++){
+          if(r.rules[fi3].n.indexOf('MARKET  Bullish Trend')===0 && r.rules[fi3].pass){ hasMktT=true; break; }
+        }
+      }
+      if(!hasMktT) return false;
+    }
+    if(needFGRising){
+      var hasFGR = false;
+      if(r.rules){
+        for(var fi4=0;fi4<r.rules.length;fi4++){
+          if(r.rules[fi4].n.indexOf('STOCK  F&G Rising')===0 && r.rules[fi4].pass){ hasFGR=true; break; }
+        }
+      }
+      if(!hasFGR) return false;
+    }
+    if(needNoExits && r.exitSignals && r.exitSignals.length > 0) return false;
+    if(needProven && PROVEN.indexOf(r.ticker) < 0) return false;
 
     // Earnings exclusion — hard filter, not a rule. Pass-by-default if
     // ticker has no entry in G_EARNINGS_CACHE (FMP coverage gap; we don't
@@ -19859,9 +19851,9 @@ var SCAN_SETTING_DEFAULTS = {
 // clears them (previously they were missing from this list and resetScanSettings
 // left them in whatever state the user had checked).
 var SCAN_FILTER_CHECKBOXES = [
-  'filt-analyst','filt-gex','filt-proven','filt-52hi','filt-rs',
-  'filt-macd','filt-tf','filt-ema200','filt-vol','filt-no-earn','filt-strong-sector',
-  'filt-jt12','filt-minervini','filt-pocket','filt-vcp','filt-donchian',
+  'filt-ovtlyr-buy','filt-no-overhead','filt-stk-trend','filt-mkt-trend',
+  'filt-fg-rising','filt-no-exits','filt-proven',
+  'filt-no-earn','filt-strong-sector',
   'filt-obclear','filt-obsupport','filt-inst-obclear','filt-inst-obsupport'
 ];
 
@@ -19954,10 +19946,9 @@ function clearFilters(){
   populateThemeCheckboxes();
   updateThemeLabel();
   // Uncheck every MUST PASS / indicator filter checkbox in the toolbar
-  ['filt-analyst','filt-gex','filt-proven',
-   'filt-52hi','filt-rs','filt-macd','filt-tf','filt-ema200','filt-vol',
+  ['filt-ovtlyr-buy','filt-no-overhead','filt-stk-trend','filt-mkt-trend',
+   'filt-fg-rising','filt-no-exits','filt-proven',
    'filt-no-earn','filt-strong-sector',
-   'filt-jt12','filt-minervini','filt-pocket','filt-vcp','filt-donchian',
    'filt-obclear','filt-obsupport','filt-inst-obclear','filt-inst-obsupport'].forEach(function(id){
     var el = eid(id); if(el) el.checked = false;
   });
@@ -20202,12 +20193,11 @@ function renderScan(){
       var maxOpt = parseFloat(eid('sc-maxoptprice') && eid('sc-maxoptprice').value) || 0;
       if(maxOpt > 0) active.push('Max Opt $'+maxOpt);
       var cbMap = {
-        'filt-analyst':'Analyst Revisions','filt-gex':'GEX Call Heavy','filt-proven':'PROVEN',
-        'filt-52hi':'52Wk Hi <15%','filt-rs':'RS > SPY','filt-macd':'MACD +',
-        'filt-tf':'TF Aligned','filt-ema200':'> EMA200','filt-vol':'Vol > Avg',
-        'filt-no-earn':'No Earnings','filt-strong-sector':'Strong Sector',
-        'filt-jt12':'JT 12-1 Mom','filt-minervini':'Minervini',
-        'filt-pocket':'Pocket Pivot','filt-vcp':'VCP','filt-donchian':'Donchian 20d'
+        'filt-ovtlyr-buy':'Signal=BUY','filt-no-overhead':'No Overhead OB',
+        'filt-stk-trend':'Stock Trend','filt-mkt-trend':'Mkt Trend',
+        'filt-fg-rising':'F&G Rising','filt-no-exits':'No Exits',
+        'filt-proven':'PROVEN',
+        'filt-no-earn':'No Earnings','filt-strong-sector':'Strong Sector'
       };
       Object.keys(cbMap).forEach(function(id){ if(getIndFilter(id)) active.push(cbMap[id]); });
       var summary = active.length
@@ -25854,7 +25844,7 @@ function saveNotifSettings(){
       ejsTemplate:   eid('notif-ejs-template')    ? eid('notif-ejs-template').value     : '',
       ejsPubKey:     eid('notif-ejs-pubkey')      ? eid('notif-ejs-pubkey').value       : '',
       emailTo:       eid('notif-email-to')        ? eid('notif-email-to').value         : '',
-      minScore:      eid('notif-min-score')       ? parseInt(eid('notif-min-score').value)||120  : 120,
+      minScore:      eid('notif-min-score')       ? parseInt(eid('notif-min-score').value)||80  : 80,
       cooldown:      eid('notif-cooldown')        ? parseInt(eid('notif-cooldown').value)||60    : 60,
       autoFill:      eid('notif-autofill')        ? eid('notif-autofill').checked       : false,
       autoQty:       eid('notif-autoqty')         ? parseInt(eid('notif-autoqty').value)||1      : 1,
@@ -25875,7 +25865,7 @@ function loadNotifSettings(){
     if(eid('notif-ejs-template'))  eid('notif-ejs-template').value    = s.ejsTemplate  || '';
     if(eid('notif-ejs-pubkey'))    eid('notif-ejs-pubkey').value      = s.ejsPubKey    || '';
     if(eid('notif-email-to'))      eid('notif-email-to').value        = s.emailTo      || '';
-    if(eid('notif-min-score'))     eid('notif-min-score').value       = s.minScore     || 120;
+    if(eid('notif-min-score'))     eid('notif-min-score').value       = s.minScore     || 80;
     if(eid('notif-cooldown'))      eid('notif-cooldown').value        = s.cooldown     || 60;
     if(eid('notif-autofill'))      eid('notif-autofill').checked      = !!s.autoFill;
     if(eid('notif-autoqty'))       eid('notif-autoqty').value         = s.autoQty      || 1;
@@ -25890,7 +25880,7 @@ function getNotifSettings(){
     var raw = localStorage.getItem('rrjcar_notif');
     if(raw) return JSON.parse(raw);
   }catch(e){}
-  return {browser:false, email:false, minScore:120, cooldown:60};
+  return {browser:false, email:false, minScore:80, cooldown:60};
 }
 
 function updateNotifPermStatus(){
@@ -26122,7 +26112,7 @@ function hcModalSkip(){
 
 function checkHighConvictionSignals(results){
   var s = getNotifSettings();
-  var minScore   = s.minScore    || 120;
+  var minScore   = s.minScore    || 80;
   var cooldownMs = (s.cooldown   || 60) * 60000;
   var doAutoFill   = !!s.autoFill;
   var doAutoSubmit = !!s.autoSubmit;
@@ -26191,7 +26181,7 @@ function saveAutoTraderSettings(){
       budget:         +(eid('at-budget')?.value||500),
       maxContracts:   +(eid('at-max-contracts')?.value||3),
       dailyLoss:      +(eid('at-daily-loss')?.value||500),
-      minScore:       +(eid('at-min-score')?.value||120),
+      minScore:       +(eid('at-min-score')?.value||80),
       hoursGate:      eid('at-hours-gate')?.checked !== false,
       maxPositions:   +(eid('at-max-positions')?.value||3),
       marketFallback: eid('at-market-fallback')?.checked || false,
@@ -26207,7 +26197,7 @@ function loadAutoTraderSettings(){
     if(eid('at-budget'))          eid('at-budget').value          = s.budget        || 500;
     if(eid('at-max-contracts'))   eid('at-max-contracts').value   = s.maxContracts  || 3;
     if(eid('at-daily-loss'))      eid('at-daily-loss').value      = s.dailyLoss     || 500;
-    if(eid('at-min-score'))       eid('at-min-score').value       = s.minScore     || 120;
+    if(eid('at-min-score'))       eid('at-min-score').value       = s.minScore     || 80;
     if(eid('at-hours-gate'))      eid('at-hours-gate').checked    = s.hoursGate !== false;
     if(eid('at-max-positions'))   eid('at-max-positions').value   = s.maxPositions || 3;
     if(eid('at-market-fallback')) eid('at-market-fallback').checked = !!s.marketFallback;
@@ -26222,12 +26212,12 @@ function getAutoTraderSettings(){
       budget:       +(s.budget       || (eid('at-budget')        ? eid('at-budget').value        : 0) || 500),
       maxContracts: +(s.maxContracts || (eid('at-max-contracts') ? eid('at-max-contracts').value : 0) || 3),
       dailyLoss:    +(s.dailyLoss    || (eid('at-daily-loss')     ? eid('at-daily-loss').value    : 0) || 500),
-      minScore:       +(s.minScore       || (eid('at-min-score')        ? eid('at-min-score').value       : 0) || 120),
+      minScore:       +(s.minScore       || (eid('at-min-score')        ? eid('at-min-score').value       : 0) || 80),
       hoursGate:      s.hoursGate !== false,
       maxPositions:   +(s.maxPositions   || (eid('at-max-positions')   ? eid('at-max-positions').value   : 0) || 3),
       marketFallback: !!s.marketFallback,
     };
-  }catch(e){ return {budget:500,maxContracts:3,dailyLoss:500,minScore:120,hoursGate:true,maxPositions:3,marketFallback:false}; }
+  }catch(e){ return {budget:500,maxContracts:3,dailyLoss:500,minScore:80,hoursGate:true,maxPositions:3,marketFallback:false}; }
 }
 
 function atLog(msg, cls){
@@ -26603,46 +26593,34 @@ function atExecuteTrade(signal, budget){
 // \u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550\u2550
 
 var STRATEGY_MODES = {
-  // Thresholds rebalanced 2026-04-30 for the new ~240-pt max scoring system
-  // (added 7 evidence-based rules: Minervini Template, Pocket Pivot, U/D Vol,
-  // VCP, BBW Squeeze, Donchian, JT 12-1). Approximate %-of-max preserved:
-  // HIGH CONVICTION ~83%, BREAKOUT/MOMENTUM ~67%, BEST ITM CALLS ~75%.
-  // Thresholds re-calibrated 2026-05-03 against the OBSERVED score
-  // distribution (peaks 140-160 on a ~164-pt practical max). Prior
-  // values (160/160/160/180) sat ABOVE the 90th percentile of all GO
-  // candidates which is why most presets returned 0-2 hits in normal
-  // markets. New per-strategy thresholds align with the rule weights
-  // each preset already filters for.
+  // OVTLYR Plan M presets (2026-05-23). Score = Ovtlyr Nine x 10 + bonus,
+  // so minScore 90 = Nine 9/9, 80 = Nine 8/9, 70 = Nine 7/9, 60 = Nine 6/9.
   highConviction: {
-    label: '\u2605 HIGH CONVICTION',
-    desc: 'PROVEN ticker + Score \u2265140 + Analyst Revisions \u2191 + GEX Call Heavy + JT 12-1 Mom + Minervini \u2014 rarest, highest-quality setups. The two highest-IC scoring rules (JT 12-1 +20, Minervini +15) are now MUST-PASS instead of merely contributing to the score. Expect 0-5 matches per scan.',
-    filters: {sig:'GO', minScore:140, analyst:true, proven:true, gex:true,
-              jt12:true, minervini:true}
+    label: 'HIGH CONVICTION',
+    desc: 'Ovtlyr Nine 9/9 \u2014 perfect score across all three layers (Market + Sector + Stock). Signal = BUY, no exits, no exclusions. The rarest, highest-conviction setups. Expect 0-5 matches per scan.',
+    filters: {sig:'GO', minScore:90, ovtlyrBuy:true, noOverhead:true,
+              stkTrend:true, fgRising:true, noExits:true}
   },
-  breakout: {
-    label: '\u25b2 BREAKOUT',
-    desc: 'Near 52-week high + RS > SPY + MACD + + TF Aligned 2/3 + Donchian 20d + VCP \u2014 chart-pattern-driven breakout buying with momentum + leadership. Donchian + VCP are the two highest-IC pure-pattern breakout rules; requiring them filters out fake-out names that just LOOK extended. Score \u2265125.',
-    filters: {sig:'GO', minScore:125, hi52:true, rs:true, macd:true, tf:true,
-              donchian:true, vcp:true}
+  buyCandidates: {
+    label: 'BUY CANDIDATES',
+    desc: 'Ovtlyr Nine 8+/9 \u2014 BUY signal with stock bullish trend + active buy + no overhead block all passing. Core buy-candidate filter for actionable entries.',
+    filters: {sig:'GO', minScore:80, ovtlyrBuy:true, noOverhead:true, stkTrend:true}
   },
-  momentum: {
-    label: '\u25b6 MOMENTUM',
-    desc: 'MACD + + Above EMA200 + RS > SPY + Strong Sector + JT 12-1 Mom \u2014 confirmed trending stocks with sector tailwind, gated by the academic gold-standard 12-1 cross-sectional momentum signal. JT 12-1 is the single strongest replicated edge in equity markets; making it MUST-PASS turns this preset from "trendy" into "trendy AND riding the strongest published factor". Score \u2265120.',
-    filters: {sig:'GO', minScore:120, macd:true, ema200:true, rs:true,
-              strongSector:true, jt12:true}
+  watchlist: {
+    label: 'WATCHLIST',
+    desc: 'Ovtlyr Nine 7+/9 \u2014 setups building but not yet full BUY. Watch for the missing component(s) to flip. Good for building a watch list of stocks approaching buy territory.',
+    filters: {sig:'', minScore:70, stkTrend:true}
   },
-  bestItmCalls: {
-    label: '\u25c6 BEST ITM CALLS',
-    desc: 'Score \u2265145 + liquid ($5+, 1M+ avg vol) + in-play today + contract \u2264$8 + JT 12-1 Mom + Minervini + Pocket Pivot \u2014 deep-ITM (\u03b4 0.70\u20130.90) calls on names that pass ALL THREE highest-IC scoring rules. You\'re paying real premium for deep-ITM contracts; only setups confirmed by 12-month momentum + Stage 2 trend template + institutional accumulation should graduate.',
-    filters: {sig:'GO', minScore:145, macd:true, ema200:true, rs:true,
-              jt12:true, minervini:true, pocket:true,
-              minPrice:5, minAvgVol:1000000, volRatio:100, maxOptPrice:8}
+  greenRegime: {
+    label: 'GREEN REGIME',
+    desc: 'Ovtlyr Nine 6+/9 with market F&G rising \u2014 bullish regime filter. Wider net during confirmed up-markets. Useful for sector rotation scans when market conditions are favorable.',
+    filters: {sig:'', minScore:60, mktTrend:true, stkTrend:true}
   },
   preMarket: {
-    label: '\u25b2 PRE/POST MARKET',
-    desc: 'Extended-hours gappers screened with the SAME filters as HIGH CONVICTION (PROVEN + Analyst \u2191 + GEX + JT 12-1 + Minervini), sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.',
-    filters: {sig:'GO', minScore:140, analyst:true, proven:true, gex:true,
-              jt12:true, minervini:true, _sortByGap:true}
+    label: 'PRE/POST MARKET',
+    desc: 'Same as BUY CANDIDATES (Nine 8+/9), sorted by absolute gap %. Use any time the extended-hours session is active or on weekends.',
+    filters: {sig:'GO', minScore:80, ovtlyrBuy:true, noOverhead:true,
+              stkTrend:true, _sortByGap:true}
   }
 };
 
@@ -26786,9 +26764,8 @@ function applyStrategyMode(mode, silent){
   if(eid('sc-minscore')) eid('sc-minscore').value = (sm.filters.minScore !== undefined) ? sm.filters.minScore : 72;
 
   // Clear all indicator checkboxes first
-  ['filt-analyst','filt-gex','filt-proven',
-   'filt-52hi','filt-rs','filt-macd','filt-tf','filt-ema200','filt-vol',
-   'filt-jt12','filt-minervini','filt-pocket','filt-vcp','filt-donchian',
+  ['filt-ovtlyr-buy','filt-no-overhead','filt-stk-trend','filt-mkt-trend',
+   'filt-fg-rising','filt-no-exits','filt-proven',
    'filt-strong-sector'].forEach(function(id){
     var el = eid(id); if(el) el.checked = false;
   });
@@ -26798,29 +26775,21 @@ function applyStrategyMode(mode, silent){
   // setups about to gap on a print. User can still uncheck or set days to
   // 0 manually after the preset applies. Individual presets can override
   // by setting filters.noEarn:false / noEarnDays:0 if needed.
+  var f = sm.filters;
   var defaultNoEarn = (f.noEarn !== undefined) ? f.noEarn : true;
   var defaultEarnDays = (f.noEarnDays !== undefined) ? f.noEarnDays : 1;
   if (eid('filt-no-earn')) eid('filt-no-earn').checked = !!defaultNoEarn;
   if (eid('filt-earn-days')) eid('filt-earn-days').value = String(defaultEarnDays);
 
-  // Apply strategy-specific checkboxes
-  var f = sm.filters;
-  if(f.analyst  && eid('filt-analyst'))  eid('filt-analyst').checked  = true;
-  if(f.gex      && eid('filt-gex'))      eid('filt-gex').checked      = true;
-  if(f.proven   && eid('filt-proven'))   eid('filt-proven').checked   = true;
-  if(f.hi52     && eid('filt-52hi'))     eid('filt-52hi').checked     = true;
-  if(f.rs       && eid('filt-rs'))       eid('filt-rs').checked       = true;
-  if(f.macd     && eid('filt-macd'))     eid('filt-macd').checked     = true;
-  if(f.tf       && eid('filt-tf'))       eid('filt-tf').checked       = true;
-  if(f.ema200   && eid('filt-ema200'))   eid('filt-ema200').checked   = true;
-  if(f.vol      && eid('filt-vol'))      eid('filt-vol').checked      = true;
+  // Apply strategy-specific checkboxes (OVTLYR filters, 2026-05-23)
+  if(f.ovtlyrBuy   && eid('filt-ovtlyr-buy'))   eid('filt-ovtlyr-buy').checked   = true;
+  if(f.noOverhead  && eid('filt-no-overhead'))   eid('filt-no-overhead').checked  = true;
+  if(f.stkTrend    && eid('filt-stk-trend'))     eid('filt-stk-trend').checked    = true;
+  if(f.mktTrend    && eid('filt-mkt-trend'))     eid('filt-mkt-trend').checked    = true;
+  if(f.fgRising    && eid('filt-fg-rising'))     eid('filt-fg-rising').checked    = true;
+  if(f.noExits     && eid('filt-no-exits'))      eid('filt-no-exits').checked     = true;
+  if(f.proven      && eid('filt-proven'))        eid('filt-proven').checked       = true;
   if(f.strongSector && eid('filt-strong-sector')) eid('filt-strong-sector').checked = true;
-  // High-IC chips (2026-05-03)
-  if(f.jt12      && eid('filt-jt12'))      eid('filt-jt12').checked      = true;
-  if(f.minervini && eid('filt-minervini')) eid('filt-minervini').checked = true;
-  if(f.pocket    && eid('filt-pocket'))    eid('filt-pocket').checked    = true;
-  if(f.vcp       && eid('filt-vcp'))       eid('filt-vcp').checked       = true;
-  if(f.donchian  && eid('filt-donchian'))  eid('filt-donchian').checked  = true;
 
   // Optional screener inputs — only written when the preset specifies them
   if(f.minPrice    !== undefined && eid('sc-minprice'))    eid('sc-minprice').value    = f.minPrice;
