@@ -77,44 +77,32 @@ User: solo developer/trader. Live Tradier account `6YB72268`. Mode: `live`.
 
 `window._tradeToken` — held in JS memory only, NEVER persisted. Re-prompted each session via the TRADE: locked badge.
 
-## Scoring rules (current state, after 2026-04-29 council overhaul)
+## Scoring rules (current state — OVTLYR Nine, 2026-05-23)
 
-**Section A — Technical Momentum** (Tradier quote-derived, no history needed):
-- RSI 40-70 (+6) + RSI 50-65 Cardwell zone (+6 bonus)
-- MACD Hist > 0 (+10)
-- ADX > 25 (+6) + ADX 15-25 + DI+>DI- (+6 bonus, only fires on detail-load)
-- EMA20 > EMA50 (+10)
-- TF Aligned 2/3 (+12)
-- Sector PF > 2 (+5)
-- 52wk Hi <15% (+8) + 52wk Hi <5% George-Hwang bonus (+6)
-- RS > SPY 21d if available else 5d (+10)
-- Price > EMA200 (+6)
+The old 19-rule additive scoring was replaced with the **Ovtlyr Nine** system (PRs #3–#5). Score = Nine × 10 + small bonus, clamped 0–100. `isGo` requires signal=BUY (Nine ≥8) + score ≥ minScore.
 
-**Section B — FMP** (analyst data):
-- Analyst Revisions ↑ (+16)
-- Analyst PT exists (+8)
+**Market layer (3 booleans):**
+- SPY Bullish Trend — EMA 10 > 20 > 50
+- Market F&G Active Buy — market F&G composite 30–70 AND rising
+- Market Breadth — SPY trend proxy
 
-**Section D — Momentum** (history-based):
-- MFI(14) > 50 (+10)
-- CMO(9) > 50 (+7)
+**Sector layer (2 booleans):**
+- Sector F&G Rising > Market — sector ETF F&G rising faster than market
+- Sector ETF Bullish Trend — sector ETF EMA 10 > 20
 
-**NEW Evidence-based rules** (require 400-day history):
-- Minervini Trend Template (+15) — 6 criteria
-- Pocket Pivot (+15) — O'Neil/Morales-Kacher
-- U/D Volume Ratio 50d tiered (+12 / +8 / +4)
-- VCP — ATR Contraction (+12)
-- BBW Squeeze <p20 of 120d (+10)
-- 20d Donchian Breakout + 1.5× vol (+12)
-- JT 12-1 Momentum top quintile proxy (+15)
+**Stock layer (4 booleans):**
+- Stock Bullish Trend — EMA 10 > 20 > 50
+- Stock F&G Active Buy — stock F&G > 30 AND rising
+- Stock F&G Rising — period-over-period increase
+- No Overhead Block — no bearish OB within 2% above price
 
-**GEX Flow** (with extreme-positioning penalty):
-- ≥75% calls = **−6** (overcrowded contrarian)
-- 70-74% = +6
-- 55-69% = +4
+**F&G Composite** (per-ticker, 0–100): RSI rank (0.25) + MFI rank (0.20) + Bollinger %B (0.20) + inverted HV rank (0.20) + extension rank (0.15).
 
-**Other:** Strong Sector ±8, AVOID -15, PROVEN +8, Broken Trend penalty.
+**Signal classification:** BUY / WATCH / HOLD / EXIT / EXCLUDE.
+**Exit signals:** 10/20 EMA bear cross, gap-and-crap (5%+ gap closing below wick), stale OB hit (120+d), extreme greed stall, earnings <4d.
+**Exclusions:** Healthcare (XLV), extended >18% in 5d, price <$10, low vol (<1M), AVOID list.
 
-**Default GO threshold:** 150 (≈ 60% of new ~252-pt max).
+**Default GO threshold:** 80.
 
 ## State as of 2026-04-29 evening
 

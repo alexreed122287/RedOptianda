@@ -49,18 +49,35 @@ console.log('parse errors='+errs);
 
 ## Architecture facts that matter
 
-### Scoring pipeline
+### Scoring pipeline (OVTLYR Plan M replica, 2026-05-23)
 
 1. **Bulk scan** (~line 18640) iterates `UNIVERSE_FULL`, stamps every result with **placeholder** indicator values:
    - `ind.rsi = 50`, `ind.macd = 0`, `ind.adx = 30`, `ind.ema20 = price*0.99`, `ind.ema50 = price*0.97`, `ind.ema200 = price*0.93`, `ind.atr = price*0.015`, `ind.tf = 2`
    - These are intentional fallbacks so scoreIt produces a number when history is unavailable.
-2. **`scoreIt(ticker, ind, opt)`** (~line 16070) **backfills** every placeholder above when history is available. Three-tier fallback for history resolution:
-   - in-memory `G_HIST_CACHE[ticker]`
-   - localStorage `loadHistCache(ticker)` (24h TTL, min 100 bars)
-   - else null → leave placeholders, set `ind._synth = true`
-3. **`simInd` / `simOpt` / `simQuote`** (lines 13345/13366/13339) — pure random fallbacks when no Tradier key. Mark `_synth: true`, `_synthSrc: 'simInd' | 'simOpt'`.
-4. **Foreground enrichment** covers top-60 in ~30 sec. **Background enrichment** covers ranks 61-200 at ~30/min over ~7 min (`SC_ENRICH_LIMIT = 60`).
-5. **Cache restore** on page load: `cacheGet(CACHE_KEYS.scanResults)` rehydrates `G.results`, then calls `scoreIt` on each row to re-backfill via `loadHistCache`. Without this, stale placeholders persisted before enrichment finished show on every reload.
+2. **`scoreIt(ticker, ind, opt)`** (~line 16334) implements the **Ovtlyr Nine** — 9 boolean components across 3 layers:
+   - **Market (3):** SPY bullish trend (EMA 10>20>50), market F&G active buy (30-70 & rising), market breadth (SPY trend proxy)
+   - **Sector (2):** sector F&G rising > market F&G, sector ETF bullish trend (10>20)
+   - **Stock (4):** stock bullish trend (10>20>50), stock F&G active buy (>30 & rising), stock F&G rising, no overhead order block (≥2% away)
+   - Score = `ovtlyrNine × 10` + small bonus, clamped 0–100. `isGo` requires signal=BUY (Nine ≥8) + score ≥ minScore.
+   - F&G composite is a 5-factor technical proxy: RSI rank (0.25) + MFI rank (0.20) + Bollinger %B (0.20) + inverted HV rank (0.20) + extension rank (0.15). Produces 0–100 daily per-ticker score.
+   - Exit signals: 10/20 EMA bear cross, gap-and-crap, stale OB hit (120+d), extreme greed stall, earnings <4d.
+   - Exclusions: Healthcare (XLV), extended >18% in 5d, price <$10, low vol (<1M), AVOID list.
+   - Signal classification: BUY / WATCH / HOLD / EXIT / EXCLUDE.
+   - Three-tier history fallback: in-memory `G_HIST_CACHE[ticker]` → localStorage `loadHistCache(ticker)` (24h TTL, min 100 bars) → null (set `ind._synth = true`).
+3. **`finishScan`** pre-fetches SPY + 11 SPDR sector ETFs (`OVTLYR_SECTOR_ETFS`) so sector-level F&G + trend can resolve.
+4. **`simInd` / `simOpt` / `simQuote`** — pure random fallbacks when no Tradier key. Mark `_synth: true`, `_synthSrc: 'simInd' | 'simOpt'`.
+5. **Foreground enrichment** covers top-60 in ~30 sec. **Background enrichment** covers ranks 61-200 at ~30/min over ~7 min (`SC_ENRICH_LIMIT = 60`).
+6. **Cache restore** on page load: `cacheGet(CACHE_KEYS.scanResults)` rehydrates `G.results`, then calls `scoreIt` on each row to re-backfill via `loadHistCache`.
+
+### Strategy presets (OVTLYR-aligned)
+
+| Preset | Min Score | Filter logic |
+|---|---|---|
+| HIGH CONVICTION | 90 | Nine 9/9, signal=BUY, stock trend + F&G rising + no overhead + no exits |
+| BUY CANDIDATES | 80 | Nine 8+/9, signal=BUY, stock trend + no overhead |
+| WATCHLIST | 70 | Nine 7+/9, stock trend |
+| GREEN REGIME | 60 | Nine 6+/9, market trend + stock trend |
+| PRE/POST MARKET | 80 | Same as BUY CANDIDATES, sorted by gap % |
 
 ### Indicator implementations (all in index.html)
 
