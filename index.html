@@ -5864,6 +5864,8 @@ function reclassifyGoThreshold(){
 function toggleMobileFilters(){ /* deprecated — see comment above */ }
 function renderBuySig(){}
 function inWatchlist(){ return false; }
+window._isFmpCircuitOpen = function(){ return false; };
+window.fmpFetch = function(url){ return fetch(url); };
 function renderAlerts(){}
 function runGex(){}
 function runGexForTicker(){}
