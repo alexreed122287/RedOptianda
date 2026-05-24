@@ -3035,19 +3035,10 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <span id="sc-data-status" class="dyn-w" style="display:none;font-size:10px;font-family:var(--ff-mono);width:140px;flex:0 1 140px;min-width:0;text-align:left;cursor:pointer;" title="Click for data-coverage details from the last scan."></span>
   </div>
   <div id="sc-filter-bars">
-  <!-- Strategy mode quick filters — inline gap/font overrides removed; the
-       base .flt-bar / .flt-bar .btn rules now drive sizing for consistency
-       with every other filter row in the app. -->
-  <div class="flt-bar collapsible" id="sc-bar-strategy" data-default-collapsed style="border-bottom:1px solid var(--bg3);">
-    <button type="button" class="sec-toggle" title="Collapse / expand the STRATEGY presets row">STRATEGY</button>
-    <button class="btn blu" onclick="applyStrategyMode('highConviction')" title="Ovtlyr Nine 9/9 — perfect score across Market + Sector + Stock layers. Signal = BUY, no exits, no exclusions. The rarest, highest-conviction setups.">HIGH CONVICTION</button>
-    <button class="btn" onclick="applyStrategyMode('buyCandidates')" title="Ovtlyr Nine 8+/9 — BUY signal with stock trend + active buy + no overhead block all passing. Core buy-candidate filter.">BUY CANDIDATES</button>
-    <button class="btn" onclick="applyStrategyMode('watchlist')" title="Ovtlyr Nine 7+/9 — setups building but not yet full BUY. Watch for the missing component(s) to flip.">WATCHLIST</button>
-    <button class="btn" style="border-color:var(--grn);color:var(--grn);" onclick="applyStrategyMode('greenRegime')" title="Ovtlyr Nine 6+/9 with market F&amp;G rising — bullish regime filter. Wider net during confirmed up-markets.">GREEN REGIME</button>
-    <button class="btn" style="border-color:var(--ambb);color:var(--ambb);" onclick="applyStrategyMode('preMarket')" title="Same as BUY CANDIDATES (Nine 8+/9), sorted by absolute gap %. Use during extended-hours sessions or on weekends.">PRE/POST MARKET</button>
-    <button class="btn" style="font-size:10px;padding:3px 8px;border-color:var(--gry2);color:var(--gry);" onclick="probePreMarketData()" title="One-shot live fetch of SPY/QQQ/NVDA/TSLA/AAPL — surfaces the raw `change_percentage` Tradier is returning right now. Use it to verify pre-market data is flowing.">VERIFY</button>
-    <button class="btn" style="border-color:var(--gry2);color:var(--gry);" onclick="applyStrategyMode('clear')">&#10005; CLEAR</button>
-    <span id="pre-market-pill" style="display:none;font-family:var(--ff-mono);font-size:9px;font-weight:800;letter-spacing:1.5px;background:var(--ambb);color:var(--bg0);padding:2px 8px;border-radius:2px;animation:today-pulse 2.4s ease-in-out infinite;" title="Pre-market session is active — Tradier `last` reflects extended-hours quotes. Use the PRE-MARKET preset to sort by gap %.">PRE-MARKET LIVE</span>
+  <div class="flt-bar" id="sc-bar-strategy" style="border-bottom:1px solid var(--bg3);gap:8px;">
+    <span style="font-family:var(--ff-mono);font-size:10px;font-weight:700;letter-spacing:1.5px;color:var(--ambb);">OVTLYR SCANNER</span>
+    <span style="font-size:10px;color:var(--gry);">Ranked by Nine count + signal + F&G + RS 5D. BUY = Nine 8+/9.</span>
+    <span id="pre-market-pill" style="display:none;font-family:var(--ff-mono);font-size:9px;font-weight:800;letter-spacing:1.5px;background:var(--ambb);color:var(--bg0);padding:2px 8px;border-radius:2px;animation:today-pulse 2.4s ease-in-out infinite;" title="Pre-market session is active — Tradier `last` reflects extended-hours quotes.">PRE-MARKET LIVE</span>
   </div>
   <div class="flt-bar collapsible" id="sc-bar-filters" data-default-collapsed>
     <button type="button" class="sec-toggle" title="Collapse / expand the FILTERS row">FILTERS</button>
@@ -7278,12 +7269,7 @@ async function _bgEnrichTick() {
       // Re-score with new history; the 7 new rules can now compute
       try {
         var newScore = scoreIt(r.ticker, r.ind, r.opt);
-        r.score = newScore.score;
-        r.techScore = newScore.techScore;
-        r.fundScore = newScore.fundScore;
-        r.isGo = newScore.isGo;
-        r.rules = newScore.rules;
-        r.passes = newScore.passes;
+        _applyScore(r, newScore);
       } catch(e) { /* per-ticker score failure is non-fatal */ }
     } else {
       // PR #37: short response (rate-limit-degraded, sandbox stub, IPO with
@@ -8563,28 +8549,22 @@ function getDaysToEarnings(ticker){
 // When the PRE-MARKET preset is active the ranking pivots to absolute gap
 // % so extended-hours movers float to the top instead of being buried by
 // the score-first ordering — that's the whole point of the preset.
+var _SIG_RANK = {BUY:5, WATCH:4, HOLD:3, EXIT:2, EXCLUDE:1};
 function _resultRankCompare(a, b){
-  if (G.activePreset === 'preMarket'){
-    return Math.abs(b.changePct || 0) - Math.abs(a.changePct || 0);
-  }
-  // 1. score (primary, descending)
+  // 1. score (primary — Nine × 10 + bonus, descending)
   var d = (b.score || 0) - (a.score || 0);
   if (d !== 0) return d;
-  // 2. techScore — stronger technical setup
-  d = (b.techScore || 0) - (a.techScore || 0);
+  // 2. signal strength — BUY > WATCH > HOLD > EXIT > EXCLUDE
+  d = (_SIG_RANK[b.signal] || 0) - (_SIG_RANK[a.signal] || 0);
   if (d !== 0) return d;
-  // 3. relStr5d — stronger 5-day relative momentum
+  // 3. stock F&G — higher momentum conviction
+  d = (b.stkFG || 0) - (a.stkFG || 0);
+  if (d !== 0) return d;
+  // 4. relStr5d — stronger 5-day relative momentum
   var aRs = (a.ind && typeof a.ind.relStr5d === 'number') ? a.ind.relStr5d : 0;
   var bRs = (b.ind && typeof b.ind.relStr5d === 'number') ? b.ind.relStr5d : 0;
   d = bRs - aRs;
   if (d !== 0) return d;
-  // 4. theme dailyScore — stronger sector context
-  if (typeof getThemeStrength === 'function') {
-    var aTh = getThemeStrength(a.ticker);
-    var bTh = getThemeStrength(b.ticker);
-    d = ((bTh && bTh.dailyScore) || 0) - ((aTh && aTh.dailyScore) || 0);
-    if (d !== 0) return d;
-  }
   // 5. volume — liquidity floor
   return (b.volume || 0) - (a.volume || 0);
 }
@@ -8605,27 +8585,21 @@ function _resultRankCompare(a, b){
 //   '= tied'      — every tiebreaker was equal (rare but possible)
 function _whyRankedBelow(r, prev){
   if (!r || !prev) return '';
-  // Pre/Post preset overrides the comparator with |changePct| DESC,
-  // so the ranking has nothing to do with score/tech/RS in that mode.
-  // Surface the actual deciding factor so the label doesn't lie.
-  if (G.activePreset === 'preMarket') {
-    if (Math.abs(r.changePct||0) < Math.abs(prev.changePct||0)) return '↓ |gap %|';
-    return '= tied';
-  }
   if ((r.score||0) < (prev.score||0)) return '↓ score';
-  if ((r.techScore||0) < (prev.techScore||0)) return '↓ tech';
+  if ((_SIG_RANK[r.signal]||0) < (_SIG_RANK[prev.signal]||0)) return '↓ signal';
+  if ((r.stkFG||0) < (prev.stkFG||0)) return '↓ F&G';
   var aRs = (r.ind && typeof r.ind.relStr5d === 'number') ? r.ind.relStr5d : 0;
   var bRs = (prev.ind && typeof prev.ind.relStr5d === 'number') ? prev.ind.relStr5d : 0;
   if (aRs < bRs) return '↓ RS 5D';
-  if (typeof getThemeStrength === 'function') {
-    var aTh = getThemeStrength(r.ticker);
-    var bTh = getThemeStrength(prev.ticker);
-    var aThS = (aTh && aTh.dailyScore) || 0;
-    var bThS = (bTh && bTh.dailyScore) || 0;
-    if (aThS < bThS) return '↓ theme';
-  }
   if ((r.volume||0) < (prev.volume||0)) return '↓ volume';
   return '= tied';
+}
+
+function _applyScore(r, s){
+  r.score=s.score; r.techScore=s.techScore; r.fundScore=s.fundScore;
+  r.isGo=s.isGo; r.rules=s.rules; r.passes=s.passes;
+  r.ovtlyrNine=s.ovtlyrNine; r.signal=s.signal; r.signalDate=s.signalDate;
+  r.exitSignals=s.exitSignals; r.stkFG=s.stkFG; r.reasons=s.reasons;
 }
 
 function scoreIt(ticker, ind, opt){
@@ -8928,6 +8902,23 @@ function scoreIt(ticker, ind, opt){
                    atr3: +(ind.price - 3 * ind.atr).toFixed(4) };
   }
 
+  // ── Buy signal trigger date: walk back through history to find when the
+  //    stock's bullish EMA stack (10>20>50) first formed in this current run.
+  //    Stops at the most recent bearish cross (the start of this trend leg).
+  var signalDate = null;
+  if (signal === 'BUY' && _hist && _hist.length >= 52) {
+    for (var sd = _hist.length - 2; sd >= 50; sd--) {
+      var _se10 = calcEMA(_hist.slice(0, sd + 1), 10);
+      var _se20 = calcEMA(_hist.slice(0, sd + 1), 20);
+      var _se50 = calcEMA(_hist.slice(0, sd + 1), 50);
+      if (!(_se10 > _se20 && _se20 > _se50)) {
+        signalDate = _hist[sd + 1] ? _hist[sd + 1].date : null;
+        break;
+      }
+    }
+    if (!signalDate && _hist[50]) signalDate = _hist[50].date;
+  }
+
   return {
     score:       total,
     techScore:   clamp(techScore, 0, 90),
@@ -8949,7 +8940,8 @@ function scoreIt(ticker, ind, opt){
     exitSignals: exitSignals,
     exclusions:  exclusionList,
     sectorEtf:   sectorEtf,
-    stopLevels:  stopLevels
+    stopLevels:  stopLevels,
+    signalDate:  signalDate
   };
 }
 
@@ -9176,23 +9168,19 @@ function viewDetail(ticker,detId,emptyId){
    if(optData.livePrice&&optData.livePrice>0){r.price=optData.livePrice;}
    r.opt=Object.assign(r.opt||{},optData);
    var newScore=scoreIt(ticker,r.ind,r.opt);
-   r.score=newScore.score;r.techScore=newScore.techScore;r.fundScore=newScore.fundScore;
-   r.isGo=newScore.isGo;r.filtersPass=newScore.filtersPass;
-   r.rules=newScore.rules;r.passes=newScore.passes;
+   _applyScore(r, newScore); r.filtersPass=newScore.filtersPass;
    G.detailOpt={ticker:ticker,strike:optData.strike,exp:optData.exp};
    buildDetail(r,detId,emptyId); renderScan();
    fetchIndicatorHistory(ticker).then(function(days){
     if(days){G_HIST_CACHE[ticker]=days;}
     var s1=scoreIt(ticker,r.ind,r.opt);
-    r.score=s1.score;r.techScore=s1.techScore;r.fundScore=s1.fundScore;
-    r.isGo=s1.isGo;r.rules=s1.rules;r.passes=s1.passes;
+    _applyScore(r, s1);
     buildDetail(r,detId,emptyId); renderScan();
     if(fmpKey){
      fetchFmpData(ticker).then(function(fmpData){
       if(!fmpData)return;
       var s2=scoreIt(ticker,r.ind,r.opt);
-      r.score=s2.score;r.techScore=s2.techScore;r.fundScore=s2.fundScore;
-      r.isGo=s2.isGo;r.rules=s2.rules;r.passes=s2.passes;
+      _applyScore(r, s2);
       buildDetail(r,detId,emptyId); renderScan();
      });
     }
@@ -9204,8 +9192,7 @@ function viewDetail(ticker,detId,emptyId){
    fetchFmpData(ticker).then(function(fmpData){
     if(!fmpData)return;
     var updated=scoreIt(ticker,r.ind,r.opt);
-    r.score=updated.score;r.techScore=updated.techScore;r.fundScore=updated.fundScore;
-    r.isGo=updated.isGo;r.rules=updated.rules;r.passes=updated.passes;
+    _applyScore(r, updated);
     buildDetail(r,detId,emptyId); renderScan();
    });
   });
@@ -10375,10 +10362,11 @@ async function runScan(opts){
     // CUSTOM-ticker merge removed (input UI deleted; helpers stay dormant)
     staticList.forEach(function(u){
       var q = simQuote(u.t), ind = simInd(u.t, q.price), opt = simOpt(q.price), sc2 = scoreIt(u.t, ind, opt);
-      G.results.push({ticker:u.t, sector:u.s, price:q.price, change:q.change, changePct:q.changePct,
-        volume:q.volume, ind:ind, opt:opt, score:sc2.score, isGo:sc2.isGo,
-        filtersPass:sc2.filtersPass, rules:sc2.rules, passes:sc2.passes,
-        _synth:true, _synthSrc:'simQuote'});  // PR #31: stamp the row so consumers don't only see r.ind._synth
+      var _row = {ticker:u.t, sector:u.s, price:q.price, change:q.change, changePct:q.changePct,
+        volume:q.volume, ind:ind, opt:opt, filtersPass:sc2.filtersPass,
+        _synth:true, _synthSrc:'simQuote'};
+      _applyScore(_row, sc2);
+      G.results.push(_row);
     });
     finishScan();
     return;
@@ -10406,11 +10394,12 @@ async function runScan(opts){
       G.results = [];
       UNIVERSE.forEach(function(u){
         var q = simQuote(u.t), ind = simInd(u.t, q.price), opt = simOpt(q.price), sc2 = scoreIt(u.t, ind, opt);
-        G.results.push({ticker:u.t, sector:u.s, price:q.price, change:q.change, changePct:q.changePct,
-          volume:q.volume, ind:ind, opt:opt, score:sc2.score, isGo:sc2.isGo,
-          filtersPass:sc2.filtersPass, rules:sc2.rules, passes:sc2.passes,
+        var _row = {ticker:u.t, sector:u.s, price:q.price, change:q.change, changePct:q.changePct,
+          volume:q.volume, ind:ind, opt:opt, filtersPass:sc2.filtersPass,
           _synth:true, _synthSrc:'simQuote',
-          _synthCause:(_rlRecent ? 'tradier-429' : 'screener-empty')});  // PR #36: cause attribution
+          _synthCause:(_rlRecent ? 'tradier-429' : 'screener-empty')};
+        _applyScore(_row, sc2);
+        G.results.push(_row);
       });
       finishScan();
       return;
@@ -10445,14 +10434,14 @@ async function runScan(opts){
       var usedOpt = simOpt(u.price);
       var sc2 = scoreIt(u.t, ind, usedOpt);
 
-      G.results.push({
+      var _row = {
         ticker: u.t, sector: u.s, companyName: u.companyName || '', price: u.price,
         change: u.change, changePct: u.changePct,
         volume: u.volume, ind: ind, opt: usedOpt,
-        score: sc2.score, techScore: sc2.techScore, fundScore: sc2.fundScore,
-        isGo: sc2.isGo, filtersPass: sc2.filtersPass,
-        rules: sc2.rules, passes: sc2.passes
-      });
+        filtersPass: sc2.filtersPass
+      };
+      _applyScore(_row, sc2);
+      G.results.push(_row);
 
       if(idx % 50 === 0){
         var pct = 65 + (idx / total) * 30;
@@ -10476,10 +10465,11 @@ async function runScan(opts){
     G.results = [];
     UNIVERSE.forEach(function(u){
       var q = simQuote(u.t), ind = simInd(u.t, q.price), opt = simOpt(q.price), sc2 = scoreIt(u.t, ind, opt);
-      G.results.push({ticker:u.t, sector:u.s, price:q.price, change:q.change, changePct:q.changePct,
-        volume:q.volume, ind:ind, opt:opt, score:sc2.score, isGo:sc2.isGo,
-        filtersPass:sc2.filtersPass, rules:sc2.rules, passes:sc2.passes,
-        _synth:true, _synthSrc:'simQuote'});  // PR #31: catch-block fallback is still sim data
+      var _row = {ticker:u.t, sector:u.s, price:q.price, change:q.change, changePct:q.changePct,
+        volume:q.volume, ind:ind, opt:opt, filtersPass:sc2.filtersPass,
+        _synth:true, _synthSrc:'simQuote'};
+      _applyScore(_row, sc2);
+      G.results.push(_row);
     });
     try { finishScan(); }
     catch(e2){
@@ -10738,8 +10728,7 @@ function finishScan(){
           r.indEnriched = true;
           try {
             var u = scoreIt(r.ticker, r.ind, r.opt);
-            r.score = u.score; r.techScore = u.techScore; r.fundScore = u.fundScore;
-            r.isGo = u.isGo; r.rules = u.rules; r.passes = u.passes;
+            _applyScore(r, u);
           } catch (e) {
             console.warn('[scan] cleanup scoreIt threw for '+r.ticker+': '+e.message);
           }
@@ -10797,8 +10786,7 @@ function finishScan(){
           var r = G.resultsByTicker[t];   // O(1) instead of O(N) filter
           if(r){
             var updated = scoreIt(t, r.ind, r.opt);
-            r.score=updated.score; r.techScore=updated.techScore; r.fundScore=updated.fundScore;
-            r.isGo=updated.isGo; r.rules=updated.rules; r.passes=updated.passes;
+            _applyScore(r, updated);
             r.fmpEnriched = true;
             if(typeof window._rescoredCount==='undefined') window._rescoredCount=0;
             window._rescoredCount++;
@@ -10899,8 +10887,7 @@ function finishScan(){
         // the existing pre-enrichment score from the bulk pass.
         try {
           var u=scoreIt(t,r.ind,r.opt);
-          r.score=u.score; r.techScore=u.techScore; r.fundScore=u.fundScore;
-          r.isGo=u.isGo; r.rules=u.rules; r.passes=u.passes;
+          _applyScore(r, u);
         } catch (scoreErr) {
           console.warn('[scan] scoreIt threw for '+t+': '+scoreErr.message+' \u2014 keeping bulk-pass score');
         }
@@ -11623,9 +11610,8 @@ function renderScan(){
     {k:'sector',l:'SECTOR'},
     {k:'changePct',l:_chgColLabel()},
     {k:'volume',l:'VOLUME'},
-    {k:'techScore',l:'TECH'},
-    {k:'fundScore',l:'FUND'},
-    {k:'_relStr5d',l:'RS 5D'}
+    {k:'_relStr5d',l:'RS 5D'},
+    {k:'_sigDate',l:'SIGNAL DATE'}
   ];
   if(hasGex){
     cols.push({k:'gexFlow',l:'FLOW'});
@@ -11645,29 +11631,29 @@ function renderScan(){
     if(c.k === '_rank'){
       // Clarify the rank's actual sort key \u2014 the Pre/Post preset
       // overrides the default score-tiebreaker chain with |gap %|.
-      var _rankTip = (G.activePreset === 'preMarket')
-        ? 'PRE/POST MARKET preset active \u2014 ranking is by absolute % change (largest gappers first), NOT by score. Click \u2715 CLEAR in the STRATEGY row to restore the score-tiebreaker default.'
-        : 'Rank by tiebreaker: score \u2192 techScore \u2192 RS 5D \u2192 theme dailyScore \u2192 volume';
+      var _rankTip = 'Rank by OVTLYR strength: score \u2192 signal (BUY>WATCH>HOLD) \u2192 stock F&G \u2192 RS 5D \u2192 volume';
       th+='<th style="cursor:default;width:36px;color:var(--gry);font-size:10px;letter-spacing:1px;" title="'+_rankTip+'">#</th>';
       return;
     }
     if(c.k === '_relStr5d'){
-      // iBUG-8 fix 2026-05-09: hide on iPhone \u2014 secondary tiebreaker
-      // info that doesn't need to be in the always-visible columns.
-      th+='<th class="col-hide-mobile" style="cursor:default;color:var(--amb);font-size:10px;letter-spacing:1px;" title="5-day relative strength vs SPY. Tiebreaker after score+tech+fund \u2014 when those are equal, higher RS ranks above.">RS 5D</th>';
+      th+='<th class="col-hide-mobile" style="cursor:default;color:var(--amb);font-size:10px;letter-spacing:1px;" title="5-day relative strength vs SPY. Tiebreaker when Nine count + F&G are equal.">RS 5D</th>';
+      return;
+    }
+    if(c.k === '_sigDate'){
+      th+='<th class="col-hide-mobile" style="cursor:default;color:var(--ambb);font-size:10px;letter-spacing:1px;" title="Date the BUY signal triggered \u2014 when the stock\'s EMA 10>20>50 bullish stack first formed in this trend leg. Only shown for BUY signals.">SIGNAL DATE</th>';
       return;
     }
     // iBUG-8 fix 2026-05-09: hide secondary scanner columns on iPhone
     // (SECTOR / VOLUME / TECH / FUND / FLOW / CALL%) so the table fits
     // 393px portrait without horizontal scroll. User can tap the row to
     // open the detail drawer for full data.
-    var _mobHide = (c.k === 'sector' || c.k === 'volume' || c.k === 'techScore' || c.k === 'fundScore' || c.k === 'gexFlow' || c.k === 'gexCall')
+    var _mobHide = (c.k === 'sector' || c.k === 'volume' || c.k === 'gexFlow' || c.k === 'gexCall' || c.k === '_sigDate')
       ? ' class="col-hide-mobile"' : '';
     // Suppress the SCORE column's \u25bc/\u25b2 arrow when Pre/Post preset is
     // active \u2014 that preset overrides sortCol with |gap %|, so the score
     // arrow would otherwise lie about the actual sort. The CHG % column
     // still gets an info tip below.
-    var _suppressArr = (G.activePreset === 'preMarket' && c.k === 'score');
+    var _suppressArr = false;
     var arr=(G.sortCol===c.k && !_suppressArr)?(G.sortDir>0?' \u25b2':' \u25bc'):'';
     var thAttrs = '';
     if(c.k === 'changePct'){
@@ -11705,8 +11691,6 @@ function renderScan(){
     }
     var chgCls=r.changePct>=0?'pnl-pos':'pnl-neg';
     var tk=r.ticker;
-    var tech=r.techScore||0;
-    var fund=r.fundScore||0;
     var rs5d = (r.ind && typeof r.ind.relStr5d === 'number') ? r.ind.relStr5d : null;
     var rsCellCls = rs5d == null ? '' : (rs5d > 0 ? 'pnl-pos' : 'pnl-neg');
     var rsCellTxt = rs5d == null ? '<span style="color:var(--gry2);">—</span>'
@@ -11733,10 +11717,6 @@ function renderScan(){
       +'</div>'
       +nineBadge
       +'</div>';
-
-    // Tech/fund mini breakdown
-    var techCls=tech>=60?'pnl-pos':tech>=40?'':'pnl-neg';
-    var fundCls=fund>=15?'pnl-pos':fund>=8?'':'pnl-neg';
 
     // THEME cell — strongest industry theme containing this ticker. Tries
     // IND.tickerAllThemes first (richest data, populated by indDraw); if
@@ -11785,7 +11765,7 @@ function renderScan(){
     // Tooltip: spell out the full sort order so the user understands
     // 'RS 5D' as a label only fires after score + techScore have tied.
     var _whyTitle = _why
-      ? 'Ranked #'+(idx+1)+' — beat by row #'+idx+' on '+_why.replace(/^[↓=]\s*/,'')+'.\n\nSort priority: 1) score 2) techScore 3) RS 5D 4) theme score 5) volume. The first non-tied factor wins, so when this label says "RS 5D" the rows above and below tied on score AND techScore.'
+      ? 'Ranked #'+(idx+1)+' — beat by row #'+idx+' on '+_why.replace(/^[↓=]\s*/,'')+'.\n\nSort: 1) score 2) signal strength 3) stock F&G 4) RS 5D 5) volume.'
       : 'Top of ranked list';
     var _whyCol = _why === '' ? 'var(--grn)'
                : _why === '↓ score' ? 'var(--gry)'
@@ -11809,9 +11789,8 @@ function renderScan(){
       +'<td class="col-hide-mobile" style="font-size:11px;color:var(--gry);">'+r.sector+'</td>'
       +'<td class="'+chgCls+'" title="'+(Math.abs(r.changePct||0) > 500 ? 'EXTREME — verify with broker. Source: '+(r._source||'tradier')+'.' : '')+'">'+(r.changePct>=0?'+':'')+fmtP(r.changePct)+(Math.abs(r.changePct||0) > 500 ? ' <span style="color:var(--wrn);font-size:9px;">⚠</span>' : '')+'</td>'
       +'<td class="col-hide-mobile" title="Raw volume">'+fmtComma(r.volume)+'</td>'
-      +'<td class="col-hide-mobile '+techCls+'" style="font-size:11px;">'+tech+'</td>'
-      +'<td class="col-hide-mobile '+fundCls+'" style="font-size:11px;color:'+(fund>0?'var(--amb)':'var(--gry)')+';">'+fund+'</td>'
-      +'<td class="col-hide-mobile '+rsCellCls+'" style="font-size:11px;">'+rsCellTxt+'</td>';
+      +'<td class="col-hide-mobile '+rsCellCls+'" style="font-size:11px;">'+rsCellTxt+'</td>'
+      +'<td class="col-hide-mobile" style="font-size:10px;font-family:var(--ff-mono);color:'+(r.signalDate?'var(--ambb)':'var(--gry2)')+';">'+(r.signalDate||'—')+'</td>';
 
     if(hasGex){
       var gx = gexMap[tk];
@@ -16530,17 +16509,10 @@ function init(){
   }catch(e){}
   try{ gatherKnownSectors(); populateSectorCheckboxes(); updateSectorLabel(); }catch(e){}
 
-  // Pre-select High Conviction strategy as the default scanner mode.
-  // This seeds Signal=GO, Min Score=120, and the 3 MUST PASS confirmation
-  // boxes (PROVEN, Analyst Revisions ↑, GEX Call Heavy). Runs silently;
-  // the user can click CLEAR or any other strategy button to override.
+  // Default scanner: OVTLYR mode — signal=GO, min score=80 (Nine 8+/9 = BUY).
   try{
-    if(typeof applyStrategyMode === 'function'){
-      // Defer slightly so sector checkboxes and other UI have mounted first
-      setTimeout(function(){
-        try{ applyStrategyMode('highConviction', true); }catch(_e){}
-      }, 50);
-    }
+    if(eid('sc-sig')) eid('sc-sig').value = 'GO';
+    if(eid('sc-minscore')) eid('sc-minscore').value = '80';
   }catch(e){}
 
   updateClock();
@@ -16579,14 +16551,7 @@ function init(){
         try {
           if(typeof scoreIt === 'function'){
             var sc = scoreIt(r.ticker, r.ind, r.opt || {});
-            if(sc){
-              r.score = sc.score;
-              r.techScore = sc.techScore;
-              r.fundScore = sc.fundScore;
-              r.isGo = sc.isGo;
-              r.rules = sc.rules;
-              r.passes = sc.passes;
-            }
+            if(sc) _applyScore(r, sc);
           }
         } catch(_){}
       });
