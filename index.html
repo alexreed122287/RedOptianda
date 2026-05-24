@@ -17519,6 +17519,33 @@ window.addEventListener('DOMContentLoaded',init);
       return bad === 0;
     }},
 
+    // OVTLYR Nine scorecard (PR #40) ────────────────────────────────────
+    { tab:'sc', label:'goThreshold = 80 (OVTLYR BUY = Nine 8+/9)', sev:'critical', fn:function(){
+      return typeof goThreshold === 'number' && goThreshold === 80;
+    }},
+    { tab:'sc', label:'scoreIt BUY requires Nine >= 8 in source', sev:'critical', fn:function(){
+      try {
+        var src = (typeof scoreIt === 'function') ? scoreIt.toString() : '';
+        if(!src) return 'n/a';
+        return src.indexOf('nineCount >= 8') >= 0;
+      } catch(_){ return 'n/a'; }
+    }},
+    { tab:'sc', label:'buildDetail renders OVTLYR Nine scorecard', sev:'important', fn:function(){
+      try {
+        var src = (typeof buildDetail === 'function') ? buildDetail.toString() : '';
+        if(!src) return 'n/a';
+        return src.indexOf('MARKET') >= 0 && src.indexOf('SECTOR') >= 0 && src.indexOf('STOCK') >= 0
+            && src.indexOf('Nine') >= 0;
+      } catch(_){ return 'n/a'; }
+    }},
+    { tab:'sc', label:'No GEX RUN pill in renderScan rows', sev:'info', fn:function(){
+      try {
+        var src = (typeof renderScan === 'function') ? renderScan.toString() : '';
+        if(!src) return 'n/a';
+        return src.indexOf('gex-pill') < 0;
+      } catch(_){ return 'n/a'; }
+    }},
+
     // Buy Sig tab ─────────────────────────────────────────────────────────
     { tab:'bs', label:'GO count consistent with G.results', sev:'critical', fn:function(){
       var el = $('bs-go'); if(!el) return 'n/a';
