@@ -3095,7 +3095,7 @@ body, body *{transition:background-color .25s ease, color .25s ease, border-colo
     <!-- B-2 default Min Score bumped 89 -> 100. With theme overlay (added 2026-04)
          scores trend ~10 pts higher, so the historical "GO rate" at 89 became
          too permissive. 100 preserves the prior selectivity. Adjust to taste. -->
-    <label>Min Score <input type="number" id="sc-minscore" value="70" style="width:80px;" onchange="reclassifyGoThreshold()" title="Default 70 — OVTLYR Nine 7+/9 maps to score 70 on the 0-100 scale (each Nine point = 10). 80 = Nine 8+/9 (a true BUY candidate). 90 = perfect 9/9. Below 60 = setup not complete."></label>
+    <label>Min Score <input type="number" id="sc-minscore" value="80" style="width:80px;" onchange="reclassifyGoThreshold()" title="Default 80 — OVTLYR Nine 8+/9 = BUY signal. 90 = Nine 9/9 (HIGH CONVICTION). 70 = WATCHLIST. Score = Nine count × 10 + bonus."></label>
     <!-- v2.17.3: long-call entry filters. Max premium = upper bound on the
          suggested call's mid price ($/contract before ×100). DTE range
          filters out too-short / too-long expiries. Both apply only when
@@ -5873,7 +5873,102 @@ function renderPositionsTable(){}
 function refreshWL(){}
 function saveAppSettings(){}
 function fetchBalances(){}
-function buildDetail(){}
+function buildDetail(r, detId, emptyId){
+  if(!r) return;
+  var det = eid(detId), emp = eid(emptyId);
+  if(!det) return;
+  if(emp) emp.style.display = 'none';
+  det.style.display = 'block';
+  var sc = r.score || 0;
+  var nine = (r.rules || []).filter(function(x){ return x.isOvtlyr && !x.isExit && !x.isExclusion; });
+  var nineCount = nine.filter(function(x){ return x.pass; }).length;
+  var sig = 'HOLD';
+  var sigClr = 'var(--gry)';
+  if(r.isGo){ sig='BUY'; sigClr='var(--grn)'; }
+  else {
+    var rr = r.rules || [];
+    for(var i=0;i<rr.length;i++){
+      if(rr[i].isExclusion && !rr[i].pass){ sig='EXCLUDE'; sigClr='var(--ngo)'; break; }
+      if(rr[i].isExit && !rr[i].pass){ sig='EXIT'; sigClr='var(--ngo)'; break; }
+    }
+    if(sig==='HOLD' && nineCount >= 8) { sig='BUY'; sigClr='var(--grn)'; }
+    else if(sig==='HOLD' && nineCount >= 6) { sig='WATCH'; sigClr='var(--amb)'; }
+  }
+  var h = '<div style="padding:12px;">';
+  h += '<div style="display:flex;align-items:center;gap:10px;margin-bottom:12px;">';
+  h += '<span style="font-size:20px;font-weight:700;">'+_esc(r.ticker)+'</span>';
+  h += '<span style="font-size:14px;color:var(--gry);">$'+fmt2(r.price)+'</span>';
+  h += '<span style="font-size:13px;font-weight:700;color:'+sigClr+';border:1px solid '+sigClr+';padding:2px 8px;border-radius:3px;">'+sig+'</span>';
+  h += '</div>';
+  h += '<div style="display:flex;align-items:baseline;gap:8px;margin-bottom:14px;">';
+  h += '<span style="font-size:36px;font-weight:800;color:'+(nineCount>=8?'var(--grn)':nineCount>=6?'var(--amb)':'var(--gry)')+';">'+nineCount+'</span>';
+  h += '<span style="font-size:16px;color:var(--gry);">/ 9</span>';
+  h += '<span style="font-size:12px;color:var(--gry);margin-left:4px;">Score: '+sc+'</span>';
+  h += '</div>';
+  var layers = [
+    {label:'MARKET', color:'#4fc3f7', items:[]},
+    {label:'SECTOR', color:'#ab47bc', items:[]},
+    {label:'STOCK',  color:'#66bb6a', items:[]}
+  ];
+  nine.forEach(function(rule){
+    var n = rule.n || '';
+    if(n.indexOf('MARKET')===0) layers[0].items.push(rule);
+    else if(n.indexOf('SECTOR')===0) layers[1].items.push(rule);
+    else if(n.indexOf('STOCK')===0) layers[2].items.push(rule);
+  });
+  layers.forEach(function(layer){
+    var passed = layer.items.filter(function(x){return x.pass;}).length;
+    h += '<div style="margin-bottom:10px;">';
+    h += '<div style="font-size:11px;font-weight:700;color:'+layer.color+';letter-spacing:1px;margin-bottom:4px;">'+layer.label+' ('+passed+'/'+layer.items.length+')</div>';
+    layer.items.forEach(function(rule){
+      var icon = rule.pass ? '<span style="color:var(--grn);">&#10003;</span>' : '<span style="color:var(--ngo);">&#10007;</span>';
+      var label = (rule.n||'').replace(/^(MARKET|SECTOR|STOCK)\s+/,'');
+      h += '<div style="display:flex;align-items:center;gap:6px;padding:3px 0;font-size:12px;">';
+      h += icon;
+      h += '<span style="flex:1;color:'+(rule.pass?'var(--txt)':'var(--gry)')+';">'+_esc(label)+'</span>';
+      h += '<span style="font-size:10px;color:var(--gry);font-family:var(--ff-mono);">'+_esc(rule.val||'')+'</span>';
+      h += '</div>';
+    });
+    h += '</div>';
+  });
+  var exits = (r.rules||[]).filter(function(x){return x.isExit;});
+  if(exits.length){
+    exits.forEach(function(ex){
+      h += '<div style="margin-bottom:6px;">';
+      h += '<div style="font-size:11px;font-weight:700;color:var(--ngo);letter-spacing:1px;margin-bottom:3px;">EXIT SIGNALS</div>';
+      h += '<div style="font-size:12px;color:'+(ex.pass?'var(--grn)':'var(--ngo)')+';">'+(ex.pass?'None active':_esc(ex.val||''))+'</div>';
+      h += '</div>';
+    });
+  }
+  var excl = (r.rules||[]).filter(function(x){return x.isExclusion;});
+  if(excl.length){
+    excl.forEach(function(ex){
+      h += '<div style="margin-bottom:6px;">';
+      h += '<div style="font-size:11px;font-weight:700;color:var(--gry);letter-spacing:1px;margin-bottom:3px;">EXCLUSIONS</div>';
+      h += '<div style="font-size:12px;color:'+(ex.pass?'var(--grn)':'var(--ngo)')+';">'+(ex.pass?'Clean':_esc(ex.val||''))+'</div>';
+      h += '</div>';
+    });
+  }
+  h += '<div style="margin-top:12px;padding-top:10px;border-top:1px solid var(--brd);">';
+  h += '<div style="font-size:10px;font-weight:700;color:var(--gry);letter-spacing:1px;margin-bottom:6px;">SCORE WEIGHTINGS</div>';
+  h += '<div style="font-size:11px;color:var(--gry);line-height:1.6;">';
+  h += 'Each of the 9 components = <b>10 pts</b> (binary pass/fail)<br>';
+  h += 'PROVEN ticker bonus = <b>+5 pts</b><br>';
+  h += 'Active exit signal penalty = <b>-20 pts</b><br>';
+  h += 'Excluded = <b>0 pts</b> (hard zero)<br>';
+  h += 'Range: <b>0 &ndash; 100</b><br>';
+  h += '<span style="color:var(--grn);">GO</span> = Signal BUY (Nine 8+) + score &ge; min threshold';
+  h += '</div></div>';
+  if(r.ind && r.ind.atr > 0 && r.price > 0){
+    var atr2 = (r.price - 2*r.ind.atr).toFixed(2);
+    var atr3 = (r.price - 3*r.ind.atr).toFixed(2);
+    h += '<div style="margin-top:8px;font-size:11px;color:var(--gry);">';
+    h += 'Stop levels: <span style="color:var(--amb);">2-ATR $'+atr2+'</span> &middot; <span style="color:var(--ngo);">3-ATR $'+atr3+'</span>';
+    h += '</div>';
+  }
+  h += '</div>';
+  det.innerHTML = h;
+}
 function fetchLiveQuote(){}
 function fetchPositions(){}
 function renderPortfolio(){}
@@ -8816,7 +8911,7 @@ function scoreIt(ticker, ind, opt){
   if (excluded) total = 0;
   total = clamp(total, 0, 100);
 
-  var goThreshold = 70;       // Default: Nine 7+ (was 130 on old 0-164 scale)
+  var goThreshold = 80;       // Default: Nine 8+/9 = BUY signal
   try {
     var el = (typeof document !== 'undefined') ? document.getElementById('sc-minscore') : null;
     if (el && el.value !== '') {
@@ -11586,7 +11681,6 @@ function renderScan(){
     th+='<th data-col="'+c.k+'" onclick="sortTable(this.dataset.col)"'+thAttrs+_mobHide+'>'+c.l+arr+'</th>';
     var lbl=(c.l||'').toUpperCase();
     if(lbl==='SIG'||lbl==='SIGNAL'||lbl==='GO/NO-GO'||lbl==='GO'){
-      th+='<th style="cursor:default;color:var(--amb);font-size:10px;letter-spacing:1px;">BUY</th>';
       th+='<th style="cursor:default;color:var(--amb);font-size:10px;letter-spacing:1px;" title="Strongest industry theme this ticker belongs to (top score; hover row cell for full list)">THEME</th>';
     }
   });
@@ -11697,22 +11791,13 @@ function renderScan(){
                : _why === '↓ score' ? 'var(--gry)'
                : _why === '= tied' ? 'var(--gry)'
                :                     'var(--ambb)';   // tiebreaker beats stand out
-    // GEX coverage indicator: ✓ if data present, RUN pill if missing
-    // (clicking the pill calls runGexForTicker(t) — single-ticker fetch).
-    var _gxEntry = gexMap[tk];
-    var gexPill;
-    if (_gxEntry && !_gxEntry.sim) {
-      gexPill = '<span class="gex-pill ok" title="GEX data loaded — '+_gxEntry.flow+', '+_gxEntry.call+'% calls">✓</span>';
-    } else {
-      gexPill = '<span class="gex-pill mis" data-tk="'+tk+'" onclick="event.stopPropagation();runGexForTicker(\''+tk+'\')" title="RUN GEX for this ticker — fetches the 30-day options chain and computes call vs put OI flow + gamma flip strike. This ticker is outside the top-200 batch that runs automatically after every scan, so its GEX rule + bullish-flow indicator are still empty. Click RUN to fetch just this ticker (≈3s, 2 API calls). The button flips to ✓ once data lands.">RUN</span>';
-    }
     rows+='<tr data-ticker="'+tk+'"'+(_isSynth?' class="row-synth"':'')+' onclick="viewDetail(this.dataset.ticker,\'sc-detail\',\'sc-det-empty\')">'
       +'<td style="text-align:center;padding:0;">'+starHTML(tk,14)+'</td>'
       +'<td style="text-align:center;font-size:10px;color:var(--gry2);font-family:var(--ff-mono);" title="'+_whyTitle.replace(/"/g,'&quot;')+'">'
       +  '<div style="line-height:1.1;">'+(idx+1)+'</div>'
       +  (_why ? '<div style="font-size:8px;color:'+_whyCol+';margin-top:1px;white-space:nowrap;">'+_why+'</div>' : '')
       +'</td>'
-      +'<td>'+chartIconBtnHtml(tk)+'<b>'+tk+'</b>'+gexPill+'</td>'
+      +'<td>'+chartIconBtnHtml(tk)+'<b>'+tk+'</b>'+'</td>'
       // v2.18.6 fix: PRICE goes here (right after SYMBOL) to match the
       // header order. The previous layout emitted PRICE after SECTOR,
       // shifting every column label one slot left of its value — most
@@ -11720,7 +11805,6 @@ function renderScan(){
       +'<td>$'+fmt2(r.price)+'</td>'
       +'<td>'+scoreBar+'</td>'
       +'<td>'+sigBadge+'</td>'
-      +'<td><button class="btn" style="font-size:10px;padding:3px 10px;white-space:nowrap;border-color:var(--amb);color:var(--amb);background:var(--amb3);" onclick="event.stopPropagation();openContractPanel(\''+tk+'\')" title="View all call contracts">▲ BUY</button></td>'
       +themeCell
       +'<td class="col-hide-mobile" style="font-size:11px;color:var(--gry);">'+r.sector+'</td>'
       +'<td class="'+chgCls+'" title="'+(Math.abs(r.changePct||0) > 500 ? 'EXTREME — verify with broker. Source: '+(r._source||'tradier')+'.' : '')+'">'+(r.changePct>=0?'+':'')+fmtP(r.changePct)+(Math.abs(r.changePct||0) > 500 ? ' <span style="color:var(--wrn);font-size:9px;">⚠</span>' : '')+'</td>'
