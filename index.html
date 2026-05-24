@@ -4249,6 +4249,7 @@ function _updateSandboxBanner(){
 try { window._updateSandboxBanner = _updateSandboxBanner; } catch(_){}
 
 var AVOID=['LULU','OXY','TDG','DIS','CMCSA','GIS','PWR','MRNA','RIVN','PLUG'];
+var PROVEN=['URI','C','GOOG','GS','JPM','HAL','VLO','MPC','ICE','CME','FTNT','ORCL','PANW','KO','RCL','NVDA','MSFT','AMZN','V','META','CAT','XOM','PLTR','MRVL','MU','ZS','SMCI','KTOS','AVAV','LITE','COHR','GLW','AMD','GOOGL','TSLA','AMAT','LRCX','RTX','NOC'];
 
 // OVTLYR.com reference signals — snapshot 2026-05-22/23 for calibration.
 // sig: 'B'=Buy, 'S'=Sell | d: signal start date | r: OVTLYR signal return %
@@ -5862,6 +5863,7 @@ function reclassifyGoThreshold(){
 //    `data-default-collapsed` + the `collapsed` class only.
 function toggleMobileFilters(){ /* deprecated — see comment above */ }
 function renderBuySig(){}
+function inWatchlist(){ return false; }
 function renderAlerts(){}
 function runGex(){}
 function runGexForTicker(){}
