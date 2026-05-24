@@ -6702,6 +6702,50 @@ function renderBuySig(){}
 function renderAlerts(){}
 function runGex(){}
 function runGexForTicker(){}
+function renderPositionsTable(){}
+function refreshWL(){}
+function saveAppSettings(){}
+function fetchBalances(){}
+function buildDetail(){}
+function fetchLiveQuote(){}
+function fetchPositions(){}
+function renderPortfolio(){}
+function cwGetAll(){ return []; }
+function cwRenderTable(){}
+function pfLoad(){ return {columns:[]}; }
+function pfSave(){}
+function pfGetCol(){ return null; }
+function pfAddRow(){}
+function closeContractPanel(){}
+function openOrderStatusModal(){}
+function closeOrderStatusModal(){}
+function onOrderTypeChange(){}
+function startGexAutoSchedule(){}
+function stopGexAutoSchedule(){}
+function _syncStatus(){}
+function _syncSnapshot(){ return {}; }
+function drawPnlChart(){}
+function closePosition(){}
+function closePositionMarket(){}
+function hcModalSubmit(){}
+function startTsPoller(){}
+function stopTsPoller(){}
+function executeTsClose(){}
+function atExecuteTrade(){}
+function saveSmartExitsConfig(){}
+function runApiAnalyzer(){}
+function showApiBreakdown(){}
+function _journalSave(){}
+function _posAlertClear(){}
+function _posAlertSave(){}
+function saveCustomTickers(){}
+function switchDetTab(){}
+function calcPnlAtPrice(){ return 0; }
+function updateStepFillMode(){}
+function wlRenderChart(){}
+function renderContractPanel(){}
+function saveGexCache(){}
+function loadGexCache(){}
 
 function addAlert(tk,msg,type){
   G.alerts.unshift({tk:tk,msg:msg,type:type,ts:_fmtCT_NowTime()});
@@ -23157,7 +23201,7 @@ function init(){
     } catch(_){}
   }
   loadKeys();
-  loadAppSettings();
+  if (typeof loadAppSettings === 'function') loadAppSettings();
   // Restore screener + filter settings (Save Settings button writes the snapshot)
   if (typeof loadScanSettings === 'function') loadScanSettings();
   // Theme overlay — non-blocking. If fetch fails, scoreIt pass-throughs.
