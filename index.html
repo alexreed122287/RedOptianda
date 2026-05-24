@@ -18885,7 +18885,7 @@ function makeMeter(label, value, max, colorClass, subtitle){
 // governs whether a given entry counts as live — this layer only stops the post-reload spam.
 var G_NOTIF_COOLDOWN_KEY = 'rrjcar_notif_cooldowns_v1';
 var G_NOTIF_COOLDOWN_TTL_MS = 24 * 60 * 60 * 1000;
-var G_NOTIF_COOLDOWNS = _loadNotifCooldowns(); // ticker -> timestamp of last alert (persisted)
+var G_NOTIF_COOLDOWNS = (typeof _loadNotifCooldowns === 'function') ? _loadNotifCooldowns() : {};
 
 function saveAlertSettingsBtn(btn){
   saveNotifSettings();
