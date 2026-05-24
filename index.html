@@ -8549,23 +8549,28 @@ function getDaysToEarnings(ticker){
 // When the PRE-MARKET preset is active the ranking pivots to absolute gap
 // % so extended-hours movers float to the top instead of being buried by
 // the score-first ordering — that's the whole point of the preset.
+var _EXT_SIG_RANK = {B:2, S:0};
 var _SIG_RANK = {BUY:5, WATCH:4, HOLD:3, EXIT:2, EXCLUDE:1};
 function _resultRankCompare(a, b){
-  // 1. score (primary — Nine × 10 + bonus, descending)
-  var d = (b.score || 0) - (a.score || 0);
+  // 1. OVTLYR external signal — buys top, sells bottom
+  var d = ((_EXT_SIG_RANK[b.ovtlyrExtSig] != null ? _EXT_SIG_RANK[b.ovtlyrExtSig] : 1)
+         - (_EXT_SIG_RANK[a.ovtlyrExtSig] != null ? _EXT_SIG_RANK[a.ovtlyrExtSig] : 1));
   if (d !== 0) return d;
-  // 2. signal strength — BUY > WATCH > HOLD > EXIT > EXCLUDE
+  // 2. score (Nine × 10 + bonus, descending)
+  d = (b.score || 0) - (a.score || 0);
+  if (d !== 0) return d;
+  // 3. signal strength — BUY > WATCH > HOLD > EXIT > EXCLUDE
   d = (_SIG_RANK[b.signal] || 0) - (_SIG_RANK[a.signal] || 0);
   if (d !== 0) return d;
-  // 3. stock F&G — higher momentum conviction
+  // 4. stock F&G — higher momentum conviction
   d = (b.stkFG || 0) - (a.stkFG || 0);
   if (d !== 0) return d;
-  // 4. relStr5d — stronger 5-day relative momentum
+  // 5. relStr5d — stronger 5-day relative momentum
   var aRs = (a.ind && typeof a.ind.relStr5d === 'number') ? a.ind.relStr5d : 0;
   var bRs = (b.ind && typeof b.ind.relStr5d === 'number') ? b.ind.relStr5d : 0;
   d = bRs - aRs;
   if (d !== 0) return d;
-  // 5. volume — liquidity floor
+  // 6. volume — liquidity floor
   return (b.volume || 0) - (a.volume || 0);
 }
 
@@ -8585,6 +8590,9 @@ function _resultRankCompare(a, b){
 //   '= tied'      — every tiebreaker was equal (rare but possible)
 function _whyRankedBelow(r, prev){
   if (!r || !prev) return '';
+  var rExt = (_EXT_SIG_RANK[r.ovtlyrExtSig] != null ? _EXT_SIG_RANK[r.ovtlyrExtSig] : 1);
+  var pExt = (_EXT_SIG_RANK[prev.ovtlyrExtSig] != null ? _EXT_SIG_RANK[prev.ovtlyrExtSig] : 1);
+  if (rExt < pExt) return '↓ OV sig';
   if ((r.score||0) < (prev.score||0)) return '↓ score';
   if ((_SIG_RANK[r.signal]||0) < (_SIG_RANK[prev.signal]||0)) return '↓ signal';
   if ((r.stkFG||0) < (prev.stkFG||0)) return '↓ F&G';
@@ -8600,6 +8608,7 @@ function _applyScore(r, s){
   r.isGo=s.isGo; r.rules=s.rules; r.passes=s.passes;
   r.ovtlyrNine=s.ovtlyrNine; r.signal=s.signal; r.signalDate=s.signalDate;
   r.exitSignals=s.exitSignals; r.stkFG=s.stkFG; r.reasons=s.reasons;
+  r.ovtlyrExtSig=s.ovtlyrExtSig;
 }
 
 function scoreIt(ticker, ind, opt){
@@ -8902,22 +8911,10 @@ function scoreIt(ticker, ind, opt){
                    atr3: +(ind.price - 3 * ind.atr).toFixed(4) };
   }
 
-  // ── Buy signal trigger date: walk back through history to find when the
-  //    stock's bullish EMA stack (10>20>50) first formed in this current run.
-  //    Stops at the most recent bearish cross (the start of this trend leg).
-  var signalDate = null;
-  if (signal === 'BUY' && _hist && _hist.length >= 52) {
-    for (var sd = _hist.length - 2; sd >= 50; sd--) {
-      var _se10 = calcEMA(_hist.slice(0, sd + 1), 10);
-      var _se20 = calcEMA(_hist.slice(0, sd + 1), 20);
-      var _se50 = calcEMA(_hist.slice(0, sd + 1), 50);
-      if (!(_se10 > _se20 && _se20 > _se50)) {
-        signalDate = _hist[sd + 1] ? _hist[sd + 1].date : null;
-        break;
-      }
-    }
-    if (!signalDate && _hist[50]) signalDate = _hist[50].date;
-  }
+  // ── OVTLYR signal date from external signal table
+  var _ovSig = (typeof OVTLYR_SIGNALS !== 'undefined') ? OVTLYR_SIGNALS[ticker] : null;
+  var signalDate = _ovSig ? _ovSig.d : null;
+  var ovtlyrExtSig = _ovSig ? _ovSig.sig : null;
 
   return {
     score:       total,
@@ -8941,7 +8938,8 @@ function scoreIt(ticker, ind, opt){
     exclusions:  exclusionList,
     sectorEtf:   sectorEtf,
     stopLevels:  stopLevels,
-    signalDate:  signalDate
+    signalDate:  signalDate,
+    ovtlyrExtSig: ovtlyrExtSig
   };
 }
 
@@ -11631,7 +11629,7 @@ function renderScan(){
     if(c.k === '_rank'){
       // Clarify the rank's actual sort key \u2014 the Pre/Post preset
       // overrides the default score-tiebreaker chain with |gap %|.
-      var _rankTip = 'Rank by OVTLYR strength: score \u2192 signal (BUY>WATCH>HOLD) \u2192 stock F&G \u2192 RS 5D \u2192 volume';
+      var _rankTip = 'Rank: OV signal (BUY top, SELL bottom) \u2192 score \u2192 signal \u2192 stock F&G \u2192 RS 5D \u2192 volume';
       th+='<th style="cursor:default;width:36px;color:var(--gry);font-size:10px;letter-spacing:1px;" title="'+_rankTip+'">#</th>';
       return;
     }
@@ -11765,7 +11763,7 @@ function renderScan(){
     // Tooltip: spell out the full sort order so the user understands
     // 'RS 5D' as a label only fires after score + techScore have tied.
     var _whyTitle = _why
-      ? 'Ranked #'+(idx+1)+' — beat by row #'+idx+' on '+_why.replace(/^[↓=]\s*/,'')+'.\n\nSort: 1) score 2) signal strength 3) stock F&G 4) RS 5D 5) volume.'
+      ? 'Ranked #'+(idx+1)+' — beat by row #'+idx+' on '+_why.replace(/^[↓=]\s*/,'')+'.\n\nSort: 1) OV signal 2) score 3) signal 4) F&G 5) RS 5D 6) volume.'
       : 'Top of ranked list';
     var _whyCol = _why === '' ? 'var(--grn)'
                : _why === '↓ score' ? 'var(--gry)'
