@@ -5086,6 +5086,130 @@ window.fmpFetch = function(url, opts){
 
 var PROVEN=['URI','C','GOOG','GS','JPM','HAL','VLO','MPC','ICE','CME','FTNT','ORCL','PANW','KO','RCL','NVDA','MSFT','AMZN','V','META','CAT','XOM','PLTR','MRVL','MU','ZS','SMCI','KTOS','AVAV','LITE','COHR','GLW','AMD','GOOGL','TSLA','AMAT','LRCX','RTX','NOC'];
 var AVOID=['LULU','OXY','TDG','DIS','CMCSA','GIS','PWR','MRNA','RIVN','PLUG'];
+
+// OVTLYR.com reference signals — snapshot 2026-05-22/23 for calibration.
+// sig: 'B'=Buy, 'S'=Sell | d: signal start date | r: OVTLYR signal return %
+// o9: Ovtlyr Nine score (x/9) | fg: Fear & Greed heatmap value | fgd: direction
+var OVTLYR_SIGNALS = {
+  AAOI:{sig:'S',d:'2026-05-22',r:637.38,o9:4,fg:63.71,fgd:'down'},
+  AMD:{sig:'S',d:'2026-05-22',r:889.22,o9:4,fg:94.24,fgd:'down'},
+  ASPN:{sig:'S',d:'2026-05-22',r:162.21,o9:4,fg:91.14,fgd:'down'},
+  ASYS:{sig:'S',d:'2026-05-22',r:197.04,o9:4,fg:88.52,fgd:'down'},
+  AXTI:{sig:'S',d:'2026-05-22',r:912.92,o9:4,fg:73.02,fgd:'down'},
+  BBSI:{sig:'B',d:'2026-05-22',r:105.80,o9:8,fg:63.81,fgd:'up'},
+  BEP:{sig:'B',d:'2026-05-22',r:54.67,o9:7,fg:74.49,fgd:'up'},
+  BLK:{sig:'S',d:'2026-05-22',r:70.04,o9:4,fg:73.35,fgd:'down'},
+  BMO:{sig:'B',d:'2026-05-22',r:160.43,o9:8,fg:78.60,fgd:'up'},
+  BNS:{sig:'B',d:'2026-05-22',r:89.12,o9:8,fg:80.38,fgd:'up'},
+  BRC:{sig:'B',d:'2026-05-22',r:3.08,o9:8,fg:50.41,fgd:'up'},
+  BVN:{sig:'S',d:'2026-05-22',r:74.87,o9:4,fg:41.75,fgd:'up'},
+  CBOE:{sig:'S',d:'2026-05-22',r:92.09,o9:4,fg:98.25,fgd:'down'},
+  CBT:{sig:'S',d:'2026-05-22',r:22.09,o9:4,fg:61.00,fgd:'down'},
+  CGNX:{sig:'S',d:'2026-05-22',r:76.72,o9:4,fg:92.29,fgd:'down'},
+  CHGG:{sig:'B',d:'2026-05-22',r:171.94,o9:5,fg:68.89,fgd:'up'},
+  CNI:{sig:'B',d:'2026-05-22',r:10.34,o9:7,fg:84.17,fgd:'up'},
+  CTRE:{sig:'S',d:'2026-05-22',r:51.45,o9:4,fg:83.91,fgd:'down'},
+  CVI:{sig:'S',d:'2026-05-22',r:112.85,o9:4,fg:60.86,fgd:'down'},
+  DCOM:{sig:'B',d:'2026-05-22',r:32.47,o9:6,fg:64.57,fgd:'up'},
+  DD:{sig:'S',d:'2026-05-21',r:86.76,o9:3,fg:61.59,fgd:'down'},
+  DGII:{sig:'S',d:'2026-05-22',r:283.01,o9:4,fg:81.24,fgd:'down'},
+  DINO:{sig:'S',d:'2026-05-22',r:106.93,o9:4,fg:83.67,fgd:'down'},
+  EDUC:{sig:'S',d:'2026-05-22',r:81.12,o9:4,fg:54.29,fgd:'down'},
+  EGP:{sig:'B',d:'2026-05-22',r:24.60,o9:8,fg:80.08,fgd:'up'},
+  EXTR:{sig:'S',d:'2026-05-22',r:328.68,o9:3,fg:91.12,fgd:'down'},
+  FNGS:{sig:'S',d:'2026-05-22',r:77.18,o9:4,fg:81.20,fgd:'down'},
+  FOXA:{sig:'S',d:'2026-05-22',r:89.20,o9:4,fg:60.21,fgd:'down'},
+  FRD:{sig:'S',d:'2026-05-22',r:10.52,o9:4,fg:68.68,fgd:'down'},
+  GE:{sig:'B',d:'2026-05-21',r:114.83,o9:5,fg:32.76,fgd:'down'},
+  GNTX:{sig:'B',d:'2026-05-20',r:4.95,o9:8,fg:68.50,fgd:'up'},
+  GTEC:{sig:'B',d:'2026-05-21',r:49.97,o9:8,fg:38.85,fgd:'up'},
+  GTLB:{sig:'B',d:'2026-05-18',r:8.79,o9:5,fg:79.75,fgd:'up'},
+  GVA:{sig:'S',d:'2026-05-21',r:161.45,o9:5,fg:67.44,fgd:'down'},
+  NVDA:{sig:'S',d:'2026-05-22',r:754.85,o9:4,fg:62.96,fgd:'down'},
+  NVGS:{sig:'S',d:'2026-05-22',r:76.33,o9:4,fg:99.05,fgd:'down'},
+  ONL:{sig:'B',d:'2026-05-22',r:20.76,o9:6,fg:79.61,fgd:'up'},
+  OPTX:{sig:'B',d:'2026-05-21',r:10.99,o9:8,fg:43.10,fgd:'up'},
+  OVBC:{sig:'B',d:'2026-05-22',r:21.31,o9:6,fg:52.59,fgd:'up'},
+  PAYC:{sig:'S',d:'2026-05-22',r:15.47,o9:4,fg:71.36,fgd:'down'},
+  PENG:{sig:'S',d:'2026-05-22',r:44.90,o9:4,fg:95.38,fgd:'down'},
+  RCI:{sig:'B',d:'2026-05-21',r:23.42,o9:5,fg:71.41,fgd:'up'},
+  RNST:{sig:'B',d:'2026-05-22',r:144.08,o9:6,fg:75.19,fgd:'up'},
+  ROK:{sig:'S',d:'2026-05-22',r:213.80,o9:4,fg:72.76,fgd:'down'},
+  SAIC:{sig:'B',d:'2026-05-21',r:15.48,o9:8,fg:59.65,fgd:'up'},
+  SVNLY:{sig:'B',d:'2026-05-20',r:3.35,o9:6,fg:55.14,fgd:'up'},
+  TRV:{sig:'B',d:'2026-05-19',r:4.72,o9:6,fg:56.77,fgd:'up'},
+  URI:{sig:'S',d:'2026-05-22',r:164.65,o9:4,fg:81.17,fgd:'down'},
+  VET:{sig:'S',d:'2026-05-21',r:14.50,o9:4,fg:68.81,fgd:'down'},
+  WMT:{sig:'S',d:'2026-05-22',r:112.38,o9:4,fg:66.81,fgd:'down'},
+  ACGL:{sig:'B',d:'2026-05-21',r:47.85,o9:5,fg:50.65,fgd:'up'},
+  IT:{sig:'B',d:'2026-05-22',r:117.38,o9:4,fg:46.59,fgd:'down'},
+  SAP:{sig:'B',d:'2026-05-21',r:39.21,o9:5,fg:48.87,fgd:'down'},
+  ARW:{sig:'B',d:'2026-05-20',r:177.05,o9:5,fg:97.13,fgd:'down'},
+  III:{sig:'B',d:'2026-05-20',r:18.42,o9:8,fg:44.08,fgd:'up'},
+  MNDY:{sig:'B',d:'2026-05-20',r:17.87,o9:5,fg:76.94,fgd:'up'},
+  ADP:{sig:'B',d:'2026-05-19',r:107.99,o9:8,fg:67.21,fgd:'up'},
+  AGYS:{sig:'B',d:'2026-05-19',r:321.85,o9:8,fg:48.43,fgd:'up'},
+  CPSH:{sig:'B',d:'2026-05-19',r:358.56,o9:8,fg:55.77,fgd:'up'},
+  YOU:{sig:'B',d:'2026-05-19',r:8.41,o9:8,fg:73.11,fgd:'up'},
+  VPG:{sig:'B',d:'2026-05-18',r:88.10,o9:5,fg:97.72,fgd:'down'},
+  VRAR:{sig:'B',d:'2026-05-18',r:58.88,o9:8,fg:62.98,fgd:'up'},
+  COHR:{sig:'B',d:'2026-05-15',r:202.63,o9:5,fg:78.65,fgd:'down'},
+  TSEM:{sig:'B',d:'2026-05-15',r:689.16,o9:5,fg:80.39,fgd:'up'},
+  VRSN:{sig:'B',d:'2026-05-15',r:17.74,o9:5,fg:85.31,fgd:'up'},
+  ZS:{sig:'B',d:'2026-05-15',r:172.40,o9:8,fg:71.91,fgd:'up'},
+  AMAT:{sig:'B',d:'2026-05-12',r:145.97,o9:5,fg:84.41,fgd:'down'},
+  GLW:{sig:'B',d:'2026-05-12',r:392.22,o9:5,fg:83.87,fgd:'down'},
+  NSIT:{sig:'B',d:'2026-05-12',r:6.77,o9:8,fg:84.68,fgd:'up'},
+  SNOW:{sig:'B',d:'2026-05-12',r:0.31,o9:5,fg:51.58,fgd:'down'},
+  VNET:{sig:'B',d:'2026-05-12',r:65.41,o9:8,fg:67.17,fgd:'up'},
+  ACMR:{sig:'B',d:'2026-05-11',r:26.57,o9:8,fg:87.20,fgd:'up'},
+  FEIM:{sig:'B',d:'2026-05-11',r:154.12,o9:8,fg:59.86,fgd:'up'},
+  HPE:{sig:'B',d:'2026-05-11',r:76.62,o9:8,fg:97.52,fgd:'up'},
+  INOD:{sig:'B',d:'2026-05-11',r:2803.32,o9:8,fg:89.71,fgd:'up'},
+  GEN:{sig:'B',d:'2026-05-08',r:103.42,o9:5,fg:78.85,fgd:'up'},
+  MFH:{sig:'B',d:'2026-05-08',r:714.26,o9:5,fg:63.36,fgd:'up'},
+  MDB:{sig:'B',d:'2026-05-07',r:13.99,o9:5,fg:64.82,fgd:'down'},
+  VUZI:{sig:'B',d:'2026-05-07',r:814.69,o9:8,fg:71.69,fgd:'up'},
+  AKAM:{sig:'B',d:'2026-05-06',r:5.13,o9:5,fg:96.72,fgd:'down'},
+  FFIV:{sig:'B',d:'2026-05-05',r:81.57,o9:8,fg:93.07,fgd:'up'},
+  PCTY:{sig:'B',d:'2026-05-04',r:43.50,o9:8,fg:70.95,fgd:'up'},
+  TDC:{sig:'B',d:'2026-05-04',r:17.09,o9:8,fg:73.39,fgd:'up'}
+};
+
+window.ovtlyrCalibrate = function(){
+  var results = G.results || [];
+  if(!results.length){ console.warn('Run a scan first.'); return; }
+  var matched=0, agree=0, disagree=0, missing=0;
+  var buysGo=0, buysNoGo=0, sellsGo=0, sellsNoGo=0;
+  var rows = [];
+  var tickers = Object.keys(OVTLYR_SIGNALS);
+  tickers.forEach(function(tk){
+    var ov = OVTLYR_SIGNALS[tk];
+    var sr = null;
+    for(var i=0;i<results.length;i++){ if(results[i].ticker===tk){sr=results[i];break;} }
+    if(!sr){ missing++; rows.push({ticker:tk,ovSig:ov.sig==='B'?'BUY':'SELL',o9:ov.o9,scanScore:'-',scanSig:'-',agree:'N/A'}); return; }
+    matched++;
+    var ovBuy = ov.sig==='B';
+    var ok = (sr.isGo && ovBuy) || (!sr.isGo && !ovBuy);
+    if(ok) agree++; else disagree++;
+    if(ovBuy && sr.isGo) buysGo++;
+    if(ovBuy && !sr.isGo) buysNoGo++;
+    if(!ovBuy && sr.isGo) sellsGo++;
+    if(!ovBuy && !sr.isGo) sellsNoGo++;
+    rows.push({ticker:tk,ovSig:ovBuy?'BUY':'SELL',o9:ov.o9,scanScore:sr.score,scanSig:sr.isGo?'GO':'NO-GO',agree:ok?'YES':'NO'});
+  });
+  var totalOvBuys = tickers.filter(function(t){return OVTLYR_SIGNALS[t].sig==='B';}).length;
+  var totalOvSells = tickers.filter(function(t){return OVTLYR_SIGNALS[t].sig==='S';}).length;
+  console.log('\n=== OVTLYR CALIBRATION REPORT ===');
+  console.log('OVTLYR signals: '+tickers.length+' ('+totalOvBuys+' BUY, '+totalOvSells+' SELL)');
+  console.log('Matched in scan: '+matched+' | Missing: '+missing);
+  console.log('Agreement: '+agree+'/'+matched+' ('+((agree/matched)*100).toFixed(1)+'%)');
+  console.log('  BUY→GO: '+buysGo+'/'+totalOvBuys+' | BUY→NO-GO: '+buysNoGo+'/'+totalOvBuys);
+  console.log('  SELL→NO-GO: '+sellsNoGo+'/'+totalOvSells+' | SELL→GO: '+sellsGo+'/'+totalOvSells+' (false positives)');
+  console.table(rows);
+  return {matched:matched,agree:agree,disagree:disagree,missing:missing,buysGo:buysGo,buysNoGo:buysNoGo,sellsGo:sellsGo,sellsNoGo:sellsNoGo,rows:rows};
+};
+
 var SECTOR_PF={Industrials:3.53,Utilities:3.28,Finance:3.07,Healthcare:2.20,Communication:2.10,Technology:2.80,Staples:2.35,Materials:2.31,Energy:1.90,Consumer:1.80,RealEstate:1.75};
 // Tradier returns long-form sector names ("Producer manufacturing",
 // "Health technology", etc.) while SECTOR_PF keys are short. Without this map
@@ -14991,7 +15115,7 @@ function finishScan(){
   // as it completes. The final green \u2713 DONE state fires from _maybeFinishScan
   // after BOTH enrichment passes finish.
   setScanProgress(60, 'Preliminary scoring done (' + G.results.length + ' tickers) \u2014 enriching top ' +
-                  Math.min(200, G.results.length) + ' with FMP + indicator history\u2026');
+                  Math.min(60, G.results.length) + ' with FMP + indicator history\u2026');
   // Reset the finished latch so this run's completion event fires once.
   G._scanFinished = false;
   // Generation counter \u2014 enrichment closures from a stale scan see a different
@@ -15008,7 +15132,9 @@ function finishScan(){
 
   // Update stats bar
   eid('bs-scan').textContent = G.results.length;
-  renderBuySig(); renderScan();
+  try { renderBuySig(); renderScan(); } catch(renderErr){
+    console.error('[scan] post-bulk render threw — enrichment will still start:', renderErr);
+  }
   // NOTE: G.scanRunning stays TRUE until _maybeFinishScan fires after both
   // enrichment queues drain. Was being cleared here, allowing auto-scan @15min
   // to stack a fresh scan onto in-flight enrichment and corrupt G.results.
@@ -15393,7 +15519,7 @@ function finishScan(){
 
   var goCount = G.results.filter(function(r){ return r.isGo; }).length;
   addAlert('SYS', 'Scan bulk pass: ' + G.results.length + ' tickers | ' + goCount + ' GO (enriching…)', 'go');
-  toast('Scan bulk pass complete — enriching top ' + Math.min(200, G.results.length) + '…');
+  toast('Scan bulk pass complete — enriching top ' + Math.min(SC_ENRICH_LIMIT, G.results.length) + '…');
   // Scan-results cache is now written by _maybeFinishScan after enrichment
   // completes (was being written here with preliminary scores).
   hideStaleBanner('tab-bs');
@@ -16151,6 +16277,16 @@ function renderScan(){
   rowSrc.forEach(function(r, idx){
     var rows = '';   // per-iteration local; pushed to rowsArr at end
     var sigBadge=r.isGo?'<span class="badge go">GO</span>':'<span class="badge nogo">NO-GO</span>';
+    var _ov = OVTLYR_SIGNALS[r.ticker];
+    if(_ov){
+      var _ovIsBuy = _ov.sig === 'B';
+      var _agree = (r.isGo && _ovIsBuy) || (!r.isGo && !_ovIsBuy);
+      sigBadge += '<span class="ovtlyr-pill" style="font-size:8px;padding:1px 4px;margin-left:3px;border-radius:3px;font-weight:700;vertical-align:middle;'
+        + 'background:'+(_agree ? 'var(--grn3,rgba(0,200,100,.15))' : 'var(--wrn3,rgba(255,80,40,.18))')+';'
+        + 'color:'+(_agree ? 'var(--grn)' : 'var(--wrn)')+';'
+        + '" title="OVTLYR '+(_ovIsBuy?'BUY':'SELL')+' ('+_ov.d+') | Nine: '+_ov.o9+'/9 | Ret: '+_ov.r.toFixed(1)+'% | F&amp;G: '+_ov.fg+' '+_ov.fgd+(_agree?' | AGREES with scanner':' | DISAGREES with scanner')+'">'
+        + (_ovIsBuy ? 'OV:B' : 'OV:S') + '</span>';
+    }
     var chgCls=r.changePct>=0?'pnl-pos':'pnl-neg';
     var tk=r.ticker;
     var tech=r.techScore||0;
