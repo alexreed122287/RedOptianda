@@ -6702,7 +6702,7 @@ function toggleMobileFilters(){ /* deprecated — see comment above */ }
 function addAlert(tk,msg,type){
   G.alerts.unshift({tk:tk,msg:msg,type:type,ts:_fmtCT_NowTime()});
   if(G.alerts.length>50)G.alerts.pop();
-  if(eid('tab-al').classList.contains('active'))renderAlerts();
+  if(eid('tab-al') && eid('tab-al').classList.contains('active'))renderAlerts();
 }
 // Map a tab id (the suffix after 'tab-') to the HOW TO section id that
 // documents it. Used by the floating HELP button to open the modal with
@@ -15131,7 +15131,7 @@ function finishScan(){
   G.results.forEach(function(r){ r.fmpEnriched = false; r.indEnriched = false; });
 
   // Update stats bar
-  eid('bs-scan').textContent = G.results.length;
+  if(eid('bs-scan')) eid('bs-scan').textContent = G.results.length;
   try { renderBuySig(); renderScan(); } catch(renderErr){
     console.error('[scan] post-bulk render threw — enrichment will still start:', renderErr);
   }
@@ -19697,8 +19697,8 @@ function saveKeys(){
   if(tr){ localStorage.setItem(trKey,tr); localStorage.setItem('rrjcar_tradier',tr); }
   else { var sk=localStorage.getItem(trKey); if(sk) localStorage.setItem('rrjcar_tradier',sk); }
   localStorage.setItem('rrjcar_mode',mode);
-  if(acct){ localStorage.setItem(acKey,acct); localStorage.setItem('rrjcar_acct',acct); G.acctId=acct; eid('ord-acct').value=acct; }
-  else { var sa=localStorage.getItem(acKey); if(sa){ localStorage.setItem('rrjcar_acct',sa); G.acctId=sa; eid('ord-acct').value=sa; } }
+  if(acct){ localStorage.setItem(acKey,acct); localStorage.setItem('rrjcar_acct',acct); G.acctId=acct; if(eid('ord-acct'))eid('ord-acct').value=acct; }
+  else { var sa=localStorage.getItem(acKey); if(sa){ localStorage.setItem('rrjcar_acct',sa); G.acctId=sa; if(eid('ord-acct'))eid('ord-acct').value=sa; } }
   eid('fmp-status').textContent=fmp?'Key saved':'(unchanged)';eid('fmp-status').className='api-status '+(fmp?'ok':'miss');
   eid('tr-status').textContent=tr?'Key saved':'(unchanged)';eid('tr-status').className='api-status '+(tr?'ok':'miss');
   eid('acct-status').textContent=acct?'Account saved':'(unchanged)';eid('acct-status').className='api-status '+(acct?'ok':'miss');
@@ -19722,7 +19722,7 @@ function clearFmpCache(){
 
 function clearKeys(){
   ['rrjcar_fmp','rrjcar_tradier','rrjcar_mode','rrjcar_acct'].forEach(function(k){localStorage.removeItem(k);});
-  eid('api-fmp').value='';eid('api-tr').value='';eid('api-acct').value='';G.acctId='';eid('ord-acct').value='';
+  eid('api-fmp').value='';eid('api-tr').value='';eid('api-acct').value='';G.acctId='';if(eid('ord-acct'))eid('ord-acct').value='';
   eid('fmp-status').textContent='Cleared';eid('fmp-status').className='api-status miss';
   eid('tr-status').textContent='Cleared';eid('tr-status').className='api-status miss';
   eid('acct-status').textContent='Cleared';eid('acct-status').className='api-status miss';
@@ -19977,7 +19977,7 @@ function loadKeys(){
   if(tr&&!_hasBadTr){eid('api-tr').value='';eid('tr-status').textContent='Key saved (hidden)';eid('tr-status').className='api-status ok';}
   else if(_hasBadTr){eid('tr-status').textContent='Key corrupted - re-enter your Tradier API key';eid('tr-status').className='api-status miss';}
   else{eid('tr-status').textContent='Not set';eid('tr-status').className='api-status miss';}
-  if(acct){eid('api-acct').value=acct;eid('acct-status').textContent='Account loaded';eid('acct-status').className='api-status ok';G.acctId=acct;eid('ord-acct').value=acct;}
+  if(acct){eid('api-acct').value=acct;eid('acct-status').textContent='Account loaded';eid('acct-status').className='api-status ok';G.acctId=acct;if(eid('ord-acct'))eid('ord-acct').value=acct;}
   else{eid('acct-status').textContent='Not set - enter account number';eid('acct-status').className='api-status miss';}
   eid('api-mode').value=mode;
   var badge=eid('mode-badge');badge.textContent=mode==='live'?'LIVE MODE':'SANDBOX';
